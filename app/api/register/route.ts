@@ -3,6 +3,14 @@ import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { sendMail } from '@/lib/mailer'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg.vercel.app'
+const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.tw@gmail.com'
+
+function yn(v: boolean | null | undefined) {
+  return v ? '是' : '否'
+}
+function nullable(v: string | null | undefined) {
+  return v || '—'
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -112,6 +120,73 @@ export async function POST(request: NextRequest) {
       })
     } catch (mailErr) {
       console.error('[register] 確認信寄送失敗（不影響報名）:', mailErr)
+    }
+
+    // 寄備存信給學會信箱（失敗不影響報名結果）
+    try {
+      const row = (label: string, value: string | number) =>
+        `<tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:140px;">${label}</td><td style="padding:6px 10px;border:1px solid #eee;">${value}</td></tr>`
+
+      const courses = Array.isArray(data.attended_courses) && data.attended_courses.length
+        ? data.attended_courses.join('、')
+        : '—'
+
+      await sendMail({
+        to: archiveEmail,
+        subject: `【報名備存】${data.chinese_name} / ${data.random_code}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; color: #222;">
+            <h2 style="color: #2d6a4f;">新報名備存</h2>
+            <p style="color:#666;">本信由系統自動寄出，供學會信箱備份資料之用。最新資料請以後台為準。</p>
+
+            <h3 style="color:#2d6a4f;margin-top:20px;">基本資料</h3>
+            <table style="border-collapse:collapse;width:100%;font-size:14px;">
+              ${row('繳費碼', data.random_code)}
+              ${row('報名時間', new Date(data.created_at).toLocaleString('zh-TW'))}
+              ${row('中文姓名', data.chinese_name)}
+              ${row('護照英文名', data.passport_name)}
+              ${row('身分', data.identity === 'lay' ? '在家人' : '僧眾')}
+              ${row('法名', nullable(data.dharma_name))}
+              ${row('性別', data.gender === 'male' ? '男' : '女')}
+              ${row('年齡', data.age)}
+              ${row('護照頒發地', nullable(data.passport_country))}
+              ${row('居住地', data.residence)}
+              ${row('手機', data.phone)}
+              ${row('Email', data.email)}
+              ${row('LINE ID', nullable(data.line_id))}
+              ${row('WeChat ID', nullable(data.wechat_id))}
+            </table>
+
+            <h3 style="color:#2d6a4f;margin-top:20px;">報名條件</h3>
+            <table style="border-collapse:collapse;width:100%;font-size:14px;">
+              ${row('承諾如實填寫', yn(data.honest_confirm))}
+              ${row('正式學員經驗', yn(data.attended_formal))}
+              ${row('觀看錄影 3 屆以上', yn(data.watched_recordings))}
+              ${row('Zoom 一對一指導', yn(data.zoom_guidance))}
+              ${row('法談 30 篇以上', yn(data.watched_30_talks))}
+              ${row('持守五戒', yn(data.keep_precepts))}
+              ${row('修習年資', nullable(data.practice_years))}
+              ${row('練習頻率', nullable(data.practice_frequency))}
+              ${row('同意繳費', yn(data.pay_confirm))}
+              ${row('身體健康', yn(data.health_confirm))}
+              ${row('心理健康備註', nullable(data.mental_health_note))}
+              ${row('過往參加課程', courses)}
+            </table>
+
+            <h3 style="color:#2d6a4f;margin-top:20px;">狀態</h3>
+            <table style="border-collapse:collapse;width:100%;font-size:14px;">
+              ${row('審核狀態', data.status)}
+              ${row('繳費狀態', data.payment_status)}
+            </table>
+
+            <p style="margin-top:24px;color:#666;font-size:12px;">
+              後台連結：<a href="${baseUrl}/admin/dashboard">${baseUrl}/admin/dashboard</a>
+            </p>
+          </div>
+        `,
+      })
+    } catch (archiveErr) {
+      console.error('[register] 備存信寄送失敗（不影響報名）:', archiveErr)
     }
 
     return NextResponse.json({
