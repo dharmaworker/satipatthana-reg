@@ -38,6 +38,7 @@ create table if not exists registrations (
 
   status text not null default 'pending',           -- pending | approved | rejected
   payment_status text not null default 'unpaid',    -- unpaid | paid | verified
+  payment_plan text,                                -- A1 | A2 | B1 | B2 | C1 | C2 | D1 | D2 | T1 | T2
   payment_note text,
   payment_confirmed_at timestamptz,
 

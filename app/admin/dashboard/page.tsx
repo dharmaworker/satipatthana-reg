@@ -13,6 +13,23 @@ export default function DashboardPage() {
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
 
+  const planLabel = (p: string | null | undefined) => {
+    if (!p) return '—'
+    const map: Record<string, string> = {
+      A1: 'A(1) 8/20-8/24 食宿等費用（匯款）',
+      A2: 'A(2) 8/20-8/24 食宿等費用（刷卡）',
+      B1: 'B(1) 8/19-8/24 食宿費用（匯款）',
+      B2: 'B(2) 8/19-8/24 食宿費用（刷卡）',
+      C1: 'C(1) 8/19+8/25 食宿等費用（匯款）',
+      C2: 'C(2) 8/19+8/25 食宿等費用（刷卡）',
+      D1: 'D(1) 8/20-8/25 食宿等費用（匯款）',
+      D2: 'D(2) 8/20-8/25 食宿等費用（刷卡）',
+      T1: '【測試】匯款 1 元',
+      T2: '【測試】刷卡 30 元',
+    }
+    return map[p] || p
+  }
+
   const fetchData = async () => {
     setLoading(true)
     const params = new URLSearchParams()
@@ -224,15 +241,16 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 text-left text-black font-medium">審核狀態</th>
                   <th className="px-4 py-3 text-left text-black font-medium">繳費狀態</th>
                   <th className="px-4 py-3 text-left text-black font-medium">學號</th>
+                  <th className="px-4 py-3 text-left text-black font-medium">方案</th>
                   <th className="px-4 py-3 text-left text-black font-medium">QR</th>
                   <th className="px-4 py-3 text-left text-black font-medium">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : registrations.length === 0 ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
                 ) : registrations.map((reg, index) => (
                   <tr key={reg.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -274,6 +292,7 @@ export default function DashboardPage() {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-black">{reg.member_id || '-'}</td>
+                    <td className="px-4 py-3 text-xs text-black whitespace-nowrap">{planLabel(reg.payment_plan)}</td>
                     <td className="px-4 py-3">
                       {(() => {
                         const qrUrl = reg.line_qr_url || reg.wechat_qr_url

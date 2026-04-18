@@ -44,6 +44,7 @@ function PayContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         registration_id,
+        plan,
         last5: transferForm.last5,
         transfer_date: transferForm.transfer_date,
         account_name: transferForm.account_name,

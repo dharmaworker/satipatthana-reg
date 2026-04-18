@@ -51,6 +51,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取，無法繳費' }, { status: 403 })
     }
 
+    // 記錄本次選擇的方案（導向綠界前）
+    await supabaseAdmin
+      .from('registrations')
+      .update({ payment_plan: plan })
+      .eq('id', registration_id)
+
     const planAmounts: Record<string, number> = {
       'A1': 18600, 'A2': 19300,
       'B1': 20350, 'B2': 21050,

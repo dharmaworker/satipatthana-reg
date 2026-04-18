@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   const headers = [
-    '報名時間', '學號', '繳費碼', '審核狀態', '繳費狀態',
+    '報名時間', '學號', '繳費碼', '審核狀態', '繳費狀態', '繳費方案',
     '中文姓名', '護照英文姓名', '身份', '法名', '性別', '年齡',
     '護照頒發地', '居住地', '手機', 'Email', 'LINE ID', '微信號',
     'LINE QR 連結', 'WeChat QR 連結',
@@ -25,6 +25,19 @@ export async function GET(request: NextRequest) {
     '是否正式學員', '觀看錄影', 'Zoom指導', '觀看法談30篇',
     '持守五戒', '同意繳費', '身體健康', '參加課程記錄'
   ]
+
+  const planMap: Record<string, string> = {
+    A1: 'A(1) 8/20-8/24 食宿等費用（匯款）',
+    A2: 'A(2) 8/20-8/24 食宿等費用（刷卡）',
+    B1: 'B(1) 8/19-8/24 食宿費用（匯款）',
+    B2: 'B(2) 8/19-8/24 食宿費用（刷卡）',
+    C1: 'C(1) 8/19+8/25 食宿等費用（匯款）',
+    C2: 'C(2) 8/19+8/25 食宿等費用（刷卡）',
+    D1: 'D(1) 8/20-8/25 食宿等費用（匯款）',
+    D2: 'D(2) 8/20-8/25 食宿等費用（刷卡）',
+    T1: '【測試】匯款 1 元',
+    T2: '【測試】刷卡 30 元',
+  }
 
   const statusMap: Record<string, string> = {
     pending: '審核中', approved: '已錄取', rejected: '未錄取'
@@ -39,6 +52,7 @@ export async function GET(request: NextRequest) {
     r.random_code,
     statusMap[r.status] || r.status,
     paymentMap[r.payment_status] || r.payment_status,
+    r.payment_plan ? (planMap[r.payment_plan] || r.payment_plan) : '',
     r.chinese_name,
     r.passport_name,
     r.identity === 'lay' ? '在家人' : '僧眾',
