@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from('registrations')
       .select(
-        'chinese_name, status, payment_status, member_id, random_code, created_at'
+        'id, chinese_name, status, payment_status, member_id, random_code, created_at'
       )
       .eq('email', email.toLowerCase().trim())
       .eq('random_code', random_code.toUpperCase().trim())
@@ -43,9 +43,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        id: data.id,
+        random_code: data.random_code,
         name: data.chinese_name,
         status: statusMap[data.status] || data.status,
+        status_raw: data.status,
         payment_status: paymentMap[data.payment_status] || data.payment_status,
+        payment_status_raw: data.payment_status,
         member_id: data.member_id || '待編號',
         applied_at: new Date(data.created_at).toLocaleDateString('zh-TW'),
       },

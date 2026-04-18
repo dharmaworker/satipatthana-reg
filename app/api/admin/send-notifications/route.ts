@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { sendMail } from '@/lib/mailer'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg.vercel.app'
+const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.tw@gmail.com'
 
 export async function POST(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     try {
         await sendMail({
         to: reg.email,
+        cc: archiveEmail,
         subject: '【第二屆台灣四念處禪修】錄取通知',
         html: `
         <div style="font-family: sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #222;">
@@ -61,6 +63,31 @@ export async function POST(request: NextRequest) {
             <tr><td style="border:1px solid #ccc;padding:8px;">D(1)</td><td style="border:1px solid #ccc;padding:8px;">8/20-8/25 食宿等費用（匯款）</td><td style="border:1px solid #ccc;padding:8px;text-align:right;">20,840</td></tr>
             <tr><td style="border:1px solid #ccc;padding:8px;">D(2)</td><td style="border:1px solid #ccc;padding:8px;">8/20-8/25 食宿等費用（刷卡）</td><td style="border:1px solid #ccc;padding:8px;text-align:right;">21,540</td></tr>
         </table>
+
+        <h3 style="color: #2d6a4f;">匯款帳號（選擇匯款方案請使用）</h3>
+        <table style="border-collapse:collapse;width:100%;font-size:14px;">
+          <tr style="background:#f0f7f4;">
+            <th style="border:1px solid #ccc;padding:8px;text-align:left;width:90px;">對象</th>
+            <th style="border:1px solid #ccc;padding:8px;text-align:left;">帳戶資訊</th>
+          </tr>
+          <tr>
+            <td style="border:1px solid #ccc;padding:8px;">台灣法友</td>
+            <td style="border:1px solid #ccc;padding:8px;">
+              戶名：台灣四念處學會<br>
+              銀行：第一銀行 仁和分行（代號 007）<br>
+              帳號：<strong>16510068750</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #ccc;padding:8px;">國外法友</td>
+            <td style="border:1px solid #ccc;padding:8px;">
+              戶名：台灣四念處學會<br>
+              銀行：第一銀行 仁和分行（代號 007）<br>
+              帳號：<strong>16540016022</strong>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:13px;color:#c0392b;margin-top:8px;">⚠️ 匯款時請備註姓名與繳費碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。</p>
 
         <h3 style="color: #2d6a4f;">三、住宿安排</h3>
         <p>房間皆為四人房，採單獨床位配置，附兩套衛浴。如需兩人一間，每人需補差額 NT$7,000（靜慮林師父免收）。</p>

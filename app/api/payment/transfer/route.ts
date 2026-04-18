@@ -13,6 +13,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '後五碼請填寫5位數字' }, { status: 400 })
     }
 
+    const { data: reg, error: regErr } = await supabaseAdmin
+      .from('registrations')
+      .select('status')
+      .eq('id', registration_id)
+      .single()
+
+    if (regErr || !reg) {
+      return NextResponse.json({ error: '找不到報名資料' }, { status: 404 })
+    }
+    if (reg.status !== 'approved') {
+      return NextResponse.json({ error: '尚未錄取，無法回填匯款' }, { status: 403 })
+    }
+
     const { error } = await supabaseAdmin
       .from('registrations')
       .update({

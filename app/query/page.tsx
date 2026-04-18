@@ -15,10 +15,14 @@ export default function QueryPage() {
       .then(data => {
         if (data) {
           setResult({
+            id: data.id,
+            random_code: data.random_code,
             name: data.chinese_name,
             member_id: data.member_id || '待編號',
             status: ({ pending: '審核中', approved: '已錄取，待繳費', rejected: '未錄取' } as Record<string, string>)[data.status] || data.status,
+            status_raw: data.status,
             payment_status: ({ unpaid: '尚未繳費', paid: '已繳費，確認中', verified: '繳費確認完成' } as Record<string, string>)[data.payment_status] || data.payment_status,
+            payment_status_raw: data.payment_status,
           })
           setAutoLoaded(true)
         }
@@ -116,6 +120,13 @@ export default function QueryPage() {
                 </div>
               ))}
             </div>
+
+            {result.status_raw === 'approved' && result.payment_status_raw === 'unpaid' && result.id && (
+              <a href={`/pay?id=${result.id}&code=${result.random_code}`}
+                className="block w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition-colors text-center">
+                前往繳費
+              </a>
+            )}
           </div>
         )}
 
