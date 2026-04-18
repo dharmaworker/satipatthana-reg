@@ -79,7 +79,13 @@
 
 ### `admin_users`
 後台管理員。欄位：`username`、`password_hash`（SHA256(password + PASSWORD_SALT)）、`role`、`name`。
-Role 種類：`admin`（全權）、`readonly`（唯讀）、`finance`（可改繳費狀態）。
+
+| Role | 列表 / 匯出 | 改 status / member_id | 改 payment_status | 寄通知信 |
+|---|---|---|---|---|
+| `admin` | ✅ | ✅ | ✅ | ✅ |
+| `reviewer` | ✅ | ✅ | ❌ | ❌ |
+| `finance` | ✅ | ❌ | ✅ | ❌ |
+| `readonly` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 

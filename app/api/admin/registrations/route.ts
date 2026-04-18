@@ -45,22 +45,36 @@ export async function GET(request: NextRequest) {
 // 更新報名狀態
 export async function PATCH(request: NextRequest) {
   const role = checkAuth(request)
-  if (!role || role === 'readonly') {
+  if (!role) {
+    return NextResponse.json({ error: '請先登入' }, { status: 401 })
+  }
+
+  const canEditStatus = role === 'admin' || role === 'reviewer'
+  const canEditPayment = role === 'admin' || role === 'finance'
+
+  if (!canEditStatus && !canEditPayment) {
     return NextResponse.json({ error: '權限不足' }, { status: 403 })
   }
 
   const body = await request.json()
-  const { id, status, payment_status,member_id } = body
+  const { id, status, payment_status, member_id } = body
 
- const updateData: any = {}
- if (status) updateData.status = status
- if (member_id) updateData.member_id = member_id
- if (payment_status) {
-   updateData.payment_status = payment_status
-   if (payment_status === 'verified') {
-     updateData.payment_confirmed_at = new Date().toISOString()
-   }
- }
+  if ((status !== undefined || member_id !== undefined) && !canEditStatus) {
+    return NextResponse.json({ error: '無權修改錄取狀態' }, { status: 403 })
+  }
+  if (payment_status !== undefined && !canEditPayment) {
+    return NextResponse.json({ error: '無權修改繳費狀態' }, { status: 403 })
+  }
+
+  const updateData: Record<string, unknown> = {}
+  if (status) updateData.status = status
+  if (member_id) updateData.member_id = member_id
+  if (payment_status) {
+    updateData.payment_status = payment_status
+    if (payment_status === 'verified') {
+      updateData.payment_confirmed_at = new Date().toISOString()
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('registrations')

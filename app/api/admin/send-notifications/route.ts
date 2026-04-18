@@ -6,7 +6,7 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg.ve
 
 export async function POST(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
-  if (!role || role === 'readonly' || role === 'finance') {
+  if (role !== 'admin') {
     return NextResponse.json({ error: '權限不足' }, { status: 403 })
   }
 
