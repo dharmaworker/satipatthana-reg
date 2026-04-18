@@ -17,8 +17,8 @@ export default function QueryPage() {
           setResult({
             name: data.chinese_name,
             member_id: data.member_id || '待編號',
-            status: { pending: '審核中', approved: '已錄取，待繳費', rejected: '未錄取' }[data.status] || data.status,
-            payment_status: { unpaid: '尚未繳費', paid: '已繳費，確認中', verified: '繳費確認完成' }[data.payment_status] || data.payment_status,
+            status: ({ pending: '審核中', approved: '已錄取，待繳費', rejected: '未錄取' } as Record<string, string>)[data.status] || data.status,
+            payment_status: ({ unpaid: '尚未繳費', paid: '已繳費，確認中', verified: '繳費確認完成' } as Record<string, string>)[data.payment_status] || data.payment_status,
           })
           setAutoLoaded(true)
         }
