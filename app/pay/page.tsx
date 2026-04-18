@@ -13,7 +13,7 @@ const PLANS = [
   { id: 'D1', label: 'D(1) 8/20-8/25 食宿等費用（匯款）', amount: 20840 },
   { id: 'D2', label: 'D(2) 8/20-8/25 食宿等費用（刷卡）', amount: 21540 },
   { id: 'T1', label: '【測試】匯款 1 元', amount: 1, test: true },
-  { id: 'T2', label: '【測試】刷卡 1 元', amount: 1, test: true },
+  { id: 'T2', label: '【測試】刷卡 30 元', amount: 30, test: true },
 ]
 
 function PayContent() {
