@@ -44,17 +44,17 @@ export async function sendLodgingArchiveEmail(reg: {
   const statusText = reg.payment_status ? (statusZh[reg.payment_status] || reg.payment_status) : '—'
 
   return sendMail({
-    to: archiveEmail,
-    subject: `【食宿登記備存】${reg.chinese_name} / ${plan || '?'}`,
+    to: reg.email,
+    bcc: archiveEmail,
+    subject: `【第二屆台灣四念處禪修】食宿登記確認`,
     html: `
       <div style="font-family: sans-serif; max-width: 680px; margin: 0 auto; padding: 20px; color: #222;">
-        <h2 style="color:#2d6a4f;">新食宿登記</h2>
-        <p style="color:#666;">本信由系統自動寄出，供學會信箱備份用。最新資料以後台為準。</p>
+        <h2 style="color:#2d6a4f;">食宿登記確認 🙏</h2>
+        <p>${reg.chinese_name} 法友您好，</p>
+        <p>我們已收到您的食宿登記，以下是您目前選擇的方案與繳費資訊：</p>
         <table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:12px;">
           ${row('繳費碼', reg.random_code)}
           ${row('中文姓名', reg.chinese_name)}
-          ${row('Email', reg.email)}
-          ${row('手機', reg.phone)}
           ${row('學號', reg.member_id)}
           ${row('選擇方案', planLabel)}
           ${row('金額 (NT$)', typeof amount === 'number' ? amount.toLocaleString() : amount)}
@@ -63,6 +63,10 @@ export async function sendLodgingArchiveEmail(reg: {
           ${row('繳費備註', reg.payment_note)}
           ${row('確認時間', reg.payment_confirmed_at ? new Date(reg.payment_confirmed_at).toLocaleString('zh-TW') : null)}
         </table>
+        <p style="color:#666;font-size:13px;margin-top:16px;">
+          如您對方案或繳費資訊有疑問，請聯繫台灣四念處學會。
+        </p>
+        <p style="color:#666;font-size:13px;">台灣四念處學會 合十</p>
       </div>
     `,
   })

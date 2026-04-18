@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
 
     const amount = planAmounts[plan] || 18600
     const tradeNo = `SAT${Date.now()}`
-    const baseUrl = 'https://satipatthana-reg.vercel.app'
+    // 導 baseUrl 自實際請求的 origin，避免寫死造成綠界 callback 打錯網址
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      new URL(request.url).origin
 
     const now = new Date()
     const tw = new Date(now.getTime() + 8 * 60 * 60 * 1000)
