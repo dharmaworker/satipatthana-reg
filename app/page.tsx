@@ -28,7 +28,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    honest_confirm: 'yes',
+    honest_confirm: '',
     attended_formal: '',
     watched_recordings: '',
     zoom_guidance: '',
@@ -171,14 +171,12 @@ export default function RegisterPage() {
         {/* 第一題 */}
         <div className={sectionClass}>
           <label className={labelClass}>1. 您是否願意承諾如實填寫本次的報名表單？*</label>
-          {[['yes', '是'], ['no', '否（將結束報名）']].map(([val, label]) => (
-            <label key={val} className={radioClass}>
-              <input type="radio" name="honest_confirm" value={val}
-                checked={form.honest_confirm === val}
-                onChange={e => update('honest_confirm', e.target.value)} />
-              {label}
-            </label>
-          ))}
+          <select className={inputClass} value={form.honest_confirm}
+            onChange={e => update('honest_confirm', e.target.value)}>
+            <option value="">請選擇</option>
+            <option value="yes">是</option>
+            <option value="no">否（將結束報名）</option>
+          </select>
           {form.honest_confirm === 'no' && (
             <p className="text-red-500 text-sm">感謝您的誠實，報名表將不予提交。</p>
           )}
@@ -192,14 +190,12 @@ export default function RegisterPage() {
 
           <div>
             <label className={labelClass}>2. 是否以正式學員身份參加過隆波帕默尊者體系的實體或線上課程？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="attended_formal" value={val}
-                  checked={form.attended_formal === val}
-                  onChange={e => update('attended_formal', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.attended_formal}
+              onChange={e => update('attended_formal', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           {/* 課程選擇 */}
@@ -228,50 +224,42 @@ export default function RegisterPage() {
 
           <div>
             <label className={labelClass}>9. 是否完整觀看/聆聽過至少3屆泰國四念處之旅的錄影/錄音？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="watched_recordings" value={val}
-                  checked={form.watched_recordings === val}
-                  onChange={e => update('watched_recordings', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.watched_recordings}
+              onChange={e => update('watched_recordings', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           <div>
             <label className={labelClass}>10. 是否透過ZOOM獲得指導老師一對一禪修指導？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="zoom_guidance" value={val}
-                  checked={form.zoom_guidance === val}
-                  onChange={e => update('zoom_guidance', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.zoom_guidance}
+              onChange={e => update('zoom_guidance', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           <div>
             <label className={labelClass}>11. 是否觀看/聆聽過隆波帕默尊者法談開示30篇以上？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="watched_30_talks" value={val}
-                  checked={form.watched_30_talks === val}
-                  onChange={e => update('watched_30_talks', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.watched_30_talks}
+              onChange={e => update('watched_30_talks', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           <div>
             <label className={labelClass}>12. 您是否持守五戒？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="keep_precepts" value={val}
-                  checked={form.keep_precepts === val}
-                  onChange={e => update('keep_precepts', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.keep_precepts}
+              onChange={e => update('keep_precepts', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           <div>
@@ -298,26 +286,22 @@ export default function RegisterPage() {
 
           <div>
             <label className={labelClass}>15. 是否願意於6月15日前按時支付食宿場地交通費用？*</label>
-            {[['yes', '是，我願意按時全額支付'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="pay_confirm" value={val}
-                  checked={form.pay_confirm === val}
-                  onChange={e => update('pay_confirm', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.pay_confirm}
+              onChange={e => update('pay_confirm', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是，我願意按時全額支付</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
           <div>
             <label className={labelClass}>16. 您是否身體健康，能夠全程獨立參與？*</label>
-            {[['yes', '是'], ['no', '否']].map(([val, label]) => (
-              <label key={val} className={radioClass}>
-                <input type="radio" name="health_confirm" value={val}
-                  checked={form.health_confirm === val}
-                  onChange={e => update('health_confirm', e.target.value)} />
-                {label}
-              </label>
-            ))}
+            <select className={inputClass} value={form.health_confirm}
+              onChange={e => update('health_confirm', e.target.value)}>
+              <option value="">請選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
           </div>
 
 
