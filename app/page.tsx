@@ -28,7 +28,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    honest_confirm: '',
+    honest_confirm: 'yes',
     attended_formal: '',
     watched_recordings: '',
     zoom_guidance: '',
