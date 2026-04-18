@@ -89,3 +89,50 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json({ success: true, data })
 }
+
+// 刪除報名紀錄（含 QR 圖檔清理）
+export async function DELETE(request: NextRequest) {
+  const role = checkAuth(request)
+  if (role !== 'admin') {
+    return NextResponse.json({ error: '僅 admin 角色可刪除' }, { status: 403 })
+  }
+
+  const { id } = await request.json()
+  if (!id) {
+    return NextResponse.json({ error: '缺少 id' }, { status: 400 })
+  }
+
+  // 先撈 QR URL 以便之後清檔
+  const { data: reg } = await supabaseAdmin
+    .from('registrations')
+    .select('line_qr_url, wechat_qr_url')
+    .eq('id', id)
+    .single()
+
+  const { error } = await supabaseAdmin
+    .from('registrations')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json({ error: '刪除失敗' }, { status: 500 })
+  }
+
+  // 清 Storage QR 檔（失敗不影響主流程）
+  try {
+    const paths: string[] = []
+    for (const url of [reg?.line_qr_url, reg?.wechat_qr_url]) {
+      if (!url) continue
+      const marker = '/qr-codes/'
+      const idx = url.indexOf(marker)
+      if (idx >= 0) paths.push(url.slice(idx + marker.length))
+    }
+    if (paths.length) {
+      await supabaseAdmin.storage.from('qr-codes').remove(paths)
+    }
+  } catch (storageErr) {
+    console.error('[registrations DELETE] storage cleanup failed:', storageErr)
+  }
+
+  return NextResponse.json({ success: true })
+}

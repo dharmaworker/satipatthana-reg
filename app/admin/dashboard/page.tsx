@@ -99,6 +99,25 @@ export default function DashboardPage() {
     setSending(false)
   }
 
+  const deleteRegistration = async (reg: any) => {
+    const confirmed = window.confirm(
+      `確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`
+    )
+    if (!confirmed) return
+    const res = await fetch('/api/admin/registrations', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: reg.id }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setMessage(`刪除失敗：${data.error || res.status}`)
+      return
+    }
+    setMessage(`已刪除 ${reg.chinese_name}`)
+    fetchData()
+  }
+
   const assignMemberId = async (id: string, sequence: number) => {
     const member_id = `TW2026-${String(sequence).padStart(3, '0')}`
     await fetch('/api/admin/registrations', {
@@ -279,6 +298,10 @@ export default function DashboardPage() {
                             編號
                           </button>
                         )}
+                        <button onClick={() => deleteRegistration(reg)}
+                          className="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs">
+                          刪除
+                        </button>
                       </div>
                     </td>
                   </tr>
