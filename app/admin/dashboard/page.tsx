@@ -49,20 +49,32 @@ export default function DashboardPage() {
   }
 
   const updateStatus = async (id: string, status: string) => {
-    await fetch('/api/admin/registrations', {
+    const res = await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setMessage(`錄取狀態更新失敗：${data.error || res.status}`)
+      return
+    }
+    setMessage('')
     fetchData()
   }
 
   const updatePayment = async (id: string, payment_status: string) => {
-    await fetch('/api/admin/registrations', {
+    const res = await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, payment_status }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setMessage(`繳費狀態更新失敗：${data.error || res.status}`)
+      return
+    }
+    setMessage('')
     fetchData()
   }
 
@@ -103,34 +115,6 @@ export default function DashboardPage() {
     approved: registrations.filter(r => r.status === 'approved').length,
     rejected: registrations.filter(r => r.status === 'rejected').length,
     paid: registrations.filter(r => r.payment_status === 'verified').length,
-  }
-
-  const statusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-    }
-    const label: Record<string, string> = {
-      pending: '審核中',
-      approved: '已錄取',
-      rejected: '未錄取',
-    }
-    return <span className={`px-2 py-1 rounded-full text-xs font-medium ${map[status]}`}>{label[status]}</span>
-  }
-
-  const paymentBadge = (status: string) => {
-    const map: Record<string, string> = {
-      unpaid: 'bg-gray-100 text-gray-800',
-      paid: 'bg-blue-100 text-blue-800',
-      verified: 'bg-green-100 text-green-800',
-    }
-    const label: Record<string, string> = {
-      unpaid: '未繳費',
-      paid: '待確認',
-      verified: '已確認',
-    }
-    return <span className={`px-2 py-1 rounded-full text-xs font-medium ${map[status]}`}>{label[status]}</span>
   }
 
   return (
@@ -244,8 +228,32 @@ export default function DashboardPage() {
                     <td className="px-4 py-3 text-black">{reg.email}</td>
                     <td className="px-4 py-3 text-black">{reg.residence}</td>
                     <td className="px-4 py-3 font-mono text-black">{reg.random_code}</td>
-                    <td className="px-4 py-3">{statusBadge(reg.status)}</td>
-                    <td className="px-4 py-3">{paymentBadge(reg.payment_status)}</td>
+                    <td className="px-4 py-3">
+                      <select value={reg.status}
+                        onChange={e => updateStatus(reg.id, e.target.value)}
+                        className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
+                          reg.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          reg.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                        <option value="pending">審核中</option>
+                        <option value="approved">已錄取</option>
+                        <option value="rejected">未錄取</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select value={reg.payment_status}
+                        onChange={e => updatePayment(reg.id, e.target.value)}
+                        className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
+                          reg.payment_status === 'unpaid' ? 'bg-gray-100 text-gray-800' :
+                          reg.payment_status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                        <option value="unpaid">未繳費</option>
+                        <option value="paid">待確認</option>
+                        <option value="verified">已確認</option>
+                      </select>
+                    </td>
                     <td className="px-4 py-3 text-black">{reg.member_id || '-'}</td>
                     <td className="px-4 py-3">
                       {(() => {
@@ -265,22 +273,6 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
-                        {reg.status === 'pending' && (<>
-                          <button onClick={() => updateStatus(reg.id, 'approved')}
-                            className="bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 rounded text-xs">
-                            錄取
-                          </button>
-                          <button onClick={() => updateStatus(reg.id, 'rejected')}
-                            className="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs">
-                            拒絕
-                          </button>
-                        </>)}
-                        {reg.status === 'approved' && reg.payment_status === 'paid' && (
-                          <button onClick={() => updatePayment(reg.id, 'verified')}
-                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">
-                            確認繳費
-                          </button>
-                        )}
                         {reg.payment_status === 'verified' && !reg.member_id && (
                           <button onClick={() => assignMemberId(reg.id, index + 1)}
                             className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
