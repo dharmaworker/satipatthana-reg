@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendApprovalEmail } from '@/lib/approval-email'
+import { sendLodgingArchiveEmail } from '@/lib/archive-email'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -86,10 +87,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '僅 admin 可修改基本資料與方案' }, { status: 403 })
   }
 
-  // 為了偵測 status 由非 approved 轉為 approved，先撈目前狀態
+  // 先撈目前狀態與 payment_plan，用於偵測轉變
   const { data: currentReg } = await supabaseAdmin
     .from('registrations')
-    .select('status')
+    .select('status, payment_plan')
     .eq('id', id)
     .single()
 
@@ -126,6 +127,20 @@ export async function PATCH(request: NextRequest) {
       await sendApprovalEmail(data)
     } catch (mailErr) {
       console.error('[registrations PATCH] approval email failed:', mailErr)
+    }
+  }
+
+  // payment_plan 被設或被變更時，寄食宿登記備存信（失敗不影響 PATCH）
+  if (
+    payment_plan !== undefined &&
+    payment_plan &&
+    payment_plan !== currentReg?.payment_plan &&
+    data
+  ) {
+    try {
+      await sendLodgingArchiveEmail(data)
+    } catch (mailErr) {
+      console.error('[registrations PATCH] lodging archive failed:', mailErr)
     }
   }
 
