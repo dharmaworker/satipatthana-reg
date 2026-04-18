@@ -3,7 +3,7 @@ import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { sendMail } from '@/lib/mailer'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg.vercel.app'
-const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.tw@gmail.com'
+const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'

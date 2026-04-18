@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendApprovalEmail } from '@/lib/approval-email'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -66,6 +67,13 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '無權修改繳費狀態' }, { status: 403 })
   }
 
+  // 為了偵測 status 由非 approved 轉為 approved，先撈目前狀態
+  const { data: currentReg } = await supabaseAdmin
+    .from('registrations')
+    .select('status')
+    .eq('id', id)
+    .single()
+
   const updateData: Record<string, unknown> = {}
   if (status) updateData.status = status
   if (member_id) updateData.member_id = member_id
@@ -85,6 +93,15 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: '更新失敗' }, { status: 500 })
+  }
+
+  // 狀態首次轉為 approved 時自動寄錄取信（失敗不影響 PATCH）
+  if (status === 'approved' && currentReg?.status !== 'approved' && data) {
+    try {
+      await sendApprovalEmail(data)
+    } catch (mailErr) {
+      console.error('[registrations PATCH] approval email failed:', mailErr)
+    }
   }
 
   return NextResponse.json({ success: true, data })
