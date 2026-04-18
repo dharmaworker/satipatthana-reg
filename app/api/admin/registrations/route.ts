@@ -58,13 +58,32 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { id, status, payment_status, member_id } = body
+  const {
+    id,
+    status,
+    payment_status,
+    member_id,
+    chinese_name,
+    email,
+    residence,
+    payment_plan,
+    line_qr_url,
+    wechat_qr_url,
+  } = body
 
   if ((status !== undefined || member_id !== undefined) && !canEditStatus) {
     return NextResponse.json({ error: '無權修改錄取狀態' }, { status: 403 })
   }
   if (payment_status !== undefined && !canEditPayment) {
     return NextResponse.json({ error: '無權修改繳費狀態' }, { status: 403 })
+  }
+
+  const adminOnlyFields = {
+    chinese_name, email, residence, payment_plan, line_qr_url, wechat_qr_url,
+  }
+  const hasAdminOnlyEdits = Object.values(adminOnlyFields).some(v => v !== undefined)
+  if (hasAdminOnlyEdits && role !== 'admin') {
+    return NextResponse.json({ error: '僅 admin 可修改基本資料與方案' }, { status: 403 })
   }
 
   // 為了偵測 status 由非 approved 轉為 approved，先撈目前狀態
@@ -76,13 +95,19 @@ export async function PATCH(request: NextRequest) {
 
   const updateData: Record<string, unknown> = {}
   if (status) updateData.status = status
-  if (member_id) updateData.member_id = member_id
+  if (member_id !== undefined) updateData.member_id = member_id
   if (payment_status) {
     updateData.payment_status = payment_status
     if (payment_status === 'verified') {
       updateData.payment_confirmed_at = new Date().toISOString()
     }
   }
+  if (chinese_name !== undefined) updateData.chinese_name = chinese_name
+  if (email !== undefined) updateData.email = email
+  if (residence !== undefined) updateData.residence = residence
+  if (payment_plan !== undefined) updateData.payment_plan = payment_plan || null
+  if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
+  if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
 
   const { data, error } = await supabaseAdmin
     .from('registrations')

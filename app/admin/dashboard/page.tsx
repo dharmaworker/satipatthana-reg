@@ -2,6 +2,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+const RESIDENCE_OPTIONS = ['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區']
+const PLAN_OPTIONS: [string, string][] = [
+  ['A1', 'A(1) 8/20-8/24 食宿等費用（匯款）'],
+  ['A2', 'A(2) 8/20-8/24 食宿等費用（刷卡）'],
+  ['B1', 'B(1) 8/19-8/24 食宿費用（匯款）'],
+  ['B2', 'B(2) 8/19-8/24 食宿費用（刷卡）'],
+  ['C1', 'C(1) 8/19+8/25 食宿等費用（匯款）'],
+  ['C2', 'C(2) 8/19+8/25 食宿等費用（刷卡）'],
+  ['D1', 'D(1) 8/20-8/25 食宿等費用（匯款）'],
+  ['D2', 'D(2) 8/20-8/25 食宿等費用（刷卡）'],
+  ['T1', '【測試】匯款 1 元'],
+  ['T2', '【測試】刷卡 30 元'],
+]
+
 export default function DashboardPage() {
   const router = useRouter()
   const [registrations, setRegistrations] = useState<any[]>([])
@@ -12,6 +26,61 @@ export default function DashboardPage() {
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
+  const [editReg, setEditReg] = useState<any | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [editUploading, setEditUploading] = useState<'line' | 'wechat' | null>(null)
+
+  const handleEditQrUpload = async (kind: 'line' | 'wechat', file: File) => {
+    setEditUploading(kind)
+    setEditError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', kind)
+      const res = await fetch('/api/upload-qr', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '上傳失敗')
+      setEditReg((prev: any) => ({
+        ...prev,
+        [kind === 'line' ? 'line_qr_url' : 'wechat_qr_url']: data.url,
+      }))
+    } catch (e: any) {
+      setEditError(e.message)
+    } finally {
+      setEditUploading(null)
+    }
+  }
+
+  const saveEdit = async () => {
+    if (!editReg) return
+    setEditSaving(true)
+    setEditError('')
+    try {
+      const res = await fetch('/api/admin/registrations', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editReg.id,
+          chinese_name: editReg.chinese_name,
+          email: editReg.email,
+          residence: editReg.residence,
+          member_id: editReg.member_id || null,
+          payment_plan: editReg.payment_plan ?? null,
+          line_qr_url: editReg.line_qr_url ?? null,
+          wechat_qr_url: editReg.wechat_qr_url ?? null,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || '儲存失敗')
+      setEditReg(null)
+      fetchData()
+    } catch (e: any) {
+      setEditError(e.message)
+    } finally {
+      setEditSaving(false)
+    }
+  }
 
   const planLabel = (p: string | null | undefined) => {
     if (!p) return '—'
@@ -311,6 +380,10 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
+                        <button onClick={() => { setEditReg({ ...reg }); setEditError('') }}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
+                          編輯
+                        </button>
                         {reg.payment_status === 'verified' && !reg.member_id && (
                           <button onClick={() => assignMemberId(reg.id, index + 1)}
                             className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
@@ -330,6 +403,117 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {editReg && (
+        <div onClick={() => !editSaving && setEditReg(null)}
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-black text-lg">編輯報名：{editReg.chinese_name}</h3>
+              <button onClick={() => !editSaving && setEditReg(null)}
+                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <label className="block text-black font-medium mb-1">姓名 *</label>
+                <input className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+                  value={editReg.chinese_name || ''}
+                  onChange={e => setEditReg({ ...editReg, chinese_name: e.target.value })} />
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">Email *</label>
+                <input type="email" className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+                  value={editReg.email || ''}
+                  onChange={e => setEditReg({ ...editReg, email: e.target.value })} />
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">居住地</label>
+                <select className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
+                  value={editReg.residence || ''}
+                  onChange={e => setEditReg({ ...editReg, residence: e.target.value })}>
+                  <option value="">請選擇</option>
+                  {RESIDENCE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">學號</label>
+                <input className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+                  placeholder="例：TW2026-001"
+                  value={editReg.member_id || ''}
+                  onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">食宿方案</label>
+                <select className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
+                  value={editReg.payment_plan || ''}
+                  onChange={e => setEditReg({ ...editReg, payment_plan: e.target.value })}>
+                  <option value="">（未選擇）</option>
+                  {PLAN_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">LINE QR</label>
+                {editReg.line_qr_url && (
+                  <img src={editReg.line_qr_url} alt="LINE QR"
+                    className="w-24 h-24 object-contain border rounded mb-2" />
+                )}
+                <input type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={editUploading === 'line'}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleEditQrUpload('line', f) }} />
+                {editUploading === 'line' && <p className="text-xs text-gray-500 mt-1">上傳中...</p>}
+                {editReg.line_qr_url && (
+                  <button onClick={() => setEditReg({ ...editReg, line_qr_url: null })}
+                    className="mt-1 text-xs text-red-600 hover:underline">清除</button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-black font-medium mb-1">WeChat QR</label>
+                {editReg.wechat_qr_url && (
+                  <img src={editReg.wechat_qr_url} alt="WeChat QR"
+                    className="w-24 h-24 object-contain border rounded mb-2" />
+                )}
+                <input type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={editUploading === 'wechat'}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleEditQrUpload('wechat', f) }} />
+                {editUploading === 'wechat' && <p className="text-xs text-gray-500 mt-1">上傳中...</p>}
+                {editReg.wechat_qr_url && (
+                  <button onClick={() => setEditReg({ ...editReg, wechat_qr_url: null })}
+                    className="mt-1 text-xs text-red-600 hover:underline">清除</button>
+                )}
+              </div>
+
+              {editError && (
+                <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm">
+                  {editError}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex gap-2 justify-end">
+              <button onClick={() => !editSaving && setEditReg(null)}
+                disabled={editSaving}
+                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">
+                取消
+              </button>
+              <button onClick={saveEdit}
+                disabled={editSaving || !!editUploading}
+                className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm">
+                {editSaving ? '儲存中...' : '儲存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {qrPreview && (
         <div onClick={() => setQrPreview(null)}
