@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendLodgingArchiveEmail } from '@/lib/archive-email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +39,18 @@ export async function POST(request: NextRequest) {
       .eq('id', registration_id)
 
     if (error) throw error
+
+    // 寄食宿登記備存信給學會信箱（失敗不影響主流程）
+    try {
+      const { data: fullReg } = await supabaseAdmin
+        .from('registrations')
+        .select('random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
+        .eq('id', registration_id)
+        .single()
+      if (fullReg) await sendLodgingArchiveEmail(fullReg)
+    } catch (mailErr) {
+      console.error('[transfer] 食宿備存信失敗:', mailErr)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

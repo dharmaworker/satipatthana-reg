@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendLodgingArchiveEmail } from '@/lib/archive-email'
 import * as crypto from 'crypto'
 
 const HASH_KEY = process.env.ECPAY_HASH_KEY!
@@ -51,6 +52,18 @@ export async function POST(request: NextRequest) {
           payment_confirmed_at: new Date().toISOString(),
         })
         .eq('id', registration_id)
+
+      // 寄食宿登記備存信給學會信箱（失敗不影響 callback）
+      try {
+        const { data: fullReg } = await supabaseAdmin
+          .from('registrations')
+          .select('random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
+          .eq('id', registration_id)
+          .single()
+        if (fullReg) await sendLodgingArchiveEmail(fullReg)
+      } catch (mailErr) {
+        console.error('[callback] 食宿備存信失敗:', mailErr)
+      }
     }
 
     return new NextResponse('1|OK', { status: 200 })
