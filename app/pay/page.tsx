@@ -12,6 +12,8 @@ const PLANS = [
   { id: 'C2', label: 'C(2) 8/19+8/25 食宿等費用（刷卡）', amount: 23290 },
   { id: 'D1', label: 'D(1) 8/20-8/25 食宿等費用（匯款）', amount: 20840 },
   { id: 'D2', label: 'D(2) 8/20-8/25 食宿等費用（刷卡）', amount: 21540 },
+  { id: 'T1', label: '【測試】匯款 1 元', amount: 1, test: true },
+  { id: 'T2', label: '【測試】刷卡 1 元', amount: 1, test: true },
 ]
 
 function PayContent() {
@@ -58,7 +60,7 @@ function PayContent() {
   }
 
   const selectedPlan = PLANS.find(p => p.id === plan)
-  const isTransfer = ['A1', 'B1', 'C1', 'D1'].includes(plan)
+  const isTransfer = ['A1', 'B1', 'C1', 'D1', 'T1'].includes(plan)
 
   const handlePay = async () => {
     if (!registration_id) {
@@ -118,8 +120,8 @@ function PayContent() {
               <label key={p.id}
                 className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors
                   ${plan === p.id
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'}`}>
+                    ? (p.test ? 'border-amber-500 bg-amber-50' : 'border-green-500 bg-green-50')
+                    : (p.test ? 'border-amber-200 bg-amber-50/40 hover:border-amber-300' : 'border-gray-200 hover:border-gray-300')}`}>
                 <div className="flex items-center gap-3">
                   <input type="radio" name="plan" value={p.id}
                     checked={plan === p.id}
@@ -127,9 +129,9 @@ function PayContent() {
                       setPlan(e.target.value)
                       setShowBank(false)
                     }} />
-                  <span className="text-black text-sm">{p.label}</span>
+                  <span className={`text-sm ${p.test ? 'text-amber-900' : 'text-black'}`}>{p.label}</span>
                 </div>
-                <span className="font-semibold text-green-800">
+                <span className={`font-semibold ${p.test ? 'text-amber-700' : 'text-green-800'}`}>
                   NT${p.amount.toLocaleString()}
                 </span>
               </label>

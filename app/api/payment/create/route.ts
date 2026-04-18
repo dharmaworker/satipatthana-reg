@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       'B1': 20350, 'B2': 21050,
       'C1': 22590, 'C2': 23290,
       'D1': 20840, 'D2': 21540,
+      'T1': 1, 'T2': 1, // 測試用
     }
 
     const amount = planAmounts[plan] || 18600
