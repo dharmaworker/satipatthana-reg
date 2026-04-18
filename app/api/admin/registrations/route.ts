@@ -87,10 +87,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '僅 admin 可修改基本資料與方案' }, { status: 403 })
   }
 
-  // 先撈目前狀態與 payment_plan，用於偵測轉變
+  // 先撈目前狀態、payment_plan、payment_status，用於偵測轉變
   const { data: currentReg } = await supabaseAdmin
     .from('registrations')
-    .select('status, payment_plan')
+    .select('status, payment_plan, payment_status')
     .eq('id', id)
     .single()
 
@@ -130,13 +130,18 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  // payment_plan 被設或被變更時，寄食宿登記備存信（失敗不影響 PATCH）
-  if (
+  // 寄食宿登記備存信（失敗不影響 PATCH）
+  // 條件（二擇一）：
+  //   a) payment_plan 被改成新的有效值
+  //   b) payment_status 首次轉為 verified（admin 確認繳款）
+  const planChanged =
     payment_plan !== undefined &&
     payment_plan &&
-    payment_plan !== currentReg?.payment_plan &&
-    data
-  ) {
+    payment_plan !== currentReg?.payment_plan
+  const verifiedTransition =
+    payment_status === 'verified' && currentReg?.payment_status !== 'verified'
+
+  if ((planChanged || verifiedTransition) && data) {
     try {
       await sendLodgingArchiveEmail(data)
     } catch (mailErr) {
