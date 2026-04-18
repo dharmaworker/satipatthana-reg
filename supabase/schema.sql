@@ -19,6 +19,8 @@ create table if not exists registrations (
   email text not null unique,
   line_id text,
   wechat_id text,
+  line_qr_url text,
+  wechat_qr_url text,
 
   honest_confirm boolean not null default false,
   attended_formal boolean not null default false,

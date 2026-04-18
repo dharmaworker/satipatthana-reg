@@ -16,6 +16,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // 驗證通訊軟體：LINE 或 WeChat 擇一，選了就要填 ID + 上傳 QR
+    if (body.contact_app === 'line') {
+      if (!body.line_id || !body.line_qr_url) {
+        return NextResponse.json({ error: '選擇 LINE 時必須填寫 LINE ID 並上傳 QR Code' }, { status: 400 })
+      }
+    } else if (body.contact_app === 'wechat') {
+      if (!body.wechat_id || !body.wechat_qr_url) {
+        return NextResponse.json({ error: '選擇 WeChat 時必須填寫微信號並上傳 QR Code' }, { status: 400 })
+      }
+    } else {
+      return NextResponse.json({ error: '請選擇 LINE 或 WeChat 作為通訊聯絡方式' }, { status: 400 })
+    }
+
     // 產生唯一隨機碼
     let randomCode = ''
     let isUnique = false
@@ -60,6 +73,8 @@ export async function POST(request: NextRequest) {
         email: body.email,
         line_id: body.line_id || null,
         wechat_id: body.wechat_id || null,
+        line_qr_url: body.line_qr_url || null,
+        wechat_qr_url: body.wechat_qr_url || null,
         honest_confirm: body.honest_confirm,
         attended_formal: body.attended_formal,
         watched_recordings: body.watched_recordings,
@@ -155,6 +170,8 @@ export async function POST(request: NextRequest) {
               ${row('Email', data.email)}
               ${row('LINE ID', nullable(data.line_id))}
               ${row('WeChat ID', nullable(data.wechat_id))}
+              ${row('LINE QR', data.line_qr_url ? `<a href="${data.line_qr_url}">查看</a>` : '—')}
+              ${row('WeChat QR', data.wechat_qr_url ? `<a href="${data.wechat_qr_url}">查看</a>` : '—')}
             </table>
 
             <h3 style="color:#2d6a4f;margin-top:20px;">報名條件</h3>

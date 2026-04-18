@@ -51,6 +51,8 @@ export default function RegisterPage() {
     email: '',
     line_id: '',
     wechat_id: '',
+    line_qr_url: '',
+    wechat_qr_url: '',
     contact_app: '',
     attended_courses: [] as string[],
   })
@@ -65,6 +67,25 @@ export default function RegisterPage() {
         ? prev.attended_courses.filter(c => c !== course)
         : [...prev.attended_courses, course],
     }))
+  }
+
+  const [uploadingQr, setUploadingQr] = useState<'line' | 'wechat' | null>(null)
+  const handleQrUpload = async (kind: 'line' | 'wechat', file: File) => {
+    setUploadingQr(kind)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', kind)
+      const res = await fetch('/api/upload-qr', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '上傳失敗')
+      update(kind === 'line' ? 'line_qr_url' : 'wechat_qr_url', data.url)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setUploadingQr(null)
+    }
   }
 
   const handleSubmit = async () => {
@@ -418,17 +439,32 @@ export default function RegisterPage() {
 <div>
   <label className={labelClass}>29. 通訊軟體（擇一填寫）</label>
   <div className="space-y-3">
+    <p className="text-sm text-gray-600">請擇一填寫通訊軟體，並上傳對應的 QR Code（檔案上限 500KB）</p>
     <div>
       <label className="flex items-center gap-2 cursor-pointer text-black mb-1">
         <input type="radio" name="contact_app" value="line"
           checked={form.contact_app === 'line'}
           onChange={() => update('contact_app', 'line')} />
-        LINE ID
+        LINE
       </label>
       {form.contact_app === 'line' && (
-        <input className={inputClass} placeholder="請填寫 LINE ID"
-          value={form.line_id}
-          onChange={e => update('line_id', e.target.value)} />
+        <div className="space-y-2 pl-6">
+          <input className={inputClass} placeholder="請填寫 LINE ID *"
+            value={form.line_id}
+            onChange={e => update('line_id', e.target.value)} />
+          <div>
+            <label className="text-sm text-gray-700 block mb-1">LINE QR Code 圖片 *</label>
+            <input type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={uploadingQr === 'line'}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('line', f) }} />
+            {uploadingQr === 'line' && <p className="text-sm text-gray-500 mt-1">上傳中...</p>}
+            {form.line_qr_url && (
+              <img src={form.line_qr_url} alt="LINE QR"
+                className="mt-2 w-40 h-40 object-contain border rounded" />
+            )}
+          </div>
+        </div>
       )}
     </div>
     <div>
@@ -436,12 +472,26 @@ export default function RegisterPage() {
         <input type="radio" name="contact_app" value="wechat"
           checked={form.contact_app === 'wechat'}
           onChange={() => update('contact_app', 'wechat')} />
-        微信號（WeChat ID）
+        微信（WeChat）
       </label>
       {form.contact_app === 'wechat' && (
-        <input className={inputClass} placeholder="請填寫微信號"
-          value={form.wechat_id}
-          onChange={e => update('wechat_id', e.target.value)} />
+        <div className="space-y-2 pl-6">
+          <input className={inputClass} placeholder="請填寫微信號 *"
+            value={form.wechat_id}
+            onChange={e => update('wechat_id', e.target.value)} />
+          <div>
+            <label className="text-sm text-gray-700 block mb-1">WeChat QR Code 圖片 *</label>
+            <input type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={uploadingQr === 'wechat'}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('wechat', f) }} />
+            {uploadingQr === 'wechat' && <p className="text-sm text-gray-500 mt-1">上傳中...</p>}
+            {form.wechat_qr_url && (
+              <img src={form.wechat_qr_url} alt="WeChat QR"
+                className="mt-2 w-40 h-40 object-contain border rounded" />
+            )}
+          </div>
+        </div>
       )}
     </div>
   </div>

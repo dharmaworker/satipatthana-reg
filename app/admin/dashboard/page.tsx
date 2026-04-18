@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
+  const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
@@ -220,14 +221,15 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 text-left text-black font-medium">審核狀態</th>
                   <th className="px-4 py-3 text-left text-black font-medium">繳費狀態</th>
                   <th className="px-4 py-3 text-left text-black font-medium">學號</th>
+                  <th className="px-4 py-3 text-left text-black font-medium">QR</th>
                   <th className="px-4 py-3 text-left text-black font-medium">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : registrations.length === 0 ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
                 ) : registrations.map((reg, index) => (
                   <tr key={reg.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -245,6 +247,22 @@ export default function DashboardPage() {
                     <td className="px-4 py-3">{statusBadge(reg.status)}</td>
                     <td className="px-4 py-3">{paymentBadge(reg.payment_status)}</td>
                     <td className="px-4 py-3 text-black">{reg.member_id || '-'}</td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const qrUrl = reg.line_qr_url || reg.wechat_qr_url
+                        const qrLabel = reg.line_qr_url ? 'LINE' : reg.wechat_qr_url ? 'WeChat' : null
+                        if (!qrUrl) return <span className="text-gray-400">—</span>
+                        return (
+                          <button
+                            onClick={() => setQrPreview({ url: qrUrl, title: `${reg.chinese_name} - ${qrLabel} QR` })}
+                            title="點擊放大"
+                            className="block">
+                            <img src={qrUrl} alt={qrLabel || 'QR'}
+                              className="w-12 h-12 object-cover rounded border border-gray-200 hover:border-green-500 transition-colors" />
+                          </button>
+                        )
+                      })()}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1 flex-wrap">
                         {reg.status === 'pending' && (<>
@@ -278,6 +296,32 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {qrPreview && (
+        <div onClick={() => setQrPreview(null)}
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-black">{qrPreview.title}</h3>
+              <button onClick={() => setQrPreview(null)}
+                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
+            </div>
+            <img src={qrPreview.url} alt="QR"
+              className="w-full rounded border border-gray-200" />
+            <div className="mt-4 flex gap-2 justify-end">
+              <a href={qrPreview.url} target="_blank" rel="noreferrer"
+                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">
+                新分頁開啟
+              </a>
+              <a href={qrPreview.url} download
+                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm">
+                下載
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

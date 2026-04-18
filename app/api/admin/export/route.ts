@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     '報名時間', '學號', '繳費碼', '審核狀態', '繳費狀態',
     '中文姓名', '護照英文姓名', '身份', '法名', '性別', '年齡',
     '護照頒發地', '居住地', '手機', 'Email', 'LINE ID', '微信號',
+    'LINE QR 連結', 'WeChat QR 連結',
     '修習年資', '練習頻率', '心理健康備注',
     '是否正式學員', '觀看錄影', 'Zoom指導', '觀看法談30篇',
     '持守五戒', '同意繳費', '身體健康', '參加課程記錄'
@@ -50,6 +51,8 @@ export async function GET(request: NextRequest) {
     r.email,
     r.line_id || '',
     r.wechat_id || '',
+    r.line_qr_url || '',
+    r.wechat_qr_url || '',
     r.practice_years || '',
     r.practice_frequency || '',
     r.mental_health_note || '',
