@@ -4,14 +4,19 @@ import { sendMail } from '@/lib/mailer'
 import { generateExportWorkbook } from '@/lib/export-excel'
 
 // Vercel Cron 排程端點：每次執行時檢查所有已到期但尚未執行的排程，逐一產 Excel 寄出。
-// 授權：Vercel Cron 會帶 Authorization: Bearer $CRON_SECRET
-//       如果未設 CRON_SECRET，暫時允許匿名（方便手動測試），但仍建議設定。
+// 兩種授權方式擇一：
+//   (a) Vercel Cron 自動帶 Authorization: Bearer $CRON_SECRET
+//   (b) admin 角色登入後，透過後台 /admin/schedules「立即執行」按鈕觸發（cookie）
+// 其他情境（未登入、非 admin、secret 未設且無 cookie）全部拒絕。
 
 function authorized(request: NextRequest) {
   const secret = process.env.CRON_SECRET
-  if (!secret) return true // 未設定時不檢查（開發用）
-  const auth = request.headers.get('authorization') || ''
-  return auth === `Bearer ${secret}`
+  if (secret) {
+    const auth = request.headers.get('authorization') || ''
+    if (auth === `Bearer ${secret}`) return true
+  }
+  if (request.cookies.get('admin_role')?.value === 'admin') return true
+  return false
 }
 
 export async function GET(request: NextRequest) {
