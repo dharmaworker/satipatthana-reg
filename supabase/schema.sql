@@ -59,6 +59,37 @@ create table if not exists admin_users (
   created_at timestamptz not null default now()
 );
 
+-- ========== lodging_registrations ==========
+create table if not exists lodging_registrations (
+  id uuid primary key default gen_random_uuid(),
+  registration_id uuid not null references registrations(id) on delete cascade unique,
+
+  arrival_date date not null,         -- 2026-08-19 or 2026-08-20
+  departure_date date not null,       -- 2026-08-24 or 2026-08-25
+  payment_method text not null,       -- transfer | credit_card
+
+  emergency_name text not null,
+  emergency_relation text not null,
+  emergency_phone text not null,
+
+  arrival_transport text not null,    -- self | taipei_bus | wuri_bus
+  departure_transport text not null,  -- self | bus
+  bus_destination text,               -- taipei_824_pm | taipei_825_am | wuri_825_am
+
+  diet text not null,                 -- meat | vegetarian
+  noon_fasting text not null,         -- before_noon | after_noon
+  snacks text not null,               -- snacks_and_drink | drink_only
+  dinner_0819 boolean not null,
+  dinner_0824 boolean not null,
+
+  snoring boolean not null,
+  agree_covid_rules boolean not null,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table lodging_registrations enable row level security;
+
 -- ========== scheduled_exports ==========
 create table if not exists scheduled_exports (
   id uuid primary key default gen_random_uuid(),
