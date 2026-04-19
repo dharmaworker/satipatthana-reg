@@ -259,6 +259,11 @@ export default function DashboardPage() {
         <h1 className="text-xl font-bold">後台管理系統｜第二屆台灣四念處禪修</h1>
         <div className="flex gap-3 items-center">
           <button
+            onClick={() => router.push('/admin/lodgings')}
+            className="text-green-200 hover:text-white text-sm">
+            🛏️ 食宿登記
+          </button>
+          <button
             onClick={() => router.push('/admin/schedules')}
             className="text-green-200 hover:text-white text-sm">
             ⚙️ 自動匯出排程

@@ -85,6 +85,24 @@ create table if not exists lodging_registrations (
   snoring boolean not null,
   agree_covid_rules boolean not null,
 
+  -- 檔案上傳（Supabase Storage bucket `lodging-docs` 的 public URL）
+  id_front_url text,
+  id_back_url text,
+  passport_url text,
+  photo_url text,
+  arrival_ticket_url text,
+  departure_ticket_url text,
+  test_0817_url text,
+  test_0819_url text,
+  test_0820_url text,
+  test_0822_url text,
+
+  -- 國外學員航班
+  flight_arrival_date date,
+  flight_arrival_time text,
+  flight_departure_date date,
+  flight_departure_time text,
+
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

@@ -65,6 +65,81 @@ function addSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
+const LODGING_COLUMNS = [
+  { key: 'updated_at', header: '更新時間', width: 20 },
+  { key: 'chinese_name', header: '中文姓名', width: 12 },
+  { key: 'member_id', header: '學號', width: 12 },
+  { key: 'random_code', header: '繳費碼', width: 10 },
+  { key: 'residence', header: '居住地', width: 12 },
+  { key: 'payment_plan', header: '方案', width: 10 },
+  { key: 'payment_method', header: '繳費方式', width: 10 },
+  { key: 'arrival_date', header: '入住日', width: 12 },
+  { key: 'departure_date', header: '離開日', width: 12 },
+  { key: 'arrival_transport', header: '前往方式', width: 18 },
+  { key: 'departure_transport', header: '離開方式', width: 10 },
+  { key: 'bus_destination', header: '專車目的地', width: 14 },
+  { key: 'diet', header: '飲食', width: 8 },
+  { key: 'noon_fasting', header: '過午不食', width: 10 },
+  { key: 'snacks', header: '茶點', width: 14 },
+  { key: 'dinner_0819', header: '8/19 晚餐', width: 8 },
+  { key: 'dinner_0824', header: '8/24 晚餐', width: 8 },
+  { key: 'snoring', header: '打鼾', width: 6 },
+  { key: 'emergency_name', header: '緊急聯絡人', width: 12 },
+  { key: 'emergency_relation', header: '關係', width: 8 },
+  { key: 'emergency_phone', header: '聯絡電話', width: 14 },
+  { key: 'flight_arrival_date', header: '抵台日期', width: 12 },
+  { key: 'flight_arrival_time', header: '抵台時間', width: 10 },
+  { key: 'flight_departure_date', header: '離台日期', width: 12 },
+  { key: 'flight_departure_time', header: '離台時間', width: 10 },
+  { key: 'photo_url', header: '個人照片', width: 40 },
+  { key: 'id_front_url', header: '身分證正面', width: 40 },
+  { key: 'id_back_url', header: '身分證反面', width: 40 },
+  { key: 'passport_url', header: '護照', width: 40 },
+  { key: 'arrival_ticket_url', header: '來台機票', width: 40 },
+  { key: 'departure_ticket_url', header: '離台機票', width: 40 },
+  { key: 'test_0817_url', header: '8/17 快篩', width: 40 },
+  { key: 'test_0819_url', header: '8/19 快篩', width: 40 },
+  { key: 'test_0820_url', header: '8/20 快篩', width: 40 },
+  { key: 'test_0822_url', header: '8/22 快篩', width: 40 },
+]
+
+function transformLodgingRow(l: any) {
+  const reg = l.registration || {}
+  const transportZh: Record<string, string> = {
+    self: '自行',
+    taipei_bus: '台北專車',
+    wuri_bus: '烏日專車',
+    bus: '專車',
+  }
+  return {
+    ...l,
+    updated_at: l.updated_at ? new Date(l.updated_at).toLocaleString('zh-TW') : '',
+    chinese_name: reg.chinese_name || '',
+    member_id: reg.member_id || '',
+    random_code: reg.random_code || '',
+    residence: reg.residence || '',
+    payment_plan: reg.payment_plan || '',
+    payment_method: l.payment_method === 'transfer' ? '匯款' : '刷卡',
+    arrival_transport: transportZh[l.arrival_transport] || l.arrival_transport,
+    departure_transport: transportZh[l.departure_transport] || l.departure_transport,
+    diet: l.diet === 'meat' ? '葷' : '素',
+    noon_fasting: l.noon_fasting === 'before_noon' ? '12前吃' : '12後吃',
+    snacks: l.snacks === 'snacks_and_drink' ? '茶點+咖啡/茶' : '只咖啡/茶',
+    dinner_0819: l.dinner_0819 ? '是' : '否',
+    dinner_0824: l.dinner_0824 ? '是' : '否',
+    snoring: l.snoring ? '會' : '否',
+  }
+}
+
+function addLodgingSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
+  const sheet = wb.addWorksheet(name)
+  sheet.columns = LODGING_COLUMNS
+  sheet.getRow(1).font = { bold: true }
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
+  rows.forEach(r => sheet.addRow(transformLodgingRow(r)))
+  sheet.views = [{ state: 'frozen', ySplit: 1 }]
+}
+
 export async function generateExportWorkbook(cutoff?: Date): Promise<{
   buffer: Buffer
   filename: string
@@ -76,6 +151,14 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   if (error) throw new Error(`DB query failed: ${error.message}`)
   const all = data || []
 
+  // Lodging 另外撈
+  let lodgingQuery = supabaseAdmin
+    .from('lodging_registrations')
+    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan)')
+    .order('updated_at', { ascending: true })
+  if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
+  const { data: lodgingData } = await lodgingQuery
+
   const wb = new ExcelJS.Workbook()
   wb.created = new Date()
   wb.creator = 'satipatthana-reg'
@@ -85,6 +168,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wb, '已錄取未繳費', all.filter(r => r.status === 'approved' && r.payment_status !== 'verified'))
   addSheet(wb, '已繳費', all.filter(r => r.payment_status === 'verified'))
   addSheet(wb, '未錄取', all.filter(r => r.status === 'rejected'))
+  addLodgingSheet(wb, '食宿登記', lodgingData || [])
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
@@ -99,6 +183,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
       approved_unpaid: all.filter(r => r.status === 'approved' && r.payment_status !== 'verified').length,
       verified: all.filter(r => r.payment_status === 'verified').length,
       rejected: all.filter(r => r.status === 'rejected').length,
+      lodgings: (lodgingData || []).length,
     },
   }
 }

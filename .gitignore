@@ -35,6 +35,9 @@ yarn-error.log*
 !.env*.example
 *.swp
 
+# 規格書 PDF（不入 repo，本地參考）
+*.pdf
+
 # vercel
 .vercel
 

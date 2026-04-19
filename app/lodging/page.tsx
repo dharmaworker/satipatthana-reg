@@ -31,8 +31,43 @@ function LodgingContent() {
     dinner_0824: false,
     snoring: false,
     agree_covid_rules: false,
+    // 檔案
+    id_front_url: '',
+    id_back_url: '',
+    passport_url: '',
+    photo_url: '',
+    arrival_ticket_url: '',
+    departure_ticket_url: '',
+    test_0817_url: '',
+    test_0819_url: '',
+    test_0820_url: '',
+    test_0822_url: '',
+    // 航班
+    flight_arrival_date: '',
+    flight_arrival_time: '',
+    flight_departure_date: '',
+    flight_departure_time: '',
   })
   const update = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }))
+
+  const [uploadingKind, setUploadingKind] = useState<string | null>(null)
+  const handleFileUpload = async (kind: string, file: File) => {
+    setUploadingKind(kind)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', kind)
+      const res = await fetch('/api/upload-lodging', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '上傳失敗')
+      update(`${kind}_url`, data.url)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setUploadingKind(null)
+    }
+  }
 
   useEffect(() => {
     if (!id || !code) {
@@ -63,6 +98,20 @@ function LodgingContent() {
             dinner_0824: !!data.lodging.dinner_0824,
             snoring: !!data.lodging.snoring,
             agree_covid_rules: !!data.lodging.agree_covid_rules,
+            id_front_url: data.lodging.id_front_url || '',
+            id_back_url: data.lodging.id_back_url || '',
+            passport_url: data.lodging.passport_url || '',
+            photo_url: data.lodging.photo_url || '',
+            arrival_ticket_url: data.lodging.arrival_ticket_url || '',
+            departure_ticket_url: data.lodging.departure_ticket_url || '',
+            test_0817_url: data.lodging.test_0817_url || '',
+            test_0819_url: data.lodging.test_0819_url || '',
+            test_0820_url: data.lodging.test_0820_url || '',
+            test_0822_url: data.lodging.test_0822_url || '',
+            flight_arrival_date: data.lodging.flight_arrival_date || '',
+            flight_arrival_time: data.lodging.flight_arrival_time || '',
+            flight_departure_date: data.lodging.flight_departure_date || '',
+            flight_departure_time: data.lodging.flight_departure_time || '',
           })
         }
       })
@@ -257,9 +306,61 @@ function LodgingContent() {
           </label>
         </div>
 
+        {/* 證件上傳 */}
+        <div className={sectionCls}>
+          <h2 className="text-lg font-semibold text-green-800">六、證件上傳</h2>
+          <p className="text-xs text-gray-500">可上傳 JPG / PNG / WEBP / PDF（5MB 以下）</p>
+          {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
+          <p className="text-xs text-gray-600 pt-2 font-semibold">國內學員</p>
+          {fileField('id_front', '身分證正面', form.id_front_url, uploadingKind, handleFileUpload)}
+          {fileField('id_back', '身分證反面', form.id_back_url, uploadingKind, handleFileUpload)}
+          <p className="text-xs text-gray-600 pt-2 font-semibold">國外學員</p>
+          {fileField('passport', '護照', form.passport_url, uploadingKind, handleFileUpload)}
+        </div>
+
+        {/* 國外學員航班 */}
+        <div className={sectionCls}>
+          <h2 className="text-lg font-semibold text-green-800">七、國外學員航班資訊</h2>
+          <p className="text-xs text-gray-500">國內學員可略過本段</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>抵台航班日期</label>
+              <input type="date" className={inputCls} value={form.flight_arrival_date}
+                onChange={e => update('flight_arrival_date', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>抵台航班具體時間</label>
+              <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
+                onChange={e => update('flight_arrival_time', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>離台航班日期</label>
+              <input type="date" className={inputCls} value={form.flight_departure_date}
+                onChange={e => update('flight_departure_date', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>離台航班具體時間</label>
+              <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
+                onChange={e => update('flight_departure_time', e.target.value)} />
+            </div>
+          </div>
+          {fileField('arrival_ticket', '上傳來台機票', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
+          {fileField('departure_ticket', '上傳離台機票', form.departure_ticket_url, uploadingKind, handleFileUpload)}
+        </div>
+
+        {/* 快篩檢測 */}
+        <div className={sectionCls}>
+          <h2 className="text-lg font-semibold text-green-800">八、快篩檢測結果上傳</h2>
+          <p className="text-xs text-gray-500">檢測結果必須載明檢測日期、學號、姓名；快篩試劑請自備，主辦單位不提供</p>
+          {fileField('test_0817', '8/17（上午 8 點至晚上 8 點前）', form.test_0817_url, uploadingKind, handleFileUpload)}
+          {fileField('test_0819', '8/19（上午 12 點前）', form.test_0819_url, uploadingKind, handleFileUpload)}
+          {fileField('test_0820', '8/20（上午 8 點前）', form.test_0820_url, uploadingKind, handleFileUpload)}
+          {fileField('test_0822', '8/22（上午 8 點前）', form.test_0822_url, uploadingKind, handleFileUpload)}
+        </div>
+
         {/* 其他 */}
         <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">六、其他</h2>
+          <h2 className="text-lg font-semibold text-green-800">九、其他</h2>
           <label className="flex items-center gap-2 text-black cursor-pointer">
             <input type="checkbox" checked={form.snoring}
               onChange={e => update('snoring', e.target.checked)} />
@@ -285,6 +386,38 @@ function LodgingContent() {
           送出後系統會自動帶入繳費方案，並轉至繳費頁。
         </p>
       </div>
+    </div>
+  )
+}
+
+function fileField(
+  kind: string,
+  label: string,
+  currentUrl: string,
+  uploadingKind: string | null,
+  onUpload: (kind: string, f: File) => void,
+) {
+  const isImage = currentUrl && !currentUrl.toLowerCase().endsWith('.pdf')
+  return (
+    <div key={kind} className="border border-gray-100 rounded-lg p-3 space-y-2">
+      <label className="block text-sm font-medium text-black">{label}</label>
+      {currentUrl && (
+        <div className="flex items-center gap-3">
+          {isImage ? (
+            <img src={currentUrl} alt={kind} className="w-20 h-20 object-cover border rounded" />
+          ) : (
+            <span className="text-xs text-gray-600">已上傳檔案</span>
+          )}
+          <a href={currentUrl} target="_blank" rel="noreferrer"
+            className="text-xs text-blue-600 underline">檢視</a>
+          <span className="text-xs text-green-700">✓ 已上傳</span>
+        </div>
+      )}
+      <input type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        disabled={uploadingKind === kind}
+        onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(kind, f) }} />
+      {uploadingKind === kind && <p className="text-xs text-gray-500">上傳中...</p>}
     </div>
   )
 }

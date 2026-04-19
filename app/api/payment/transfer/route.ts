@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     try {
       const { data: fullReg } = await supabaseAdmin
         .from('registrations')
-        .select('random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
+        .select('id, random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
         .eq('id', registration_id)
         .single()
       if (fullReg) await sendLodgingArchiveEmail(fullReg)

@@ -1,4 +1,5 @@
 import { sendMail } from './mailer'
+import { supabaseAdmin } from './supabase'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
@@ -23,7 +24,37 @@ const PLAN_AMOUNTS: Record<string, number> = {
 const row = (label: string, value: string | number | null | undefined) =>
   `<tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:120px;">${label}</td><td style="padding:6px 10px;border:1px solid #eee;">${value ?? '—'}</td></tr>`
 
+const TRANSPORT_ZH: Record<string, string> = {
+  self: '自行',
+  taipei_bus: '主辦專車（8/19 台北車站）',
+  wuri_bus: '主辦專車（8/19 烏日高鐵）',
+  bus: '主辦專車',
+}
+const BUS_DEST_ZH: Record<string, string> = {
+  taipei_824_pm: '8/24 下午 6:00–6:30 到台北車站',
+  taipei_825_am: '8/25 上午 9 點到台北車站',
+  wuri_825_am: '8/25 上午 9 點到烏日高鐵',
+}
+
+function lodgingTableRows(l: any): string {
+  if (!l) return row('食宿登記狀態', '尚未填寫')
+  const parts = [
+    row('入住／離開', `${l.arrival_date} ／ ${l.departure_date}`),
+    row('繳費方式', l.payment_method === 'transfer' ? '匯款' : '刷卡'),
+    row('前往方式', TRANSPORT_ZH[l.arrival_transport] || l.arrival_transport),
+    row('離開方式', `${TRANSPORT_ZH[l.departure_transport] || l.departure_transport}${l.bus_destination ? '（' + (BUS_DEST_ZH[l.bus_destination] || l.bus_destination) + '）' : ''}`),
+    row('飲食', `${l.diet === 'meat' ? '葷食' : '素食'}　${l.noon_fasting === 'before_noon' ? '12 前吃' : '12 後吃'}`),
+    row('茶點', l.snacks === 'snacks_and_drink' ? '茶點 + 咖啡/茶' : '只咖啡/茶'),
+    row('8/19 晚餐', l.dinner_0819 ? '是' : '否'),
+    row('8/24 晚餐', l.dinner_0824 ? '是' : '否'),
+    row('打鼾', l.snoring ? '會' : '不會'),
+    row('緊急聯絡人', `${l.emergency_name}（${l.emergency_relation}）${l.emergency_phone}`),
+  ]
+  return parts.join('')
+}
+
 export async function sendLodgingArchiveEmail(reg: {
+  id?: string
   random_code: string
   chinese_name: string
   email: string
@@ -43,6 +74,17 @@ export async function sendLodgingArchiveEmail(reg: {
   }
   const statusText = reg.payment_status ? (statusZh[reg.payment_status] || reg.payment_status) : '—'
 
+  // 若有 id，附帶 lodging 詳細資料
+  let lodging: any = null
+  if (reg.id) {
+    const { data } = await supabaseAdmin
+      .from('lodging_registrations')
+      .select('*')
+      .eq('registration_id', reg.id)
+      .maybeSingle()
+    lodging = data
+  }
+
   return sendMail({
     to: reg.email,
     bcc: archiveEmail,
@@ -52,7 +94,8 @@ export async function sendLodgingArchiveEmail(reg: {
         <h2 style="color:#2d6a4f;">食宿登記確認 🙏</h2>
         <p>${reg.chinese_name} 法友您好，</p>
         <p>我們已收到您的食宿登記，以下是您目前選擇的方案與繳費資訊：</p>
-        <table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:12px;">
+        <h3 style="color:#2d6a4f;font-size:15px;margin-top:14px;">繳費資訊</h3>
+        <table style="border-collapse:collapse;width:100%;font-size:14px;">
           ${row('繳費碼', reg.random_code)}
           ${row('中文姓名', reg.chinese_name)}
           ${row('學號', reg.member_id)}
@@ -62,6 +105,10 @@ export async function sendLodgingArchiveEmail(reg: {
           ${row('繳費狀態', statusText)}
           ${row('繳費備註', reg.payment_note)}
           ${row('確認時間', reg.payment_confirmed_at ? new Date(reg.payment_confirmed_at).toLocaleString('zh-TW') : null)}
+        </table>
+        <h3 style="color:#2d6a4f;font-size:15px;margin-top:14px;">食宿登記資料</h3>
+        <table style="border-collapse:collapse;width:100%;font-size:14px;">
+          ${lodgingTableRows(lodging)}
         </table>
         <p style="color:#666;font-size:13px;margin-top:16px;">
           如您對方案或繳費資訊有疑問，請聯繫台灣四念處學會。

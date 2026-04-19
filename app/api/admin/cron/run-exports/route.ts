@@ -74,6 +74,7 @@ async function runExports(request: NextRequest) {
             <li>已錄取待繳費：${counts.approved_unpaid}</li>
             <li>已繳費：${counts.verified}</li>
             <li>未錄取：${counts.rejected}</li>
+            <li>食宿登記：${counts.lodgings ?? 0}</li>
           </ul>
           <p style="color:#666;font-size:13px;">本信由系統自動寄出。</p>
         `,
