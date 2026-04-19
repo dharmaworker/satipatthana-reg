@@ -157,20 +157,20 @@ export default function RegisterPage() {
             <p className="font-medium text-green-800 mt-2">指導老師陣容</p>
             <div className="grid grid-cols-2 gap-2 text-left max-w-md mx-auto">
               <div>
-                <p className="font-medium">阿 姜 巴山</p>
+                <p className="font-medium">阿姜巴山</p>
                 <p className="text-gray-500 text-xs">Ajahn Prasan Bhuddhakulsomsir</p>
               </div>
               <div>
-                <p className="font-medium">阿 姜 納</p>
+                <p className="font-medium">阿姜納</p>
                 <p className="text-gray-500 text-xs">Ajahn Nat Sriwachirawat</p>
               </div>
               <div>
-                <p className="font-medium">阿 姜 妮</p>
+                <p className="font-medium">阿姜妮</p>
                 <p className="text-gray-500 text-xs">Ajahn Nitiya Petchpaibool</p>
               </div>
               <div>
-                <p className="font-medium">阿 姜 松</p>
-                <p className="text-gray-500 text-xs">Ajahn Napatpol Kunatanasate</p>
+                <p className="font-medium">阿姜松</p>
+                <p className="text-gray-500 text-xs">Ajahn Napatpol Kunatanasa te</p>
               </div>
             </div>
           </div>
