@@ -235,7 +235,7 @@ export default function DashboardPage() {
   }
 
   const assignMemberId = async (id: string, sequence: number) => {
-    const member_id = `TW2026-${String(sequence).padStart(3, '0')}`
+    const member_id = `${String(sequence).padStart(3, '0')}-T`
     await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -498,7 +498,7 @@ export default function DashboardPage() {
               <div>
                 <label className="block text-black font-medium mb-1">學號</label>
                 <input className="w-full border border-gray-300 rounded px-3 py-2 text-black"
-                  placeholder="例：TW2026-001"
+                  placeholder="例：001-T"
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>

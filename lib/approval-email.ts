@@ -22,14 +22,18 @@ export async function sendApprovalEmail(reg: {
 
         <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
 
-        <h3 style="color: #2d6a4f;">一、繳費資訊</h3>
+        <h3 style="color: #2d6a4f;">一、請詳讀以下內容</h3>
+        <p>本信包含：繳費資訊、費用方案、住宿安排、報到時間、課程時間、結束時間、食宿登記、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
+
+        <h3 style="color: #2d6a4f;">二、繳費資訊</h3>
         <p>請於 <strong>2026年6月15日台北時間晚上8時前</strong>點擊下方按鈕選擇方案並完成繳費：</p>
         <a href="${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}"
           style="display:inline-block;background:#2d6a4f;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:10px 0;">
           前往繳費
         </a>
+        <p style="font-size:13px;color:#c0392b;margin-top:6px;">⚠️ 匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。</p>
 
-        <h3 style="color: #2d6a4f;">二、費用方案</h3>
+        <h4 style="color:#2d6a4f;margin-top:16px;">費用方案</h4>
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
             <tr style="background:#f0f7f4;">
             <th style="border:1px solid #ccc;padding:8px;text-align:left;">方案</th>
@@ -72,34 +76,61 @@ export async function sendApprovalEmail(reg: {
         <p style="font-size:13px;color:#c0392b;margin-top:8px;">⚠️ 匯款時請備註姓名與繳費碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。</p>
 
         <h3 style="color: #2d6a4f;">三、住宿安排</h3>
-        <p>房間皆為四人房，採單獨床位配置，附兩套衛浴。如需兩人一間，每人需補差額 NT$7,000（靜慮林師父免收）。</p>
+        <ol style="font-size:14px;line-height:1.7;">
+          <li>房間皆為四人房，採單獨床位配置，附兩套衛浴。</li>
+          <li>如需安排兩人一間，請先私訊向主辦單位確認房間數量是否足夠；經確認後，每人需補差額新台幣 <strong>7,000 至 9,000 元</strong>。</li>
+        </ol>
 
         <h3 style="color: #2d6a4f;">四、報到時間及地點</h3>
         <p>時間：2026年8月19日上午10點（台北時間）<br>
-        地點：日月潭湖畔會館<br>
+        場地：日月潭湖畔會館<br>
         地址：南投縣魚池鄉日月村中正路101號</p>
 
         <h3 style="color: #2d6a4f;">五、課程時間</h3>
-        <p>2026年8月20日至8月24日，共5天<br>
-        結束時間：8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
+        <p>2026年8月20日至8月24日，共5天</p>
 
-        <h3 style="color: #2d6a4f;">六、航班建議</h3>
-        <p><strong>來台：</strong>建議8月19日下午2:00前抵達桃園國際機場第一航廈，法工人員接機，統一搭專車前往日月潭。</p>
-        <p><strong>離台：</strong>8月25日上午9:00自會館發車，預計下午2:00-3:00抵達桃園機場第一航廈。</p>
+        <h3 style="color: #2d6a4f;">六、結束時間</h3>
+        <p>2026年8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
 
-        <h3 style="color: #2d6a4f;">七、承諾事項</h3>
-        <ul style="font-size:14px;line-height:1.8;">
-            <li>遵從指導老師課程安排及主辦方規定</li>
-            <li>課程全程進行拍攝錄音，學員需接受出境</li>
-            <li>用餐時間禁語</li>
-            <li>全程佩戴學員證</li>
-            <li>課程期間不可使用通訊軟體、手機</li>
-            <li>輕聲細語，勿打擾他人禪修</li>
-            <li>因故無法參加請提早告知，已繳費用恕無法退還</li>
+        <h3 style="color: #2d6a4f;">七、食宿登記</h3>
+        <p>繳費完成後，會以 E-MAIL 通知，再進入學會網站填寫食宿登記資料。</p>
+
+        <h3 style="color: #2d6a4f;">八、禪修課程群組</h3>
+        <p>資料經確認無誤後，學會將以學員所提供之 LINE 或微信，邀請您加入 <strong>8 月禪修課程群組</strong>。</p>
+
+        <h3 style="color: #2d6a4f;">九、承諾事項</h3>
+        <ol type="a" style="font-size:14px;line-height:1.7;">
+          <li>請遵從指導老師的課程安排指導及主辦方的規定。課程期間將全程進行拍攝與錄音，作為法佈施；學員需接受出鏡，並在課後不要求刪減個人互動的相關音視頻。</li>
+          <li>用餐時間，禁語。</li>
+          <li>請務必全程佩戴學員證。</li>
+          <li>課程期間請遵守作息時間，勿遲到早退，影響他人。</li>
+          <li>課程期間不可使用通訊軟體、手機。為示尊重，未獲得老師許可，上課中請勿拍照、攝影或錄音。</li>
+          <li>請輕聲細語，勿打擾他人禪修。</li>
+          <li>為護持禪眾修行與隱私保護，未經同意不得外傳任何資訊。</li>
+          <li>因故無法參加，請提早告知，俾利主辦方作業處理，恕無法退還已繳費用。</li>
+          <li>禪修期間，必須全程參加課程，勿遲到早退，私人事務請事先安排妥當。若課程開始當日無故不到，又未告知者，將影響下次報名資格。</li>
+          <li>主辦單位不提供禪修課程之外的其他服務，如：安排家屬住宿、安排旅遊、安排課程後的參學等。</li>
+          <li>除颱風、天災或不可抗拒之因素，禪修課程照常舉辦。</li>
+        </ol>
+
+        <h3 style="color: #2d6a4f;">十、海外入境須知</h3>
+        <p>請進入中華民國移民署查詢：<a href="https://www.immigration.gov.tw/">https://www.immigration.gov.tw/</a></p>
+
+        <h3 style="color: #2d6a4f;">十一、航班建議</h3>
+        <p><strong>a. 來台抵達時間</strong></p>
+        <ul style="font-size:14px;line-height:1.7;margin-top:0;">
+          <li>建議抵達：8 月 19 日下午 2:00 至 2:30 以前（台北時間）。</li>
+          <li>集合地點：桃園國際機場（TPE）第一航廈，完成入境並領取行李後，請至出關後右側服務台前集合。</li>
+          <li>行程安排：現場將由法工人員接機，並統一搭乘專車前往日月潭湖畔會館。</li>
+        </ul>
+        <p><strong>b. 離台時間</strong></p>
+        <ul style="font-size:14px;line-height:1.7;margin-top:0;">
+          <li>專車出發：8 月 25 日上午 9:00（台北時間）自會館準時發車。</li>
+          <li>預計抵達：預計於下午 2:00 至 3:00 抵達桃園國際機場第一航廈。</li>
         </ul>
 
-        <h3 style="color: #2d6a4f;">八、海外入境須知</h3>
-        <p>請至中華民國移民署查詢：<a href="https://www.immigration.gov.tw/">https://www.immigration.gov.tw/</a></p>
+        <h3 style="color: #2d6a4f;">十二、主辦單位保有課程變更、異動之權利</h3>
+        <p>如有任何爭議，台灣四念處學會將保留最終決定權。</p>
 
         <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
         <div style="background:#fff3cd;padding:15px;border-radius:8px;margin:20px 0;">
