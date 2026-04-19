@@ -648,7 +648,7 @@ export default function RegisterPage() {
           <p className="text-green-800 font-medium">報名表填寫結束，感謝您的報名！</p>
           <p className="text-gray-600 text-sm">隨喜功德</p>
           <p className="text-green-800 font-semibold">台灣四念處學會 合十</p>
-          <img src="/logo.png" alt="台灣四念處學會"
+          <img src="/logo.webp" alt="台灣四念處學會"
             className="mx-auto w-32 h-auto opacity-90"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
