@@ -3,24 +3,46 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const THAILAND_COURSES = [
-  '第一屆 2014/07', '第二屆 2014/09', '第三屆 2014/11',
-  '第四屆 2015/05', '第五屆 2015/09', '第六屆 2016/05',
-  '第七屆 2017/08', '第八屆 2017/12', '第九屆 2018/05',
-  '第十屆 2018/11', '第十一屆 2019/03', '第十二屆 2019/12',
-  '第十三屆 2024/02', '第十四屆 2025/07', '第十五屆 2025/10',
+  '第一屆泰國四念處禪修之旅　2014/07/11－20',
+  '第二屆泰國四念處禪修之旅　2014/09/11－21',
+  '第三屆泰國四念處禪修之旅　2014/11/27－12/07',
+  '第四屆泰國四念處禪修之旅　2015/05/07－17',
+  '第五屆泰國四念處禪修之旅　2015/09/11－19',
+  '第六屆泰國四念處禪修之旅　2016/05/05－15',
+  '第七屆泰國四念處禪修之旅　2017/08/12－20',
+  '第八屆泰國四念處禪修之旅　2017/12/29－2018/01/07',
+  '第九屆泰國四念處禪修之旅　2018/05/04－13',
+  '第十屆泰國四念處禪修之旅　2018/11/23－12/02',
+  '第十一屆泰國四念處禪修之旅　2019/03/08－17',
+  '第十二屆泰國四念處禪修之旅　2019/12/20－29',
+  '第十三屆泰國四念處禪修之旅　2024/02/29－03/10',
+  '第十四屆泰國四念處禪修之旅　2025/07/17－27',
+  '第十五屆泰國四念處禪修之旅　2025/10/23－29',
 ]
 const MALAYSIA_COURSES = [
-  '第一屆 2023/03', '第二屆 2024/04', '第三屆 2025/03', '第四屆 2026/03',
+  '第一屆大馬四念處禪修課程　2023/03/17－20',
+  '第二屆大馬四念處禪修課程　2024/04/12－16',
+  '第三屆大馬四念處禪修課程　2025/03/26－04/01',
+  '第四屆大馬四念處禪修課程　2026/03/20－26',
 ]
-const TAIWAN_COURSES = ['第一屆 2024/08']
-const SINGAPORE_COURSES = ['第一屆 2024/11']
+const TAIWAN_COURSES = ['第一屆台灣四念處禪修課程　2024/08/23－26']
+const SINGAPORE_COURSES = ['第一屆新加坡四念處禪修課程　2024/11/29－12/01']
 const ONLINE_COURSES = [
-  '第一屆 2021/04', '第二屆 2021/08', '第三屆 2022/02',
-  '第四屆 2022/06', '第五屆 2022/09', '第六屆 2023/05',
-  '第七屆 2023/10', '第八屆 2024/06', '第九屆 2024/10',
-  '第十屆 2025/03', '第十一屆 2025/10', '第十二屆 2026/02', '第十三屆 2026/03',
+  '第一屆遠程四念處禪修課程　2021/04/30－05/05',
+  '第二屆遠程四念處禪修課程　2021/08/27－31',
+  '第三屆遠程四念處禪修課程　2022/02/24－28',
+  '第四屆遠程四念處禪修課程　2022/06/17－20',
+  '第五屆遠程四念處禪修課程　2022/09/30－10/05',
+  '第六屆遠程四念處禪修課程　2023/05/12－15',
+  '第七屆遠程四念處禪修課程　2023/10/20－24',
+  '第八屆遠程四念處禪修課程　2024/06/07－11',
+  '第九屆遠程四念處禪修課程　2024/10/24－29',
+  '第十屆遠程四念處禪修課程　2025/03/26－04/01（即第三屆大馬線上部分）',
+  '第十一屆遠程四念處禪修課程　2025/10/23－29（即第十五屆泰國線上部分）',
+  '第十二屆遠程四念處禪修課程　2026/02/18－24',
+  '第十三屆遠程四念處禪修課程　2026/03/20－26（即第四屆大馬線上部分）',
 ]
-const CHENGDU_COURSES = ['成都讀者交流會 2024/06']
+const CHENGDU_COURSES = ['《解苦心鑰》讀者交流會　2024/06/06－11']
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -89,8 +111,41 @@ export default function RegisterPage() {
   }
 
   const handleSubmit = async () => {
-    setLoading(true)
     setError('')
+
+    // 報名條件檢查
+    if (form.honest_confirm !== 'yes') {
+      setError('請確認已承諾如實填寫')
+      return
+    }
+    // 聞法條件：Q2 / Q9 / Q10 / Q11 任一為「是」即可
+    const heardDharma =
+      form.attended_formal === 'yes' ||
+      form.watched_recordings === 'yes' ||
+      form.zoom_guidance === 'yes' ||
+      form.watched_30_talks === 'yes'
+    if (!heardDharma) {
+      setError('聞法條件未達成：第 2、9、10、11 題需至少有一項選「是」（正式學員／3 屆錄影／ZOOM 指導／30 篇法談）')
+      return
+    }
+    if (form.keep_precepts !== 'yes') {
+      setError('報名條件：需持守五戒（第 12 題須選「是」）')
+      return
+    }
+    if (!form.practice_frequency) {
+      setError('請回答第 14 題：固定練習頻率')
+      return
+    }
+    if (form.pay_confirm !== 'yes') {
+      setError('需同意於 6/15 前完成繳費（第 15 題須選「是」）')
+      return
+    }
+    if (form.health_confirm !== 'yes') {
+      setError('需確認身體健康能全程參與（第 16 題須選「是」）')
+      return
+    }
+
+    setLoading(true)
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
@@ -153,7 +208,7 @@ export default function RegisterPage() {
 
           <div className="text-gray-700 text-sm space-y-2">
             <p className="font-medium text-green-800">【傳承與指導】</p>
-            <p>承蒙 隆波帕默尊者慈悲指定，<br />助教 老師 團隊親自指導</p>
+            <p>承蒙 隆波帕默尊者慈悲指定，<br />助教老師團隊親自指導</p>
             <p className="font-medium text-green-800 mt-2">指導老師陣容</p>
             <div className="grid grid-cols-2 gap-2 text-left max-w-md mx-auto">
               <div>
@@ -170,7 +225,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <p className="font-medium">阿姜松</p>
-                <p className="text-gray-500 text-xs">Ajahn Napatpol Kunatanasa te</p>
+                <p className="text-gray-500 text-xs">Ajahn Napatpol Kunatanasate</p>
               </div>
             </div>
           </div>
@@ -181,12 +236,73 @@ export default function RegisterPage() {
 
         {/* 第一部分：課程說明 */}
         <div className={sectionClass}>
-          <h2 className="text-lg font-semibold text-green-800">課程資訊</h2>
+          <h2 className="text-lg font-semibold text-green-800">一、課程資訊</h2>
           <div className="text-sm text-gray-600 space-y-1">
             <p>📅 課程時間：2026年8月20日至8月24日（共5天）</p>
+            <p>📍 課程方式：實體禪修</p>
             <p>📍 課程地點：南投日月潭湖畔會館</p>
             <p>👥 課程名額：250名（額滿為止）</p>
-            <p>💰 課程費用：課程免費，食宿場地交通費用 NT$18,600 自理</p>
+            <p>💰 課程費用：課程免費，食宿、場地及交通等費用自理</p>
+          </div>
+
+          <h2 className="text-lg font-semibold text-green-800 mt-6">二、報名時間</h2>
+          <div className="text-sm text-gray-600 space-y-1">
+            <p>報名時間：2026年5月11日（一）上午 10點（台北時間）</p>
+            <p>截止時間：2026年5月25日（一）晚上 10點（台北時間止）</p>
+          </div>
+
+          <h2 className="text-lg font-semibold text-green-800 mt-6">三、課程名額</h2>
+          <p className="text-sm text-gray-600">250名（額滿為止）</p>
+        </div>
+
+        {/* 四、課程報名條件 */}
+        <div className={sectionClass}>
+          <h2 className="text-lg font-semibold text-green-800">四、課程報名條件</h2>
+          <p className="text-sm text-gray-700">報名者需<strong>同時滿足</strong>以下三條件：</p>
+          <div className="text-sm text-gray-700 space-y-2">
+            <div>
+              <p><strong>1. 聞法條件</strong>（需滿足以下任意 1 個）</p>
+              <ul className="list-disc pl-6 space-y-1 mt-1">
+                <li>曾參加過任意一屆隆波帕默尊者體系的線下實體課程或線上網路課程</li>
+                <li>參加過每月 ZOOM 指導老師線上互動</li>
+                <li>完整觀看／聆聽過 3 屆泰國禪修之旅課程錄影／錄音（第 1–15 屆均可）</li>
+                <li>觀看／聆聽隆波帕默尊者法談開示 30 篇以上</li>
+              </ul>
+            </div>
+            <p><strong>2. 持守五戒</strong></p>
+            <p><strong>3. 堅持做固定形式的練習</strong>（如：經行、靜坐⋯）</p>
+          </div>
+        </div>
+
+        {/* 五、報名及錄取說明 */}
+        <div className={sectionClass}>
+          <h2 className="text-lg font-semibold text-green-800">五、報名及錄取說明</h2>
+
+          <div className="text-sm text-gray-700 space-y-2">
+            <p><strong>1. 報名方式：</strong>可透過以下任一平台填寫報名表單提交</p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>台灣四念處學會網站：<a href="https://satipatthana.org.tw/" className="text-blue-700 underline" target="_blank" rel="noreferrer">https://satipatthana.org.tw/</a></li>
+              <li>甘露雨網站：Ganluyu.org</li>
+              <li>法藏平台：
+                <div className="pl-4 text-xs text-gray-600">
+                  1. 法藏資源：<a href="https://www.iDhamma.cn" className="text-blue-700 underline" target="_blank" rel="noreferrer">https://www.iDhamma.cn</a><br />
+                  2. 直播綜合：<a href="https://www.iDhamma.net" className="text-blue-700 underline" target="_blank" rel="noreferrer">https://www.iDhamma.net</a>
+                </div>
+              </li>
+              <li>台灣四念處學會 FB 官方</li>
+              <li>台灣四念處學會 LINE 官方</li>
+            </ul>
+          </div>
+
+          <div className="text-sm text-gray-700 space-y-2 mt-4">
+            <p><strong>2. 錄取方式：</strong></p>
+            <ul className="list-[lower-alpha] pl-6 space-y-1">
+              <li>錄取通知：錄取者將於 <strong>6 月 6 日</strong>透過您的 E-MAIL 發送錄取通知（提交報名表單不代表已錄取）。</li>
+              <li>錄取條件：收到錄取通知後，須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>匯款／刷卡繳交食宿、場地及交通等費用，並至台灣四念處學會網站填寫匯款／刷卡資料，才算完成正式錄取。</li>
+              <li>錄取情況：正式錄取者，將建立 Line 及微信群組。</li>
+              <li>實體禪修場地條件有限，如報名學員較多，將無法全部錄取，最終錄取方法與結果由課程組決定。</li>
+            </ul>
+            <p><strong>3. 如果被課程組認為不適合再繼續參加本次課程，需完全配合課程組的決定。</strong></p>
           </div>
         </div>
 
@@ -255,7 +371,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className={labelClass}>10. 是否透過ZOOM獲得指導老師一對一禪修指導？*</label>
+            <label className={labelClass}>10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？*</label>
             <select className={inputClass} value={form.zoom_guidance}
               onChange={e => update('zoom_guidance', e.target.value)}>
               <option value="">請選擇</option>
@@ -302,12 +418,12 @@ export default function RegisterPage() {
               <option value="">請選擇</option>
               <option value="every_day">每天至少30分鐘</option>
               <option value="almost_every_day">幾乎每天，偶有間斷</option>
-              <option value="commit_from_now">承諾從現在開始每天堅持</option>
+              <option value="commit_from_now">未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束</option>
             </select>
           </div>
 
           <div>
-            <label className={labelClass}>15. 是否願意於6月15日前按時支付食宿場地交通費用？*</label>
+            <label className={labelClass}>15. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？*</label>
             <select className={inputClass} value={form.pay_confirm}
               onChange={e => update('pay_confirm', e.target.value)}>
               <option value="">請選擇</option>
@@ -427,7 +543,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className={labelClass}>27. 手機號碼*（海外請加國際碼）</label>
+            <label className={labelClass}>27. 手機號碼*（海外人士請加國際碼，例如：台灣886+）</label>
             <input className={inputClass} value={form.phone}
               onChange={e => update('phone', e.target.value)} />
           </div>
@@ -501,9 +617,10 @@ export default function RegisterPage() {
 
         {/* 費用說明 */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <h3 className="font-semibold text-yellow-800">18. 費用說明</h3>
-          <p className="text-yellow-700 mt-2">8/20-8/24 禪修食宿、交通、場地費用：<strong>NT$18,600 元整</strong></p>
-          <p className="text-sm text-yellow-600 mt-1">錄取後將提供專屬繳費碼，請於6月15日前完成繳費。</p>
+          <h3 className="font-semibold text-yellow-800">18. 8/20–8/24 禪修期間之食宿、交通及場地費用</h3>
+          <p className="text-yellow-700 mt-2"><strong>NT$18,600 元整</strong></p>
+          <p className="text-sm text-yellow-700 mt-1">（如需提前或延後住宿，將另計相關費用）</p>
+          <p className="text-sm text-yellow-600 mt-2">錄取後將提供專屬繳費碼，請於 6 月 15 日前完成繳費。</p>
         </div>
 
         {/* 提交 */}
@@ -525,6 +642,16 @@ export default function RegisterPage() {
         </p>
 
         </>)}
+
+        {/* 結尾 */}
+        <div className="text-center space-y-3 pt-6">
+          <p className="text-green-800 font-medium">報名表填寫結束，感謝您的報名！</p>
+          <p className="text-gray-600 text-sm">隨喜功德</p>
+          <p className="text-green-800 font-semibold">台灣四念處學會 合十</p>
+          <img src="/logo.png" alt="台灣四念處學會"
+            className="mx-auto w-32 h-auto opacity-90"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        </div>
       </div>
     </div>
   )

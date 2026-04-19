@@ -1,3 +1,4 @@
+'use client'
 export default function SuccessPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -13,7 +14,10 @@ export default function SuccessPage() {
           <p>💰 繳費期限：錄取後請於 <strong>6月15日</strong> 前完成繳費</p>
           <p>📍 課程時間：<strong>2026年8月20日～8月24日</strong></p>
         </div>
-        <p className="mt-6 text-sm text-gray-400">台灣四念處學會 合十</p>
+        <p className="mt-6 text-sm text-gray-500">台灣四念處學會 合十</p>
+        <img src="/logo.png" alt="台灣四念處學會"
+          className="mx-auto mt-3 w-24 h-auto opacity-90"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
       </div>
     </div>
   )
