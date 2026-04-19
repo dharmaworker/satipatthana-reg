@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [detailReg, setDetailReg] = useState<any | null>(null)
   const [editReg, setEditReg] = useState<any | null>(null)
 
   // 點 row 外面關閉下拉
@@ -482,8 +483,12 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-3 relative" data-row-menu>
                       <div className="flex gap-1">
-                        <button onClick={() => { setEditReg({ ...reg }); setEditError('') }}
+                        <button onClick={() => setDetailReg(reg)}
                           className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
+                          詳細
+                        </button>
+                        <button onClick={() => { setEditReg({ ...reg }); setEditError('') }}
+                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">
                           編輯
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === reg.id ? null : reg.id) }}
@@ -639,6 +644,100 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {detailReg && (
+        <div onClick={() => setDetailReg(null)}
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-black text-lg">{detailReg.chinese_name}　學員詳細資料</h3>
+              <button onClick={() => setDetailReg(null)}
+                className="text-gray-500 hover:text-black text-xl">✕</button>
+            </div>
+
+            <h4 className="font-semibold text-green-800 mb-2 mt-2">基本資料</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <DetailField label="中文姓名" value={detailReg.chinese_name} />
+              <DetailField label="護照英文姓名" value={detailReg.passport_name} />
+              <DetailField label="繳費碼" value={detailReg.random_code} mono />
+              <DetailField label="學號" value={detailReg.member_id} />
+              <DetailField label="身分" value={detailReg.identity === 'lay' ? '在家人' : detailReg.identity === 'monastic' ? '僧眾' : detailReg.identity} />
+              <DetailField label="法名" value={detailReg.dharma_name} />
+              <DetailField label="性別" value={detailReg.gender === 'male' ? '男' : detailReg.gender === 'female' ? '女' : detailReg.gender} />
+              <DetailField label="年齡" value={detailReg.age} />
+              <DetailField label="居住地" value={detailReg.residence} />
+              <DetailField label="護照頒發地" value={detailReg.passport_country} />
+              <DetailField label="手機" value={detailReg.phone} />
+              <DetailField label="Email" value={detailReg.email} />
+              <DetailField label="報名時間" value={detailReg.created_at ? new Date(detailReg.created_at).toLocaleString('zh-TW') : '—'} />
+            </div>
+
+            <h4 className="font-semibold text-green-800 mb-2 mt-5">通訊軟體</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <DetailField label="LINE ID" value={detailReg.line_id} />
+              <DetailField label="WeChat ID" value={detailReg.wechat_id} />
+            </div>
+            <div className="flex gap-3 mt-2">
+              {detailReg.line_qr_url && (
+                <button onClick={() => setQrPreview({ url: detailReg.line_qr_url, title: `${detailReg.chinese_name} - LINE QR` })}>
+                  <img src={detailReg.line_qr_url} alt="LINE QR" className="w-20 h-20 object-cover border rounded" />
+                  <p className="text-xs text-black mt-1">LINE</p>
+                </button>
+              )}
+              {detailReg.wechat_qr_url && (
+                <button onClick={() => setQrPreview({ url: detailReg.wechat_qr_url, title: `${detailReg.chinese_name} - WeChat QR` })}>
+                  <img src={detailReg.wechat_qr_url} alt="WeChat QR" className="w-20 h-20 object-cover border rounded" />
+                  <p className="text-xs text-black mt-1">WeChat</p>
+                </button>
+              )}
+            </div>
+
+            <h4 className="font-semibold text-green-800 mb-2 mt-5">報名條件</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <DetailField label="承諾如實填寫" value={yn(detailReg.honest_confirm)} />
+              <DetailField label="正式學員經驗" value={yn(detailReg.attended_formal)} />
+              <DetailField label="觀看 3 屆錄影" value={yn(detailReg.watched_recordings)} />
+              <DetailField label="ZOOM 一對一指導" value={yn(detailReg.zoom_guidance)} />
+              <DetailField label="法談 30 篇以上" value={yn(detailReg.watched_30_talks)} />
+              <DetailField label="持守五戒" value={yn(detailReg.keep_precepts)} />
+              <DetailField label="同意繳費" value={yn(detailReg.pay_confirm)} />
+              <DetailField label="身體健康" value={yn(detailReg.health_confirm)} />
+              <DetailField label="修習年資" value={detailReg.practice_years} />
+              <DetailField label="練習頻率" value={detailReg.practice_frequency} />
+            </div>
+            {detailReg.mental_health_note && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-500">心理健康備註</div>
+                <div className="text-black text-sm bg-gray-50 rounded p-2">{detailReg.mental_health_note}</div>
+              </div>
+            )}
+
+            {Array.isArray(detailReg.attended_courses) && detailReg.attended_courses.length > 0 && (
+              <>
+                <h4 className="font-semibold text-green-800 mb-2 mt-5">過往參加課程</h4>
+                <ul className="text-sm text-black list-disc pl-6">
+                  {detailReg.attended_courses.map((c: string, i: number) => <li key={i}>{c}</li>)}
+                </ul>
+              </>
+            )}
+
+            <h4 className="font-semibold text-green-800 mb-2 mt-5">狀態 / 繳費</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <DetailField label="審核狀態" value={({ pending: '審核中', approved: '已錄取', rejected: '未錄取' } as Record<string, string>)[detailReg.status] || detailReg.status} />
+              <DetailField label="繳費狀態" value={({ unpaid: '未繳費', paid: '已回報待確認', verified: '已確認繳費' } as Record<string, string>)[detailReg.payment_status] || detailReg.payment_status} />
+              <DetailField label="繳費方案" value={detailReg.payment_plan} />
+              <DetailField label="繳費確認時間" value={detailReg.payment_confirmed_at ? new Date(detailReg.payment_confirmed_at).toLocaleString('zh-TW') : '—'} />
+            </div>
+            {detailReg.payment_note && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-500">繳費備註</div>
+                <div className="text-black text-xs bg-gray-50 rounded p-2 break-all">{detailReg.payment_note}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {qrPreview && (
         <div onClick={() => setQrPreview(null)}
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -666,4 +765,19 @@ export default function DashboardPage() {
       )}
     </div>
   )
+}
+
+function DetailField({ label, value, mono }: { label: string; value: any; mono?: boolean }) {
+  return (
+    <div>
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className={`text-black ${mono ? 'font-mono' : ''}`}>{value || value === 0 ? value : '—'}</div>
+    </div>
+  )
+}
+
+function yn(v: boolean | null | undefined) {
+  if (v === true) return '是'
+  if (v === false) return '否'
+  return '—'
 }
