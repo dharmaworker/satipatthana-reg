@@ -223,6 +223,10 @@ function LodgingContent() {
               <div className="text-black font-medium">{reg.chinese_name || '—'}</div>
             </div>
             <div>
+              <div className="text-xs text-gray-500">護照英文姓名</div>
+              <div className="text-black font-medium break-all">{reg.passport_name || '—'}</div>
+            </div>
+            <div>
               <div className="text-xs text-gray-500">學號</div>
               <div className="text-black font-medium">{reg.member_id || '待編號'}</div>
             </div>
@@ -230,7 +234,17 @@ function LodgingContent() {
               <div className="text-xs text-gray-500">性別</div>
               <div className="text-black font-medium">{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</div>
             </div>
+            {reg.dharma_name && (
+              <div>
+                <div className="text-xs text-gray-500">法名</div>
+                <div className="text-black font-medium">{reg.dharma_name}</div>
+              </div>
+            )}
             <div>
+              <div className="text-xs text-gray-500">手機號碼</div>
+              <div className="text-black font-medium">{reg.phone || '—'}</div>
+            </div>
+            <div className={reg.dharma_name ? '' : 'col-span-2'}>
               <div className="text-xs text-gray-500">Email</div>
               <div className="text-black font-medium break-all">{reg.email || '—'}</div>
             </div>
