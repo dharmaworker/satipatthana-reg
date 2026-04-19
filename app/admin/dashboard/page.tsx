@@ -27,7 +27,19 @@ export default function DashboardPage() {
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [editReg, setEditReg] = useState<any | null>(null)
+
+  // 點 row 外面關閉下拉
+  useEffect(() => {
+    if (!openMenuId) return
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-row-menu]')) setOpenMenuId(null)
+    }
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [openMenuId])
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [editUploading, setEditUploading] = useState<'line' | 'wechat' | null>(null)
@@ -468,35 +480,45 @@ export default function DashboardPage() {
                         )
                       })()}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1 flex-wrap">
+                    <td className="px-4 py-3 relative" data-row-menu>
+                      <div className="flex gap-1">
                         <button onClick={() => { setEditReg({ ...reg }); setEditError('') }}
                           className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
                           編輯
                         </button>
-                        {!reg.member_id && reg.payment_status === 'verified' && (
-                          <button onClick={() => assignMemberId(reg.id)}
-                            className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
-                            編號
-                          </button>
-                        )}
-                        {reg.member_id && (
-                          <>
-                            <button onClick={() => reassignMemberId(reg)}
-                              className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
-                              重新編號
-                            </button>
-                            <button onClick={() => clearMemberId(reg)}
-                              className="bg-orange-100 hover:bg-orange-200 text-orange-800 px-2 py-1 rounded text-xs">
-                              註銷
-                            </button>
-                          </>
-                        )}
-                        <button onClick={() => deleteRegistration(reg)}
-                          className="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs">
-                          刪除
+                        <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === reg.id ? null : reg.id) }}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs"
+                          title="更多操作">
+                          ⋯
                         </button>
                       </div>
+                      {openMenuId === reg.id && (
+                        <div className="absolute right-2 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px] py-1">
+                          {!reg.member_id && reg.payment_status === 'verified' && (
+                            <button onClick={() => { setOpenMenuId(null); assignMemberId(reg.id) }}
+                              className="w-full text-left px-3 py-2 text-xs text-purple-800 hover:bg-purple-50">
+                              🔢 編號
+                            </button>
+                          )}
+                          {reg.member_id && (
+                            <>
+                              <button onClick={() => { setOpenMenuId(null); reassignMemberId(reg) }}
+                                className="w-full text-left px-3 py-2 text-xs text-purple-800 hover:bg-purple-50">
+                                🔄 重新編號
+                              </button>
+                              <button onClick={() => { setOpenMenuId(null); clearMemberId(reg) }}
+                                className="w-full text-left px-3 py-2 text-xs text-orange-800 hover:bg-orange-50">
+                                ⛔ 註銷學號
+                              </button>
+                            </>
+                          )}
+                          <div className="border-t border-gray-100 my-1" />
+                          <button onClick={() => { setOpenMenuId(null); deleteRegistration(reg) }}
+                            className="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">
+                            🗑️ 刪除報名
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
