@@ -136,16 +136,17 @@ export default function RegisterPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center space-y-4">
           <div className="text-gray-700 leading-relaxed whitespace-pre-line text-sm">
       {`大夢醒時，
-      看見，即是覺醒的開始。
-      迷失在念頭的夢境裡太久，
+      「看見」，正是解脫的起點。
+      在念頭的夢境中迷失已久，
       是時候回過頭來，
-      如實看見生命的真相。
-      本次禪修課程，誠摯邀請您
-      於日月潭的山水之間，
-      在四位助教老師的指導下，
-      親自走上四念處的覺醒之道。
+      如實觀照生命的真相。
+      誠摯邀請您—
+      走入日月潭的山水之間，
+      在四位助教老師的引導下，
+      親自踏上四念處的覺醒之路。
+
       修行，
-      就從這一刻的「看見」開始。`}
+      就從此時此刻的「看見」開始。`}
           </div>
 
           <hr className="border-gray-100" />
