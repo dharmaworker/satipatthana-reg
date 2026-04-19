@@ -234,13 +234,62 @@ export default function DashboardPage() {
     fetchData()
   }
 
-  const assignMemberId = async (id: string, sequence: number) => {
-    const member_id = `${String(sequence).padStart(3, '0')}-T`
-    await fetch('/api/admin/registrations', {
+  // 計算下一個可用學號（所有現有 XXX-T 最大號 + 1）
+  const nextAvailableMemberId = () => {
+    let maxN = 0
+    for (const r of registrations) {
+      const m = r.member_id?.match(/^(\d+)-T$/)
+      if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
+    }
+    return `${String(maxN + 1).padStart(3, '0')}-T`
+  }
+
+  const assignMemberId = async (id: string) => {
+    const member_id = nextAvailableMemberId()
+    const res = await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, member_id }),
     })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`編號失敗：${d.error || res.status}`)
+      return
+    }
+    setMessage(`已編號 ${member_id}`)
+    fetchData()
+  }
+
+  const clearMemberId = async (reg: any) => {
+    if (!confirm(`確定清除（註銷）${reg.chinese_name} 的學號「${reg.member_id}」？\n清除後此號碼若無其他人使用，可重新分配給其他學員。`)) return
+    const res = await fetch('/api/admin/registrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: reg.id, member_id: null }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`清除失敗：${d.error || res.status}`)
+      return
+    }
+    setMessage(`已清除 ${reg.chinese_name} 的學號`)
+    fetchData()
+  }
+
+  const reassignMemberId = async (reg: any) => {
+    const next = nextAvailableMemberId()
+    if (!confirm(`將 ${reg.chinese_name} 的學號由「${reg.member_id || '無'}」改為「${next}」？`)) return
+    const res = await fetch('/api/admin/registrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: reg.id, member_id: next }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`重新分配失敗：${d.error || res.status}`)
+      return
+    }
+    setMessage(`已重新分配 ${reg.chinese_name} 的學號為 ${next}`)
     fetchData()
   }
 
@@ -444,11 +493,23 @@ export default function DashboardPage() {
                           className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
                           編輯
                         </button>
-                        {reg.payment_status === 'verified' && !reg.member_id && (
-                          <button onClick={() => assignMemberId(reg.id, index + 1)}
+                        {!reg.member_id && reg.payment_status === 'verified' && (
+                          <button onClick={() => assignMemberId(reg.id)}
                             className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
                             編號
                           </button>
+                        )}
+                        {reg.member_id && (
+                          <>
+                            <button onClick={() => reassignMemberId(reg)}
+                              className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs">
+                              重新編號
+                            </button>
+                            <button onClick={() => clearMemberId(reg)}
+                              className="bg-orange-100 hover:bg-orange-200 text-orange-800 px-2 py-1 rounded text-xs">
+                              註銷
+                            </button>
+                          </>
                         )}
                         <button onClick={() => deleteRegistration(reg)}
                           className="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs">

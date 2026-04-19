@@ -96,7 +96,7 @@ export async function PATCH(request: NextRequest) {
 
   const updateData: Record<string, unknown> = {}
   if (status) updateData.status = status
-  if (member_id !== undefined) updateData.member_id = member_id
+  if (member_id !== undefined) updateData.member_id = member_id || null
   if (payment_status) {
     updateData.payment_status = payment_status
     if (payment_status === 'verified') {
