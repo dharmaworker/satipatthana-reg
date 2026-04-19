@@ -32,7 +32,26 @@ export default function LodgingsPage() {
   const [edit, setEdit] = useState<any | null>(null)
   const [editError, setEditError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
+
+  const handleEditUpload = async (kind: string, file: File) => {
+    setUploadingKind(kind)
+    setEditError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('kind', kind)
+      const res = await fetch('/api/upload-lodging', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '上傳失敗')
+      setEdit((prev: any) => ({ ...prev, [kind + '_url']: data.url }))
+    } catch (e: any) {
+      setEditError(e.message)
+    } finally {
+      setUploadingKind(null)
+    }
+  }
 
   const saveEdit = async () => {
     if (!edit) return
@@ -391,17 +410,31 @@ export default function LodgingsPage() {
               </label>
             </div>
 
-            <h4 className="font-semibold text-black mt-6 mb-2">已上傳檔案</h4>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <h4 className="font-semibold text-black mt-6 mb-2">檔案管理</h4>
+            <p className="text-xs text-gray-500 mb-2">學員傳錯檔可在此重新上傳或清除</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {Object.entries(DOC_LABEL).map(([k, label]) => {
+                const kind = k.replace(/_url$/, '')
                 const url = edit[k]
-                if (!url) return <div key={k} className="text-gray-400">{label}：未上傳</div>
                 return (
-                  <div key={k} className="border border-gray-200 rounded p-2">
-                    <p className="text-black mb-1">{label}</p>
-                    <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 underline">檢視</a>
-                    <button onClick={() => setEdit({ ...edit, [k]: null })}
-                      className="ml-2 text-red-600 hover:underline">清除</button>
+                  <div key={k} className="border border-gray-200 rounded p-2 space-y-1">
+                    <p className="text-black font-medium">{label}</p>
+                    {url ? (
+                      <div className="flex items-center gap-2">
+                        <a href={url} target="_blank" rel="noreferrer"
+                          className="text-blue-600 underline">檢視</a>
+                        <button onClick={() => setEdit({ ...edit, [k]: null })}
+                          className="text-red-600 hover:underline">清除</button>
+                      </div>
+                    ) : (
+                      <p className="text-gray-400">未上傳</p>
+                    )}
+                    <input type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      disabled={uploadingKind === kind}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleEditUpload(kind, f) }}
+                      className="text-xs" />
+                    {uploadingKind === kind && <p className="text-gray-500">上傳中...</p>}
                   </div>
                 )
               })}
@@ -414,7 +447,7 @@ export default function LodgingsPage() {
             <div className="mt-4 flex gap-2 justify-end">
               <button onClick={() => !saving && setEdit(null)}
                 className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">取消</button>
-              <button onClick={saveEdit} disabled={saving}
+              <button onClick={saveEdit} disabled={saving || !!uploadingKind}
                 className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm">
                 {saving ? '儲存中...' : '儲存'}
               </button>
