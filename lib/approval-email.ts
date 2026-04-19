@@ -1,4 +1,5 @@
 import { sendMail } from './mailer'
+import { buildApprovalPdf } from './approval-pdf'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -10,10 +11,28 @@ export async function sendApprovalEmail(reg: {
   random_code: string
   member_id: string | null
 }) {
+  // 產生 PDF 附件（失敗不影響 email 本體）
+  let attachments: { filename: string; content: Buffer; contentType?: string }[] | undefined
+  try {
+    const pdfBuf = await buildApprovalPdf({
+      chinese_name: reg.chinese_name,
+      member_id: reg.member_id,
+      random_code: reg.random_code,
+    })
+    attachments = [{
+      filename: `錄取通知_${reg.chinese_name}_${reg.random_code}.pdf`,
+      content: pdfBuf,
+      contentType: 'application/pdf',
+    }]
+  } catch (pdfErr) {
+    console.error('[approval-email] PDF 產生失敗，改為純 html:', pdfErr)
+  }
+
   return sendMail({
     to: reg.email,
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】錄取通知',
+    attachments,
     html: `
       <div style="font-family: sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #222;">
         <h2 style="color: #2d6a4f;">第二屆台灣四念處禪修課程－錄取通知</h2>
