@@ -16,7 +16,6 @@ function QuickTestsContent() {
 
   const [reg, setReg] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [needLodging, setNeedLodging] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -46,8 +45,6 @@ function QuickTestsContent() {
             test_0822_url: data.lodging.test_0822_url || '',
           })
           setLastUpdate(data.lodging.updated_at || null)
-        } else {
-          setNeedLodging(true)
         }
       })
       .catch(e => setError(e.message))
@@ -98,22 +95,6 @@ function QuickTestsContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-6 max-w-md text-center">
           <p className="text-red-700">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (needLodging) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center space-y-4">
-          <div className="text-5xl">📝</div>
-          <h2 className="text-xl font-bold text-green-800">請先完成食宿登記</h2>
-          <p className="text-gray-700 text-sm">尚未填寫食宿登記，無法上傳快篩。請先完成食宿登記後再回此頁。</p>
-          <a href={`/lodging?id=${id}&code=${encodeURIComponent(code)}`}
-            className="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-semibold">
-            前往食宿登記
-          </a>
         </div>
       </div>
     )

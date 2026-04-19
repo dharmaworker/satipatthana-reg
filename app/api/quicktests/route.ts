@@ -53,34 +53,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取' }, { status: 403 })
     }
 
-    // 必須先填過食宿登記（才有 lodging row）
-    const { data: lodging } = await supabaseAdmin
-      .from('lodging_registrations')
-      .select('id')
-      .eq('registration_id', reg.id)
-      .maybeSingle()
-    if (!lodging) {
-      return NextResponse.json({ error: '請先完成食宿登記再上傳快篩檢測結果' }, { status: 400 })
-    }
-
     const allowed = ['test_0817_url', 'test_0819_url', 'test_0820_url', 'test_0822_url']
-    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    const testData: Record<string, unknown> = {}
     for (const k of allowed) {
-      if (k in fields) updateData[k] = fields[k] || null
+      if (k in fields) testData[k] = fields[k] || null
     }
-    if (Object.keys(updateData).length === 1) {
-      // 只有 updated_at，沒實際上傳任何檔
+    if (Object.keys(testData).length === 0) {
       return NextResponse.json({ error: '請至少上傳一個快篩檔案' }, { status: 400 })
     }
 
+    // upsert 食宿登記 row（不存在就建最小記錄，其餘欄位允許為 null）
     const { data: updated, error: updErr } = await supabaseAdmin
       .from('lodging_registrations')
-      .update(updateData)
-      .eq('id', lodging.id)
+      .upsert({
+        registration_id: reg.id,
+        ...testData,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'registration_id' })
       .select('test_0817_url, test_0819_url, test_0820_url, test_0822_url')
       .single()
     if (updErr) {
-      console.error('[quicktests] update failed:', updErr)
+      console.error('[quicktests] upsert failed:', updErr)
       return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
     }
 

@@ -64,26 +64,27 @@ create table if not exists lodging_registrations (
   id uuid primary key default gen_random_uuid(),
   registration_id uuid not null references registrations(id) on delete cascade unique,
 
-  arrival_date date not null,         -- 2026-08-19 or 2026-08-20
-  departure_date date not null,       -- 2026-08-24 or 2026-08-25
-  payment_method text not null,       -- transfer | credit_card
+  -- 以下欄位皆 nullable，允許食宿登記與快篩上傳分段填寫
+  arrival_date date,                  -- 2026-08-19 or 2026-08-20（由 payment_plan 推導）
+  departure_date date,                -- 2026-08-24 or 2026-08-25（同上）
+  payment_method text,                -- transfer | credit_card（同上）
 
-  emergency_name text not null,
-  emergency_relation text not null,
-  emergency_phone text not null,
+  emergency_name text,
+  emergency_relation text,
+  emergency_phone text,
 
-  arrival_transport text not null,    -- self | taipei_bus | wuri_bus
-  departure_transport text not null,  -- self | bus
+  arrival_transport text,             -- self | taipei_bus | wuri_bus
+  departure_transport text,           -- self | bus
   bus_destination text,               -- taipei_824_pm | taipei_825_am | wuri_825_am
 
-  diet text not null,                 -- meat | vegetarian
-  noon_fasting text not null,         -- before_noon | after_noon
-  snacks text not null,               -- snacks_and_drink | drink_only
-  dinner_0819 boolean not null,
-  dinner_0824 boolean not null,
+  diet text,                          -- meat | vegetarian
+  noon_fasting text,                  -- before_noon | after_noon
+  snacks text,                        -- snacks_and_drink | drink_only
+  dinner_0819 boolean,
+  dinner_0824 boolean,
 
-  snoring boolean not null,
-  agree_covid_rules boolean not null,
+  snoring boolean,
+  agree_covid_rules boolean,
 
   -- 檔案上傳（Supabase Storage bucket `lodging-docs` 的 public URL）
   id_front_url text,

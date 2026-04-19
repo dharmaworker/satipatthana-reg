@@ -145,23 +145,6 @@ function LodgingContent() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">載入中...</div>
 
-  // 已驗證身份但尚未繳費（無 payment_plan）→ 提示先去繳費
-  if (reg && !reg.payment_plan) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center space-y-4">
-          <div className="text-5xl">💳</div>
-          <h2 className="text-xl font-bold text-green-800">請先完成繳費</h2>
-          <p className="text-gray-700 text-sm">食宿登記需在繳費完成後填寫，方案會自動帶入。</p>
-          <a href={`/pay?id=${id}&code=${encodeURIComponent(code)}`}
-            className="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-semibold">
-            前往繳費
-          </a>
-        </div>
-      </div>
-    )
-  }
-
   if (error && !reg) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
