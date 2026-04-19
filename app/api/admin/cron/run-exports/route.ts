@@ -50,19 +50,13 @@ async function runExports(request: NextRequest) {
     }
 
     try {
-      // 截止資料：scheduled_at 的前一日 24:00（= scheduled_at 那天 00:00 當下，台灣時區）
-      // 以 scheduled_at 的日期為基準：cutoff = 該日期 (YYYY-MM-DD) 的 00:00 台灣時間
-      const y = scheduledAt.getUTCFullYear()
-      const m = scheduledAt.getUTCMonth()
-      const d = scheduledAt.getUTCDate()
-      // 台灣時區 UTC+8。UTC 該日 00:00 對應台灣 08:00，往前推 8 小時得台灣 00:00
-      // 實作上：我們以 scheduled_at 的 UTC 日期，往前推一點到該日開始 (台北 00:00)
-      // 簡化處理：cutoff = 同一 UTC 日期的 00:00 - 8 小時 = 前一日 16:00 UTC = 前一日 24:00 台北
-      const cutoff = new Date(Date.UTC(y, m, d, 0, 0, 0) - 8 * 60 * 60 * 1000)
-
+      // scheduled_at 即為「該日台北 00:00」= 前一日 24:00 的瞬間，直接用它做 cutoff
+      const cutoff = scheduledAt
       const { buffer, filename, counts } = await generateExportWorkbook(cutoff)
 
-      const dateLabel = cutoff.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })
+      // 標題要顯示「前一日」的日期（cutoff 的前一瞬間所屬日期）
+      const prevDay = new Date(cutoff.getTime() - 1)
+      const dateLabel = prevDay.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })
       await sendMail({
         to: sched.recipients,
         subject: `【第二屆台灣四念處禪修】自動彙整報表 (截止 ${dateLabel} 24:00)`,

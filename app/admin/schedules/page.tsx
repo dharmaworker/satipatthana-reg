@@ -100,7 +100,7 @@ export default function SchedulesPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800 space-y-1">
-          <p>⚙️ 系統每天台灣時間 09:00 自動檢查並執行到期的排程。</p>
+          <p>⚙️ 系統每天台灣時間 00:00 自動檢查並執行到期的排程。</p>
           <p>📎 Excel 含：全部 / 待審核 / 已錄取未繳費 / 已繳費 / 未錄取 五個工作表。</p>
           <p>⏰ 資料截止時間 = 排程日期的前一日 24:00（台灣時間）。</p>
           <p>🔢 最多 10 筆排程。</p>
@@ -183,7 +183,7 @@ export default function SchedulesPage() {
                   className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                   value={toInputDate(editItem.scheduled_at)}
                   onChange={e => setEditItem({ ...editItem, scheduled_at: fromInputDate(e.target.value) })} />
-                <p className="text-xs text-gray-500 mt-1">系統固定於當天台北時間 09:00 寄出，資料截止前一日 24:00</p>
+                <p className="text-xs text-gray-500 mt-1">系統固定於當天台北時間 00:00 寄出，資料截止前一日 24:00</p>
               </div>
               <div>
                 <label className="block text-black font-medium mb-1">收件人 Email *</label>
