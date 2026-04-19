@@ -9,6 +9,7 @@ function LodgingContent() {
   const code = searchParams.get('code') || ''
 
   const [reg, setReg] = useState<any>(null)
+  const [existingLodging, setExistingLodging] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -78,6 +79,7 @@ function LodgingContent() {
         if (!r.ok) throw new Error(data.error || '載入失敗')
         setReg(data.registration)
         if (data.lodging) {
+          setExistingLodging(data.lodging)
           setForm({
             emergency_name: data.lodging.emergency_name || '',
             emergency_relation: data.lodging.emergency_relation || '',
@@ -128,6 +130,7 @@ function LodgingContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '送出失敗')
+      if (data.lodging) setExistingLodging(data.lodging)
       setDone(true)
     } catch (e: any) {
       setError(e.message)
@@ -174,11 +177,11 @@ function LodgingContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-8 max-w-md text-center">
           <p className="text-5xl mb-4">🙏</p>
-          <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記完成</h2>
-          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。</p>
+          <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記已儲存</h2>
+          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。<br />6/20 截止前可隨時回到此頁更新。</p>
           <button onClick={() => setDone(false)}
             className="inline-block bg-gray-100 hover:bg-gray-200 text-black px-6 py-2 rounded-lg">
-            返回檢視
+            返回繼續編輯
           </button>
         </div>
       </div>
@@ -210,6 +213,14 @@ function LodgingContent() {
           <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，若取消報名，所付費用恕不退款、轉讓。</p>
           <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成，逾期系統將拒絕提交。</p>
         </div>
+
+        {existingLodging && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+            <p className="font-semibold">✅ 您已填寫過食宿登記</p>
+            <p className="mt-1">上次更新時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
+            <p className="mt-1">以下為您上次填寫的內容（含已上傳的檔案）。如需更新，修改後再次提交即可（6/20 截止前不限次數）。</p>
+          </div>
+        )}
 
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900 space-y-1">
           <p className="font-semibold">渡假村入住說明</p>
@@ -456,7 +467,7 @@ function LodgingContent() {
         )}
         <button onClick={handleSubmit} disabled={submitting || pastDeadline}
           className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting ? '送出中...' : pastDeadline ? '已截止' : '提交食宿登記'}
+          {submitting ? '送出中...' : pastDeadline ? '已截止' : (existingLodging ? '更新食宿登記' : '提交食宿登記')}
         </button>
 
         <p className="text-center text-sm text-gray-500">
