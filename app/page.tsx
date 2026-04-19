@@ -597,7 +597,7 @@ export default function RegisterPage() {
             value={form.wechat_id}
             onChange={e => update('wechat_id', e.target.value)} />
           <div>
-            <label className="text-sm text-gray-700 block mb-1">WeChat QR Code 圖片 *</label>
+            <label className="text-sm text-gray-700 block mb-1">微信二維碼圖片 *</label>
             <input type="file"
               accept="image/jpeg,image/png,image/webp"
               disabled={uploadingQr === 'wechat'}
