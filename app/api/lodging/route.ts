@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { planToLodgingDefaults } from '@/lib/lodging-plan'
 import { sendMail } from '@/lib/mailer'
+import { quickTestsButtonHtml } from '@/lib/quicktests-email'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
@@ -171,6 +172,10 @@ export async function POST(request: NextRequest) {
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">睡覺會打鼾</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.snoring ? '會' : '不會'}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">緊急聯絡人</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.emergency_name}（${fields.emergency_relation}）${fields.emergency_phone}</td></tr>
             </table>
+            <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
+            <h3 style="color:#2d6a4f;font-size:15px;">下一步：快篩檢測上傳</h3>
+            <p>請於下列時段於規定時間前上傳快篩檢測結果：</p>
+            ${quickTestsButtonHtml({ id: reg.id, random_code: reg.random_code })}
             <p style="color:#666;font-size:13px;margin-top:16px;">台灣四念處學會 合十</p>
           </div>
         `,

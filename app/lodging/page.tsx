@@ -429,17 +429,11 @@ function LodgingContent() {
           </div>
         )}
 
-        {/* 快篩檢測（國外學員） */}
-        {!isDomestic && (
-          <div className={sectionCls}>
-            <h2 className="text-lg font-semibold text-green-800">八、快篩檢測結果上傳</h2>
-            <p className="text-xs text-gray-500">檢測結果必須載明檢測日期、學號、姓名；快篩試劑請自備，主辦單位不提供</p>
-            {fileField('test_0817', '8/17（上午 8 點至晚上 8 點前）', form.test_0817_url, uploadingKind, handleFileUpload)}
-            {fileField('test_0819', '8/19（上午 12 點前）', form.test_0819_url, uploadingKind, handleFileUpload)}
-            {fileField('test_0820', '8/20（上午 8 點前）', form.test_0820_url, uploadingKind, handleFileUpload)}
-            {fileField('test_0822', '8/22（上午 8 點前）', form.test_0822_url, uploadingKind, handleFileUpload)}
-          </div>
-        )}
+        {/* 快篩另頁上傳，這裡僅提示 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+          <p className="font-semibold">關於快篩檢測上傳</p>
+          <p className="mt-1">快篩檢測時程在課程開始前後（8/17、8/19、8/20、8/22），時間較晚，請完成本食宿登記後另行於專屬頁面上傳。完成此食宿登記送出後，系統會在確認信中附上快篩上傳頁連結。</p>
+        </div>
 
         {/* 其他 */}
         <div className={sectionCls}>
