@@ -29,7 +29,32 @@ export default function LodgingsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [detail, setDetail] = useState<any | null>(null)
+  const [edit, setEdit] = useState<any | null>(null)
+  const [editError, setEditError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
+
+  const saveEdit = async () => {
+    if (!edit) return
+    setSaving(true)
+    setEditError('')
+    try {
+      const res = await fetch('/api/admin/lodgings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(edit),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '儲存失敗')
+      setEdit(null)
+      setDetail(null)
+      fetchData()
+    } catch (e: any) {
+      setEditError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -114,10 +139,16 @@ export default function LodgingsPage() {
                         {r.emergency_phone}
                       </td>
                       <td className="px-3 py-3">
-                        <button onClick={() => setDetail(r)}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
-                          詳細
-                        </button>
+                        <div className="flex gap-1">
+                          <button onClick={() => setDetail(r)}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
+                            詳細
+                          </button>
+                          <button onClick={() => { setEdit({ ...r }); setEditError('') }}
+                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">
+                            編輯
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -196,6 +227,197 @@ export default function LodgingsPage() {
               {!Object.keys(DOC_LABEL).some(k => detail[k]) && (
                 <p className="text-gray-400 text-sm">尚未上傳任何檔案</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {edit && (
+        <div onClick={() => !saving && setEdit(null)}
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div onClick={e => e.stopPropagation()}
+            className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-black text-lg">
+                編輯食宿登記：{edit.registration?.chinese_name}
+              </h3>
+              <button onClick={() => !saving && setEdit(null)}
+                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <label className="block text-black mb-1">入住日</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.arrival_date || ''}
+                  onChange={e => setEdit({ ...edit, arrival_date: e.target.value })}>
+                  <option value="2026-08-19">2026-08-19</option>
+                  <option value="2026-08-20">2026-08-20</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">離開日</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.departure_date || ''}
+                  onChange={e => setEdit({ ...edit, departure_date: e.target.value })}>
+                  <option value="2026-08-24">2026-08-24</option>
+                  <option value="2026-08-25">2026-08-25</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">繳費方式</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.payment_method || ''}
+                  onChange={e => setEdit({ ...edit, payment_method: e.target.value })}>
+                  <option value="transfer">匯款</option>
+                  <option value="credit_card">刷卡</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">飲食</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.diet || ''}
+                  onChange={e => setEdit({ ...edit, diet: e.target.value })}>
+                  <option value="meat">葷食</option>
+                  <option value="vegetarian">素食</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">過午不食</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.noon_fasting || ''}
+                  onChange={e => setEdit({ ...edit, noon_fasting: e.target.value })}>
+                  <option value="before_noon">12 前吃</option>
+                  <option value="after_noon">12 後吃</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">茶點</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.snacks || ''}
+                  onChange={e => setEdit({ ...edit, snacks: e.target.value })}>
+                  <option value="snacks_and_drink">茶點+咖啡/茶</option>
+                  <option value="drink_only">只咖啡/茶</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">前往方式</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.arrival_transport || ''}
+                  onChange={e => setEdit({ ...edit, arrival_transport: e.target.value })}>
+                  <option value="self">自行</option>
+                  <option value="taipei_bus">台北專車</option>
+                  <option value="wuri_bus">烏日專車</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-black mb-1">離開方式</label>
+                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.departure_transport || ''}
+                  onChange={e => setEdit({ ...edit, departure_transport: e.target.value })}>
+                  <option value="self">自行</option>
+                  <option value="bus">專車</option>
+                </select>
+              </div>
+              {edit.departure_transport === 'bus' && (
+                <div className="col-span-2">
+                  <label className="block text-black mb-1">專車目的地</label>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                    value={edit.bus_destination || ''}
+                    onChange={e => setEdit({ ...edit, bus_destination: e.target.value })}>
+                    <option value="">—</option>
+                    <option value="taipei_824_pm">8/24 下午台北</option>
+                    <option value="taipei_825_am">8/25 上午台北</option>
+                    <option value="wuri_825_am">8/25 上午烏日</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-black mb-1">緊急聯絡人姓名</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.emergency_name || ''}
+                  onChange={e => setEdit({ ...edit, emergency_name: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-black mb-1">關係</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.emergency_relation || ''}
+                  onChange={e => setEdit({ ...edit, emergency_relation: e.target.value })} />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-black mb-1">緊急聯絡電話</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.emergency_phone || ''}
+                  onChange={e => setEdit({ ...edit, emergency_phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-black mb-1">抵台日期</label>
+                <input type="date" className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.flight_arrival_date || ''}
+                  onChange={e => setEdit({ ...edit, flight_arrival_date: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-black mb-1">抵台時間</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.flight_arrival_time || ''}
+                  onChange={e => setEdit({ ...edit, flight_arrival_time: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-black mb-1">離台日期</label>
+                <input type="date" className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.flight_departure_date || ''}
+                  onChange={e => setEdit({ ...edit, flight_departure_date: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-black mb-1">離台時間</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
+                  value={edit.flight_departure_time || ''}
+                  onChange={e => setEdit({ ...edit, flight_departure_time: e.target.value })} />
+              </div>
+              <label className="col-span-2 flex items-center gap-2 text-black">
+                <input type="checkbox" checked={!!edit.dinner_0819}
+                  onChange={e => setEdit({ ...edit, dinner_0819: e.target.checked })} />
+                8/19 晚餐
+              </label>
+              <label className="col-span-2 flex items-center gap-2 text-black">
+                <input type="checkbox" checked={!!edit.dinner_0824}
+                  onChange={e => setEdit({ ...edit, dinner_0824: e.target.checked })} />
+                8/24 晚餐
+              </label>
+              <label className="col-span-2 flex items-center gap-2 text-black">
+                <input type="checkbox" checked={!!edit.snoring}
+                  onChange={e => setEdit({ ...edit, snoring: e.target.checked })} />
+                打鼾
+              </label>
+            </div>
+
+            <h4 className="font-semibold text-black mt-6 mb-2">已上傳檔案</h4>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {Object.entries(DOC_LABEL).map(([k, label]) => {
+                const url = edit[k]
+                if (!url) return <div key={k} className="text-gray-400">{label}：未上傳</div>
+                return (
+                  <div key={k} className="border border-gray-200 rounded p-2">
+                    <p className="text-black mb-1">{label}</p>
+                    <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 underline">檢視</a>
+                    <button onClick={() => setEdit({ ...edit, [k]: null })}
+                      className="ml-2 text-red-600 hover:underline">清除</button>
+                  </div>
+                )
+              })}
+            </div>
+
+            {editError && (
+              <div className="mt-3 bg-red-50 border border-red-200 rounded p-2 text-red-700 text-sm">{editError}</div>
+            )}
+
+            <div className="mt-4 flex gap-2 justify-end">
+              <button onClick={() => !saving && setEdit(null)}
+                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">取消</button>
+              <button onClick={saveEdit} disabled={saving}
+                className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm">
+                {saving ? '儲存中...' : '儲存'}
+              </button>
             </div>
           </div>
         </div>

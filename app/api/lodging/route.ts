@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ registration: reg, lodging: lodging || null })
 }
 
+// 食宿登記截止時間：2026-06-20 20:00 台北 = 2026-06-20 12:00 UTC
+const LODGING_DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0)
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -43,6 +46,11 @@ export async function POST(request: NextRequest) {
 
     if (!id || !code) {
       return NextResponse.json({ error: '缺少 id 或 code' }, { status: 400 })
+    }
+
+    // 6/20 截止硬限制（後端擋，前端規避不了）
+    if (Date.now() > LODGING_DEADLINE_MS) {
+      return NextResponse.json({ error: '食宿登記已於 6/20 晚上 8 點截止' }, { status: 403 })
     }
 
     const { data: reg, error: regErr } = await supabaseAdmin

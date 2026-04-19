@@ -120,6 +120,10 @@ function LodgingContent() {
   }, [id, code])
 
   const handleSubmit = async () => {
+    if (Date.now() > Date.UTC(2026, 5, 20, 12, 0, 0)) {
+      setError('食宿登記已於 6/20 晚上 8 點截止，請聯絡學會。')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
@@ -139,6 +143,10 @@ function LodgingContent() {
       setSubmitting(false)
     }
   }
+
+  const isDomestic = reg?.residence === '台灣'
+  const DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0) // 6/20 20:00 Taipei = 12:00 UTC
+  const pastDeadline = Date.now() > DEADLINE_MS
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">載入中...</div>
 
@@ -191,7 +199,18 @@ function LodgingContent() {
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
           <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，若取消報名，所付費用恕不退款、轉讓。</p>
-          <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成。</p>
+          <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成，逾期系統將拒絕提交。</p>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900 space-y-1">
+          <p className="font-semibold">渡假村入住說明</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>渡假村辦理入住時間：每日下午 3 點後辦理入住。</li>
+            <li>辦理入住時請攜帶<strong>身分證＋健保卡</strong>（國內）或<strong>護照正本</strong>（國外）。</li>
+            <li>房間一律 4 人一房，採單獨床位配置，附 2 套衛浴。</li>
+            <li>每間房間皆有對外窗戶，舒適寬敞，可曬衣。</li>
+            <li>請<strong>自備盥洗用具與衣架</strong>，會館不提供一次性盥洗用品。</li>
+          </ul>
         </div>
 
         {/* 入住 / 離開 / 繳費方式 */}
@@ -311,52 +330,58 @@ function LodgingContent() {
           <h2 className="text-lg font-semibold text-green-800">六、證件上傳</h2>
           <p className="text-xs text-gray-500">可上傳 JPG / PNG / WEBP / PDF（5MB 以下）</p>
           {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
-          <p className="text-xs text-gray-600 pt-2 font-semibold">國內學員</p>
-          {fileField('id_front', '身分證正面', form.id_front_url, uploadingKind, handleFileUpload)}
-          {fileField('id_back', '身分證反面', form.id_back_url, uploadingKind, handleFileUpload)}
-          <p className="text-xs text-gray-600 pt-2 font-semibold">國外學員</p>
-          {fileField('passport', '護照', form.passport_url, uploadingKind, handleFileUpload)}
+          {isDomestic ? (
+            <>
+              {fileField('id_front', '身分證正面', form.id_front_url, uploadingKind, handleFileUpload)}
+              {fileField('id_back', '身分證反面', form.id_back_url, uploadingKind, handleFileUpload)}
+            </>
+          ) : (
+            fileField('passport', '護照', form.passport_url, uploadingKind, handleFileUpload)
+          )}
         </div>
 
         {/* 國外學員航班 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">七、國外學員航班資訊</h2>
-          <p className="text-xs text-gray-500">國內學員可略過本段</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>抵台航班日期</label>
-              <input type="date" className={inputCls} value={form.flight_arrival_date}
-                onChange={e => update('flight_arrival_date', e.target.value)} />
+        {!isDomestic && (
+          <div className={sectionCls}>
+            <h2 className="text-lg font-semibold text-green-800">七、航班資訊</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>抵台航班日期</label>
+                <input type="date" className={inputCls} value={form.flight_arrival_date}
+                  onChange={e => update('flight_arrival_date', e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>抵台航班具體時間</label>
+                <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
+                  onChange={e => update('flight_arrival_time', e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>離台航班日期</label>
+                <input type="date" className={inputCls} value={form.flight_departure_date}
+                  onChange={e => update('flight_departure_date', e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>離台航班具體時間</label>
+                <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
+                  onChange={e => update('flight_departure_time', e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>抵台航班具體時間</label>
-              <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
-                onChange={e => update('flight_arrival_time', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelCls}>離台航班日期</label>
-              <input type="date" className={inputCls} value={form.flight_departure_date}
-                onChange={e => update('flight_departure_date', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelCls}>離台航班具體時間</label>
-              <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
-                onChange={e => update('flight_departure_time', e.target.value)} />
-            </div>
+            {fileField('arrival_ticket', '上傳來台機票', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
+            {fileField('departure_ticket', '上傳離台機票', form.departure_ticket_url, uploadingKind, handleFileUpload)}
           </div>
-          {fileField('arrival_ticket', '上傳來台機票', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
-          {fileField('departure_ticket', '上傳離台機票', form.departure_ticket_url, uploadingKind, handleFileUpload)}
-        </div>
+        )}
 
-        {/* 快篩檢測 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">八、快篩檢測結果上傳</h2>
-          <p className="text-xs text-gray-500">檢測結果必須載明檢測日期、學號、姓名；快篩試劑請自備，主辦單位不提供</p>
-          {fileField('test_0817', '8/17（上午 8 點至晚上 8 點前）', form.test_0817_url, uploadingKind, handleFileUpload)}
-          {fileField('test_0819', '8/19（上午 12 點前）', form.test_0819_url, uploadingKind, handleFileUpload)}
-          {fileField('test_0820', '8/20（上午 8 點前）', form.test_0820_url, uploadingKind, handleFileUpload)}
-          {fileField('test_0822', '8/22（上午 8 點前）', form.test_0822_url, uploadingKind, handleFileUpload)}
-        </div>
+        {/* 快篩檢測（國外學員） */}
+        {!isDomestic && (
+          <div className={sectionCls}>
+            <h2 className="text-lg font-semibold text-green-800">八、快篩檢測結果上傳</h2>
+            <p className="text-xs text-gray-500">檢測結果必須載明檢測日期、學號、姓名；快篩試劑請自備，主辦單位不提供</p>
+            {fileField('test_0817', '8/17（上午 8 點至晚上 8 點前）', form.test_0817_url, uploadingKind, handleFileUpload)}
+            {fileField('test_0819', '8/19（上午 12 點前）', form.test_0819_url, uploadingKind, handleFileUpload)}
+            {fileField('test_0820', '8/20（上午 8 點前）', form.test_0820_url, uploadingKind, handleFileUpload)}
+            {fileField('test_0822', '8/22（上午 8 點前）', form.test_0822_url, uploadingKind, handleFileUpload)}
+          </div>
+        )}
 
         {/* 其他 */}
         <div className={sectionCls}>
@@ -377,9 +402,14 @@ function LodgingContent() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">{error}</div>
         )}
 
-        <button onClick={handleSubmit} disabled={submitting}
+        {pastDeadline && (
+          <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-red-700 text-sm text-center">
+            食宿登記已於 6/20 晚上 8 點（台北時間）截止，無法再提交。如有特殊狀況請聯絡學會。
+          </div>
+        )}
+        <button onClick={handleSubmit} disabled={submitting || pastDeadline}
           className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting ? '送出中...' : '提交食宿登記'}
+          {submitting ? '送出中...' : pastDeadline ? '已截止' : '提交食宿登記'}
         </button>
 
         <p className="text-center text-sm text-gray-500">
