@@ -94,6 +94,10 @@ const LODGING_COLUMNS = [
   { key: 'flight_arrival_time', header: '抵台時間', width: 10 },
   { key: 'flight_departure_date', header: '離台日期', width: 12 },
   { key: 'flight_departure_time', header: '離台時間', width: 10 },
+  { key: 'line_id', header: 'LINE ID', width: 14 },
+  { key: 'wechat_id', header: '微信號', width: 14 },
+  { key: 'line_qr_url', header: 'LINE QR 連結', width: 40 },
+  { key: 'wechat_qr_url', header: 'WeChat QR 連結', width: 40 },
   { key: 'photo_url', header: '個人照片', width: 40 },
   { key: 'id_front_url', header: '身分證正面', width: 40 },
   { key: 'id_back_url', header: '身分證反面', width: 40 },
@@ -129,6 +133,10 @@ function transformLodgingRow(l: any) {
     payment_status: paymentStatusZh[reg.payment_status] || reg.payment_status || '',
     payment_note: reg.payment_note || '',
     payment_confirmed_at: reg.payment_confirmed_at ? new Date(reg.payment_confirmed_at).toLocaleString('zh-TW') : '',
+    line_id: reg.line_id || '',
+    wechat_id: reg.wechat_id || '',
+    line_qr_url: reg.line_qr_url || '',
+    wechat_qr_url: reg.wechat_qr_url || '',
     arrival_transport: transportZh[l.arrival_transport] || l.arrival_transport,
     departure_transport: transportZh[l.departure_transport] || l.departure_transport,
     diet: l.diet === 'meat' ? '葷' : '素',
@@ -163,7 +171,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   // Lodging 另外撈
   let lodgingQuery = supabaseAdmin
     .from('lodging_registrations')
-    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at)')
+    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at, line_id, wechat_id, line_qr_url, wechat_qr_url)')
     .order('updated_at', { ascending: true })
   if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
   const { data: lodgingData } = await lodgingQuery
