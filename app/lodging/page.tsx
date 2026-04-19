@@ -213,6 +213,30 @@ function LodgingContent() {
           </ul>
         </div>
 
+        {/* 學員資料（由報名表帶入，唯讀） */}
+        <div className={sectionCls}>
+          <h2 className="text-lg font-semibold text-green-800">學員資料</h2>
+          <p className="text-xs text-gray-500">以下資料由報名表自動帶入，如需修改請聯絡學會</p>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-xs text-gray-500">中文姓名</div>
+              <div className="text-black font-medium">{reg.chinese_name || '—'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">學號</div>
+              <div className="text-black font-medium">{reg.member_id || '待編號'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">性別</div>
+              <div className="text-black font-medium">{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">Email</div>
+              <div className="text-black font-medium break-all">{reg.email || '—'}</div>
+            </div>
+          </div>
+        </div>
+
         {/* 入住 / 離開 / 繳費方式 */}
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">一、住宿日期</h2>
