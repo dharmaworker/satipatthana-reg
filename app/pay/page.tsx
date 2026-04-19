@@ -3,32 +3,36 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
-const PLAN_INFO: Record<string, { label: string; amount: number }> = {
-  A1: { label: 'A(1) 8/20-8/24 食宿等費用（匯款）', amount: 18600 },
-  A2: { label: 'A(2) 8/20-8/24 食宿等費用（刷卡）', amount: 19300 },
-  B1: { label: 'B(1) 8/19-8/24 食宿費用（匯款）', amount: 20350 },
-  B2: { label: 'B(2) 8/19-8/24 食宿費用（刷卡）', amount: 21050 },
-  C1: { label: 'C(1) 8/19-8/25 食宿等費用（匯款）', amount: 22590 },
-  C2: { label: 'C(2) 8/19-8/25 食宿等費用（刷卡）', amount: 23290 },
-  D1: { label: 'D(1) 8/20-8/25 食宿等費用（匯款）', amount: 20840 },
-  D2: { label: 'D(2) 8/20-8/25 食宿等費用（刷卡）', amount: 21540 },
-  T1: { label: '【測試】匯款 1 元', amount: 1 },
-  T2: { label: '【測試】刷卡 30 元', amount: 30 },
-}
+type PlanRow = { id: string; label: string; amount: number; test?: boolean }
+const PLANS: PlanRow[] = [
+  { id: 'A1', label: 'A(1) 8/20-8/24 食宿等費用（匯款）', amount: 18600 },
+  { id: 'A2', label: 'A(2) 8/20-8/24 食宿等費用（刷卡）', amount: 19300 },
+  { id: 'B1', label: 'B(1) 8/19-8/24 食宿費用（匯款）', amount: 20350 },
+  { id: 'B2', label: 'B(2) 8/19-8/24 食宿費用（刷卡）', amount: 21050 },
+  { id: 'C1', label: 'C(1) 8/19-8/25 食宿等費用（匯款）', amount: 22590 },
+  { id: 'C2', label: 'C(2) 8/19-8/25 食宿等費用（刷卡）', amount: 23290 },
+  { id: 'D1', label: 'D(1) 8/20-8/25 食宿等費用（匯款）', amount: 20840 },
+  { id: 'D2', label: 'D(2) 8/20-8/25 食宿等費用（刷卡）', amount: 21540 },
+  { id: 'T1', label: '【測試】匯款 1 元', amount: 1, test: true },
+  { id: 'T2', label: '【測試】刷卡 30 元', amount: 30, test: true },
+]
+const PLAN_INFO: Record<string, { label: string; amount: number }> = Object.fromEntries(
+  PLANS.map(p => [p.id, { label: p.label, amount: p.amount }])
+)
 
 function PayContent() {
   const searchParams = useSearchParams()
   const registration_id = searchParams.get('id') || ''
   const random_code = searchParams.get('code') || ''
 
-  const [plan, setPlan] = useState('')
+  const [plan, setPlan] = useState('A1')
   const [loadingInit, setLoadingInit] = useState(true)
   const [initError, setInitError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showBank, setShowBank] = useState(false)
   const [error, setError] = useState('')
 
-  // 進頁面時先抓 registration，確認 payment_plan 已由食宿登記帶入
+  // 進頁面時驗證身份；若已有 payment_plan 則預設選那個
   useEffect(() => {
     if (!registration_id || !random_code) {
       setInitError('網址缺少參數，請從錄取通知信進入')
@@ -133,23 +137,6 @@ function PayContent() {
     )
   }
 
-  // 沒有 payment_plan → 先導去食宿登記
-  if (!plan) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center space-y-4">
-          <div className="text-5xl">📝</div>
-          <h2 className="text-xl font-bold text-green-800">請先完成食宿登記</h2>
-          <p className="text-gray-700 text-sm">食宿方案將依登記內容自動帶入，完成後可返回此頁繳費。</p>
-          <a href={`/lodging?id=${registration_id}&code=${encodeURIComponent(random_code)}`}
-            className="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-semibold">
-            前往食宿登記
-          </a>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-green-800 text-white py-8 px-4 text-center">
@@ -166,17 +153,28 @@ function PayContent() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-3">
-          <h2 className="text-lg font-semibold text-green-800">您選擇的方案</h2>
-          <p className="text-sm text-gray-600">以下方案由食宿登記自動帶入，如需變更請回到食宿登記修改。</p>
-          <div className="p-3 rounded-lg border border-green-500 bg-green-50 flex items-center justify-between">
-            <span className="text-black text-sm">{selectedPlan?.label}</span>
-            <span className="font-semibold text-green-800">NT${selectedPlan?.amount.toLocaleString()}</span>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-green-800">請選擇費用方案</h2>
+          <p className="text-xs text-gray-500">繳費完成後系統會寄信邀請您完成食宿登記，方案內容會自動帶入食宿登記表。</p>
+          <div className="space-y-2">
+            {PLANS.map(p => (
+              <label key={p.id}
+                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors
+                  ${plan === p.id
+                    ? (p.test ? 'border-amber-500 bg-amber-50' : 'border-green-500 bg-green-50')
+                    : (p.test ? 'border-amber-200 bg-amber-50/40 hover:border-amber-300' : 'border-gray-200 hover:border-gray-300')}`}>
+                <div className="flex items-center gap-3">
+                  <input type="radio" name="plan" value={p.id}
+                    checked={plan === p.id}
+                    onChange={e => { setPlan(e.target.value); setShowBank(false) }} />
+                  <span className={`text-sm ${p.test ? 'text-amber-900' : 'text-black'}`}>{p.label}</span>
+                </div>
+                <span className={`font-semibold ${p.test ? 'text-amber-700' : 'text-green-800'}`}>
+                  NT${p.amount.toLocaleString()}
+                </span>
+              </label>
+            ))}
           </div>
-          <a href={`/lodging?id=${registration_id}&code=${encodeURIComponent(random_code)}`}
-            className="inline-block text-xs text-green-700 underline">
-            修改食宿登記
-          </a>
         </div>
 
         {selectedPlan && (

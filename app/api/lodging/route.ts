@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { derivePaymentPlan } from '@/lib/lodging-plan'
+import { planToLodgingDefaults } from '@/lib/lodging-plan'
 import { sendMail } from '@/lib/mailer'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     const { data: reg, error: regErr } = await supabaseAdmin
       .from('registrations')
-      .select('id, random_code, chinese_name, email, member_id, status')
+      .select('id, random_code, chinese_name, email, member_id, status, payment_plan')
       .eq('id', id)
       .eq('random_code', code.toUpperCase())
       .single()
@@ -66,9 +66,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取，無法填寫食宿登記' }, { status: 403 })
     }
 
-    // 必填檢查
+    // 方案來自繳費紀錄（payment_plan），食宿登記只填其餘資訊
+    const plan = reg.payment_plan
+    if (!plan) {
+      return NextResponse.json({ error: '尚未完成繳費（未設定方案），請先到繳費頁完成繳費再填食宿登記' }, { status: 400 })
+    }
+    const planDefaults = planToLodgingDefaults(plan)
+    if (!planDefaults) {
+      return NextResponse.json({ error: `無法依方案 ${plan} 推導日期，請聯絡學會` }, { status: 400 })
+    }
+
+    // 必填檢查（不再要求 dates / payment_method，這些由 plan 帶入）
     const required = [
-      'arrival_date', 'departure_date', 'payment_method',
       'emergency_name', 'emergency_relation', 'emergency_phone',
       'arrival_transport', 'departure_transport',
       'diet', 'noon_fasting', 'snacks',
@@ -85,23 +94,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '選擇專車離開需指定目的地' }, { status: 400 })
     }
 
-    const plan = derivePaymentPlan(
-      fields.arrival_date,
-      fields.departure_date,
-      fields.payment_method
-    )
-    if (!plan) {
-      return NextResponse.json({ error: '日期組合無對應方案，請聯絡學會' }, { status: 400 })
-    }
-
-    // upsert 食宿登記
+    // upsert 食宿登記（dates / method 由 plan 推導，非由 form 帶入）
     const { data: lodging, error: lodgingErr } = await supabaseAdmin
       .from('lodging_registrations')
       .upsert({
         registration_id: reg.id,
-        arrival_date: fields.arrival_date,
-        departure_date: fields.departure_date,
-        payment_method: fields.payment_method,
+        arrival_date: planDefaults.arrival_date,
+        departure_date: planDefaults.departure_date,
+        payment_method: planDefaults.payment_method,
         emergency_name: fields.emergency_name,
         emergency_relation: fields.emergency_relation,
         emergency_phone: fields.emergency_phone,
@@ -138,12 +138,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
     }
 
-    // 同步更新 registrations.payment_plan（由食宿登記帶入）
-    await supabaseAdmin
-      .from('registrations')
-      .update({ payment_plan: plan })
-      .eq('id', reg.id)
-
     // 寄確認信給學員 + bcc 學會（失敗不影響主流程）
     try {
       const dietZh = fields.diet === 'meat' ? '葷食' : '素食'
@@ -167,9 +161,7 @@ export async function POST(request: NextRequest) {
             <p>您已完成食宿登記。以下為登記摘要：</p>
             <table style="border-collapse:collapse;width:100%;font-size:14px;">
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:140px;">學號</td><td style="padding:6px 10px;border:1px solid #eee;">${reg.member_id || '待編號'}</td></tr>
-              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">入住日</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.arrival_date}</td></tr>
-              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">離開日</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.departure_date}</td></tr>
-              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">方案</td><td style="padding:6px 10px;border:1px solid #eee;">${plan}</td></tr>
+              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">方案</td><td style="padding:6px 10px;border:1px solid #eee;">${plan}（${planDefaults.arrival_date} 至 ${planDefaults.departure_date}）</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">前往方式</td><td style="padding:6px 10px;border:1px solid #eee;">${arrivalZh}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">離開方式</td><td style="padding:6px 10px;border:1px solid #eee;">${departureZh}${busDestZh ? '：' + busDestZh : ''}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">飲食</td><td style="padding:6px 10px;border:1px solid #eee;">${dietZh}　${noonZh}</td></tr>
@@ -179,7 +171,6 @@ export async function POST(request: NextRequest) {
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">睡覺會打鼾</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.snoring ? '會' : '不會'}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">緊急聯絡人</td><td style="padding:6px 10px;border:1px solid #eee;">${fields.emergency_name}（${fields.emergency_relation}）${fields.emergency_phone}</td></tr>
             </table>
-            <p style="margin-top:16px;">食宿登記完成後，請繼續完成繳費；系統已依您的選擇自動帶入方案 <strong>${plan}</strong>。</p>
             <p style="color:#666;font-size:13px;margin-top:16px;">台灣四念處學會 合十</p>
           </div>
         `,

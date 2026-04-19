@@ -15,9 +15,6 @@ function LodgingContent() {
   const [done, setDone] = useState(false)
 
   const [form, setForm] = useState({
-    arrival_date: '',
-    departure_date: '',
-    payment_method: '',
     emergency_name: '',
     emergency_relation: '',
     emergency_phone: '',
@@ -82,9 +79,6 @@ function LodgingContent() {
         setReg(data.registration)
         if (data.lodging) {
           setForm({
-            arrival_date: data.lodging.arrival_date || '',
-            departure_date: data.lodging.departure_date || '',
-            payment_method: data.lodging.payment_method || '',
             emergency_name: data.lodging.emergency_name || '',
             emergency_relation: data.lodging.emergency_relation || '',
             emergency_phone: data.lodging.emergency_phone || '',
@@ -135,8 +129,6 @@ function LodgingContent() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '送出失敗')
       setDone(true)
-      // 顯示成功後 2 秒跳去繳費頁
-      setTimeout(() => router.push(`/pay?id=${id}&code=${encodeURIComponent(code)}`), 2000)
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -149,6 +141,23 @@ function LodgingContent() {
   const pastDeadline = Date.now() > DEADLINE_MS
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">載入中...</div>
+
+  // 已驗證身份但尚未繳費（無 payment_plan）→ 提示先去繳費
+  if (reg && !reg.payment_plan) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl p-8 max-w-md text-center space-y-4">
+          <div className="text-5xl">💳</div>
+          <h2 className="text-xl font-bold text-green-800">請先完成繳費</h2>
+          <p className="text-gray-700 text-sm">食宿登記需在繳費完成後填寫，方案會自動帶入。</p>
+          <a href={`/pay?id=${id}&code=${encodeURIComponent(code)}`}
+            className="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-semibold">
+            前往繳費
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   if (error && !reg) {
     return (
@@ -166,11 +175,11 @@ function LodgingContent() {
         <div className="bg-white rounded-xl p-8 max-w-md text-center">
           <p className="text-5xl mb-4">🙏</p>
           <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記完成</h2>
-          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email。正在轉至繳費頁⋯</p>
-          <a href={`/pay?id=${id}&code=${encodeURIComponent(code)}`}
-            className="inline-block bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-lg">
-            前往繳費
-          </a>
+          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。</p>
+          <button onClick={() => setDone(false)}
+            className="inline-block bg-gray-100 hover:bg-gray-200 text-black px-6 py-2 rounded-lg">
+            返回檢視
+          </button>
         </div>
       </div>
     )
@@ -251,28 +260,28 @@ function LodgingContent() {
           </div>
         </div>
 
-        {/* 入住 / 離開 / 繳費方式 */}
+        {/* 方案資訊（由繳費頁帶入，唯讀） */}
         <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">一、住宿日期</h2>
-          <div>
-            <label className={labelCls}>入住日月潭湖畔會館日期 *</label>
-            <div className="space-y-2">
-              {radio('arrival_date', '2026-08-19', '8/19 入住（提前一晚，課前休息）')}
-              {radio('arrival_date', '2026-08-20', '8/20 入住（當日報到）')}
+          <h2 className="text-lg font-semibold text-green-800">一、您的方案</h2>
+          <p className="text-xs text-gray-500">方案由您於繳費頁的選擇自動帶入；如需修改，請聯絡學會</p>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-xs text-gray-500">方案代碼</div>
+              <div className="text-black font-medium">{reg.payment_plan || '—'}</div>
             </div>
-          </div>
-          <div>
-            <label className={labelCls}>離開日月潭湖畔會館日期 *</label>
-            <div className="space-y-2">
-              {radio('departure_date', '2026-08-24', '8/24 離開（課程結束當日）')}
-              {radio('departure_date', '2026-08-25', '8/25 離開（延後一晚）')}
+            <div>
+              <div className="text-xs text-gray-500">繳費方式</div>
+              <div className="text-black font-medium">
+                {reg.payment_plan?.endsWith('1') ? '匯款' : reg.payment_plan?.endsWith('2') ? '刷卡' : '—'}
+              </div>
             </div>
-          </div>
-          <div>
-            <label className={labelCls}>繳費方式 *</label>
-            <div className="space-y-2">
-              {radio('payment_method', 'transfer', '匯款（台灣/國外銀行帳號）')}
-              {radio('payment_method', 'credit_card', '刷卡（綠界 ECPay）')}
+            <div>
+              <div className="text-xs text-gray-500">入住日</div>
+              <div className="text-black font-medium">{(planDates(reg.payment_plan)?.[0]) || '—'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">離開日</div>
+              <div className="text-black font-medium">{(planDates(reg.payment_plan)?.[1]) || '—'}</div>
             </div>
           </div>
         </div>
@@ -456,6 +465,18 @@ function LodgingContent() {
       </div>
     </div>
   )
+}
+
+function planDates(plan: string | null | undefined): [string, string] | null {
+  if (!plan) return null
+  const map: Record<string, [string, string]> = {
+    A: ['2026-08-20', '2026-08-24'],
+    B: ['2026-08-19', '2026-08-24'],
+    C: ['2026-08-19', '2026-08-25'],
+    D: ['2026-08-20', '2026-08-25'],
+    T: ['2026-08-20', '2026-08-24'],
+  }
+  return map[plan.charAt(0)] || null
 }
 
 function fileField(

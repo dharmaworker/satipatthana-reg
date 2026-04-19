@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
+import { sendLodgingInvitationEmail } from '@/lib/lodging-invitation-email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const { data: reg, error: regErr } = await supabaseAdmin
       .from('registrations')
-      .select('status')
+      .select('status, payment_status')
       .eq('id', registration_id)
       .single()
 
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     if (reg.status !== 'approved') {
       return NextResponse.json({ error: '尚未錄取，無法回填匯款' }, { status: 403 })
     }
+    const wasUnpaid = reg.payment_status === 'unpaid' || !reg.payment_status
 
     const updateData: Record<string, unknown> = {
       payment_status: 'paid',
@@ -40,14 +42,21 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
-    // 寄食宿登記備存信給學會信箱（失敗不影響主流程）
+    // 寄食宿備存信給學會信箱（失敗不影響主流程）
     try {
       const { data: fullReg } = await supabaseAdmin
         .from('registrations')
         .select('id, random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
         .eq('id', registration_id)
         .single()
-      if (fullReg) await sendLodgingArchiveEmail(fullReg)
+      if (fullReg) {
+        await sendLodgingArchiveEmail(fullReg)
+        // 首次完成繳費 → 寄食宿登記邀請信
+        if (wasUnpaid) {
+          try { await sendLodgingInvitationEmail(fullReg) }
+          catch (e) { console.error('[transfer] 食宿邀請信失敗:', e) }
+        }
+      }
     } catch (mailErr) {
       console.error('[transfer] 食宿備存信失敗:', mailErr)
     }

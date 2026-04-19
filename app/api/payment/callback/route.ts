@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
+import { sendLodgingInvitationEmail } from '@/lib/lodging-invitation-email'
 import * as crypto from 'crypto'
 
 const HASH_KEY = process.env.ECPAY_HASH_KEY!
@@ -45,6 +46,14 @@ export async function POST(request: NextRequest) {
 
     // 付款成功
     if (RtnCode === '1') {
+      // 先看當前 payment_status 是否為首次繳費
+      const { data: prev } = await supabaseAdmin
+        .from('registrations')
+        .select('payment_status')
+        .eq('id', registration_id)
+        .single()
+      const wasUnpaid = !prev || prev.payment_status === 'unpaid' || prev.payment_status === null
+
       // 組刷卡備註：綠界交易號 + 實際付款時間 + 付款方式 + 金額
       const tradeNo = params.TradeNo || ''
       const paymentDate = params.PaymentDate || ''
@@ -68,7 +77,13 @@ export async function POST(request: NextRequest) {
           .select('id, random_code, chinese_name, email, phone, member_id, payment_plan, payment_status, payment_note, payment_confirmed_at')
           .eq('id', registration_id)
           .single()
-        if (fullReg) await sendLodgingArchiveEmail(fullReg)
+        if (fullReg) {
+          await sendLodgingArchiveEmail(fullReg)
+          if (wasUnpaid) {
+            try { await sendLodgingInvitationEmail(fullReg) }
+            catch (e) { console.error('[callback] 食宿邀請信失敗:', e) }
+          }
+        }
       } catch (mailErr) {
         console.error('[callback] 食宿備存信失敗:', mailErr)
       }
