@@ -100,7 +100,7 @@ export default function SchedulesPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800 space-y-1">
-          <p>⚙️ 系統每天台灣時間早上 9:00 自動檢查並執行到期的排程。</p>
+          <p>⚙️ 系統每天台灣時間 09:00 自動檢查並執行到期的排程。</p>
           <p>📎 Excel 含：全部 / 待審核 / 已錄取未繳費 / 已繳費 / 未錄取 五個工作表。</p>
           <p>⏰ 資料截止時間 = 排程日期的前一日 24:00（台灣時間）。</p>
           <p>🔢 最多 10 筆排程。</p>
@@ -123,7 +123,7 @@ export default function SchedulesPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-4 py-3 text-left text-black font-medium">排程時間（台北）</th>
+                <th className="px-4 py-3 text-left text-black font-medium">排程日期（台北）</th>
                 <th className="px-4 py-3 text-left text-black font-medium">收件人</th>
                 <th className="px-4 py-3 text-left text-black font-medium">啟用</th>
                 <th className="px-4 py-3 text-left text-black font-medium">上次執行</th>
@@ -137,7 +137,7 @@ export default function SchedulesPage() {
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-black">尚無排程</td></tr>
               ) : schedules.map(s => (
                 <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-black">{toLocal(s.scheduled_at)}</td>
+                  <td className="px-4 py-3 text-black">{toLocalDate(s.scheduled_at)}</td>
                   <td className="px-4 py-3 text-black text-xs">{s.recipients.join(', ')}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleEnabled(s)}
@@ -178,12 +178,12 @@ export default function SchedulesPage() {
             </h3>
             <div className="space-y-4 text-sm">
               <div>
-                <label className="block text-black font-medium mb-1">排程日期時間（台北時間）*</label>
-                <input type="datetime-local"
+                <label className="block text-black font-medium mb-1">排程日期（台北時間）*</label>
+                <input type="date"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-black"
-                  value={toInputLocal(editItem.scheduled_at)}
-                  onChange={e => setEditItem({ ...editItem, scheduled_at: fromInputLocal(e.target.value) })} />
-                <p className="text-xs text-gray-500 mt-1">系統會在此時間之後最近一次 cron (每天 09:00) 執行</p>
+                  value={toInputDate(editItem.scheduled_at)}
+                  onChange={e => setEditItem({ ...editItem, scheduled_at: fromInputDate(e.target.value) })} />
+                <p className="text-xs text-gray-500 mt-1">系統固定於當天台北時間 09:00 寄出，資料截止前一日 24:00</p>
               </div>
               <div>
                 <label className="block text-black font-medium mb-1">收件人 Email *</label>
@@ -222,20 +222,22 @@ function toLocal(iso: string) {
   return new Date(iso).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })
 }
 
-function toInputLocal(iso?: string) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  // 轉成台北時區的 yyyy-MM-ddTHH:mm
-  const tw = new Date(d.getTime() + 8 * 60 * 60 * 1000)
-  return tw.toISOString().slice(0, 16)
+function toLocalDate(iso: string) {
+  return new Date(iso).toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })
 }
 
-function fromInputLocal(localStr: string) {
-  if (!localStr) return ''
-  // 使用者輸入的是「台北時間」，減 8 小時轉成 UTC ISO
-  const [date, time] = localStr.split('T')
-  const [y, m, d] = date.split('-').map(Number)
-  const [hh, mm] = time.split(':').map(Number)
-  const utc = new Date(Date.UTC(y, m - 1, d, hh, mm) - 8 * 60 * 60 * 1000)
+// 取得日期輸入框顯示用字串（台北時區的 yyyy-MM-dd）
+function toInputDate(iso?: string) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  // +8 小時得到台北時間，再截前 10 碼
+  return new Date(d.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+// 使用者選的日期（台北）轉為 UTC ISO（該日台北 00:00 = 前一日 UTC 16:00）
+function fromInputDate(dateStr: string) {
+  if (!dateStr) return ''
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const utc = new Date(Date.UTC(y, m - 1, d, 0, 0) - 8 * 60 * 60 * 1000)
   return utc.toISOString()
 }
