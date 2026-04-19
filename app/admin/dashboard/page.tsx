@@ -164,6 +164,36 @@ export default function DashboardPage() {
     fetchData()
   }
 
+  const batchAction = async (action: 'approve' | 'reject' | 'delete') => {
+    if (selected.length === 0) {
+      setMessage('請先勾選項目')
+      return
+    }
+    const verb = action === 'approve' ? '錄取' : action === 'reject' ? '拒絕' : '刪除'
+    const destructive = action === 'delete'
+    if (!confirm(
+      `確定要批次${verb} ${selected.length} 筆嗎？` +
+      (destructive ? '\n\n此操作無法復原，會連同 QR 圖檔一併清除。' : '')
+    )) return
+
+    setSending(true)
+    const res = await fetch('/api/admin/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selected, action }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setMessage(`批次${verb}失敗：${data.error || res.status}`)
+    } else {
+      const emailed = data.emailed ? `（自動寄出 ${data.emailed.ok} 封錄取信，${data.emailed.failed} 封失敗）` : ''
+      setMessage(`已批次${verb} ${data.count} 筆${emailed}`)
+      setSelected([])
+      fetchData()
+    }
+    setSending(false)
+  }
+
   const sendNotifications = async () => {
     const approvedSelected = registrations
       .filter(r => selected.includes(r.id) && r.status === 'approved')
@@ -227,11 +257,18 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-green-800 text-white px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">後台管理系統｜第二屆台灣四念處禪修</h1>
-        <button
-          onClick={() => router.push('/admin')}
-          className="text-green-200 hover:text-white text-sm">
-          登出
-        </button>
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={() => router.push('/admin/schedules')}
+            className="text-green-200 hover:text-white text-sm">
+            ⚙️ 自動匯出排程
+          </button>
+          <button
+            onClick={() => router.push('/admin')}
+            className="text-green-200 hover:text-white text-sm">
+            登出
+          </button>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -281,10 +318,28 @@ export default function DashboardPage() {
             匯出 CSV
           </button>
           <button
+            onClick={() => batchAction('approve')}
+            disabled={sending || selected.length === 0}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            批次錄取 ({selected.length})
+          </button>
+          <button
+            onClick={() => batchAction('reject')}
+            disabled={sending || selected.length === 0}
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            批次拒絕 ({selected.length})
+          </button>
+          <button
+            onClick={() => batchAction('delete')}
+            disabled={sending || selected.length === 0}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            批次刪除 ({selected.length})
+          </button>
+          <button
             onClick={sendNotifications}
             disabled={sending || selected.length === 0}
-            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm">
-            {sending ? '寄送中...' : `批次寄送錄取通知 (${selected.length})`}
+            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            {sending ? '寄送中...' : `再寄錄取信 (${selected.length})`}
           </button>
           {message && (
             <span className="text-sm text-green-700 font-medium">{message}</span>

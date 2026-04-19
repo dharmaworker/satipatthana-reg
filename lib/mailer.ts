@@ -19,12 +19,14 @@ export async function sendMail({
   html,
   cc,
   bcc,
+  attachments,
 }: {
-  to: string
+  to: string | string[]
   subject: string
   html: string
   cc?: string | string[]
   bcc?: string | string[]
+  attachments?: { filename: string; content: Buffer; contentType?: string }[]
 }) {
   try {
     const result = await transporter.sendMail({
@@ -34,8 +36,9 @@ export async function sendMail({
       bcc,
       subject,
       html,
+      attachments,
     })
-    console.log('Mail sent:', result.messageId, 'to:', to, 'cc:', cc ?? '—')
+    console.log('Mail sent:', result.messageId, 'to:', to, 'cc:', cc ?? '—', 'attachments:', attachments?.length ?? 0)
     return result
   } catch (err) {
     console.error('Mail error:', err)

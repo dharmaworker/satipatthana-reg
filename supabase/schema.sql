@@ -59,6 +59,18 @@ create table if not exists admin_users (
   created_at timestamptz not null default now()
 );
 
+-- ========== scheduled_exports ==========
+create table if not exists scheduled_exports (
+  id uuid primary key default gen_random_uuid(),
+  scheduled_at timestamptz not null,
+  recipients text[] not null default '{}',
+  enabled boolean not null default true,
+  last_run_at timestamptz,
+  last_error text,
+  created_at timestamptz not null default now()
+);
+alter table scheduled_exports enable row level security;
+
 -- ========== RLS ==========
 -- 程式全部用 service_role (secret) key 走 supabaseAdmin，不靠 anon 讀寫，
 -- 所以直接鎖死 RLS，anon 完全無權限即可。
