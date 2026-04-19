@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { AdminHeader } from '../_components/AdminHeader'
 
 const RESIDENCE_OPTIONS = ['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區']
 const PLAN_OPTIONS: [string, string][] = [
@@ -303,27 +304,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-green-800 text-white px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">後台管理系統｜第二屆台灣四念處禪修</h1>
-        <div className="flex gap-3 items-center">
-          <button
-            onClick={() => router.push('/admin/lodgings')}
-            className="text-green-200 hover:text-white text-sm">
-            🛏️ 食宿登記
-          </button>
-          <button
-            onClick={() => router.push('/admin/schedules')}
-            className="text-green-200 hover:text-white text-sm">
-            ⚙️ 自動匯出排程
-          </button>
-          <button
-            onClick={() => router.push('/admin')}
-            className="text-green-200 hover:text-white text-sm">
-            登出
-          </button>
-        </div>
-      </div>
+      <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 

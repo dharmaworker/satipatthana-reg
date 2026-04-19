@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { AdminHeader } from '../_components/AdminHeader'
 
 const PLAN_LABEL: Record<string, string> = {
   A1: 'A(1) 匯款', A2: 'A(2) 刷卡',
@@ -99,11 +100,7 @@ export default function LodgingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-green-800 text-white px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">食宿登記管理</h1>
-        <button onClick={() => router.push('/admin/dashboard')}
-          className="text-green-200 hover:text-white text-sm">← 返回 Dashboard</button>
-      </div>
+      <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center">
