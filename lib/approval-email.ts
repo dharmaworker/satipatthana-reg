@@ -42,22 +42,35 @@ export async function sendApprovalEmail(reg: {
         <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
 
         <h3 style="color: #2d6a4f;">一、請詳讀以下內容</h3>
-        <p>本信包含：繳費資訊、費用方案、住宿安排、報到時間、課程時間、結束時間、食宿登記、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
+        <p>本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
 
-        <h3 style="color: #2d6a4f;">二、繳費與食宿登記</h3>
-        <p>請於 <strong>2026年6月15日台北時間晚上8時前</strong>完成繳費：</p>
+        <h3 style="color: #2d6a4f;">二、繳費 / 食宿登記 / 快篩上傳</h3>
+        <p>以下三個流程<strong>可獨立進行、不需依序</strong>，請依各自截止時間完成：</p>
+
+        <p style="margin-top:14px;"><strong>① 繳費</strong>　截止：<strong>6 月 15 日台北時間晚上 8 時前</strong></p>
         <a href="${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}"
           style="display:inline-block;background:#2d6a4f;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:6px 0;">
-          ① 前往繳費
+          前往繳費
         </a>
         <p style="font-size:13px;color:#c0392b;margin-top:6px;">⚠️ 匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。</p>
 
-        <p style="margin-top:14px;">完成繳費後，請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成「食宿登記」：</p>
+        <p style="margin-top:14px;"><strong>② 食宿登記</strong>　截止：<strong>6 月 20 日晚上 8 點前</strong></p>
         <a href="${baseUrl}/lodging?id=${reg.id}&code=${reg.random_code}"
           style="display:inline-block;background:#1a5276;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:6px 0;">
-          ② 前往食宿登記
+          前往食宿登記
         </a>
-        <p style="font-size:13px;color:#666;margin-top:6px;">食宿登記需在繳費完成後方可提交，方案會自動帶入。</p>
+        <p style="font-size:13px;color:#666;margin-top:6px;">填寫緊急聯絡人、飲食、交通、證件等資料；可隨時回頁面更新（6/20 截止前不限次數）。</p>
+
+        <p style="margin-top:14px;"><strong>③ 快篩檢測上傳</strong>　依各時段截止：</p>
+        <a href="${baseUrl}/quicktests?id=${reg.id}&code=${reg.random_code}"
+          style="display:inline-block;background:#8e44ad;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:6px 0;">
+          前往上傳快篩
+        </a>
+        <p style="font-size:13px;color:#666;margin-top:6px;">
+          ・8/17 上午 8 點至晚上 8 點前　・8/19 上午 12 點前<br>
+          ・8/20 上午 8 點前（課程期間）　・8/22 上午 8 點前（課程期間）<br>
+          檢測結果需載明日期、學號、姓名；快篩試劑請自備。
+        </p>
 
         <h4 style="color:#2d6a4f;margin-top:16px;">費用方案</h4>
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
@@ -119,7 +132,7 @@ export async function sendApprovalEmail(reg: {
         <p>2026年8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
 
         <h3 style="color: #2d6a4f;">七、食宿登記</h3>
-        <p>繳費完成後，系統將另寄一封郵件附上「食宿登記表」連結，請於 6/20 晚上 8 點（台北時間）前完成填寫。</p>
+        <p>請從本信第二段「② 前往食宿登記」連結進入填寫，6/20 晚上 8 點前可隨時更新。</p>
 
         <h3 style="color: #2d6a4f;">八、禪修課程群組</h3>
         <p>資料經確認無誤後，學會將以學員所提供之 LINE 或微信，邀請您加入 <strong>8 月禪修課程群組</strong>。</p>
