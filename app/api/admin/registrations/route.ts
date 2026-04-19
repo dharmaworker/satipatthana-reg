@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendApprovalEmail } from '@/lib/approval-email'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
-import { sendLodgingInvitationEmail } from '@/lib/lodging-invitation-email'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -147,20 +146,6 @@ export async function PATCH(request: NextRequest) {
       await sendLodgingArchiveEmail(data)
     } catch (mailErr) {
       console.error('[registrations PATCH] lodging archive failed:', mailErr)
-    }
-  }
-
-  // 首次從 unpaid 轉為 paid/verified → 寄食宿登記邀請信
-  if (
-    payment_status &&
-    (payment_status === 'paid' || payment_status === 'verified') &&
-    (currentReg?.payment_status === 'unpaid' || !currentReg?.payment_status) &&
-    data
-  ) {
-    try {
-      await sendLodgingInvitationEmail(data)
-    } catch (mailErr) {
-      console.error('[registrations PATCH] lodging invitation failed:', mailErr)
     }
   }
 

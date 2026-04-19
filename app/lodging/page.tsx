@@ -271,31 +271,6 @@ function LodgingContent() {
           </div>
         </div>
 
-        {/* 方案資訊（由繳費頁帶入，唯讀） */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">一、您的方案</h2>
-          <p className="text-xs text-gray-500">方案由您於繳費頁的選擇自動帶入；如需修改，請聯絡學會</p>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-xs text-gray-500">方案代碼</div>
-              <div className="text-black font-medium">{reg.payment_plan || '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">繳費方式</div>
-              <div className="text-black font-medium">
-                {reg.payment_plan?.endsWith('1') ? '匯款' : reg.payment_plan?.endsWith('2') ? '刷卡' : '—'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">入住日</div>
-              <div className="text-black font-medium">{(planDates(reg.payment_plan)?.[0]) || '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">離開日</div>
-              <div className="text-black font-medium">{(planDates(reg.payment_plan)?.[1]) || '—'}</div>
-            </div>
-          </div>
-        </div>
 
         {/* 緊急聯絡人 */}
         <div className={sectionCls}>
