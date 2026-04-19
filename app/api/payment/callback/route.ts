@@ -45,11 +45,19 @@ export async function POST(request: NextRequest) {
 
     // 付款成功
     if (RtnCode === '1') {
+      // 組刷卡備註：綠界交易號 + 實際付款時間 + 付款方式 + 金額
+      const tradeNo = params.TradeNo || ''
+      const paymentDate = params.PaymentDate || ''
+      const paymentType = params.PaymentType || ''
+      const tradeAmt = params.TradeAmt || ''
+      const note = `刷卡付款（綠界）｜交易號：${tradeNo}｜付款時間：${paymentDate}｜類型：${paymentType}｜金額：${tradeAmt}`
+
       await supabaseAdmin
         .from('registrations')
         .update({
           payment_status: 'verified',
           payment_confirmed_at: new Date().toISOString(),
+          payment_note: note,
         })
         .eq('id', registration_id)
 

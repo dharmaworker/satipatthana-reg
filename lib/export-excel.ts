@@ -73,6 +73,9 @@ const LODGING_COLUMNS = [
   { key: 'residence', header: '居住地', width: 12 },
   { key: 'payment_plan', header: '方案', width: 10 },
   { key: 'payment_method', header: '繳費方式', width: 10 },
+  { key: 'payment_status', header: '繳費狀態', width: 10 },
+  { key: 'payment_note', header: '繳費備註', width: 60 },
+  { key: 'payment_confirmed_at', header: '繳費確認時間', width: 20 },
   { key: 'arrival_date', header: '入住日', width: 12 },
   { key: 'departure_date', header: '離開日', width: 12 },
   { key: 'arrival_transport', header: '前往方式', width: 18 },
@@ -111,6 +114,9 @@ function transformLodgingRow(l: any) {
     wuri_bus: '烏日專車',
     bus: '專車',
   }
+  const paymentStatusZh: Record<string, string> = {
+    unpaid: '未繳費', paid: '待確認', verified: '已確認',
+  }
   return {
     ...l,
     updated_at: l.updated_at ? new Date(l.updated_at).toLocaleString('zh-TW') : '',
@@ -120,6 +126,9 @@ function transformLodgingRow(l: any) {
     residence: reg.residence || '',
     payment_plan: reg.payment_plan || '',
     payment_method: l.payment_method === 'transfer' ? '匯款' : '刷卡',
+    payment_status: paymentStatusZh[reg.payment_status] || reg.payment_status || '',
+    payment_note: reg.payment_note || '',
+    payment_confirmed_at: reg.payment_confirmed_at ? new Date(reg.payment_confirmed_at).toLocaleString('zh-TW') : '',
     arrival_transport: transportZh[l.arrival_transport] || l.arrival_transport,
     departure_transport: transportZh[l.departure_transport] || l.departure_transport,
     diet: l.diet === 'meat' ? '葷' : '素',
@@ -154,7 +163,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   // Lodging 另外撈
   let lodgingQuery = supabaseAdmin
     .from('lodging_registrations')
-    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan)')
+    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at)')
     .order('updated_at', { ascending: true })
   if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
   const { data: lodgingData } = await lodgingQuery

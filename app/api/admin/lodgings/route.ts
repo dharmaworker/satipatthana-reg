@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       *,
       registration:registrations (
         id, chinese_name, passport_name, member_id, email, phone, random_code,
-        residence, payment_plan, payment_status, status
+        residence, payment_plan, payment_status, payment_note, payment_confirmed_at, status
       )
     `)
     .order('updated_at', { ascending: false })

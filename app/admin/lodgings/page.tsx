@@ -124,6 +124,7 @@ export default function LodgingsPage() {
                   <th className="px-3 py-3 text-left text-black font-medium">學號</th>
                   <th className="px-3 py-3 text-left text-black font-medium">繳費碼</th>
                   <th className="px-3 py-3 text-left text-black font-medium">方案</th>
+                  <th className="px-3 py-3 text-left text-black font-medium">繳費</th>
                   <th className="px-3 py-3 text-left text-black font-medium">入住－離開</th>
                   <th className="px-3 py-3 text-left text-black font-medium">飲食</th>
                   <th className="px-3 py-3 text-left text-black font-medium">打鼾</th>
@@ -133,9 +134,9 @@ export default function LodgingsPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
                 ) : filtered.map(r => {
                   const reg = r.registration || {}
                   return (
@@ -144,6 +145,19 @@ export default function LodgingsPage() {
                       <td className="px-3 py-3 text-black">{reg.member_id || '—'}</td>
                       <td className="px-3 py-3 font-mono text-black">{reg.random_code}</td>
                       <td className="px-3 py-3 text-black">{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
+                      <td className="px-3 py-3 text-xs">
+                        {paymentStatusBadge(reg.payment_status)}
+                        {r.payment_method === 'transfer' ? (
+                          <div className="text-black mt-1">匯款</div>
+                        ) : r.payment_method === 'credit_card' ? (
+                          <div className="text-black mt-1">刷卡</div>
+                        ) : null}
+                        {reg.payment_note && (
+                          <div className="text-gray-500 mt-1 max-w-[200px] truncate" title={reg.payment_note}>
+                            {shortNote(reg.payment_note)}
+                          </div>
+                        )}
+                      </td>
                       <td className="px-3 py-3 text-black text-xs">
                         {r.arrival_date} <br />{r.departure_date}
                       </td>
@@ -198,6 +212,14 @@ export default function LodgingsPage() {
               <Field label="居住地" value={detail.registration?.residence} />
               <Field label="方案" value={PLAN_LABEL[detail.registration?.payment_plan] || detail.registration?.payment_plan} />
               <Field label="繳費方式" value={detail.payment_method === 'transfer' ? '匯款' : '刷卡'} />
+              <Field label="繳費狀態" value={({ unpaid: '未繳費', paid: '已回報待確認', verified: '已確認繳費' } as Record<string, string>)[detail.registration?.payment_status] || detail.registration?.payment_status} />
+              <Field label="繳費確認時間" value={detail.registration?.payment_confirmed_at ? new Date(detail.registration.payment_confirmed_at).toLocaleString('zh-TW') : '—'} />
+              {detail.registration?.payment_note && (
+                <div className="col-span-2">
+                  <div className="text-xs text-gray-500">繳費備註</div>
+                  <div className="text-black text-xs bg-gray-50 rounded p-2 break-all">{detail.registration.payment_note}</div>
+                </div>
+              )}
               <Field label="入住日" value={detail.arrival_date} />
               <Field label="離開日" value={detail.departure_date} />
               <Field label="前往方式" value={transportLabel(detail.arrival_transport)} />
@@ -490,6 +512,26 @@ function Field({ label, value }: { label: string; value: any }) {
       <div className="text-black">{value || '—'}</div>
     </div>
   )
+}
+
+function paymentStatusBadge(status: string) {
+  const map: Record<string, { cls: string; label: string }> = {
+    unpaid: { cls: 'bg-gray-100 text-gray-700', label: '未繳費' },
+    paid: { cls: 'bg-blue-100 text-blue-800', label: '待確認' },
+    verified: { cls: 'bg-green-100 text-green-800', label: '已確認' },
+  }
+  const info = map[status] || { cls: 'bg-gray-100 text-gray-700', label: status || '—' }
+  return <span className={`px-2 py-0.5 rounded text-xs font-medium ${info.cls}`}>{info.label}</span>
+}
+
+// 把 payment_note 精簡成一行摘要。匯款：抓後五碼；刷卡：抓交易號
+function shortNote(note: string): string {
+  if (!note) return ''
+  const match5 = note.match(/後五碼[:：]\s*(\d{5})/)
+  if (match5) return `後五碼 ${match5[1]}`
+  const tradeNo = note.match(/交易號[:：]\s*(\S+)/)
+  if (tradeNo) return `綠界 ${tradeNo[1]}`
+  return note.length > 20 ? note.slice(0, 20) + '…' : note
 }
 
 function transportLabel(v: string) {
