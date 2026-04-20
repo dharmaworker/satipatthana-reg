@@ -25,15 +25,19 @@ const row = (label: string, value: string | number | null | undefined) =>
   `<tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:120px;">${label}</td><td style="padding:6px 10px;border:1px solid #eee;">${value ?? '—'}</td></tr>`
 
 const TRANSPORT_ZH: Record<string, string> = {
-  self: '自行',
+  self: '8/19 自行抵達',
   taipei_bus: '主辦專車（8/19 台北車站）',
   wuri_bus: '主辦專車（8/19 烏日高鐵）',
+  airport_bus_0819: '主辦專車（8/19 桃園機場）',
+  self_0820: '8/20 自行抵達',
   bus: '主辦專車',
 }
 const BUS_DEST_ZH: Record<string, string> = {
   taipei_824_pm: '8/24 下午 6:00–6:30 到台北車站',
   taipei_825_am: '8/25 上午 9 點到台北車站',
   wuri_825_am: '8/25 上午 9 點到烏日高鐵',
+  taoyuan_824_pm: '8/24 下午 6:00–6:30 到桃園機場',
+  taoyuan_825_am: '8/25 上午 9 點到桃園機場',
 }
 
 function lodgingTableRows(l: any): string {

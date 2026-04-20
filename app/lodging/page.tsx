@@ -48,6 +48,9 @@ function LodgingContent() {
   })
   const update = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }))
 
+  // 證件類型（身分證 or 護照）— UI 狀態，非 DB 欄位
+  const [identityType, setIdentityType] = useState<'id' | 'passport'>('id')
+
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const handleFileUpload = async (kind: string, file: File) => {
     setUploadingKind(kind)
@@ -109,6 +112,16 @@ function LodgingContent() {
             flight_departure_date: data.lodging.flight_departure_date || '',
             flight_departure_time: data.lodging.flight_departure_time || '',
           })
+          // 依已上傳的檔案推測證件類型；皆無則依居住地預設
+          if (data.lodging.passport_url && !data.lodging.id_front_url) {
+            setIdentityType('passport')
+          } else if (data.lodging.id_front_url) {
+            setIdentityType('id')
+          } else {
+            setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
+          }
+        } else {
+          setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
         }
       })
       .catch(e => setError(e.message))
@@ -209,10 +222,10 @@ function LodgingContent() {
           <p className="font-semibold">渡假村入住說明</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>渡假村辦理入住時間：每日下午 3 點後辦理入住。</li>
-            <li>辦理入住時請攜帶<strong>身分證＋健保卡</strong>（國內）或<strong>護照正本</strong>（國外）。</li>
+            <li><span className="text-red-600 font-semibold">辦理入住時請攜帶身分證＋健保卡（國內）或護照正本（國外）。</span></li>
             <li>房間一律 4 人一房，採單獨床位配置，附 2 套衛浴。</li>
             <li>每間房間皆有對外窗戶，舒適寬敞，可曬衣。</li>
-            <li>請<strong>自備盥洗用具與衣架</strong>，會館不提供一次性盥洗用品。</li>
+            <li>請<strong>自備盥洗用具、衣架與<span className="text-red-600">雨具</span></strong>，會館不提供一次性盥洗用品。</li>
           </ul>
         </div>
 
@@ -280,10 +293,22 @@ function LodgingContent() {
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">三、前往日月潭方式 *</h2>
           <div className="space-y-2">
-            {radio('arrival_transport', 'self', '自行抵達日月潭湖畔會館')}
-            {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合')}
-            {radio('arrival_transport', 'wuri_bus', '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口 7-8 號月台')}
+            {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
+            {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合（法工人員穿著學會背心）')}
+            {radio('arrival_transport', 'wuri_bus', '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口 7-8 號月台（法工人員穿著學會背心）')}
+            {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 2:30 桃園機場第一航廈接機大廳右邊集合（法工人員穿著學會背心）')}
+            {radio('arrival_transport', 'self_0820', '8/20 上午 7 點前自行抵達日月潭湖畔會館')}
           </div>
+          {!isDomestic && (form.arrival_transport === 'self' || form.arrival_transport === 'self_0820') && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800">
+              <p className="font-semibold">國外學員自行前往可聯絡：</p>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>桃園機場計程車預約電話：03-3834499</li>
+                <li>台灣大車隊計程車手機直撥：55688</li>
+                <li>大都會計程車手機直撥：55178</li>
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* 離開方式 */}
@@ -300,6 +325,8 @@ function LodgingContent() {
                 {radio('bus_destination', 'taipei_824_pm', '8/24 下午 6:00–6:30 專車到台北車站')}
                 {radio('bus_destination', 'taipei_825_am', '8/25 上午 9:00 專車到台北車站')}
                 {radio('bus_destination', 'wuri_825_am', '8/25 上午 9:00 專車到烏日高鐵')}
+                {radio('bus_destination', 'taoyuan_824_pm', '8/24 下午 6:00–6:30 專車到桃園機場第一航廈（車程約 3 小時）')}
+                {radio('bus_destination', 'taoyuan_825_am', '8/25 上午 9:00 專車到桃園機場第一航廈（車程約 3 小時）')}
               </div>
             </div>
           )}
@@ -346,13 +373,31 @@ function LodgingContent() {
           <h2 className="text-lg font-semibold text-green-800">六、證件上傳</h2>
           <p className="text-xs text-gray-500">可上傳 JPG / PNG / WEBP / PDF（5MB 以下）</p>
           {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
-          {isDomestic ? (
+
+          <div>
+            <label className={labelCls}>身分證／護照（擇一上傳）*</label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer text-black">
+                <input type="radio" name="identity_type" value="id"
+                  checked={identityType === 'id'}
+                  onChange={() => setIdentityType('id')} />
+                身分證（正反面皆需上傳）
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-black">
+                <input type="radio" name="identity_type" value="passport"
+                  checked={identityType === 'passport'}
+                  onChange={() => setIdentityType('passport')} />
+                護照
+              </label>
+            </div>
+          </div>
+          {identityType === 'id' ? (
             <>
-              {fileField('id_front', '身分證正面', form.id_front_url, uploadingKind, handleFileUpload)}
-              {fileField('id_back', '身分證反面', form.id_back_url, uploadingKind, handleFileUpload)}
+              {fileField('id_front', '身分證正面 *', form.id_front_url, uploadingKind, handleFileUpload)}
+              {fileField('id_back', '身分證反面 *', form.id_back_url, uploadingKind, handleFileUpload)}
             </>
           ) : (
-            fileField('passport', '護照', form.passport_url, uploadingKind, handleFileUpload)
+            fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)
           )}
         </div>
 
@@ -382,8 +427,8 @@ function LodgingContent() {
                   onChange={e => update('flight_departure_time', e.target.value)} />
               </div>
             </div>
-            {fileField('arrival_ticket', '上傳來台機票', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
-            {fileField('departure_ticket', '上傳離台機票', form.departure_ticket_url, uploadingKind, handleFileUpload)}
+            {fileField('arrival_ticket', '上傳來台機票（非必填）', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
+            {fileField('departure_ticket', '上傳離台機票（非必填）', form.departure_ticket_url, uploadingKind, handleFileUpload)}
           </div>
         )}
 
@@ -391,6 +436,31 @@ function LodgingContent() {
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
           <p className="font-semibold">關於快篩檢測上傳</p>
           <p className="mt-1">快篩檢測時程在課程開始前後（8/17、8/19、8/20、8/22），時間較晚，請完成本食宿登記後另行於專屬頁面上傳。完成此食宿登記送出後，系統會在確認信中附上快篩上傳頁連結。</p>
+        </div>
+
+        {/* 防疫與課程規範 */}
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-900 space-y-2">
+          <p className="font-semibold text-red-800">防疫與課程規範（請務必閱讀）</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>若在課程前幾天<strong>感冒確診</strong>並仍具傳染力，<strong>必須取消課程</strong>。</li>
+            <li>若在課程會場（課程開始前或課程中）<strong>被檢驗出陽性</strong>，同寢室 4 人需在房間隔離，並透過 ZOOM 線上上課及互動，不能與其他學員一起上課及用餐。</li>
+            <li>若出現發燒、咳嗽、呼吸急促、胸悶、頭痛、喉嚨痛等症狀，需接受主辦單位個別檢測；即使陰性亦會移至後段座位，與其他學員隔開。</li>
+            <li><strong>快篩檢測時間</strong>（檢測結果必須載明檢測日期、學號、姓名，快篩試劑請自備，主辦單位不提供）：
+              <ul className="list-disc pl-5 mt-1 space-y-0.5 text-xs">
+                <li>開課前：8/17 上午 8:00–晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
+                <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>
+              </ul>
+            </li>
+            <li>課程期間全程配戴口罩。</li>
+            <li>課程期間一律停用手機等通訊設備。</li>
+            <li>用餐時必須禁語。</li>
+            <li>請務必全程佩戴學員證。</li>
+            <li>為示尊重，未得老師允許，上課中請勿拍照、攝影或錄音。</li>
+            <li>本次課程所有座位皆是座椅，請勿佔座位，離開時請記得將個人物品帶走。</li>
+            <li>請勿攜帶貴重物品至會場，個人隨身物品請自行妥善保管。</li>
+            <li>請穿著整齊、舒適且適宜聞法的衣著。</li>
+            <li>課程會場長時開著冷氣，畏寒者可攜帶禦寒衣物（如圍巾、披肩、襪子等）。</li>
+          </ul>
         </div>
 
         {/* 其他 */}
@@ -404,7 +474,7 @@ function LodgingContent() {
           <label className="flex items-start gap-2 text-black cursor-pointer">
             <input type="checkbox" className="mt-1" checked={form.agree_covid_rules}
               onChange={e => update('agree_covid_rules', e.target.checked)} />
-            <span>我願意遵守主辦單位在課程期間的課程與防疫安排（含用餐禁語、手機停用、全程佩戴學員證、未經同意不得外傳資訊等規範）*</span>
+            <span>我已閱讀並<strong>願意遵守以上防疫與課程規範</strong> *</span>
           </label>
         </div>
 

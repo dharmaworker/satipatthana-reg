@@ -109,9 +109,11 @@ const LODGING_COLUMNS = [
 function transformLodgingRow(l: any) {
   const reg = l.registration || {}
   const transportZh: Record<string, string> = {
-    self: '自行',
+    self: '8/19 自行',
     taipei_bus: '台北專車',
     wuri_bus: '烏日專車',
+    airport_bus_0819: '桃園機場專車',
+    self_0820: '8/20 自行',
     bus: '專車',
   }
   const paymentStatusZh: Record<string, string> = {

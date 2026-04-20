@@ -341,9 +341,11 @@ export default function LodgingsPage() {
                 <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
                   value={edit.arrival_transport || ''}
                   onChange={e => setEdit({ ...edit, arrival_transport: e.target.value })}>
-                  <option value="self">自行</option>
+                  <option value="self">8/19 自行</option>
                   <option value="taipei_bus">台北專車</option>
                   <option value="wuri_bus">烏日專車</option>
+                  <option value="airport_bus_0819">桃園機場專車</option>
+                  <option value="self_0820">8/20 自行</option>
                 </select>
               </div>
               <div>
@@ -365,6 +367,8 @@ export default function LodgingsPage() {
                     <option value="taipei_824_pm">8/24 下午台北</option>
                     <option value="taipei_825_am">8/25 上午台北</option>
                     <option value="wuri_825_am">8/25 上午烏日</option>
+                    <option value="taoyuan_824_pm">8/24 下午桃園機場</option>
+                    <option value="taoyuan_825_am">8/25 上午桃園機場</option>
                   </select>
                 </div>
               )}
@@ -531,9 +535,11 @@ function shortNote(note: string): string {
 
 function transportLabel(v: string) {
   return {
-    self: '自行抵達',
+    self: '8/19 自行抵達',
     taipei_bus: '主辦專車（8/19 台北車站）',
     wuri_bus: '主辦專車（8/19 烏日高鐵）',
+    airport_bus_0819: '主辦專車（8/19 桃園機場）',
+    self_0820: '8/20 自行抵達',
   }[v] || v || '—'
 }
 function busDestLabel(v: string) {
@@ -541,5 +547,7 @@ function busDestLabel(v: string) {
     taipei_824_pm: '8/24 下午 6:00-6:30 到台北車站',
     taipei_825_am: '8/25 上午 9 點到台北車站',
     wuri_825_am: '8/25 上午 9 點到烏日高鐵',
+    taoyuan_824_pm: '8/24 下午 6:00-6:30 到桃園機場',
+    taoyuan_825_am: '8/25 上午 9 點到桃園機場',
   }[v] || v
 }
