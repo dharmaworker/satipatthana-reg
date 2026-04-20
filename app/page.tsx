@@ -617,7 +617,7 @@ export default function RegisterPage() {
 
         {/* 費用說明 */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <h3 className="font-semibold text-yellow-800">18. 8/20–8/24 禪修期間之食宿、交通及場地費用</h3>
+          <h3 className="font-semibold text-yellow-800">8/20–8/24 禪修期間之食宿、交通及場地費用</h3>
           <p className="text-yellow-700 mt-2"><strong>NT$18,600 元整</strong></p>
           <p className="text-sm text-yellow-700 mt-1">（如需提前或延後住宿，將另計相關費用）</p>
           <p className="text-sm text-yellow-600 mt-2">錄取後將提供專屬繳費碼，請於 6 月 15 日前完成繳費。</p>
