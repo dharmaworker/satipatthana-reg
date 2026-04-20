@@ -5,6 +5,7 @@ const TABS = [
   { path: '/admin/dashboard', label: '報名管理' },
   { path: '/admin/lodgings', label: '食宿登記' },
   { path: '/admin/documents', label: '所有證件' },
+  { path: '/admin/quicktests', label: '快篩上傳' },
 ]
 
 export function AdminHeader() {
