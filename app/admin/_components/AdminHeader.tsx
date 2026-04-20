@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 const TABS = [
   { path: '/admin/dashboard', label: '報名管理' },
   { path: '/admin/lodgings', label: '食宿登記' },
+  { path: '/admin/documents', label: '所有證件' },
 ]
 
 export function AdminHeader() {
