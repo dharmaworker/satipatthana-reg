@@ -20,8 +20,6 @@ const DOC_LABEL: Record<string, string> = {
   departure_ticket_url: '離台機票',
   test_0817_url: '8/17 快篩',
   test_0819_url: '8/19 快篩',
-  test_0820_url: '8/20 快篩',
-  test_0822_url: '8/22 快篩',
 }
 
 export default function LodgingsPage() {

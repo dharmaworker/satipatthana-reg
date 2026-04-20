@@ -104,8 +104,6 @@ const LODGING_COLUMNS = [
   { key: 'departure_ticket_url', header: '離台機票', width: 40 },
   { key: 'test_0817_url', header: '8/17 快篩', width: 40 },
   { key: 'test_0819_url', header: '8/19 快篩', width: 40 },
-  { key: 'test_0820_url', header: '8/20 快篩', width: 40 },
-  { key: 'test_0822_url', header: '8/22 快篩', width: 40 },
 ]
 
 function transformLodgingRow(l: any) {

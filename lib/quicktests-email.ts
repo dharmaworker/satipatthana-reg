@@ -6,8 +6,6 @@ const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com
 const TEST_LABELS: Record<string, string> = {
   test_0817_url: '8/17',
   test_0819_url: '8/19',
-  test_0820_url: '8/20',
-  test_0822_url: '8/22',
 }
 
 // 快篩上傳邀請信（隨食宿登記確認信附帶）
@@ -21,8 +19,7 @@ export function quickTestsButtonHtml(reg: { id: string; random_code: string }) {
       請依下列時間上傳檢測結果（檢測結果需載明日期、學號、姓名；快篩試劑請自備）：<br>
       ・8/17 上午 8:00 至晚上 8:00 前<br>
       ・8/19 上午 12:00 前<br>
-      ・8/20 上午 8:00 前<br>
-      ・8/22 上午 8:00 前
+      （課程期間 8/20、8/22 快篩結果現場繳交，不需線上上傳）
     </p>
   `
 }

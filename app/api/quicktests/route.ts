@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
   const { data: lodging } = await supabaseAdmin
     .from('lodging_registrations')
-    .select('id, test_0817_url, test_0819_url, test_0820_url, test_0822_url, updated_at')
+    .select('id, test_0817_url, test_0819_url, updated_at')
     .eq('registration_id', reg.id)
     .maybeSingle()
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取' }, { status: 403 })
     }
 
-    const allowed = ['test_0817_url', 'test_0819_url', 'test_0820_url', 'test_0822_url']
+    const allowed = ['test_0817_url', 'test_0819_url']
     const testData: Record<string, unknown> = {}
     for (const k of allowed) {
       if (k in fields) testData[k] = fields[k] || null
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         ...testData,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'registration_id' })
-      .select('test_0817_url, test_0819_url, test_0820_url, test_0822_url')
+      .select('test_0817_url, test_0819_url')
       .single()
     if (updErr) {
       console.error('[quicktests] upsert failed:', updErr)

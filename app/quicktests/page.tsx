@@ -5,8 +5,6 @@ import { useSearchParams } from 'next/navigation'
 const TESTS: { key: string; label: string; deadline: string }[] = [
   { key: 'test_0817_url', label: '8/17 上午 8 點至晚上 8 點前', deadline: '2026-08-17' },
   { key: 'test_0819_url', label: '8/19 上午 12 點前', deadline: '2026-08-19' },
-  { key: 'test_0820_url', label: '8/20 上午 8 點前（課程期間）', deadline: '2026-08-20' },
-  { key: 'test_0822_url', label: '8/22 上午 8 點前（課程期間）', deadline: '2026-08-22' },
 ]
 
 function QuickTestsContent() {
@@ -22,7 +20,7 @@ function QuickTestsContent() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
 
   const [files, setFiles] = useState<Record<string, string>>({
-    test_0817_url: '', test_0819_url: '', test_0820_url: '', test_0822_url: '',
+    test_0817_url: '', test_0819_url: '',
   })
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
 
@@ -41,8 +39,6 @@ function QuickTestsContent() {
           setFiles({
             test_0817_url: data.lodging.test_0817_url || '',
             test_0819_url: data.lodging.test_0819_url || '',
-            test_0820_url: data.lodging.test_0820_url || '',
-            test_0822_url: data.lodging.test_0822_url || '',
           })
           setLastUpdate(data.lodging.updated_at || null)
         }
@@ -131,13 +127,14 @@ function QuickTestsContent() {
           <ul className="list-disc pl-5 mt-1 space-y-1">
             <li>檢測結果必須<strong>載明檢測日期、學號、姓名</strong>。</li>
             <li>快篩試劑請<strong>自備</strong>，主辦單位不提供。</li>
-            <li>請依下方四個時段於規定時間前上傳；可分次回到此頁補上。</li>
+            <li>請依下方兩個時段於規定時間前上傳；可分次回到此頁補上。</li>
+            <li>課程期間的 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需於此上傳。</li>
           </ul>
         </div>
 
         {lastUpdate && uploadedCount > 0 && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <p>已上傳 {uploadedCount}/4 次。最後更新：{new Date(lastUpdate).toLocaleString('zh-TW')}</p>
+            <p>已上傳 {uploadedCount}/2 次。最後更新：{new Date(lastUpdate).toLocaleString('zh-TW')}</p>
           </div>
         )}
 

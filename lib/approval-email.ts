@@ -68,7 +68,7 @@ export async function sendApprovalEmail(reg: {
         </a>
         <p style="font-size:13px;color:#666;margin-top:6px;">
           ・8/17 上午 8 點至晚上 8 點前　・8/19 上午 12 點前<br>
-          ・8/20 上午 8 點前（課程期間）　・8/22 上午 8 點前（課程期間）<br>
+          （課程期間 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需線上上傳）<br>
           檢測結果需載明日期、學號、姓名；快篩試劑請自備。
         </p>
 

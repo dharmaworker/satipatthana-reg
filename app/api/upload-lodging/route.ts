@@ -7,7 +7,7 @@ const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const VALID_KINDS = [
   'id_front', 'id_back', 'passport', 'photo',
   'arrival_ticket', 'departure_ticket',
-  'test_0817', 'test_0819', 'test_0820', 'test_0822',
+  'test_0817', 'test_0819',
 ]
 
 export async function POST(request: NextRequest) {

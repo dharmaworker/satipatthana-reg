@@ -95,8 +95,7 @@ create table if not exists lodging_registrations (
   departure_ticket_url text,
   test_0817_url text,
   test_0819_url text,
-  test_0820_url text,
-  test_0822_url text,
+  -- 8/20 與 8/22 快篩結果改為現場繳交，故不存 DB
 
   -- 國外學員航班
   flight_arrival_date date,
