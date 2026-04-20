@@ -336,19 +336,19 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          {/* 課程選擇 */}
+          {/* 課程選擇（Q3–Q8，依 PDF 規格） */}
           {[
-            ['泰國四念處禪修課程', THAILAND_COURSES],
-            ['馬來西亞四念處禪修課程', MALAYSIA_COURSES],
-            ['台灣四念處禪修課程', TAIWAN_COURSES],
-            ['新加坡四念處禪修課程', SINGAPORE_COURSES],
-            ['遠程（線上）四念處禪修課程', ONLINE_COURSES],
-            ['成都讀者交流會', CHENGDU_COURSES],
-          ].map(([title, courses]) => (
-            <div key={title as string}>
-              <label className={labelClass}>{title as string}（非必選）</label>
+            { no: 3, title: '泰國四念處禪修課程', loc: '泰國·線下實體', courses: THAILAND_COURSES },
+            { no: 4, title: '馬來西亞四念處禪修課程', loc: '馬來西亞·線下實體', courses: MALAYSIA_COURSES },
+            { no: 5, title: '《解苦心鑰》讀者交流會', loc: '中國成都·線下實體', courses: CHENGDU_COURSES },
+            { no: 6, title: '台灣四念處禪修課程', loc: '台灣·線下實體', courses: TAIWAN_COURSES },
+            { no: 7, title: '新加坡四念處禪修課程', loc: '新加坡·線下實體', courses: SINGAPORE_COURSES },
+            { no: 8, title: '遠程（線上）四念處禪修課程', loc: 'Zoom·線上網路', courses: ONLINE_COURSES },
+          ].map(({ no, title, loc, courses }) => (
+            <div key={title}>
+              <label className={labelClass}>{no}. {title}（{loc}）（非必選題）</label>
               <div className="grid grid-cols-2 gap-2">
-                {(courses as string[]).map(course => (
+                {courses.map(course => (
                   <label key={course} className="flex items-center gap-2 text-sm cursor-pointer">
                     <input type="checkbox"
                       checked={form.attended_courses.includes(course)}
@@ -501,7 +501,7 @@ export default function RegisterPage() {
 
           {form.identity === 'monastic' && (
             <div>
-              <label className={labelClass}>22. 法名（僧眾填寫）</label>
+              <label className={labelClass}>22. 法名（僅出家師父填寫）</label>
               <input className={inputClass} value={form.dharma_name}
                 onChange={e => update('dharma_name', e.target.value)} />
             </div>
