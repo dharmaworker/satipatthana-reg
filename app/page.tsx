@@ -183,7 +183,7 @@ export default function RegisterPage() {
       <div className="bg-green-800 text-white py-8 px-4 text-center">
         <h1 className="text-2xl font-bold">第二屆台灣四念處禪修</h1>
         <p className="mt-2 text-green-200">課程報名表</p>
-        <p className="mt-1 text-sm text-green-300">報名時間：2026/05/11 上午10點 ～ 2026/05/25 晚上10點</p>
+        <p className="mt-1 text-sm text-green-300">報名時間：2026/05/11 上午 10 點 ～ 2026/05/25 晚上 24 點</p>
       </div>
 
       {/* 課程介紹 */}
@@ -248,7 +248,7 @@ export default function RegisterPage() {
           <h2 className="text-lg font-semibold text-green-800 mt-6">二、報名時間</h2>
           <div className="text-sm text-gray-600 space-y-1">
             <p>報名時間：2026年5月11日（一）上午 10點（台北時間）</p>
-            <p>截止時間：2026年5月25日（一）晚上 10點（台北時間止）</p>
+            <p>截止時間：2026年5月25日（一）晚上 24 點（台北時間止）</p>
           </div>
 
           <h2 className="text-lg font-semibold text-green-800 mt-6">三、課程名額</h2>
