@@ -63,12 +63,13 @@ export async function POST(request: NextRequest) {
     }
 
     // upsert 食宿登記 row（不存在就建最小記錄，其餘欄位允許為 null）
+    // 注意：這裡不寫 updated_at — 食宿可修改次數是用 created_at/updated_at 差異判斷的，
+    //       快篩上傳屬另一個流程，不應影響食宿編輯鎖定狀態。
     const { data: updated, error: updErr } = await supabaseAdmin
       .from('lodging_registrations')
       .upsert({
         registration_id: reg.id,
         ...testData,
-        updated_at: new Date().toISOString(),
       }, { onConflict: 'registration_id' })
       .select('test_0817_url, test_0819_url')
       .single()
