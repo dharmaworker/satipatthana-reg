@@ -173,16 +173,14 @@ function LodgingContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-8 max-w-md text-center">
           <p className="text-5xl mb-4">🙏</p>
-          <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記已儲存</h2>
-          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。<br />6/20 截止前可隨時回到此頁更新。</p>
-          <button onClick={() => setDone(false)}
-            className="inline-block bg-gray-100 hover:bg-gray-200 text-black px-6 py-2 rounded-lg">
-            返回繼續編輯
-          </button>
+          <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記已送出</h2>
+          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。<br /><strong className="text-red-600">本表單僅能提交一次，若需修改請聯絡學會。</strong></p>
         </div>
       </div>
     )
   }
+
+  const locked = !!existingLodging
 
   const inputCls = 'w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black bg-white'
   const labelCls = 'block text-sm font-medium text-black mb-1'
@@ -208,13 +206,14 @@ function LodgingContent() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
           <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，若取消報名，所付費用恕不退款、轉讓。</p>
           <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成，逾期系統將拒絕提交。</p>
+          <p className="mt-2 text-red-700"><strong>⚠️ 本表單僅能提交一次，送出後即無法修改，請務必確認後再送出。</strong></p>
         </div>
 
-        {existingLodging && (
+        {locked && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <p className="font-semibold">✅ 您已填寫過食宿登記</p>
-            <p className="mt-1">上次更新時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
-            <p className="mt-1">以下為您上次填寫的內容（含已上傳的檔案）。如需更新，修改後再次提交即可（6/20 截止前不限次數）。</p>
+            <p className="font-semibold">✅ 您已送出食宿登記</p>
+            <p className="mt-1">送出時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
+            <p className="mt-1">以下為您送出的內容（唯讀）。<strong>本表單僅能提交一次，如有錯誤請聯絡學會。</strong></p>
           </div>
         )}
 
@@ -268,6 +267,7 @@ function LodgingContent() {
         </div>
 
 
+        <fieldset disabled={locked} style={{ display: 'contents' }}>
         {/* 緊急聯絡人 */}
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">二、緊急聯絡人</h2>
@@ -477,6 +477,7 @@ function LodgingContent() {
             <span>我已閱讀並<strong>願意遵守以上防疫與課程規範</strong> *</span>
           </label>
         </div>
+        </fieldset>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">{error}</div>
@@ -487,14 +488,16 @@ function LodgingContent() {
             食宿登記已於 6/20 晚上 8 點（台北時間）截止，無法再提交。如有特殊狀況請聯絡學會。
           </div>
         )}
-        <button onClick={handleSubmit} disabled={submitting || pastDeadline}
+        <button onClick={handleSubmit} disabled={submitting || pastDeadline || locked}
           className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting ? '送出中...' : pastDeadline ? '已截止' : (existingLodging ? '更新食宿登記' : '提交食宿登記')}
+          {submitting ? '送出中...' : pastDeadline ? '已截止' : locked ? '已送出，無法再次修改' : '提交食宿登記'}
         </button>
 
-        <p className="text-center text-sm text-gray-500">
-          送出後系統會自動帶入繳費方案，並轉至繳費頁。
-        </p>
+        {!locked && (
+          <p className="text-center text-sm text-gray-500">
+            本表單僅能提交一次，送出後系統會寄出確認信，並自動帶入繳費方案。
+          </p>
+        )}
       </div>
     </div>
   )

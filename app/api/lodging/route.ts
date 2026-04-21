@@ -67,6 +67,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取，無法填寫食宿登記' }, { status: 403 })
     }
 
+    // 只允許提交一次：已有 lodging 紀錄即拒絕（避免作業人員反覆比對）
+    const { data: existing } = await supabaseAdmin
+      .from('lodging_registrations')
+      .select('id')
+      .eq('registration_id', reg.id)
+      .maybeSingle()
+    if (existing) {
+      return NextResponse.json({ error: '您已送出食宿登記，無法再次修改。如有錯誤請聯絡學會。' }, { status: 403 })
+    }
+
     // 方案若已選好，順便帶入日期 / 繳費方式；沒選也接受（可之後再選）
     const plan = reg.payment_plan || ''
     const planDefaults = plan ? planToLodgingDefaults(plan) : null
@@ -89,10 +99,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '選擇專車離開需指定目的地' }, { status: 400 })
     }
 
-    // upsert 食宿登記（dates / method 若無 plan 則暫存 null，之後再帶入）
+    // insert 食宿登記（上面已擋過重複，僅允許一次提交）
     const { data: lodging, error: lodgingErr } = await supabaseAdmin
       .from('lodging_registrations')
-      .upsert({
+      .insert({
         registration_id: reg.id,
         arrival_date: planDefaults?.arrival_date ?? null,
         departure_date: planDefaults?.departure_date ?? null,
@@ -125,7 +135,7 @@ export async function POST(request: NextRequest) {
         flight_departure_date: fields.flight_departure_date || null,
         flight_departure_time: fields.flight_departure_time || null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'registration_id' })
+      })
       .select()
       .single()
     if (lodgingErr) {

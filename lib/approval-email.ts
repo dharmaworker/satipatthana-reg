@@ -59,7 +59,7 @@ export async function sendApprovalEmail(reg: {
           style="display:inline-block;background:#1a5276;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;margin:6px 0;">
           前往食宿登記
         </a>
-        <p style="font-size:13px;color:#666;margin-top:6px;">填寫緊急聯絡人、飲食、交通、證件等資料；可隨時回頁面更新（6/20 截止前不限次數）。</p>
+        <p style="font-size:13px;color:#c0392b;margin-top:6px;">⚠️ 填寫緊急聯絡人、飲食、交通、證件等資料。<strong>本表單僅能提交一次，送出後即無法修改，請務必確認後再送出。</strong></p>
 
         <p style="margin-top:14px;"><strong>③ 快篩檢測上傳</strong>　依各時段截止：</p>
         <a href="${baseUrl}/quicktests?id=${reg.id}&code=${reg.random_code}"
@@ -132,7 +132,7 @@ export async function sendApprovalEmail(reg: {
         <p>2026年8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
 
         <h3 style="color: #2d6a4f;">七、食宿登記</h3>
-        <p>請從本信第二段「② 前往食宿登記」連結進入填寫，6/20 晚上 8 點前可隨時更新。</p>
+        <p>請從本信第二段「② 前往食宿登記」連結進入填寫，截止時間為 6/20 晚上 8 點。<strong>本表單僅能提交一次，送出後即無法修改，請務必確認後再送出。</strong></p>
 
         <h3 style="color: #2d6a4f;">八、禪修課程群組</h3>
         <p>資料經確認無誤後，學會將以學員所提供之 LINE 或微信，邀請您加入 <strong>8 月禪修課程群組</strong>。</p>
