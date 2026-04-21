@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '帳號或繳費碼錯誤' }, { status: 401 })
     }
 
-    if (data.payment_status !== 'verified') {
-      return NextResponse.json({ error: '您尚未完成繳費確認，無法進入學員專區' }, { status: 403 })
+    if (data.status !== 'approved') {
+      return NextResponse.json({ error: '您尚未錄取，無法進入學員專區' }, { status: 403 })
     }
 
     const response = NextResponse.json({

@@ -178,13 +178,13 @@ export async function sendApprovalEmail(reg: {
             <p style="margin:0;font-size:13px;color:#666;">查詢報名狀態時需使用此碼</p>
         </div>
         <div style="background:#e8f4f8;padding:15px;border-radius:8px;margin:20px 0;">
-          <p style="margin:0;font-weight:bold;color:#1a5276;">📋 學員查詢系統</p>
-          <p style="margin:10px 0 5px;">繳費完成後，您可以透過以下連結查詢報名狀態及序號：</p>
-          <a href="${baseUrl}/query"
+          <p style="margin:0;font-weight:bold;color:#1a5276;">📋 學員專區</p>
+          <p style="margin:10px 0 5px;">您可以透過以下連結登入學員專區，查看目前繳費、食宿登記與快篩上傳進度：</p>
+          <a href="${baseUrl}/member"
             style="display:inline-block;background:#1a5276;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:5px 0;">
-            查詢報名狀態與序號
+            進入學員專區
           </a>
-          <p style="margin:10px 0 0;font-size:13px;color:#666;">查詢時需輸入您的 Email 及繳費專屬碼：<strong>${reg.random_code}</strong></p>
+          <p style="margin:10px 0 0;font-size:13px;color:#666;">登入時需輸入您的 Email 及繳費專屬碼：<strong>${reg.random_code}</strong></p>
         </div>
         <p style="color:#666;font-size:13px;">如有任何問題，請聯繫台灣四念處學會。</p>
         <p style="color:#666;font-size:13px;">台灣四念處學會 合十</p>

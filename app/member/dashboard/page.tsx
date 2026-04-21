@@ -75,7 +75,11 @@ export default function MemberDashboardPage() {
             </div>
             <div>
               <div className="text-xs text-gray-500">繳費狀態</div>
-              <div className="text-black font-medium">✅ 繳費已確認</div>
+              <div className="text-black font-medium">
+                {member.payment_status === 'verified' ? '✅ 繳費已確認' :
+                 member.payment_status === 'paid' ? '⏳ 已回報，待確認' :
+                 '❌ 尚未繳費'}
+              </div>
             </div>
             {member.payment_plan && (
               <div>
@@ -108,14 +112,26 @@ export default function MemberDashboardPage() {
           <div className="p-4 space-y-3">
             <p className="text-xs text-gray-600 px-2">以下流程可平行進行，請依各自截止時間完成。</p>
 
+            <a href={withAuth('/pay')}
+              className={`block w-full rounded-xl p-4 text-white text-center transition-colors ${
+                member.payment_status === 'verified' ? 'bg-gray-400 pointer-events-none' : 'bg-green-700 hover:bg-green-800'
+              }`}>
+              <div className="font-semibold">
+                {member.payment_status === 'verified' ? '✅ ① 繳費已完成' :
+                 member.payment_status === 'paid' ? '① 繳費資訊（待確認中）' :
+                 '① 前往繳費'}
+              </div>
+              <div className="text-xs text-green-100 mt-0.5">截止：6/15 晚上 8 點</div>
+            </a>
+
             <a href={withAuth('/lodging')}
               className={`block w-full rounded-xl p-4 text-white text-center transition-colors ${
                 member.lodging_status === 'locked' ? 'bg-gray-500' : 'bg-blue-700 hover:bg-blue-800'
               }`}>
               <div className="font-semibold">
-                {member.lodging_status === 'none' ? '① 前往食宿登記' :
-                 member.lodging_status === 'submitted_editable' ? '① 食宿登記（可再修改 1 次）' :
-                 '🔒 ① 食宿登記已鎖定'}
+                {member.lodging_status === 'none' ? '② 前往食宿登記' :
+                 member.lodging_status === 'submitted_editable' ? '② 食宿登記（可再修改 1 次）' :
+                 '🔒 ② 食宿登記已鎖定'}
               </div>
               <div className="text-xs text-blue-100 mt-0.5">截止：6/20 晚上 8 點｜僅能送出並修改 1 次</div>
             </a>
@@ -123,7 +139,7 @@ export default function MemberDashboardPage() {
             <a href={withAuth('/quicktests')}
               className="block w-full rounded-xl p-4 text-white text-center bg-purple-700 hover:bg-purple-800 transition-colors">
               <div className="font-semibold">
-                ② 快篩上傳（已上傳 {member.tests_uploaded}/{member.tests_total}）
+                ③ 快篩上傳（已上傳 {member.tests_uploaded}/{member.tests_total}）
               </div>
               <div className="text-xs text-purple-100 mt-0.5">
                 8/17 上午 8–晚上 8、8/19 上午 12 前｜8/20、8/22 現場繳交
@@ -145,7 +161,6 @@ export default function MemberDashboardPage() {
             {[
               { title: '課程時間與地點', href: '/info/schedule', ready: true },
               { title: '費用說明與支付方式', href: '/info/payment', ready: true },
-              { title: '序號 / 狀態查詢', href: '/query', ready: true },
             ].map(item => (
               <a key={item.title} href={item.href}
                 className="flex items-center justify-between px-6 py-4 hover:bg-green-50 cursor-pointer transition-colors">

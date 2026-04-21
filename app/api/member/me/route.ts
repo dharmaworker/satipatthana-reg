@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     .from('registrations')
     .select('id, chinese_name, member_id, student_id, random_code, status, payment_status, payment_plan, residence')
     .eq('id', memberId)
-    .eq('payment_status', 'verified')
+    .eq('status', 'approved')
     .single()
 
   if (error || !reg) {
