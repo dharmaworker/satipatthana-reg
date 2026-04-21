@@ -36,6 +36,7 @@ export default function LodgingsPage() {
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
   const [bulkMessage, setBulkMessage] = useState('')
+  const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
 
   // 學號管理（R-001）：計算下一個可用編號（掃全部 rows 找最大 R-N）
   const nextStudentId = () => {
@@ -181,14 +182,16 @@ export default function LodgingsPage() {
   useEffect(() => { fetchData() }, [])
 
   const filtered = rows.filter(r => {
+    const reg = r.registration || {}
+    if (onlyWithStudentId && !reg.student_id) return false
     if (!search) return true
     const q = search.toLowerCase()
-    const reg = r.registration || {}
     return (
       (reg.chinese_name || '').toLowerCase().includes(q) ||
       (reg.email || '').toLowerCase().includes(q) ||
       (reg.random_code || '').toLowerCase().includes(q) ||
-      (reg.member_id || '').toLowerCase().includes(q)
+      (reg.member_id || '').toLowerCase().includes(q) ||
+      (reg.student_id || '').toLowerCase().includes(q)
     )
   })
 
@@ -205,7 +208,7 @@ export default function LodgingsPage() {
             <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
-            <li><strong>批次寄信流程：</strong>先用搜尋過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
+            <li><strong>批次寄信流程：</strong>先用搜尋 / 「只顯示已分配學號者」過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
               <ul className="list-disc pl-5 mt-1 space-y-0.5">
                 <li><strong>批次寄出錄取通知信：</strong>通知學員已錄取，內含繳費/食宿/快篩連結（首次寄，或需補寄）。</li>
                 <li><strong>批次寄出正式學員通知信：</strong>彙整學員完整資料（含食宿、證件、學號）＋ PDF 附件。建議確認學號與資料皆正確後再寄。</li>
@@ -216,8 +219,13 @@ export default function LodgingsPage() {
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
           <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
-            placeholder="搜尋姓名 / Email / 繳費碼 / 學號"
+            placeholder="搜尋姓名 / Email / 繳費碼 / 序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)} />
+          <label className="flex items-center gap-2 text-sm text-black cursor-pointer bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
+            <input type="checkbox" checked={onlyWithStudentId}
+              onChange={e => setOnlyWithStudentId(e.target.checked)} />
+            只顯示已分配學號者
+          </label>
           <button onClick={fetchData}
             className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">重新整理</button>
           <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
