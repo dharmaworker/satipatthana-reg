@@ -163,21 +163,6 @@ export default function DashboardPage() {
     fetchData()
   }
 
-  const updatePayment = async (id: string, payment_status: string) => {
-    const res = await fetch('/api/admin/registrations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, payment_status }),
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      setMessage(`繳費狀態更新失敗：${data.error || res.status}`)
-      return
-    }
-    setMessage('')
-    fetchData()
-  }
-
   const batchAction = async (action: 'approve' | 'reject' | 'delete') => {
     if (selected.length === 0) {
       setMessage('請先勾選項目')
@@ -289,7 +274,7 @@ export default function DashboardPage() {
             <li><strong>序號自動化：</strong>錄取時系統自動編序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
             <li><strong>寄錄取信：</strong>勾選已錄取學員，按「批次寄出錄取信」（含繳費/食宿/快篩連結 + PDF 附件）。</li>
             <li><strong>編輯資料：</strong>單筆按「編輯」修改姓名／Email／居住地等；⋯ 可刪除。</li>
-            <li><strong>學號（R-xxx）管理：</strong>請到「錄取學員」分頁操作。</li>
+            <li><strong>繳費狀態 / 學號（R-xxx）管理：</strong>請到「錄取學員」分頁操作。</li>
           </ol>
         </details>
 
@@ -367,8 +352,7 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 text-left text-black font-medium">居住地</th>
                   <th className="px-4 py-3 text-left text-black font-medium">繳費碼</th>
                   <th className="px-4 py-3 text-left text-black font-medium">審核狀態</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">繳費狀態</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">學號</th>
+                  <th className="px-4 py-3 text-left text-black font-medium">序號</th>
                   <th className="px-4 py-3 text-left text-black font-medium">方案</th>
                   <th className="px-4 py-3 text-left text-black font-medium">QR</th>
                   <th className="px-4 py-3 text-left text-black font-medium">操作</th>
@@ -376,9 +360,9 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : registrations.length === 0 ? (
-                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
                 ) : registrations.map((reg, index) => (
                   <tr key={reg.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -406,20 +390,7 @@ export default function DashboardPage() {
                         <option value="rejected">未錄取</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3">
-                      <select value={reg.payment_status}
-                        onChange={e => updatePayment(reg.id, e.target.value)}
-                        className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
-                          reg.payment_status === 'unpaid' ? 'bg-gray-100 text-gray-800' :
-                          reg.payment_status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                        <option value="unpaid">未繳費</option>
-                        <option value="paid">待確認</option>
-                        <option value="verified">已確認</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-black">{reg.member_id || '-'}</td>
+                    <td className="px-4 py-3 text-black font-mono">{reg.member_id || '-'}</td>
                     <td className="px-4 py-3 text-xs text-black whitespace-nowrap">{planLabel(reg.payment_plan)}</td>
                     <td className="px-4 py-3">
                       {(() => {

@@ -70,6 +70,20 @@ export default function LodgingsPage() {
     if (await patchStudentId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
   }
 
+  const updatePaymentStatus = async (regId: string, payment_status: string) => {
+    const res = await fetch('/api/admin/registrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: regId, payment_status }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setBulkMessage(`繳費狀態更新失敗：${d.error || res.status}`)
+      return
+    }
+    fetchData()
+  }
+
   const sendFormalNotifications = async () => {
     if (bulkSelected.length === 0) { setBulkMessage('請先勾選學員'); return }
     if (!confirm(`寄出正式學員通知信給 ${bulkSelected.length} 位學員？`)) return
@@ -159,6 +173,7 @@ export default function LodgingsPage() {
             <li><strong>本頁對象：</strong>只列出已完成食宿登記的學員；狀態需為「已錄取」。</li>
             <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生。</li>
             <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
+            <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>右側「詳細」查看內容；「編輯」可改食宿登記、上傳證件等。</li>
             <li><strong>批次寄出正式學員通知信：</strong>勾選學員後按上方按鈕，系統會將學員完整資料（含食宿、證件檢核、學號）整理成信件＋ PDF 寄出。建議在確認學號與資料皆正確後再寄。</li>
           </ol>
@@ -247,7 +262,17 @@ export default function LodgingsPage() {
                       <td className="px-3 py-3 font-mono text-black">{reg.random_code}</td>
                       <td className="px-3 py-3 text-black">{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
                       <td className="px-3 py-3 text-xs">
-                        {paymentStatusBadge(reg.payment_status)}
+                        <select value={reg.payment_status || 'unpaid'}
+                          onChange={e => updatePaymentStatus(reg.id, e.target.value)}
+                          className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
+                            reg.payment_status === 'unpaid' ? 'bg-gray-100 text-gray-800' :
+                            reg.payment_status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                          <option value="unpaid">未繳費</option>
+                          <option value="paid">待確認</option>
+                          <option value="verified">已確認</option>
+                        </select>
                         {r.payment_method === 'transfer' ? (
                           <div className="text-black mt-1">匯款</div>
                         ) : r.payment_method === 'credit_card' ? (
