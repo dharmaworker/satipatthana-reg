@@ -212,7 +212,7 @@ export default function LodgingsPage() {
             <li><strong>批次寄信流程：</strong>先用搜尋 / 「只顯示已分配學號者」過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
               <ul className="list-disc pl-5 mt-1 space-y-0.5">
                 <li><strong>批次寄出錄取通知信：</strong>通知學員已錄取，內含繳費/食宿/快篩連結（首次寄，或需補寄）。</li>
-                <li><strong>批次寄出正式學員通知信：</strong>彙整學員完整資料（含食宿、證件、學號）＋ PDF 附件。建議確認學號與資料皆正確後再寄。</li>
+                <li><strong>批次寄出正式學員通知信：</strong>彙整學員完整資料（含食宿、證件、學號）寄出。建議確認學號與資料皆正確後再寄。</li>
               </ul>
             </li>
           </ol>

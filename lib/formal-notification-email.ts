@@ -1,7 +1,22 @@
 import { sendMail } from './mailer'
-import { buildFormalNotifPdf, FormalNotifData } from './formal-notification-pdf'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
+
+export interface FormalNotifData {
+  chinese_name: string
+  passport_name: string | null
+  member_id: string | null
+  student_id: string | null
+  random_code: string
+  email: string
+  phone: string
+  residence: string | null
+  gender: string | null
+  dharma_name: string | null
+  payment_plan: string | null
+  payment_status: string | null
+  lodging: any
+}
 
 const TRANSPORT_ZH: Record<string, string> = {
   self: '8/19 自行抵達',
@@ -24,18 +39,6 @@ const row = (label: string, value: string | number | null | undefined) =>
 export async function sendFormalNotificationEmail(reg: FormalNotifData) {
   const l = reg.lodging || {}
 
-  let attachments: { filename: string; content: Buffer; contentType?: string }[] | undefined
-  try {
-    const pdfBuf = await buildFormalNotifPdf(reg)
-    attachments = [{
-      filename: `正式學員通知_${reg.chinese_name}_${reg.student_id || reg.member_id || reg.random_code}.pdf`,
-      content: pdfBuf,
-      contentType: 'application/pdf',
-    }]
-  } catch (pdfErr) {
-    console.error('[formal-notification] PDF 產生失敗，改為純 html:', pdfErr)
-  }
-
   const genderZh = reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : reg.gender
   const paymentStatusZh = reg.payment_status === 'verified' ? '已確認' : reg.payment_status === 'paid' ? '待確認' : '未繳費'
   const arrivalZh = TRANSPORT_ZH[l.arrival_transport] || l.arrival_transport || '—'
@@ -49,7 +52,6 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
     to: reg.email,
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】正式學員通知',
-    attachments,
     html: `
       <div style="font-family: sans-serif; max-width: 680px; margin: 0 auto; padding: 20px; color: #222;">
         <h2 style="color:#2d6a4f;">第二屆台灣四念處禪修課程－正式學員通知</h2>
@@ -106,7 +108,7 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
           <li>若感冒確診須取消課程；若課程期間陽性，同寢室 4 人需房內隔離並改 ZOOM 上課。</li>
         </ul>
 
-        <p style="color:#666;font-size:13px;margin-top:18px;">本信附件為您完整資料的 PDF 版本，請妥善保管。</p>
+        <p style="color:#666;font-size:13px;margin-top:18px;">若資料有誤請儘速聯絡學會。</p>
         <p style="color:#2d6a4f;font-size:13px;margin-top:8px;">台灣四念處學會 合十</p>
       </div>
     `,
