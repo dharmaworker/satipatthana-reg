@@ -543,26 +543,55 @@ function fileField(
   onUpload: (kind: string, f: File) => void,
 ) {
   const isImage = currentUrl && !currentUrl.toLowerCase().endsWith('.pdf')
+  const uploading = uploadingKind === kind
+  const inputId = `file-${kind}`
   return (
-    <div key={kind} className="border border-gray-100 rounded-lg p-3 space-y-2">
-      <label className="block text-sm font-medium text-black">{label}</label>
+    <div key={kind} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/50">
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={inputId} className="block text-sm font-semibold text-black">{label}</label>
+        {currentUrl && <span className="text-xs text-green-700 font-medium whitespace-nowrap">✓ 已上傳</span>}
+      </div>
+
       {currentUrl && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 bg-white border border-gray-200 rounded p-2">
           {isImage ? (
-            <img src={currentUrl} alt={kind} className="w-20 h-20 object-cover border rounded" />
+            <img src={currentUrl} alt={kind} className="w-16 h-16 object-cover border rounded" />
           ) : (
-            <span className="text-xs text-gray-600">已上傳檔案</span>
+            <span className="text-2xl">📄</span>
           )}
           <a href={currentUrl} target="_blank" rel="noreferrer"
-            className="text-xs text-blue-600 underline">檢視</a>
-          <span className="text-xs text-green-700">✓ 已上傳</span>
+            className="text-sm text-blue-600 underline">點此檢視</a>
         </div>
       )}
-      <input type="file"
-        accept="image/jpeg,image/png,image/webp,application/pdf"
-        disabled={uploadingKind === kind}
-        onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(kind, f) }} />
-      {uploadingKind === kind && <p className="text-xs text-gray-500">上傳中...</p>}
+
+      <label htmlFor={inputId}
+        className={`block w-full border-2 border-dashed rounded-lg px-4 py-6 text-center cursor-pointer transition-colors ${
+          uploading
+            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+            : currentUrl
+            ? 'border-green-400 bg-green-50 hover:bg-green-100 text-green-800'
+            : 'border-green-500 bg-white hover:bg-green-50 text-green-800'
+        }`}>
+        {uploading ? (
+          <>
+            <div className="text-2xl mb-1">⏳</div>
+            <div className="text-sm font-medium">上傳中，請稍候...</div>
+          </>
+        ) : (
+          <>
+            <div className="text-3xl mb-1">📤</div>
+            <div className="text-sm font-semibold">
+              {currentUrl ? '點此重新上傳' : '點此選擇檔案上傳'}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">支援 JPG / PNG / WEBP / PDF（5MB 以下）</div>
+          </>
+        )}
+        <input id={inputId} type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          disabled={uploading}
+          className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(kind, f) }} />
+      </label>
     </div>
   )
 }

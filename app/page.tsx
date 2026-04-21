@@ -570,16 +570,35 @@ export default function RegisterPage() {
             value={form.line_id}
             onChange={e => update('line_id', e.target.value)} />
           <div>
-            <label className="text-sm text-gray-700 block mb-1">LINE QR Code 圖片 *</label>
-            <input type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={uploadingQr === 'line'}
-              onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('line', f) }} />
-            {uploadingQr === 'line' && <p className="text-sm text-gray-500 mt-1">上傳中...</p>}
+            <label htmlFor="qr-line" className="text-sm text-gray-700 block mb-1 font-semibold">LINE QR Code 圖片 *</label>
             {form.line_qr_url && (
               <img src={form.line_qr_url} alt="LINE QR"
-                className="mt-2 w-40 h-40 object-contain border rounded" />
+                className="mb-2 w-32 h-32 object-contain border rounded" />
             )}
+            <label htmlFor="qr-line"
+              className={`block w-full border-2 border-dashed rounded-lg px-4 py-5 text-center cursor-pointer transition-colors ${
+                uploadingQr === 'line'
+                  ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+                  : form.line_qr_url
+                  ? 'border-green-400 bg-green-50 hover:bg-green-100 text-green-800'
+                  : 'border-green-500 bg-white hover:bg-green-50 text-green-800'
+              }`}>
+              {uploadingQr === 'line' ? (
+                <><div className="text-2xl mb-1">⏳</div><div className="text-sm">上傳中...</div></>
+              ) : (
+                <><div className="text-2xl mb-1">📤</div>
+                  <div className="text-sm font-semibold">
+                    {form.line_qr_url ? '點此重新上傳 LINE QR' : '點此選擇 LINE QR Code 圖片'}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">JPG / PNG / WEBP（500KB 以下）</div>
+                </>
+              )}
+              <input id="qr-line" type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploadingQr === 'line'}
+                className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('line', f) }} />
+            </label>
           </div>
         </div>
       )}
@@ -597,16 +616,35 @@ export default function RegisterPage() {
             value={form.wechat_id}
             onChange={e => update('wechat_id', e.target.value)} />
           <div>
-            <label className="text-sm text-gray-700 block mb-1">微信二維碼圖片 *</label>
-            <input type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={uploadingQr === 'wechat'}
-              onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('wechat', f) }} />
-            {uploadingQr === 'wechat' && <p className="text-sm text-gray-500 mt-1">上傳中...</p>}
+            <label htmlFor="qr-wechat" className="text-sm text-gray-700 block mb-1 font-semibold">微信二維碼圖片 *</label>
             {form.wechat_qr_url && (
               <img src={form.wechat_qr_url} alt="WeChat QR"
-                className="mt-2 w-40 h-40 object-contain border rounded" />
+                className="mb-2 w-32 h-32 object-contain border rounded" />
             )}
+            <label htmlFor="qr-wechat"
+              className={`block w-full border-2 border-dashed rounded-lg px-4 py-5 text-center cursor-pointer transition-colors ${
+                uploadingQr === 'wechat'
+                  ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+                  : form.wechat_qr_url
+                  ? 'border-green-400 bg-green-50 hover:bg-green-100 text-green-800'
+                  : 'border-green-500 bg-white hover:bg-green-50 text-green-800'
+              }`}>
+              {uploadingQr === 'wechat' ? (
+                <><div className="text-2xl mb-1">⏳</div><div className="text-sm">上傳中...</div></>
+              ) : (
+                <><div className="text-2xl mb-1">📤</div>
+                  <div className="text-sm font-semibold">
+                    {form.wechat_qr_url ? '點此重新上傳 微信 QR' : '點此選擇微信二維碼圖片'}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">JPG / PNG / WEBP（500KB 以下）</div>
+                </>
+              )}
+              <input id="qr-wechat" type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploadingQr === 'wechat'}
+                className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('wechat', f) }} />
+            </label>
           </div>
         </div>
       )}
