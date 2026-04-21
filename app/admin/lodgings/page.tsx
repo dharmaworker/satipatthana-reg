@@ -37,20 +37,20 @@ export default function LodgingsPage() {
   const [bulkSending, setBulkSending] = useState(false)
   const [bulkMessage, setBulkMessage] = useState('')
 
-  // 序號管理：計算下一個可用編號（掃全部 rows 找最大 T-N）
-  const nextMemberId = () => {
+  // 學號管理（R-001）：計算下一個可用編號（掃全部 rows 找最大 R-N）
+  const nextStudentId = () => {
     let maxN = 0
     for (const r of rows) {
-      const m = (r.registration?.member_id || '').match(/^T-(\d+)$/)
+      const m = (r.registration?.student_id || '').match(/^R-(\d+)$/)
       if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
     }
-    return `T-${String(maxN + 1).padStart(3, '0')}`
+    return `R-${String(maxN + 1).padStart(3, '0')}`
   }
-  const patchMemberId = async (regId: string, member_id: string | null) => {
+  const patchStudentId = async (regId: string, student_id: string | null) => {
     const res = await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: regId, member_id }),
+      body: JSON.stringify({ id: regId, student_id }),
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
@@ -60,19 +60,19 @@ export default function LodgingsPage() {
     fetchData()
     return true
   }
-  const assignMemberId = async (regId: string) => {
-    const next = nextMemberId()
-    if (!confirm(`配發序號 ${next}？`)) return
-    if (await patchMemberId(regId, next)) setBulkMessage(`已編號 ${next}`)
+  const assignStudentId = async (regId: string) => {
+    const next = nextStudentId()
+    if (!confirm(`配發學號 ${next}？`)) return
+    if (await patchStudentId(regId, next)) setBulkMessage(`已編學號 ${next}`)
   }
-  const reassignMemberId = async (reg: any) => {
-    const next = nextMemberId()
-    if (!confirm(`將 ${reg.chinese_name} 序號由「${reg.member_id}」改為「${next}」？`)) return
-    if (await patchMemberId(reg.id, next)) setBulkMessage(`已重編 → ${next}`)
+  const reassignStudentId = async (reg: any) => {
+    const next = nextStudentId()
+    if (!confirm(`將 ${reg.chinese_name} 學號由「${reg.student_id}」改為「${next}」？`)) return
+    if (await patchStudentId(reg.id, next)) setBulkMessage(`已重編 → ${next}`)
   }
-  const clearMemberId = async (reg: any) => {
-    if (!confirm(`確定註銷 ${reg.chinese_name} 的序號「${reg.member_id}」？`)) return
-    if (await patchMemberId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的序號`)
+  const clearStudentId = async (reg: any) => {
+    if (!confirm(`確定註銷 ${reg.chinese_name} 的學號「${reg.student_id}」？`)) return
+    if (await patchStudentId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
   }
 
   const sendFormalNotifications = async () => {
@@ -195,7 +195,8 @@ export default function LodgingsPage() {
                       }} />
                   </th>
                   <th className="px-3 py-3 text-left text-black font-medium">姓名</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">學號</th>
+                  <th className="px-3 py-3 text-left text-black font-medium">序號<br /><span className="text-xs font-normal text-gray-500">T-xxx 錄取自動</span></th>
+                  <th className="px-3 py-3 text-left text-black font-medium">學號<br /><span className="text-xs font-normal text-gray-500">R-xxx 手動</span></th>
                   <th className="px-3 py-3 text-left text-black font-medium">繳費碼</th>
                   <th className="px-3 py-3 text-left text-black font-medium">方案</th>
                   <th className="px-3 py-3 text-left text-black font-medium">繳費</th>
@@ -208,9 +209,9 @@ export default function LodgingsPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
+                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
                 ) : filtered.map(r => {
                   const reg = r.registration || {}
                   return (
@@ -223,18 +224,19 @@ export default function LodgingsPage() {
                           )} />
                       </td>
                       <td className="px-3 py-3 font-medium text-black">{reg.chinese_name}</td>
+                      <td className="px-3 py-3 text-black font-mono">{reg.member_id || '—'}</td>
                       <td className="px-3 py-3 text-black">
-                        <div>{reg.member_id || '—'}</div>
+                        <div className="font-mono">{reg.student_id || '—'}</div>
                         <div className="flex gap-1 mt-1">
-                          {!reg.member_id && (
-                            <button onClick={() => assignMemberId(reg.id)}
+                          {!reg.student_id && (
+                            <button onClick={() => assignStudentId(reg.id)}
                               className="text-[10px] text-purple-700 hover:underline">編號</button>
                           )}
-                          {reg.member_id && (
+                          {reg.student_id && (
                             <>
-                              <button onClick={() => reassignMemberId(reg)}
+                              <button onClick={() => reassignStudentId(reg)}
                                 className="text-[10px] text-purple-700 hover:underline">重編</button>
-                              <button onClick={() => clearMemberId(reg)}
+                              <button onClick={() => clearStudentId(reg)}
                                 className="text-[10px] text-orange-700 hover:underline">註銷</button>
                             </>
                           )}

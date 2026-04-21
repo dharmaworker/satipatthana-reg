@@ -64,6 +64,7 @@ export async function PATCH(request: NextRequest) {
     status,
     payment_status,
     member_id,
+    student_id,
     chinese_name,
     email,
     residence,
@@ -72,7 +73,7 @@ export async function PATCH(request: NextRequest) {
     wechat_qr_url,
   } = body
 
-  if ((status !== undefined || member_id !== undefined) && !canEditStatus) {
+  if ((status !== undefined || member_id !== undefined || student_id !== undefined) && !canEditStatus) {
     return NextResponse.json({ error: '無權修改錄取狀態' }, { status: 403 })
   }
   if (payment_status !== undefined && !canEditPayment) {
@@ -97,6 +98,7 @@ export async function PATCH(request: NextRequest) {
   const updateData: Record<string, unknown> = {}
   if (status) updateData.status = status
   if (member_id !== undefined) updateData.member_id = member_id || null
+  if (student_id !== undefined) updateData.student_id = student_id || null
   if (payment_status) {
     updateData.payment_status = payment_status
     if (payment_status === 'verified') {

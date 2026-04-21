@@ -5,7 +5,8 @@
 create table if not exists registrations (
   id uuid primary key default gen_random_uuid(),
   random_code text not null unique,
-  member_id text,
+  member_id text,           -- 序號：T-001/T-002（錄取時自動編）
+  student_id text unique,   -- 學號：R-001/R-002（食宿管理頁手動編，給正式學員通知信用）
 
   chinese_name text not null,
   passport_name text not null,
@@ -48,6 +49,7 @@ create table if not exists registrations (
 create index if not exists idx_registrations_email on registrations(email);
 create index if not exists idx_registrations_random_code on registrations(random_code);
 create index if not exists idx_registrations_status on registrations(status);
+create index if not exists idx_registrations_student_id on registrations(student_id);
 
 -- ========== admin_users ==========
 create table if not exists admin_users (

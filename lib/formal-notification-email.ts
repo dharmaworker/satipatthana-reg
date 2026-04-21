@@ -28,7 +28,7 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
   try {
     const pdfBuf = await buildFormalNotifPdf(reg)
     attachments = [{
-      filename: `正式學員通知_${reg.chinese_name}_${reg.member_id || reg.random_code}.pdf`,
+      filename: `正式學員通知_${reg.chinese_name}_${reg.student_id || reg.member_id || reg.random_code}.pdf`,
       content: pdfBuf,
       contentType: 'application/pdf',
     }]
@@ -58,7 +58,8 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
 
         <h3 style="color:#2d6a4f;">一、學員資料</h3>
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
-          ${row('學號', reg.member_id || '（未編號）')}
+          ${row('學號', reg.student_id || '（未編號）')}
+          ${row('序號', reg.member_id || '（未編號）')}
           ${row('中文姓名', reg.chinese_name)}
           ${row('護照英文姓名', reg.passport_name)}
           ${row('性別', genderZh)}

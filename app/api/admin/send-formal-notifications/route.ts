@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
         chinese_name: reg.chinese_name,
         passport_name: reg.passport_name || null,
         member_id: reg.member_id || null,
+        student_id: reg.student_id || null,
         random_code: reg.random_code,
         email: reg.email,
         phone: reg.phone,
