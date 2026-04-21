@@ -42,7 +42,9 @@ export async function POST(request: NextRequest) {
       .upload(filename, arrayBuffer, { contentType: file.type, upsert: false })
     if (uploadErr) {
       console.error('[upload-lodging] upload failed:', uploadErr)
-      return NextResponse.json({ error: '上傳失敗，請稍後再試' }, { status: 500 })
+      return NextResponse.json({
+        error: `上傳失敗：${uploadErr.message || '未知錯誤'}`,
+      }, { status: 500 })
     }
 
     const { data: { publicUrl } } = supabaseAdmin
@@ -51,8 +53,10 @@ export async function POST(request: NextRequest) {
       .getPublicUrl(filename)
 
     return NextResponse.json({ url: publicUrl })
-  } catch (err) {
+  } catch (err: any) {
     console.error('[upload-lodging] error:', err)
-    return NextResponse.json({ error: '上傳失敗' }, { status: 500 })
+    return NextResponse.json({
+      error: `上傳失敗：${err?.message || String(err)}`,
+    }, { status: 500 })
   }
 }

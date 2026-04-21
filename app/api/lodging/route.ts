@@ -183,7 +183,10 @@ export async function POST(request: NextRequest) {
     }
     if (lodgingErr) {
       console.error('[lodging] upsert failed:', lodgingErr)
-      return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
+      return NextResponse.json({
+        error: `儲存失敗（DB）：${lodgingErr.message || '未知錯誤'}`,
+        detail: lodgingErr.details || lodgingErr.hint || null,
+      }, { status: 500 })
     }
 
     // 寄確認信給學員 + bcc 學會（失敗不影響主流程）
@@ -234,6 +237,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, lodging, payment_plan: plan })
   } catch (err: any) {
     console.error('[lodging] error:', err)
-    return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
+    return NextResponse.json({
+      error: `儲存失敗：${err?.message || String(err)}`,
+    }, { status: 500 })
   }
 }
