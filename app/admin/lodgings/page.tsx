@@ -39,21 +39,20 @@ export default function LodgingsPage() {
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
 
-  // 序號（member_id, T-001）＋ 學號（student_id, R-001）手動管理
-  const nextId = (prefix: string, key: 'member_id' | 'student_id') => {
-    const re = new RegExp(`^${prefix}-(\\d+)$`)
+  // 學號管理（R-001）：計算下一個可用編號（掃全部 rows 找最大 R-N）
+  const nextStudentId = () => {
     let maxN = 0
     for (const r of rows) {
-      const m = (r.registration?.[key] || '').match(re)
+      const m = (r.registration?.student_id || '').match(/^R-(\d+)$/)
       if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
     }
-    return `${prefix}-${String(maxN + 1).padStart(3, '0')}`
+    return `R-${String(maxN + 1).padStart(3, '0')}`
   }
-  const patchId = async (regId: string, field: 'member_id' | 'student_id', val: string | null) => {
+  const patchStudentId = async (regId: string, student_id: string | null) => {
     const res = await fetch('/api/admin/registrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: regId, [field]: val }),
+      body: JSON.stringify({ id: regId, student_id }),
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
@@ -63,23 +62,14 @@ export default function LodgingsPage() {
     fetchData()
     return true
   }
-  const assignMemberId = async (regId: string) => {
-    const next = nextId('T', 'member_id')
-    if (!confirm(`配發序號 ${next}？`)) return
-    if (await patchId(regId, 'member_id', next)) setBulkMessage(`已編序號 ${next}`)
-  }
-  const clearMemberId = async (reg: any) => {
-    if (!confirm(`確定註銷 ${reg.chinese_name} 的序號「${reg.member_id}」？`)) return
-    if (await patchId(reg.id, 'member_id', null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的序號`)
-  }
   const assignStudentId = async (regId: string) => {
-    const next = nextId('R', 'student_id')
+    const next = nextStudentId()
     if (!confirm(`配發學號 ${next}？`)) return
-    if (await patchId(regId, 'student_id', next)) setBulkMessage(`已編學號 ${next}`)
+    if (await patchStudentId(regId, next)) setBulkMessage(`已編學號 ${next}`)
   }
   const clearStudentId = async (reg: any) => {
     if (!confirm(`確定註銷 ${reg.chinese_name} 的學號「${reg.student_id}」？`)) return
-    if (await patchId(reg.id, 'student_id', null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
+    if (await patchStudentId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
   }
 
   const updatePaymentStatus = async (regId: string, payment_status: string) => {
@@ -215,7 +205,7 @@ export default function LodgingsPage() {
           <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
           <ol className="list-decimal pl-5 mt-2 space-y-1">
             <li><strong>本頁對象：</strong>所有狀態為「已錄取」的學員；未填食宿者食宿欄位顯示「—」。</li>
-            <li><strong>序號 T-xxx：</strong>手動編；按「編號」自動配發下一組 T-xxx；按「註銷」可清除。</li>
+            <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生；取消錄取時自動註銷。</li>
             <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
@@ -275,7 +265,7 @@ export default function LodgingsPage() {
                       }} />
                   </th>
                   <th className="px-3 py-3 text-left text-black font-medium">姓名</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">序號<br /><span className="text-xs font-normal text-gray-500">T-xxx 手動</span></th>
+                  <th className="px-3 py-3 text-left text-black font-medium">序號<br /><span className="text-xs font-normal text-gray-500">T-xxx 錄取自動</span></th>
                   <th className="px-3 py-3 text-left text-black font-medium">學號<br /><span className="text-xs font-normal text-gray-500">R-xxx 手動</span></th>
                   <th className="px-3 py-3 text-left text-black font-medium">繳費碼</th>
                   <th className="px-3 py-3 text-left text-black font-medium">方案</th>
@@ -304,19 +294,7 @@ export default function LodgingsPage() {
                           )} />
                       </td>
                       <td className="px-3 py-3 font-medium text-black">{reg.chinese_name}</td>
-                      <td className="px-3 py-3 text-black">
-                        <div className="font-mono">{reg.member_id || '—'}</div>
-                        <div className="flex gap-1 mt-1">
-                          {!reg.member_id && (
-                            <button onClick={() => assignMemberId(reg.id)}
-                              className="text-[10px] text-blue-700 hover:underline">編號</button>
-                          )}
-                          {reg.member_id && (
-                            <button onClick={() => clearMemberId(reg)}
-                              className="text-[10px] text-orange-700 hover:underline">註銷</button>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-3 py-3 text-black font-mono">{reg.member_id || '—'}</td>
                       <td className="px-3 py-3 text-black">
                         <div className="font-mono">{reg.student_id || '—'}</div>
                         <div className="flex gap-1 mt-1">
