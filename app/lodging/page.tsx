@@ -233,7 +233,7 @@ function LodgingContent() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-green-800 text-white py-6 px-4 text-center">
         <h1 className="text-xl font-bold">第二屆台灣四念處禪修－食宿登記表</h1>
-        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 學號 {reg.member_id || '待編號'}</p>
+        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 序號 {reg.member_id || '待編號'}</p>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
@@ -285,7 +285,7 @@ function LodgingContent() {
               <div className="text-black font-medium break-all">{reg.passport_name || '—'}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500">學號</div>
+              <div className="text-xs text-gray-500">序號</div>
               <div className="text-black font-medium">{reg.member_id || '待編號'}</div>
             </div>
             <div>
@@ -506,7 +506,7 @@ function LodgingContent() {
             <li>若在課程前幾天<strong>感冒確診</strong>並仍具傳染力，<strong>必須取消課程</strong>。</li>
             <li>若在課程會場（課程開始前或課程中）<strong>被檢驗出陽性</strong>，同寢室 4 人需在房間隔離，並透過 ZOOM 線上上課及互動，不能與其他學員一起上課及用餐。</li>
             <li>若出現發燒、咳嗽、呼吸急促、胸悶、頭痛、喉嚨痛等症狀，需接受主辦單位個別檢測；即使陰性亦會移至後段座位，與其他學員隔開。</li>
-            <li><strong>快篩檢測時間</strong>（檢測結果必須載明檢測日期、學號、姓名，快篩試劑請自備，主辦單位不提供）：
+            <li><strong>快篩檢測時間</strong>（檢測結果必須載明檢測日期、序號、姓名，快篩試劑請自備，主辦單位不提供）：
               <ul className="list-disc pl-5 mt-1 space-y-0.5 text-xs">
                 <li>開課前：8/17 上午 8:00–晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
                 <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>

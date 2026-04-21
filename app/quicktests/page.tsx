@@ -118,14 +118,14 @@ function QuickTestsContent() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-green-800 text-white py-6 px-4 text-center">
         <h1 className="text-xl font-bold">第二屆台灣四念處禪修－快篩檢測上傳</h1>
-        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 學號 {reg.member_id || '待編號'}</p>
+        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 序號 {reg.member_id || '待編號'}</p>
       </div>
 
       <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
           <p className="font-semibold">注意事項</p>
           <ul className="list-disc pl-5 mt-1 space-y-1">
-            <li>檢測結果必須<strong>載明檢測日期、學號、姓名</strong>。</li>
+            <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>。</li>
             <li>快篩試劑請<strong>自備</strong>，主辦單位不提供。</li>
             <li>請依下方兩個時段於規定時間前上傳；可分次回到此頁補上。</li>
             <li>課程期間的 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需於此上傳。</li>

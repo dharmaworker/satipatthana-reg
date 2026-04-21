@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
             <p>${reg.chinese_name} 法友您好，</p>
             <p>您已完成食宿登記。以下為登記摘要：</p>
             <table style="border-collapse:collapse;width:100%;font-size:14px;">
-              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:140px;">學號</td><td style="padding:6px 10px;border:1px solid #eee;">${reg.member_id || '待編號'}</td></tr>
+              <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:140px;">序號</td><td style="padding:6px 10px;border:1px solid #eee;">${reg.member_id || '待編號'}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">方案</td><td style="padding:6px 10px;border:1px solid #eee;">${plan ? `${plan}${planDefaults ? `（${planDefaults.arrival_date} 至 ${planDefaults.departure_date}）` : ''}` : '（尚未於繳費頁選擇，請於繳費時選定）'}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">前往方式</td><td style="padding:6px 10px;border:1px solid #eee;">${arrivalZh}</td></tr>
               <tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;">離開方式</td><td style="padding:6px 10px;border:1px solid #eee;">${departureZh}${busDestZh ? '：' + busDestZh : ''}</td></tr>

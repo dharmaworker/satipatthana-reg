@@ -540,7 +540,7 @@ export default function DashboardPage() {
               <DetailField label="中文姓名" value={detailReg.chinese_name} />
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
               <DetailField label="繳費碼" value={detailReg.random_code} mono />
-              <DetailField label="學號" value={detailReg.member_id} />
+              <DetailField label="序號" value={detailReg.member_id} />
               <DetailField label="身分" value={detailReg.identity === 'lay' ? '在家人' : detailReg.identity === 'monastic' ? '僧眾' : detailReg.identity} />
               <DetailField label="法名" value={detailReg.dharma_name} />
               <DetailField label="性別" value={detailReg.gender === 'male' ? '男' : detailReg.gender === 'female' ? '女' : detailReg.gender} />

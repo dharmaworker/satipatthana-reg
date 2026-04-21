@@ -110,7 +110,7 @@ export default function QueryPage() {
             <div className="space-y-3">
               {[
                 { label: '姓名', value: result.name },
-                { label: '學號', value: result.member_id },
+                { label: '序號', value: result.member_id },
                 { label: '審核狀態', value: result.status },
                 { label: '繳費狀態', value: result.payment_status },
               ].map(({ label, value }) => (

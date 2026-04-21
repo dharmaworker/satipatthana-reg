@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   const headers = [
-    '報名時間', '學號', '繳費碼', '審核狀態', '繳費狀態', '繳費方案',
+    '報名時間', '序號', '繳費碼', '審核狀態', '繳費狀態', '繳費方案',
     '中文姓名', '護照英文姓名', '身份', '法名', '性別', '年齡',
     '護照頒發地', '居住地', '手機', 'Email', 'LINE ID', '微信號',
     'LINE QR 連結', 'WeChat QR 連結',

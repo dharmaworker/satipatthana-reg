@@ -34,7 +34,8 @@ export default function QuickTestsAdminPage() {
       const q = search.toLowerCase()
       const match =
         (reg.chinese_name || '').toLowerCase().includes(q) ||
-        (reg.member_id || '').toLowerCase().includes(q)
+        (reg.member_id || '').toLowerCase().includes(q) ||
+        (reg.student_id || '').toLowerCase().includes(q)
       if (!match) return false
     }
     if (missingOnly && countUploaded(r) >= TEST_COLS.length) return false
@@ -51,7 +52,7 @@ export default function QuickTestsAdminPage() {
       <div className="max-w-[1200px] mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
           <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
-            placeholder="搜尋姓名 / 學號"
+            placeholder="搜尋姓名 / 序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)} />
           <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
             <input type="checkbox" checked={missingOnly}
@@ -70,6 +71,7 @@ export default function QuickTestsAdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
+                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">序號</th>
                   <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">學號</th>
                   <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">姓名</th>
                   {TEST_COLS.map(c => (
@@ -80,15 +82,16 @@ export default function QuickTestsAdminPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={3 + TEST_COLS.length} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={4 + TEST_COLS.length} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={3 + TEST_COLS.length} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
+                  <tr><td colSpan={4 + TEST_COLS.length} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
                 ) : filtered.map(r => {
                   const reg = r.registration || {}
                   const uploaded = countUploaded(r)
                   return (
                     <tr key={r.id} className="hover:bg-gray-50">
                       <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.member_id || '—'}</td>
+                      <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.student_id || '—'}</td>
                       <td className="px-3 py-3 font-medium text-black whitespace-nowrap">{reg.chinese_name}</td>
                       {TEST_COLS.map(c => {
                         const url: string = r[c.key] || ''

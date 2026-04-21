@@ -57,7 +57,8 @@ export default function DocumentsPage() {
       const match =
         (reg.chinese_name || '').toLowerCase().includes(q) ||
         (reg.passport_name || '').toLowerCase().includes(q) ||
-        (reg.member_id || '').toLowerCase().includes(q)
+        (reg.member_id || '').toLowerCase().includes(q) ||
+        (reg.student_id || '').toLowerCase().includes(q)
       if (!match) return false
     }
     if (missingOnly) {
@@ -74,7 +75,7 @@ export default function DocumentsPage() {
       <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-4">
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
           <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
-            placeholder="搜尋姓名 / 英文姓名 / 學號"
+            placeholder="搜尋姓名 / 英文姓名 / 序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)} />
           <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
             <input type="checkbox" checked={missingOnly}
@@ -92,6 +93,7 @@ export default function DocumentsPage() {
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">姓名</th>
+                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">序號</th>
                   <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">學號</th>
                   <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">居住地</th>
                   {DOC_COLS.map(c => (
@@ -101,9 +103,9 @@ export default function DocumentsPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={3 + DOC_COLS.length} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={4 + DOC_COLS.length} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={3 + DOC_COLS.length} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
+                  <tr><td colSpan={4 + DOC_COLS.length} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
                 ) : filtered.map(r => {
                   const reg = r.registration || {}
                   return (
@@ -114,7 +116,8 @@ export default function DocumentsPage() {
                           <div className="text-xs text-gray-500">{reg.passport_name}</div>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-black whitespace-nowrap">{reg.member_id || '—'}</td>
+                      <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.member_id || '—'}</td>
+                      <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.student_id || '—'}</td>
                       <td className="px-3 py-3 text-black text-xs whitespace-nowrap">{reg.residence || '—'}</td>
                       {DOC_COLS.map(c => {
                         const url: string = r[c.key] || ''

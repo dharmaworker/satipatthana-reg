@@ -102,7 +102,7 @@ export async function sendLodgingArchiveEmail(reg: {
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
           ${row('繳費碼', reg.random_code)}
           ${row('中文姓名', reg.chinese_name)}
-          ${row('學號', reg.member_id)}
+          ${row('序號', reg.member_id)}
           ${row('選擇方案', planLabel)}
           ${row('金額 (NT$)', typeof amount === 'number' ? amount.toLocaleString() : amount)}
           ${row('繳費方式', method)}

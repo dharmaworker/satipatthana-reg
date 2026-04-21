@@ -20,7 +20,3 @@ export function generateRandomCode(): string {
   return code
 }
 
-// 產生暫時學號（格式 001-T）
-export function generateMemberId(sequence: number): string {
-  return `${String(sequence).padStart(3, '0')}-T`
-}

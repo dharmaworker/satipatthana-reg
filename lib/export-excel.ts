@@ -18,7 +18,8 @@ const PLAN_LABEL: Record<string, string> = {
 
 const COLUMNS = [
   { key: 'created_at', header: '報名時間', width: 20 },
-  { key: 'member_id', header: '學號', width: 12 },
+  { key: 'member_id', header: '序號', width: 12 },
+  { key: 'student_id', header: '學號', width: 12 },
   { key: 'random_code', header: '繳費碼', width: 10 },
   { key: 'status', header: '審核狀態', width: 10 },
   { key: 'payment_status', header: '繳費狀態', width: 10 },
@@ -68,7 +69,8 @@ function addSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
 const LODGING_COLUMNS = [
   { key: 'updated_at', header: '更新時間', width: 20 },
   { key: 'chinese_name', header: '中文姓名', width: 12 },
-  { key: 'member_id', header: '學號', width: 12 },
+  { key: 'member_id', header: '序號', width: 12 },
+  { key: 'student_id', header: '學號', width: 12 },
   { key: 'random_code', header: '繳費碼', width: 10 },
   { key: 'residence', header: '居住地', width: 12 },
   { key: 'payment_plan', header: '方案', width: 10 },
@@ -125,6 +127,7 @@ function transformLodgingRow(l: any) {
     updated_at: l.updated_at ? new Date(l.updated_at).toLocaleString('zh-TW') : '',
     chinese_name: reg.chinese_name || '',
     member_id: reg.member_id || '',
+    student_id: reg.student_id || '',
     random_code: reg.random_code || '',
     residence: reg.residence || '',
     payment_plan: reg.payment_plan || '',

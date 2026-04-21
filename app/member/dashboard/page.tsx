@@ -32,7 +32,7 @@ export default function MemberDashboardPage() {
           <p className="text-green-200 text-sm">歡迎，{member?.chinese_name} 學員</p>
         </div>
         <div className="text-right">
-          <p className="text-green-200 text-sm">學號</p>
+          <p className="text-green-200 text-sm">序號</p>
           <p className="font-bold">{member?.member_id || '待編號'}</p>
         </div>
       </div>

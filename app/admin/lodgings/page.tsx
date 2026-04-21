@@ -384,7 +384,8 @@ export default function LodgingsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <Field label="學號" value={detail.registration?.member_id} />
+              <Field label="序號" value={detail.registration?.member_id} />
+              <Field label="學號" value={detail.registration?.student_id} />
               <Field label="Email" value={detail.registration?.email} />
               <Field label="手機" value={detail.registration?.phone} />
               <Field label="居住地" value={detail.registration?.residence} />
