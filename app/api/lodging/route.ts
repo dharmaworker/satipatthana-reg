@@ -82,14 +82,19 @@ export async function POST(request: NextRequest) {
     const planDefaults = plan ? planToLodgingDefaults(plan) : null
 
     // 必填檢查（不再要求 dates / payment_method，這些由 plan 帶入）
-    const required = [
-      'emergency_name', 'emergency_relation', 'emergency_phone',
-      'arrival_transport', 'departure_transport',
-      'diet', 'noon_fasting', 'snacks',
-    ]
-    for (const k of required) {
+    const FIELD_LABEL: Record<string, string> = {
+      emergency_name: '緊急聯絡人姓名',
+      emergency_relation: '緊急聯絡人關係',
+      emergency_phone: '緊急聯絡人電話',
+      arrival_transport: '前往日月潭方式',
+      departure_transport: '離開渡假村方式',
+      diet: '飲食選擇',
+      noon_fasting: '過午不食',
+      snacks: '茶點需求',
+    }
+    for (const k of Object.keys(FIELD_LABEL)) {
       if (!fields[k]) {
-        return NextResponse.json({ error: `欄位 ${k} 必填` }, { status: 400 })
+        return NextResponse.json({ error: `「${FIELD_LABEL[k]}」必填` }, { status: 400 })
       }
     }
     if (!fields.agree_covid_rules) {

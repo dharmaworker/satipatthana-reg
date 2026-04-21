@@ -22,9 +22,9 @@ function LodgingContent() {
     arrival_transport: '',
     departure_transport: '',
     bus_destination: '',
-    diet: '',
-    noon_fasting: '',
-    snacks: '',
+    diet: 'vegetarian',            // 預設素食（禪修課程常見）
+    noon_fasting: 'after_noon',    // 預設可以 12 點後吃
+    snacks: 'drink_only',          // 預設只需咖啡/茶
     dinner_0819: false,
     dinner_0824: false,
     snoring: false,
