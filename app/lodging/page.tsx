@@ -38,8 +38,6 @@ function LodgingContent() {
     departure_ticket_url: '',
     test_0817_url: '',
     test_0819_url: '',
-    test_0820_url: '',
-    test_0822_url: '',
     // 航班
     flight_arrival_date: '',
     flight_arrival_time: '',
@@ -105,8 +103,6 @@ function LodgingContent() {
             departure_ticket_url: data.lodging.departure_ticket_url || '',
             test_0817_url: data.lodging.test_0817_url || '',
             test_0819_url: data.lodging.test_0819_url || '',
-            test_0820_url: data.lodging.test_0820_url || '',
-            test_0822_url: data.lodging.test_0822_url || '',
             flight_arrival_date: data.lodging.flight_arrival_date || '',
             flight_arrival_time: data.lodging.flight_arrival_time || '',
             flight_departure_date: data.lodging.flight_departure_date || '',

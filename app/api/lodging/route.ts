@@ -125,8 +125,6 @@ export async function POST(request: NextRequest) {
       departure_ticket_url: fields.departure_ticket_url || null,
       test_0817_url: fields.test_0817_url || null,
       test_0819_url: fields.test_0819_url || null,
-      test_0820_url: fields.test_0820_url || null,
-      test_0822_url: fields.test_0822_url || null,
       flight_arrival_date: fields.flight_arrival_date || null,
       flight_arrival_time: fields.flight_arrival_time || null,
       flight_departure_date: fields.flight_departure_date || null,

@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest) {
     'flight_departure_date', 'flight_departure_time',
     'photo_url', 'id_front_url', 'id_back_url', 'passport_url',
     'arrival_ticket_url', 'departure_ticket_url',
-    'test_0817_url', 'test_0819_url', 'test_0820_url', 'test_0822_url',
+    'test_0817_url', 'test_0819_url',
   ]
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
   for (const k of allowed) {
