@@ -35,7 +35,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState(false)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
 
@@ -92,7 +92,7 @@ export default function LodgingsPage() {
       return
     }
     if (!confirm(`寄出錄取通知信給 ${bulkSelected.length} 位學員？`)) return
-    setBulkSending(true)
+    setBulkSending('approval')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-notifications', {
       method: 'POST',
@@ -101,7 +101,7 @@ export default function LodgingsPage() {
     })
     const data = await res.json()
     setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
-    setBulkSending(false)
+    setBulkSending(null)
     if (res.ok) setBulkSelected([])
   }
 
@@ -119,7 +119,7 @@ export default function LodgingsPage() {
     } else {
       if (!confirm(`寄出正式學員通知信給 ${bulkSelected.length} 位學員？`)) return
     }
-    setBulkSending(true)
+    setBulkSending('formal')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-formal-notifications', {
       method: 'POST',
@@ -128,7 +128,7 @@ export default function LodgingsPage() {
     })
     const data = await res.json()
     setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
-    setBulkSending(false)
+    setBulkSending(null)
     if (res.ok) setBulkSelected([])
   }
 
@@ -238,14 +238,14 @@ export default function LodgingsPage() {
             全選本頁
           </label>
           <button onClick={sendApprovalNotifications}
-            disabled={bulkSending}
+            disabled={bulkSending !== null}
             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {bulkSending ? '寄送中...' : `批次寄出錄取通知信 (${bulkSelected.length})`}
+            {bulkSending === 'approval' ? '寄送中...' : `批次寄出錄取通知信 (${bulkSelected.length})`}
           </button>
           <button onClick={sendFormalNotifications}
-            disabled={bulkSending}
+            disabled={bulkSending !== null}
             className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {bulkSending ? '寄送中...' : `批次寄出正式學員通知信 (${bulkSelected.length})`}
+            {bulkSending === 'formal' ? '寄送中...' : `批次寄出正式學員通知信 (${bulkSelected.length})`}
           </button>
           {bulkMessage && <span className="text-sm text-green-700 font-medium">{bulkMessage}</span>}
           <span className="text-sm text-gray-600 ml-auto">共 {filtered.length} 筆</span>
