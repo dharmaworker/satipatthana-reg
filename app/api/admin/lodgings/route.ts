@@ -13,20 +13,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '請先登入' }, { status: 401 })
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('lodging_registrations')
+  // 取所有已錄取學員（含尚未填食宿者），LEFT JOIN 食宿登記
+  const { data: regs, error: regsErr } = await supabaseAdmin
+    .from('registrations')
     .select(`
-      *,
-      registration:registrations (
-        id, chinese_name, passport_name, member_id, student_id, email, phone, random_code,
-        residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status
-      )
+      id, chinese_name, passport_name, member_id, student_id, email, phone, random_code,
+      residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
+      created_at
     `)
-    .order('updated_at', { ascending: false })
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (regsErr) {
+    return NextResponse.json({ error: regsErr.message }, { status: 500 })
   }
+
+  const regIds = (regs || []).map(r => r.id)
+  const { data: lodgings } = regIds.length > 0
+    ? await supabaseAdmin
+        .from('lodging_registrations')
+        .select('*')
+        .in('registration_id', regIds)
+    : { data: [] as any[] }
+
+  const lodgingByReg = new Map<string, any>()
+  for (const l of lodgings || []) lodgingByReg.set(l.registration_id, l)
+
+  // 包裝成 rows：每筆都有 registration 子物件，lodging 欄位攤平在 row（無 lodging 時為 null）
+  const data = (regs || []).map(reg => {
+    const l = lodgingByReg.get(reg.id) || {}
+    return {
+      id: l.id || null,
+      ...l,
+      registration: reg,
+    }
+  })
+
   return NextResponse.json({ data })
 }
 

@@ -193,27 +193,6 @@ export default function DashboardPage() {
     setSending(false)
   }
 
-  const sendNotifications = async () => {
-    const approvedSelected = registrations
-      .filter(r => selected.includes(r.id) && r.status === 'approved')
-      .map(r => r.id)
-
-    if (approvedSelected.length === 0) {
-      setMessage('請先選取已審核通過的學員')
-      return
-    }
-
-    setSending(true)
-    const res = await fetch('/api/admin/send-notifications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: approvedSelected }),
-    })
-    const data = await res.json()
-    setMessage(data.message)
-    setSending(false)
-  }
-
   const deleteRegistration = async (reg: any) => {
     const confirmed = window.confirm(
       `確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`
@@ -272,9 +251,8 @@ export default function DashboardPage() {
           <ol className="list-decimal pl-5 mt-2 space-y-1">
             <li><strong>審核報名：</strong>在「審核狀態」下拉切換，或勾選多筆後按上方「批次錄取／批次拒絕」。</li>
             <li><strong>序號自動化：</strong>錄取時系統自動編序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
-            <li><strong>寄錄取信：</strong>勾選已錄取學員，按「批次寄出錄取信」（含繳費/食宿/快篩連結 + PDF 附件）。</li>
             <li><strong>編輯資料：</strong>單筆按「編輯」修改姓名／Email／居住地等；⋯ 可刪除。</li>
-            <li><strong>繳費狀態 / 學號（R-xxx）管理：</strong>請到「錄取學員」分頁操作。</li>
+            <li><strong>批次寄信 / 繳費狀態 / 學號（R-xxx）管理：</strong>都請到「錄取學員」分頁操作。</li>
           </ol>
         </details>
 
@@ -323,12 +301,6 @@ export default function DashboardPage() {
             disabled={sending || selected.length === 0}
             className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
             批次刪除 ({selected.length})
-          </button>
-          <button
-            onClick={sendNotifications}
-            disabled={sending || selected.length === 0}
-            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {sending ? '寄送中...' : `批次寄出錄取信 (${selected.length})`}
           </button>
           {message && (
             <span className="text-sm text-green-700 font-medium">{message}</span>

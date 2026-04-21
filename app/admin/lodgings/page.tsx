@@ -84,9 +84,39 @@ export default function LodgingsPage() {
     fetchData()
   }
 
+  const sendApprovalNotifications = async () => {
+    if (bulkSelected.length === 0) {
+      alert('請先勾選至少一位學員')
+      return
+    }
+    if (!confirm(`寄出錄取通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending(true)
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(false)
+    if (res.ok) setBulkSelected([])
+  }
+
   const sendFormalNotifications = async () => {
-    if (bulkSelected.length === 0) { setBulkMessage('請先勾選學員'); return }
-    if (!confirm(`寄出正式學員通知信給 ${bulkSelected.length} 位學員？`)) return
+    if (bulkSelected.length === 0) {
+      alert('請先勾選至少一位學員')
+      return
+    }
+    // 正式通知信需要已填食宿，提醒操作員
+    const noLodgingCount = filtered
+      .filter(r => bulkSelected.includes(r.registration?.id) && !r.id)
+      .length
+    if (noLodgingCount > 0) {
+      if (!confirm(`勾選中有 ${noLodgingCount} 位尚未填食宿登記的學員，通知信內食宿欄位會顯示「—」。確定仍要寄出？`)) return
+    } else {
+      if (!confirm(`寄出正式學員通知信給 ${bulkSelected.length} 位學員？`)) return
+    }
     setBulkSending(true)
     setBulkMessage('')
     const res = await fetch('/api/admin/send-formal-notifications', {
@@ -170,12 +200,17 @@ export default function LodgingsPage() {
         <details open className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
           <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
           <ol className="list-decimal pl-5 mt-2 space-y-1">
-            <li><strong>本頁對象：</strong>只列出已完成食宿登記的學員；狀態需為「已錄取」。</li>
+            <li><strong>本頁對象：</strong>所有狀態為「已錄取」的學員；未填食宿者食宿欄位顯示「—」。</li>
             <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生。</li>
             <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
-            <li><strong>詳細／編輯：</strong>右側「詳細」查看內容；「編輯」可改食宿登記、上傳證件等。</li>
-            <li><strong>批次寄出正式學員通知信：</strong>勾選學員後按上方按鈕，系統會將學員完整資料（含食宿、證件檢核、學號）整理成信件＋ PDF 寄出。建議在確認學號與資料皆正確後再寄。</li>
+            <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
+            <li><strong>批次寄信流程：</strong>先用搜尋過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li><strong>批次寄出錄取通知信：</strong>通知學員已錄取，內含繳費/食宿/快篩連結（首次寄，或需補寄）。</li>
+                <li><strong>批次寄出正式學員通知信：</strong>彙整學員完整資料（含食宿、證件、學號）＋ PDF 附件。建議確認學號與資料皆正確後再寄。</li>
+              </ul>
+            </li>
           </ol>
         </details>
 
@@ -193,8 +228,13 @@ export default function LodgingsPage() {
               }} />
             全選本頁
           </label>
+          <button onClick={sendApprovalNotifications}
+            disabled={bulkSending}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            {bulkSending ? '寄送中...' : `批次寄出錄取通知信 (${bulkSelected.length})`}
+          </button>
           <button onClick={sendFormalNotifications}
-            disabled={bulkSending || bulkSelected.length === 0}
+            disabled={bulkSending}
             className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
             {bulkSending ? '寄送中...' : `批次寄出正式學員通知信 (${bulkSelected.length})`}
           </button>
@@ -285,26 +325,29 @@ export default function LodgingsPage() {
                         )}
                       </td>
                       <td className="px-3 py-3 text-black text-xs">
-                        {r.arrival_date} <br />{r.departure_date}
+                        {r.arrival_date ? <>{r.arrival_date}<br />{r.departure_date}</> : <span className="text-gray-400">未填食宿</span>}
                       </td>
                       <td className="px-3 py-3 text-black text-xs">
-                        {r.diet === 'meat' ? '葷' : '素'}<br />
-                        {r.noon_fasting === 'before_noon' ? '12前' : '12後'}
+                        {r.diet ? <>{r.diet === 'meat' ? '葷' : '素'}<br />{r.noon_fasting === 'before_noon' ? '12前' : '12後'}</> : '—'}
                       </td>
-                      <td className="px-3 py-3 text-black text-xs">{r.snoring ? '會' : '否'}</td>
+                      <td className="px-3 py-3 text-black text-xs">{r.id ? (r.snoring ? '會' : '否') : '—'}</td>
                       <td className="px-3 py-3 text-black text-xs">
-                        {r.emergency_name}<br />
-                        <span className="text-gray-500">{r.emergency_relation}</span><br />
-                        {r.emergency_phone}
+                        {r.emergency_name ? <>
+                          {r.emergency_name}<br />
+                          <span className="text-gray-500">{r.emergency_relation}</span><br />
+                          {r.emergency_phone}
+                        </> : '—'}
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex gap-1">
                           <button onClick={() => setDetail(r)}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
+                            disabled={!r.id}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 px-2 py-1 rounded text-xs">
                             詳細
                           </button>
                           <button onClick={() => { setEdit({ ...r }); setEditError('') }}
-                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">
+                            disabled={!r.id}
+                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 disabled:bg-gray-50 disabled:text-gray-400 px-2 py-1 rounded text-xs">
                             編輯
                           </button>
                         </div>
