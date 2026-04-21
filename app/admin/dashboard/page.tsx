@@ -281,6 +281,18 @@ export default function DashboardPage() {
           ))}
         </div>
 
+        {/* 操作說明 */}
+        <details open className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+          <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
+          <ol className="list-decimal pl-5 mt-2 space-y-1">
+            <li><strong>審核報名：</strong>在「審核狀態」下拉切換，或勾選多筆後按上方「批次錄取／批次拒絕」。</li>
+            <li><strong>序號自動化：</strong>錄取時系統自動編序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
+            <li><strong>寄錄取信：</strong>勾選已錄取學員，按「批次寄出錄取信」（含繳費/食宿/快篩連結 + PDF 附件）。</li>
+            <li><strong>編輯資料：</strong>單筆按「編輯」修改姓名／Email／居住地等；⋯ 可刪除。</li>
+            <li><strong>學號（R-xxx）管理：</strong>請到「錄取學員」分頁操作。</li>
+          </ol>
+        </details>
+
         {/* 操作列 */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap gap-3 items-center">
           <input

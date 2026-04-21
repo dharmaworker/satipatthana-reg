@@ -153,6 +153,17 @@ export default function LodgingsPage() {
       <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+        <details open className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+          <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
+          <ol className="list-decimal pl-5 mt-2 space-y-1">
+            <li><strong>本頁對象：</strong>只列出已完成食宿登記的學員；狀態需為「已錄取」。</li>
+            <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生。</li>
+            <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
+            <li><strong>詳細／編輯：</strong>右側「詳細」查看內容；「編輯」可改食宿登記、上傳證件等。</li>
+            <li><strong>批次寄出正式學員通知信：</strong>勾選學員後按上方按鈕，系統會將學員完整資料（含食宿、證件檢核、學號）整理成信件＋ PDF 寄出。建議在確認學號與資料皆正確後再寄。</li>
+          </ol>
+        </details>
+
         <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
           <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
             placeholder="搜尋姓名 / Email / 繳費碼 / 學號"
