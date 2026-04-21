@@ -65,11 +65,6 @@ export default function LodgingsPage() {
     if (!confirm(`配發學號 ${next}？`)) return
     if (await patchStudentId(regId, next)) setBulkMessage(`已編學號 ${next}`)
   }
-  const reassignStudentId = async (reg: any) => {
-    const next = nextStudentId()
-    if (!confirm(`將 ${reg.chinese_name} 學號由「${reg.student_id}」改為「${next}」？`)) return
-    if (await patchStudentId(reg.id, next)) setBulkMessage(`已重編 → ${next}`)
-  }
   const clearStudentId = async (reg: any) => {
     if (!confirm(`確定註銷 ${reg.chinese_name} 的學號「${reg.student_id}」？`)) return
     if (await patchStudentId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
@@ -233,12 +228,8 @@ export default function LodgingsPage() {
                               className="text-[10px] text-purple-700 hover:underline">編號</button>
                           )}
                           {reg.student_id && (
-                            <>
-                              <button onClick={() => reassignStudentId(reg)}
-                                className="text-[10px] text-purple-700 hover:underline">重編</button>
-                              <button onClick={() => clearStudentId(reg)}
-                                className="text-[10px] text-orange-700 hover:underline">註銷</button>
-                            </>
+                            <button onClick={() => clearStudentId(reg)}
+                              className="text-[10px] text-orange-700 hover:underline">註銷</button>
                           )}
                         </div>
                       </td>
