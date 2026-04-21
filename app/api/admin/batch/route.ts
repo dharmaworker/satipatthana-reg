@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendApprovalEmail } from '@/lib/approval-email'
+import { nextAvailableMemberId, formatMemberId } from '@/lib/member-id'
 
 type Action = 'approve' | 'reject' | 'delete'
 
@@ -63,46 +63,61 @@ export async function POST(request: NextRequest) {
 
   const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
-  // 先撈目前狀態，只對「非目標狀態」者寄通知信
+  // 先撈目前狀態＋member_id
   const { data: currentRegs } = await supabaseAdmin
     .from('registrations')
-    .select('id, status')
+    .select('id, status, member_id')
     .in('id', ids)
 
-  const idsNeedingEmail =
-    action === 'approve'
-      ? (currentRegs || []).filter(r => r.status !== 'approved').map(r => r.id)
-      : []
-
-  const { error: updErr } = await supabaseAdmin
-    .from('registrations')
-    .update({ status: newStatus })
-    .in('id', ids)
-  if (updErr) {
-    return NextResponse.json({ error: updErr.message }, { status: 500 })
-  }
-
-  let emailedOk = 0
-  let emailedFail = 0
-  if (idsNeedingEmail.length > 0) {
-    const { data: toEmail } = await supabaseAdmin
-      .from('registrations')
-      .select('*')
-      .in('id', idsNeedingEmail)
-    for (const reg of toEmail || []) {
-      try {
-        await sendApprovalEmail(reg)
-        emailedOk++
-      } catch (e) {
-        console.error('[batch approve] email failed:', reg.id, e)
-        emailedFail++
+  let assignedCount = 0
+  if (action === 'approve') {
+    // 批次錄取：對尚未編號者依序編 T-XXX（以當前最大號 +1 起跑，避免互相衝突）
+    const needAssign = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id)
+    if (needAssign.length > 0) {
+      const start = await nextAvailableMemberId()
+      const m = start.match(/^T-(\d+)$/)
+      let n = m ? parseInt(m[1], 10) : 1
+      for (const r of needAssign) {
+        const mid = formatMemberId(n++)
+        await supabaseAdmin
+          .from('registrations')
+          .update({ status: 'approved', member_id: mid })
+          .eq('id', r.id)
+        assignedCount++
       }
+    }
+    // 剩下的（已 approved 或已有 member_id）只需改狀態（若有變動）
+    const remaining = (currentRegs || [])
+      .filter(r => !(r.status !== 'approved' && !r.member_id))
+      .map(r => r.id)
+    if (remaining.length > 0) {
+      const { error: updErr } = await supabaseAdmin
+        .from('registrations')
+        .update({ status: 'approved' })
+        .in('id', remaining)
+      if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 })
+    }
+  } else {
+    // 批次拒絕：若原本是 approved → 註銷 member_id
+    const wasApproved = (currentRegs || []).filter(r => r.status === 'approved').map(r => r.id)
+    if (wasApproved.length > 0) {
+      await supabaseAdmin
+        .from('registrations')
+        .update({ status: newStatus, member_id: null })
+        .in('id', wasApproved)
+    }
+    const others = (currentRegs || []).filter(r => r.status !== 'approved').map(r => r.id)
+    if (others.length > 0) {
+      await supabaseAdmin
+        .from('registrations')
+        .update({ status: newStatus })
+        .in('id', others)
     }
   }
 
   return NextResponse.json({
     success: true,
     count: ids.length,
-    emailed: { ok: emailedOk, failed: emailedFail },
+    assignedMemberIds: assignedCount,
   })
 }

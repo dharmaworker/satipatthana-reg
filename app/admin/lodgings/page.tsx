@@ -33,6 +33,63 @@ export default function LodgingsPage() {
   const [saving, setSaving] = useState(false)
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
+  const [bulkSelected, setBulkSelected] = useState<string[]>([])
+  const [bulkSending, setBulkSending] = useState(false)
+  const [bulkMessage, setBulkMessage] = useState('')
+
+  // 序號管理：計算下一個可用編號（掃全部 rows 找最大 T-N）
+  const nextMemberId = () => {
+    let maxN = 0
+    for (const r of rows) {
+      const m = (r.registration?.member_id || '').match(/^T-(\d+)$/)
+      if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
+    }
+    return `T-${String(maxN + 1).padStart(3, '0')}`
+  }
+  const patchMemberId = async (regId: string, member_id: string | null) => {
+    const res = await fetch('/api/admin/registrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: regId, member_id }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setBulkMessage(`操作失敗：${d.error || res.status}`)
+      return false
+    }
+    fetchData()
+    return true
+  }
+  const assignMemberId = async (regId: string) => {
+    const next = nextMemberId()
+    if (!confirm(`配發序號 ${next}？`)) return
+    if (await patchMemberId(regId, next)) setBulkMessage(`已編號 ${next}`)
+  }
+  const reassignMemberId = async (reg: any) => {
+    const next = nextMemberId()
+    if (!confirm(`將 ${reg.chinese_name} 序號由「${reg.member_id}」改為「${next}」？`)) return
+    if (await patchMemberId(reg.id, next)) setBulkMessage(`已重編 → ${next}`)
+  }
+  const clearMemberId = async (reg: any) => {
+    if (!confirm(`確定註銷 ${reg.chinese_name} 的序號「${reg.member_id}」？`)) return
+    if (await patchMemberId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的序號`)
+  }
+
+  const sendFormalNotifications = async () => {
+    if (bulkSelected.length === 0) { setBulkMessage('請先勾選學員'); return }
+    if (!confirm(`寄出正式學員通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending(true)
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-formal-notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(false)
+    if (res.ok) setBulkSelected([])
+  }
 
   const handleEditUpload = async (kind: string, file: File) => {
     setUploadingKind(kind)
@@ -101,12 +158,26 @@ export default function LodgingsPage() {
       <AdminHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center">
+        <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
           <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
             placeholder="搜尋姓名 / Email / 繳費碼 / 學號"
             value={search} onChange={e => setSearch(e.target.value)} />
           <button onClick={fetchData}
             className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">重新整理</button>
+          <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
+            <input type="checkbox" checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
+              onChange={() => {
+                if (bulkSelected.length === filtered.length) setBulkSelected([])
+                else setBulkSelected(filtered.map(r => r.registration?.id).filter(Boolean))
+              }} />
+            全選本頁
+          </label>
+          <button onClick={sendFormalNotifications}
+            disabled={bulkSending || bulkSelected.length === 0}
+            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
+            {bulkSending ? '寄送中...' : `批次寄出正式學員通知信 (${bulkSelected.length})`}
+          </button>
+          {bulkMessage && <span className="text-sm text-green-700 font-medium">{bulkMessage}</span>}
           <span className="text-sm text-gray-600 ml-auto">共 {filtered.length} 筆</span>
         </div>
 
@@ -115,6 +186,14 @@ export default function LodgingsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
+                  <th className="px-3 py-3 text-left text-black font-medium">
+                    <input type="checkbox"
+                      checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
+                      onChange={() => {
+                        if (bulkSelected.length === filtered.length) setBulkSelected([])
+                        else setBulkSelected(filtered.map(r => r.registration?.id).filter(Boolean))
+                      }} />
+                  </th>
                   <th className="px-3 py-3 text-left text-black font-medium">姓名</th>
                   <th className="px-3 py-3 text-left text-black font-medium">學號</th>
                   <th className="px-3 py-3 text-left text-black font-medium">繳費碼</th>
@@ -129,15 +208,38 @@ export default function LodgingsPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {loading ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">載入中...</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
                 ) : filtered.map(r => {
                   const reg = r.registration || {}
                   return (
                     <tr key={r.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-3">
+                        <input type="checkbox"
+                          checked={bulkSelected.includes(reg.id)}
+                          onChange={() => setBulkSelected(prev =>
+                            prev.includes(reg.id) ? prev.filter(x => x !== reg.id) : [...prev, reg.id]
+                          )} />
+                      </td>
                       <td className="px-3 py-3 font-medium text-black">{reg.chinese_name}</td>
-                      <td className="px-3 py-3 text-black">{reg.member_id || '—'}</td>
+                      <td className="px-3 py-3 text-black">
+                        <div>{reg.member_id || '—'}</div>
+                        <div className="flex gap-1 mt-1">
+                          {!reg.member_id && (
+                            <button onClick={() => assignMemberId(reg.id)}
+                              className="text-[10px] text-purple-700 hover:underline">編號</button>
+                          )}
+                          {reg.member_id && (
+                            <>
+                              <button onClick={() => reassignMemberId(reg)}
+                                className="text-[10px] text-purple-700 hover:underline">重編</button>
+                              <button onClick={() => clearMemberId(reg)}
+                                className="text-[10px] text-orange-700 hover:underline">註銷</button>
+                            </>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-3 py-3 font-mono text-black">{reg.random_code}</td>
                       <td className="px-3 py-3 text-black">{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
                       <td className="px-3 py-3 text-xs">

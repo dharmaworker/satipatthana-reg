@@ -114,7 +114,7 @@ export async function buildApprovalPdf(reg: {
         <Text style={styles.title}>第二屆台灣四念處禪修課程－錄取通知</Text>
         <Text style={styles.para}>{reg.chinese_name} 法友您好：</Text>
         <Text style={styles.para}>
-          恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的暫時學員編號為 <Text style={styles.bold}>{reg.member_id || '待編號'}</Text>。
+          恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的序號為 <Text style={styles.bold}>{reg.member_id || '待編號'}</Text>。
         </Text>
 
         <Text style={styles.h2}>一、請詳讀以下內容</Text>

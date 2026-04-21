@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendApprovalEmail } from '@/lib/approval-email'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
+import { nextAvailableMemberId } from '@/lib/member-id'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -87,10 +87,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '僅 admin 可修改基本資料與方案' }, { status: 403 })
   }
 
-  // 先撈目前狀態、payment_plan、payment_status，用於偵測轉變
+  // 先撈目前狀態、payment_plan、payment_status、member_id，用於偵測轉變
   const { data: currentReg } = await supabaseAdmin
     .from('registrations')
-    .select('status, payment_plan, payment_status')
+    .select('status, payment_plan, payment_status, member_id')
     .eq('id', id)
     .single()
 
@@ -110,6 +110,15 @@ export async function PATCH(request: NextRequest) {
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
 
+  // 狀態首次轉為 approved → 自動編序號（若尚未編過）
+  if (status === 'approved' && currentReg?.status !== 'approved' && !currentReg?.member_id && member_id === undefined) {
+    updateData.member_id = await nextAvailableMemberId()
+  }
+  // 狀態從 approved 轉走 → 註銷序號
+  if (status && status !== 'approved' && currentReg?.status === 'approved' && member_id === undefined) {
+    updateData.member_id = null
+  }
+
   const { data, error } = await supabaseAdmin
     .from('registrations')
     .update(updateData)
@@ -121,14 +130,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '更新失敗' }, { status: 500 })
   }
 
-  // 狀態首次轉為 approved 時自動寄錄取信（失敗不影響 PATCH）
-  if (status === 'approved' && currentReg?.status !== 'approved' && data) {
-    try {
-      await sendApprovalEmail(data)
-    } catch (mailErr) {
-      console.error('[registrations PATCH] approval email failed:', mailErr)
-    }
-  }
+  // 注意：按錄取時「不」自動寄信，由 /admin/dashboard「批次寄出錄取信」手動觸發
 
   // 寄食宿登記備存信（失敗不影響 PATCH）
   // 條件（二擇一）：

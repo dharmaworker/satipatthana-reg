@@ -248,64 +248,8 @@ export default function DashboardPage() {
     fetchData()
   }
 
-  // 計算下一個可用學號（所有現有 XXX-T 最大號 + 1）
-  const nextAvailableMemberId = () => {
-    let maxN = 0
-    for (const r of registrations) {
-      const m = r.member_id?.match(/^(\d+)-T$/)
-      if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
-    }
-    return `${String(maxN + 1).padStart(3, '0')}-T`
-  }
-
-  const assignMemberId = async (id: string) => {
-    const member_id = nextAvailableMemberId()
-    const res = await fetch('/api/admin/registrations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, member_id }),
-    })
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`編號失敗：${d.error || res.status}`)
-      return
-    }
-    setMessage(`已編號 ${member_id}`)
-    fetchData()
-  }
-
-  const clearMemberId = async (reg: any) => {
-    if (!confirm(`確定清除（註銷）${reg.chinese_name} 的學號「${reg.member_id}」？\n清除後此號碼若無其他人使用，可重新分配給其他學員。`)) return
-    const res = await fetch('/api/admin/registrations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: reg.id, member_id: null }),
-    })
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`清除失敗：${d.error || res.status}`)
-      return
-    }
-    setMessage(`已清除 ${reg.chinese_name} 的學號`)
-    fetchData()
-  }
-
-  const reassignMemberId = async (reg: any) => {
-    const next = nextAvailableMemberId()
-    if (!confirm(`將 ${reg.chinese_name} 的學號由「${reg.member_id || '無'}」改為「${next}」？`)) return
-    const res = await fetch('/api/admin/registrations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: reg.id, member_id: next }),
-    })
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`重新分配失敗：${d.error || res.status}`)
-      return
-    }
-    setMessage(`已重新分配 ${reg.chinese_name} 的學號為 ${next}`)
-    fetchData()
-  }
+  // 註：學號（序號）管理 buttons 已移至「食宿登記」tab。這裡不再提供。
+  // 按錄取時系統會自動編序號（T-001, T-002...）；取消錄取時自動註銷。
 
   const stats = {
     total: registrations.length,
@@ -387,7 +331,7 @@ export default function DashboardPage() {
             onClick={sendNotifications}
             disabled={sending || selected.length === 0}
             className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {sending ? '寄送中...' : `再寄錄取信 (${selected.length})`}
+            {sending ? '寄送中...' : `批次寄出錄取信 (${selected.length})`}
           </button>
           {message && (
             <span className="text-sm text-green-700 font-medium">{message}</span>
@@ -499,25 +443,6 @@ export default function DashboardPage() {
                       </div>
                       {openMenuId === reg.id && (
                         <div className="absolute right-2 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px] py-1">
-                          {!reg.member_id && reg.payment_status === 'verified' && (
-                            <button onClick={() => { setOpenMenuId(null); assignMemberId(reg.id) }}
-                              className="w-full text-left px-3 py-2 text-xs text-purple-800 hover:bg-purple-50">
-                              🔢 編號
-                            </button>
-                          )}
-                          {reg.member_id && (
-                            <>
-                              <button onClick={() => { setOpenMenuId(null); reassignMemberId(reg) }}
-                                className="w-full text-left px-3 py-2 text-xs text-purple-800 hover:bg-purple-50">
-                                🔄 重新編號
-                              </button>
-                              <button onClick={() => { setOpenMenuId(null); clearMemberId(reg) }}
-                                className="w-full text-left px-3 py-2 text-xs text-orange-800 hover:bg-orange-50">
-                                ⛔ 註銷學號
-                              </button>
-                            </>
-                          )}
-                          <div className="border-t border-gray-100 my-1" />
                           <button onClick={() => { setOpenMenuId(null); deleteRegistration(reg) }}
                             className="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">
                             🗑️ 刪除報名
@@ -570,9 +495,9 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-black font-medium mb-1">學號</label>
+                <label className="block text-black font-medium mb-1">序號</label>
                 <input className="w-full border border-gray-300 rounded px-3 py-2 text-black"
-                  placeholder="例：001-T"
+                  placeholder="例：T-001"
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>

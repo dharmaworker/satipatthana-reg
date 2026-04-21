@@ -37,7 +37,7 @@ export async function sendApprovalEmail(reg: {
       <div style="font-family: sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; color: #222;">
         <h2 style="color: #2d6a4f;">第二屆台灣四念處禪修課程－錄取通知</h2>
         <p>${reg.chinese_name} 法友您好：</p>
-        <p>恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的暫時學員編號為 <strong>${reg.member_id || '待編號'}</strong>。</p>
+        <p>恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的序號為 <strong>${reg.member_id || '待編號'}</strong>。</p>
 
         <hr style="border:none;border-top:1px solid #eee;margin:20px 0;">
 
