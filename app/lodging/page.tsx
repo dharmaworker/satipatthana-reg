@@ -305,8 +305,20 @@ function LodgingContent() {
           <div className="space-y-2">
             {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
             {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合（法工人員穿著學會背心）')}
+            {form.arrival_transport === 'taipei_bus' && (
+              <LocationMap label="台北車站位置示意圖（集合點：東三門全家與郵局樓梯口）"
+                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taipei-station.jpg" />
+            )}
             {radio('arrival_transport', 'wuri_bus', '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口 7-8 號月台（法工人員穿著學會背心）')}
+            {form.arrival_transport === 'wuri_bus' && (
+              <LocationMap label="台中高鐵站一樓 6 號出口示意圖"
+                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/wuri-hsr.jpg" />
+            )}
             {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 2:30 桃園機場第一航廈接機大廳右邊集合（法工人員穿著學會背心）')}
+            {form.arrival_transport === 'airport_bus_0819' && (
+              <LocationMap label="桃園機場第一航廈一樓集合點示意圖"
+                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taoyuan-airport-t1.jpg" />
+            )}
             {radio('arrival_transport', 'self_0820', '8/20 上午 7 點前自行抵達日月潭湖畔會館')}
           </div>
           {!isDomestic && (form.arrival_transport === 'self' || form.arrival_transport === 'self_0820') && (
@@ -519,6 +531,17 @@ function LodgingContent() {
           </p>
         )}
       </div>
+    </div>
+  )
+}
+
+function LocationMap({ label, src }: { label: string; src: string }) {
+  return (
+    <div className="ml-6 mt-1 border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <div className="bg-gray-50 px-3 py-1.5 text-xs text-gray-700 border-b border-gray-200">{label}</div>
+      <a href={src} target="_blank" rel="noreferrer" title="點擊開啟原圖">
+        <img src={src} alt={label} className="w-full h-auto max-h-72 object-contain" />
+      </a>
     </div>
   )
 }
