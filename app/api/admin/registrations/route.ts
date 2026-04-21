@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
-import { nextAvailableMemberId } from '@/lib/member-id'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -112,14 +111,7 @@ export async function PATCH(request: NextRequest) {
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
 
-  // 狀態首次轉為 approved → 自動編序號（若尚未編過）
-  if (status === 'approved' && currentReg?.status !== 'approved' && !currentReg?.member_id && member_id === undefined) {
-    updateData.member_id = await nextAvailableMemberId()
-  }
-  // 狀態從 approved 轉走 → 註銷序號
-  if (status && status !== 'approved' && currentReg?.status === 'approved' && member_id === undefined) {
-    updateData.member_id = null
-  }
+  // 注意：序號（member_id）改為完全手動管理，不再依狀態變化自動產生或註銷
 
   const { data, error } = await supabaseAdmin
     .from('registrations')
