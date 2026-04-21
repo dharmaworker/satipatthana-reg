@@ -110,9 +110,10 @@ function FormalNotifDoc({ reg }: { reg: FormalNotifData }) {
         <Text style={styles.h2}>三、證件檢核</Text>
         <Table rows={[
           ['個人相片', l.photo_url ? '已上傳' : '未上傳'],
-          ['身分證正面', l.id_front_url ? '已上傳' : '未上傳'],
-          ['身分證反面', l.id_back_url ? '已上傳' : '未上傳'],
-          ['護照', l.passport_url ? '已上傳' : '未上傳'],
+          ['身分證正面', l.id_front_url ? '已上傳' : '—'],
+          ['身分證反面', l.id_back_url ? '已上傳' : '—'],
+          ['護照', l.passport_url ? '已上傳' : '—'],
+          ['ARC / 居留證', l.arc_url ? '已上傳' : '—'],
           ['來台機票', l.arrival_ticket_url ? '已上傳' : '（非必填）'],
           ['離台機票', l.departure_ticket_url ? '已上傳' : '（非必填）'],
           ['8/17 快篩', l.test_0817_url ? '已上傳' : '未上傳'],

@@ -89,9 +89,10 @@ create table if not exists lodging_registrations (
   agree_covid_rules boolean,
 
   -- 檔案上傳（Supabase Storage bucket `lodging-docs` 的 public URL）
-  id_front_url text,
-  id_back_url text,
-  passport_url text,
+  id_front_url text,         -- 台灣人：身分證正面
+  id_back_url text,          -- 台灣人：身分證反面
+  passport_url text,         -- 外籍短期旅客：護照
+  arc_url text,              -- 在台外籍居民：ARC／居留證
   photo_url text,
   arrival_ticket_url text,
   departure_ticket_url text,

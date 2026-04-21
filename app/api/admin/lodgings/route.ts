@@ -70,7 +70,7 @@ export async function PATCH(request: NextRequest) {
     'dinner_0819', 'dinner_0824', 'snoring', 'agree_covid_rules',
     'flight_arrival_date', 'flight_arrival_time',
     'flight_departure_date', 'flight_departure_time',
-    'photo_url', 'id_front_url', 'id_back_url', 'passport_url',
+    'photo_url', 'id_front_url', 'id_back_url', 'passport_url', 'arc_url',
     'arrival_ticket_url', 'departure_ticket_url',
     'test_0817_url', 'test_0819_url',
   ]

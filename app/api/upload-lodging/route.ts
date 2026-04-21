@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto'
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const VALID_KINDS = [
-  'id_front', 'id_back', 'passport', 'photo',
+  'id_front', 'id_back', 'passport', 'arc', 'photo',
   'arrival_ticket', 'departure_ticket',
   'test_0817', 'test_0819',
 ]

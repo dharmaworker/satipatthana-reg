@@ -100,6 +100,7 @@ const LODGING_COLUMNS = [
   { key: 'id_front_url', header: '身分證正面', width: 40 },
   { key: 'id_back_url', header: '身分證反面', width: 40 },
   { key: 'passport_url', header: '護照', width: 40 },
+  { key: 'arc_url', header: 'ARC/居留證', width: 40 },
   { key: 'arrival_ticket_url', header: '來台機票', width: 40 },
   { key: 'departure_ticket_url', header: '離台機票', width: 40 },
   { key: 'test_0817_url', header: '8/17 快篩', width: 40 },

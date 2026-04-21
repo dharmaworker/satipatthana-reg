@@ -99,6 +99,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '選擇專車離開需指定目的地' }, { status: 400 })
     }
 
+    // 證件／航班 依 identity_type 驗證（identity_type 不存 DB，只做 server-side 驗證）
+    const itype = fields.identity_type
+    if (itype === 'id') {
+      if (!fields.id_front_url || !fields.id_back_url) {
+        return NextResponse.json({ error: '身分證正反面皆需上傳' }, { status: 400 })
+      }
+    } else if (itype === 'passport') {
+      if (!fields.passport_url) {
+        return NextResponse.json({ error: '請上傳護照' }, { status: 400 })
+      }
+      if (!fields.flight_arrival_date || !fields.flight_arrival_time ||
+          !fields.flight_departure_date || !fields.flight_departure_time) {
+        return NextResponse.json({ error: '外籍短期旅客需填寫抵台/離台航班日期與時間' }, { status: 400 })
+      }
+    } else if (itype === 'arc') {
+      if (!fields.arc_url) {
+        return NextResponse.json({ error: '請上傳 ARC / 居留證' }, { status: 400 })
+      }
+    } else {
+      // 未指定或未知類型：至少要有一組可辨識證件
+      if (!fields.id_front_url && !fields.passport_url && !fields.arc_url) {
+        return NextResponse.json({ error: '請上傳身分證 / 護照 / ARC 其中一項' }, { status: 400 })
+      }
+    }
+
     const payload = {
       registration_id: reg.id,
       arrival_date: planDefaults?.arrival_date ?? null,
@@ -120,6 +145,7 @@ export async function POST(request: NextRequest) {
       id_front_url: fields.id_front_url || null,
       id_back_url: fields.id_back_url || null,
       passport_url: fields.passport_url || null,
+      arc_url: fields.arc_url || null,
       photo_url: fields.photo_url || null,
       arrival_ticket_url: fields.arrival_ticket_url || null,
       departure_ticket_url: fields.departure_ticket_url || null,

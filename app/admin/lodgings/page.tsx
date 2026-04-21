@@ -16,6 +16,7 @@ const DOC_LABEL: Record<string, string> = {
   id_front_url: '身分證正面',
   id_back_url: '身分證反面',
   passport_url: '護照',
+  arc_url: 'ARC／居留證',
   arrival_ticket_url: '來台機票',
   departure_ticket_url: '離台機票',
   test_0817_url: '8/17 快篩',

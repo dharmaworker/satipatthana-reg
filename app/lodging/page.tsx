@@ -33,6 +33,7 @@ function LodgingContent() {
     id_front_url: '',
     id_back_url: '',
     passport_url: '',
+    arc_url: '',
     photo_url: '',
     arrival_ticket_url: '',
     departure_ticket_url: '',
@@ -46,8 +47,11 @@ function LodgingContent() {
   })
   const update = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }))
 
-  // 證件類型（身分證 or 護照）— UI 狀態，非 DB 欄位
-  const [identityType, setIdentityType] = useState<'id' | 'passport'>('id')
+  // 申請人類型 — 決定要上傳什麼證件、要不要填航班。本身不存 DB，由上傳的檔案隱含判斷。
+  // 'id' = 台灣人（身分證正反）
+  // 'passport' = 外籍短期旅客（護照 + 航班必填）
+  // 'arc' = 在台外籍居民（ARC / 居留證）
+  const [identityType, setIdentityType] = useState<'id' | 'passport' | 'arc'>('id')
 
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const handleFileUpload = async (kind: string, file: File) => {
@@ -98,6 +102,7 @@ function LodgingContent() {
             id_front_url: data.lodging.id_front_url || '',
             id_back_url: data.lodging.id_back_url || '',
             passport_url: data.lodging.passport_url || '',
+            arc_url: data.lodging.arc_url || '',
             photo_url: data.lodging.photo_url || '',
             arrival_ticket_url: data.lodging.arrival_ticket_url || '',
             departure_ticket_url: data.lodging.departure_ticket_url || '',
@@ -109,13 +114,10 @@ function LodgingContent() {
             flight_departure_time: data.lodging.flight_departure_time || '',
           })
           // 依已上傳的檔案推測證件類型；皆無則依居住地預設
-          if (data.lodging.passport_url && !data.lodging.id_front_url) {
-            setIdentityType('passport')
-          } else if (data.lodging.id_front_url) {
-            setIdentityType('id')
-          } else {
-            setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
-          }
+          if (data.lodging.arc_url) setIdentityType('arc')
+          else if (data.lodging.id_front_url) setIdentityType('id')
+          else if (data.lodging.passport_url) setIdentityType('passport')
+          else setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
         } else {
           setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
         }
@@ -129,13 +131,44 @@ function LodgingContent() {
       setError('食宿登記已於 6/20 晚上 8 點截止，請聯絡學會。')
       return
     }
+    // 依申請人類型只送對應的證件 URL，其他清空；同時擋必填
+    const payload: any = { ...form, identity_type: identityType }
+    if (identityType === 'id') {
+      if (!form.id_front_url || !form.id_back_url) {
+        setError('身分證正反面皆需上傳'); return
+      }
+      payload.passport_url = ''
+      payload.arc_url = ''
+    } else if (identityType === 'passport') {
+      if (!form.passport_url) { setError('請上傳護照'); return }
+      if (!form.flight_arrival_date || !form.flight_arrival_time ||
+          !form.flight_departure_date || !form.flight_departure_time) {
+        setError('外籍短期旅客需填寫抵台/離台航班日期與時間'); return
+      }
+      payload.id_front_url = ''
+      payload.id_back_url = ''
+      payload.arc_url = ''
+    } else if (identityType === 'arc') {
+      if (!form.arc_url) { setError('請上傳 ARC / 居留證'); return }
+      payload.id_front_url = ''
+      payload.id_back_url = ''
+      payload.passport_url = ''
+      // ARC 不需航班，清掉
+      payload.flight_arrival_date = ''
+      payload.flight_arrival_time = ''
+      payload.flight_departure_date = ''
+      payload.flight_departure_time = ''
+      payload.arrival_ticket_url = ''
+      payload.departure_ticket_url = ''
+    }
+
     setSubmitting(true)
     setError('')
     try {
       const res = await fetch('/api/lodging', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, code, ...form }),
+        body: JSON.stringify({ id, code, ...payload }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '送出失敗')
@@ -397,54 +430,60 @@ function LodgingContent() {
           {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
 
           <div>
-            <label className={labelCls}>身分證／護照（擇一上傳）*</label>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer text-black">
-                <input type="radio" name="identity_type" value="id"
+            <label className={labelCls}>申請人身份（三選一）*</label>
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 cursor-pointer text-black">
+                <input type="radio" name="identity_type" value="id" className="mt-1"
                   checked={identityType === 'id'}
                   onChange={() => setIdentityType('id')} />
-                身分證（正反面皆需上傳）
+                <span><strong>台灣人</strong>（上傳身分證正反面）</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-black">
-                <input type="radio" name="identity_type" value="passport"
+              <label className="flex items-start gap-2 cursor-pointer text-black">
+                <input type="radio" name="identity_type" value="passport" className="mt-1"
                   checked={identityType === 'passport'}
                   onChange={() => setIdentityType('passport')} />
-                護照
+                <span><strong>外籍短期旅客</strong>（觀光／免簽／短期簽證入境，上傳護照 + 填寫航班資訊）</span>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer text-black">
+                <input type="radio" name="identity_type" value="arc" className="mt-1"
+                  checked={identityType === 'arc'}
+                  onChange={() => setIdentityType('arc')} />
+                <span><strong>在台外籍居民</strong>（上傳 ARC／居留證）</span>
               </label>
             </div>
           </div>
-          {identityType === 'id' ? (
+          {identityType === 'id' && (
             <>
               {fileField('id_front', '身分證正面 *', form.id_front_url, uploadingKind, handleFileUpload)}
               {fileField('id_back', '身分證反面 *', form.id_back_url, uploadingKind, handleFileUpload)}
             </>
-          ) : (
-            fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)
           )}
+          {identityType === 'passport' && fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)}
+          {identityType === 'arc' && fileField('arc', 'ARC／居留證 *', form.arc_url, uploadingKind, handleFileUpload)}
         </div>
 
         {/* 國外學員航班 */}
-        {!isDomestic && (
+        {identityType === 'passport' && (
           <div className={sectionCls}>
-            <h2 className="text-lg font-semibold text-green-800">七、航班資訊</h2>
+            <h2 className="text-lg font-semibold text-green-800">七、航班資訊（外籍短期旅客必填）</h2>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>抵台航班日期</label>
+                <label className={labelCls}>抵台航班日期（入境日）*</label>
                 <input type="date" className={inputCls} value={form.flight_arrival_date}
                   onChange={e => update('flight_arrival_date', e.target.value)} />
               </div>
               <div>
-                <label className={labelCls}>抵台航班具體時間</label>
+                <label className={labelCls}>抵台航班具體時間 *</label>
                 <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
                   onChange={e => update('flight_arrival_time', e.target.value)} />
               </div>
               <div>
-                <label className={labelCls}>離台航班日期</label>
+                <label className={labelCls}>離台航班日期（離境日）*</label>
                 <input type="date" className={inputCls} value={form.flight_departure_date}
                   onChange={e => update('flight_departure_date', e.target.value)} />
               </div>
               <div>
-                <label className={labelCls}>離台航班具體時間</label>
+                <label className={labelCls}>離台航班具體時間 *</label>
                 <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
                   onChange={e => update('flight_departure_time', e.target.value)} />
               </div>

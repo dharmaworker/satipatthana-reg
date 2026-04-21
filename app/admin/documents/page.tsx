@@ -8,6 +8,7 @@ const DOC_COLS: { key: string; label: string }[] = [
   { key: 'id_front_url', label: '身分證正面' },
   { key: 'id_back_url', label: '身分證反面' },
   { key: 'passport_url', label: '護照' },
+  { key: 'arc_url', label: 'ARC／居留證' },
   { key: 'arrival_ticket_url', label: '來台機票' },
   { key: 'departure_ticket_url', label: '離台機票' },
   { key: 'test_0817_url', label: '8/17 快篩' },
@@ -33,16 +34,16 @@ export default function DocumentsPage() {
   useEffect(() => { fetchData() }, [])
 
   const requiredDocs = (r: any): { uploaded: number; total: number } => {
-    const reg = r.registration || {}
-    const isDomestic = reg.residence === '台灣'
     const hasId = !!(r.id_front_url && r.id_back_url)
     const hasPassport = !!r.passport_url
-    let total = 1 // photo
-    let uploaded = r.photo_url ? 1 : 0
-    total += 1 // 身分證(正反) 或 護照
-    if (hasId || hasPassport) uploaded += 1
-    if (!isDomestic) {
-      total += 2 // 機票（非必填但計為完整度）
+    const hasArc = !!r.arc_url
+    let total = 2 // 相片 + 證件一組（身分證正反 / 護照 / ARC）擇一
+    let uploaded = 0
+    if (r.photo_url) uploaded += 1
+    if (hasId || hasPassport || hasArc) uploaded += 1
+    // 短期旅客才計機票；ARC 與台灣人不計
+    if (hasPassport) {
+      total += 2
       if (r.arrival_ticket_url) uploaded += 1
       if (r.departure_ticket_url) uploaded += 1
     }
