@@ -45,7 +45,20 @@ function LodgingContent() {
     flight_departure_date: '',
     flight_departure_time: '',
   })
-  const update = (k: string, v: any) => setForm(prev => ({ ...prev, [k]: v }))
+  const [errorField, setErrorField] = useState<string | null>(null)
+  const update = (k: string, v: any) => {
+    setForm(prev => ({ ...prev, [k]: v }))
+    if (errorField === k) setErrorField(null)
+  }
+  const fail = (field: string, msg: string) => {
+    setError(msg)
+    setErrorField(field)
+    setTimeout(() => {
+      const el = document.getElementById(`field-${field}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
+  const ringCls = (f: string) => errorField === f ? 'ring-2 ring-red-400 ring-offset-2 rounded-lg' : ''
 
   // 申請人類型 — 決定要上傳什麼證件、要不要填航班。本身不存 DB，由上傳的檔案隱含判斷。
   // 'id' = 台灣人（身分證正反）
@@ -131,25 +144,36 @@ function LodgingContent() {
       setError('食宿登記已於 6/20 晚上 8 點截止，請聯絡學會。')
       return
     }
-    // 依申請人類型只送對應的證件 URL，其他清空；同時擋必填
+    // Client-side 必填驗證（依 UI 由上到下的順序，第一個沒填的就停在那兒）
+    if (!form.emergency_name) return fail('emergency_name', '請填寫「緊急聯絡人姓名」')
+    if (!form.emergency_relation) return fail('emergency_relation', '請填寫「緊急聯絡人關係」')
+    if (!form.emergency_phone) return fail('emergency_phone', '請填寫「緊急聯絡人電話」')
+    if (!form.arrival_transport) return fail('arrival_transport', '請選擇「前往日月潭方式」')
+    if (!form.departure_transport) return fail('departure_transport', '請選擇「離開渡假村方式」')
+    if (form.departure_transport === 'bus' && !form.bus_destination) return fail('bus_destination', '請選擇「專車目的地」')
+    if (!form.diet) return fail('diet', '請選擇「飲食」')
+    if (!form.noon_fasting) return fail('noon_fasting', '請選擇「過午不食」')
+    if (!form.snacks) return fail('snacks', '請選擇「茶點需求」')
+    if (!form.photo_url) return fail('photo', '請上傳「個人相片」')
+
+    // 依申請人類型只送對應的證件 URL，其他清空
     const payload: any = { ...form, identity_type: identityType }
     if (identityType === 'id') {
-      if (!form.id_front_url || !form.id_back_url) {
-        setError('身分證正反面皆需上傳'); return
-      }
+      if (!form.id_front_url) return fail('id_front', '請上傳「身分證正面」')
+      if (!form.id_back_url) return fail('id_back', '請上傳「身分證反面」')
       payload.passport_url = ''
       payload.arc_url = ''
     } else if (identityType === 'passport') {
-      if (!form.passport_url) { setError('請上傳護照'); return }
-      if (!form.flight_arrival_date || !form.flight_arrival_time ||
-          !form.flight_departure_date || !form.flight_departure_time) {
-        setError('外籍短期旅客需填寫抵台/離台航班日期與時間'); return
-      }
+      if (!form.passport_url) return fail('passport', '請上傳「護照」')
+      if (!form.flight_arrival_date) return fail('flight_arrival_date', '請填寫「抵台航班日期」')
+      if (!form.flight_arrival_time) return fail('flight_arrival_time', '請填寫「抵台航班時間」')
+      if (!form.flight_departure_date) return fail('flight_departure_date', '請填寫「離台航班日期」')
+      if (!form.flight_departure_time) return fail('flight_departure_time', '請填寫「離台航班時間」')
       payload.id_front_url = ''
       payload.id_back_url = ''
       payload.arc_url = ''
     } else if (identityType === 'arc') {
-      if (!form.arc_url) { setError('請上傳 ARC / 居留證'); return }
+      if (!form.arc_url) return fail('arc', '請上傳「ARC / 居留證」')
       payload.id_front_url = ''
       payload.id_back_url = ''
       payload.passport_url = ''
@@ -162,8 +186,11 @@ function LodgingContent() {
       payload.departure_ticket_url = ''
     }
 
+    if (!form.agree_covid_rules) return fail('agree_covid_rules', '請勾選「同意防疫與課程規範」')
+
     setSubmitting(true)
     setError('')
+    setErrorField(null)
     try {
       const res = await fetch('/api/lodging', {
         method: 'POST',
@@ -314,18 +341,18 @@ function LodgingContent() {
         {/* 緊急聯絡人 */}
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">二、緊急聯絡人</h2>
-          <div>
+          <div id="field-emergency_name" className={ringCls('emergency_name')}>
             <label className={labelCls}>姓名 *</label>
             <input className={inputCls} value={form.emergency_name}
               onChange={e => update('emergency_name', e.target.value)} />
           </div>
-          <div>
+          <div id="field-emergency_relation" className={ringCls('emergency_relation')}>
             <label className={labelCls}>關係 *</label>
             <input className={inputCls} placeholder="例：配偶、父母、朋友"
               value={form.emergency_relation}
               onChange={e => update('emergency_relation', e.target.value)} />
           </div>
-          <div>
+          <div id="field-emergency_phone" className={ringCls('emergency_phone')}>
             <label className={labelCls}>聯絡電話 *</label>
             <input className={inputCls} placeholder="請加國碼，例：台灣 886+" value={form.emergency_phone}
               onChange={e => update('emergency_phone', e.target.value)} />
@@ -333,7 +360,7 @@ function LodgingContent() {
         </div>
 
         {/* 課程前往方式 */}
-        <div className={sectionCls}>
+        <div id="field-arrival_transport" className={`${sectionCls} ${ringCls('arrival_transport')}`}>
           <h2 className="text-lg font-semibold text-green-800">三、前往日月潭方式 *</h2>
           <div className="space-y-2">
             {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
@@ -367,14 +394,14 @@ function LodgingContent() {
         </div>
 
         {/* 離開方式 */}
-        <div className={sectionCls}>
+        <div id="field-departure_transport" className={`${sectionCls} ${ringCls('departure_transport')}`}>
           <h2 className="text-lg font-semibold text-green-800">四、離開渡假村方式 *</h2>
           <div className="space-y-2">
             {radio('departure_transport', 'self', '自行離開')}
             {radio('departure_transport', 'bus', '乘坐主辦單位安排專車')}
           </div>
           {form.departure_transport === 'bus' && (
-            <div className="pl-6">
+            <div id="field-bus_destination" className={`pl-6 ${ringCls('bus_destination')}`}>
               <label className={labelCls}>專車目的地 *</label>
               <div className="space-y-2">
                 {radio('bus_destination', 'taipei_824_pm', '8/24 下午 6:00–6:30 專車到台北車站')}
@@ -390,21 +417,21 @@ function LodgingContent() {
         {/* 飲食 */}
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">五、飲食</h2>
-          <div>
+          <div id="field-diet" className={ringCls('diet')}>
             <label className={labelCls}>飲食選擇 *</label>
             <div className="space-y-2">
               {radio('diet', 'meat', '葷食')}
               {radio('diet', 'vegetarian', '素食')}
             </div>
           </div>
-          <div>
+          <div id="field-noon_fasting" className={ringCls('noon_fasting')}>
             <label className={labelCls}>課程期間是否過午不食 *</label>
             <div className="space-y-2">
               {radio('noon_fasting', 'before_noon', '需要 12 點前吃')}
               {radio('noon_fasting', 'after_noon', '可以 12 點後吃')}
             </div>
           </div>
-          <div>
+          <div id="field-snacks" className={ringCls('snacks')}>
             <label className={labelCls}>是否吃茶點 *</label>
             <div className="space-y-2">
               {radio('snacks', 'snacks_and_drink', '需要茶點、咖啡 OR 茶')}
@@ -427,7 +454,9 @@ function LodgingContent() {
         <div className={sectionCls}>
           <h2 className="text-lg font-semibold text-green-800">六、證件上傳</h2>
           <p className="text-xs text-gray-500">可上傳 JPG / PNG / WEBP / PDF（5MB 以下）</p>
-          {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
+          <div id="field-photo" className={ringCls('photo')}>
+            {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
+          </div>
 
           <div>
             <label className={labelCls}>申請人身份（三選一）*</label>
@@ -454,12 +483,24 @@ function LodgingContent() {
           </div>
           {identityType === 'id' && (
             <>
-              {fileField('id_front', '身分證正面 *', form.id_front_url, uploadingKind, handleFileUpload)}
-              {fileField('id_back', '身分證反面 *', form.id_back_url, uploadingKind, handleFileUpload)}
+              <div id="field-id_front" className={ringCls('id_front')}>
+                {fileField('id_front', '身分證正面 *', form.id_front_url, uploadingKind, handleFileUpload)}
+              </div>
+              <div id="field-id_back" className={ringCls('id_back')}>
+                {fileField('id_back', '身分證反面 *', form.id_back_url, uploadingKind, handleFileUpload)}
+              </div>
             </>
           )}
-          {identityType === 'passport' && fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)}
-          {identityType === 'arc' && fileField('arc', 'ARC／居留證 *', form.arc_url, uploadingKind, handleFileUpload)}
+          {identityType === 'passport' && (
+            <div id="field-passport" className={ringCls('passport')}>
+              {fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)}
+            </div>
+          )}
+          {identityType === 'arc' && (
+            <div id="field-arc" className={ringCls('arc')}>
+              {fileField('arc', 'ARC／居留證 *', form.arc_url, uploadingKind, handleFileUpload)}
+            </div>
+          )}
         </div>
 
         {/* 國外學員航班 */}
@@ -467,22 +508,22 @@ function LodgingContent() {
           <div className={sectionCls}>
             <h2 className="text-lg font-semibold text-green-800">七、航班資訊（外籍短期旅客必填）</h2>
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div id="field-flight_arrival_date" className={ringCls('flight_arrival_date')}>
                 <label className={labelCls}>抵台航班日期（入境日）*</label>
                 <input type="date" className={inputCls} value={form.flight_arrival_date}
                   onChange={e => update('flight_arrival_date', e.target.value)} />
               </div>
-              <div>
+              <div id="field-flight_arrival_time" className={ringCls('flight_arrival_time')}>
                 <label className={labelCls}>抵台航班具體時間 *</label>
                 <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
                   onChange={e => update('flight_arrival_time', e.target.value)} />
               </div>
-              <div>
+              <div id="field-flight_departure_date" className={ringCls('flight_departure_date')}>
                 <label className={labelCls}>離台航班日期（離境日）*</label>
                 <input type="date" className={inputCls} value={form.flight_departure_date}
                   onChange={e => update('flight_departure_date', e.target.value)} />
               </div>
-              <div>
+              <div id="field-flight_departure_time" className={ringCls('flight_departure_time')}>
                 <label className={labelCls}>離台航班具體時間 *</label>
                 <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
                   onChange={e => update('flight_departure_time', e.target.value)} />
@@ -532,7 +573,8 @@ function LodgingContent() {
               onChange={e => update('snoring', e.target.checked)} />
             睡覺會打鼾
           </label>
-          <label className="flex items-start gap-2 text-black cursor-pointer">
+          <label id="field-agree_covid_rules"
+            className={`flex items-start gap-2 text-black cursor-pointer p-2 ${ringCls('agree_covid_rules')}`}>
             <input type="checkbox" className="mt-1" checked={form.agree_covid_rules}
               onChange={e => update('agree_covid_rules', e.target.checked)} />
             <span>我已閱讀並<strong>願意遵守以上防疫與課程規範</strong> *</span>
@@ -541,7 +583,12 @@ function LodgingContent() {
         </fieldset>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">{error}</div>
+          <div className="sticky bottom-4 z-10 bg-red-50 border-2 border-red-400 rounded-lg p-4 text-red-700 shadow-lg flex items-start gap-2">
+            <span className="text-xl">⚠️</span>
+            <div className="flex-1"><strong>{error}</strong></div>
+            <button onClick={() => { setError(''); setErrorField(null) }}
+              className="text-red-700 hover:text-red-900 font-bold">✕</button>
+          </div>
         )}
 
         {pastDeadline && (
