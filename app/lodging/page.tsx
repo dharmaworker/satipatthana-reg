@@ -168,19 +168,25 @@ function LodgingContent() {
     )
   }
 
+  const hasEdited = !!(existingLodging && existingLodging.updated_at !== existingLodging.created_at)
+  const locked = hasEdited // 鎖定唯讀：已修改過一次
+
   if (done) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl p-8 max-w-md text-center">
           <p className="text-5xl mb-4">🙏</p>
           <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記已送出</h2>
-          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email，請注意查收。<br /><strong className="text-red-600">本表單僅能提交一次，若需修改請聯絡學會。</strong></p>
+          <p className="text-gray-600 mb-4">
+            系統已寄出確認信至您的 Email，請注意查收。<br />
+            {hasEdited
+              ? <strong className="text-red-600">本表單已修改過一次，無法再修改。若需更動請聯絡學會。</strong>
+              : <span>如需修改，<strong className="text-red-600">僅能再修改一次</strong>（6/20 晚上 8 點前），修改後即無法再動。</span>}
+          </p>
         </div>
       </div>
     )
   }
-
-  const locked = !!existingLodging
 
   const inputCls = 'w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black bg-white'
   const labelCls = 'block text-sm font-medium text-black mb-1'
@@ -206,14 +212,22 @@ function LodgingContent() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
           <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，若取消報名，所付費用恕不退款、轉讓。</p>
           <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成，逾期系統將拒絕提交。</p>
-          <p className="mt-2 text-red-700"><strong>⚠️ 本表單僅能提交一次，送出後即無法修改，請務必確認後再送出。</strong></p>
+          <p className="mt-2 text-red-700"><strong>⚠️ 本表單送出後僅能再修改一次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
         </div>
+
+        {existingLodging && !hasEdited && (
+          <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-yellow-900">
+            <p className="font-semibold">✅ 您已送出食宿登記（尚有 1 次修改機會）</p>
+            <p className="mt-1">送出時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
+            <p className="mt-1">如需修改，請在此頁面調整後再次送出。<strong>修改僅能進行一次，送出後即無法再改。</strong></p>
+          </div>
+        )}
 
         {locked && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <p className="font-semibold">✅ 您已送出食宿登記</p>
-            <p className="mt-1">送出時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
-            <p className="mt-1">以下為您送出的內容（唯讀）。<strong>本表單僅能提交一次，如有錯誤請聯絡學會。</strong></p>
+            <p className="font-semibold">✅ 您已完成食宿登記（已修改過 1 次，無法再改）</p>
+            <p className="mt-1">最後修改時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
+            <p className="mt-1">以下為您送出的內容（唯讀）。如有錯誤請聯絡學會。</p>
           </div>
         )}
 
@@ -490,12 +504,22 @@ function LodgingContent() {
         )}
         <button onClick={handleSubmit} disabled={submitting || pastDeadline || locked}
           className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting ? '送出中...' : pastDeadline ? '已截止' : locked ? '已送出，無法再次修改' : '提交食宿登記'}
+          {submitting
+            ? '送出中...'
+            : pastDeadline
+            ? '已截止'
+            : locked
+            ? '已修改過 1 次，無法再改'
+            : existingLodging
+            ? '送出修改（最後 1 次機會）'
+            : '提交食宿登記'}
         </button>
 
         {!locked && (
           <p className="text-center text-sm text-gray-500">
-            本表單僅能提交一次，送出後系統會寄出確認信，並自動帶入繳費方案。
+            {existingLodging
+              ? '本次為最後 1 次修改機會，送出後即鎖定。'
+              : '送出後可於 6/20 晚上 8 點前再修改 1 次，系統會寄出確認信。'}
           </p>
         )}
       </div>

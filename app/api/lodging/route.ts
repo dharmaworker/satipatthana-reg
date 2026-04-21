@@ -67,14 +67,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '尚未錄取，無法填寫食宿登記' }, { status: 403 })
     }
 
-    // 只允許提交一次：已有 lodging 紀錄即拒絕（避免作業人員反覆比對）
+    // 允許首次送出 + 一次修改：以 created_at === updated_at 判斷「尚未修改」
     const { data: existing } = await supabaseAdmin
       .from('lodging_registrations')
-      .select('id')
+      .select('id, created_at, updated_at')
       .eq('registration_id', reg.id)
       .maybeSingle()
-    if (existing) {
-      return NextResponse.json({ error: '您已送出食宿登記，無法再次修改。如有錯誤請聯絡學會。' }, { status: 403 })
+    if (existing && existing.updated_at !== existing.created_at) {
+      return NextResponse.json({ error: '您已修改過一次，無法再次修改。如有錯誤請聯絡學會。' }, { status: 403 })
     }
 
     // 方案若已選好，順便帶入日期 / 繳費方式；沒選也接受（可之後再選）
@@ -99,45 +99,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '選擇專車離開需指定目的地' }, { status: 400 })
     }
 
-    // insert 食宿登記（上面已擋過重複，僅允許一次提交）
-    const { data: lodging, error: lodgingErr } = await supabaseAdmin
-      .from('lodging_registrations')
-      .insert({
-        registration_id: reg.id,
-        arrival_date: planDefaults?.arrival_date ?? null,
-        departure_date: planDefaults?.departure_date ?? null,
-        payment_method: planDefaults?.payment_method ?? null,
-        emergency_name: fields.emergency_name,
-        emergency_relation: fields.emergency_relation,
-        emergency_phone: fields.emergency_phone,
-        arrival_transport: fields.arrival_transport,
-        departure_transport: fields.departure_transport,
-        bus_destination: fields.bus_destination || null,
-        diet: fields.diet,
-        noon_fasting: fields.noon_fasting,
-        snacks: fields.snacks,
-        dinner_0819: !!fields.dinner_0819,
-        dinner_0824: !!fields.dinner_0824,
-        snoring: !!fields.snoring,
-        agree_covid_rules: !!fields.agree_covid_rules,
-        id_front_url: fields.id_front_url || null,
-        id_back_url: fields.id_back_url || null,
-        passport_url: fields.passport_url || null,
-        photo_url: fields.photo_url || null,
-        arrival_ticket_url: fields.arrival_ticket_url || null,
-        departure_ticket_url: fields.departure_ticket_url || null,
-        test_0817_url: fields.test_0817_url || null,
-        test_0819_url: fields.test_0819_url || null,
-        test_0820_url: fields.test_0820_url || null,
-        test_0822_url: fields.test_0822_url || null,
-        flight_arrival_date: fields.flight_arrival_date || null,
-        flight_arrival_time: fields.flight_arrival_time || null,
-        flight_departure_date: fields.flight_departure_date || null,
-        flight_departure_time: fields.flight_departure_time || null,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
+    const payload = {
+      registration_id: reg.id,
+      arrival_date: planDefaults?.arrival_date ?? null,
+      departure_date: planDefaults?.departure_date ?? null,
+      payment_method: planDefaults?.payment_method ?? null,
+      emergency_name: fields.emergency_name,
+      emergency_relation: fields.emergency_relation,
+      emergency_phone: fields.emergency_phone,
+      arrival_transport: fields.arrival_transport,
+      departure_transport: fields.departure_transport,
+      bus_destination: fields.bus_destination || null,
+      diet: fields.diet,
+      noon_fasting: fields.noon_fasting,
+      snacks: fields.snacks,
+      dinner_0819: !!fields.dinner_0819,
+      dinner_0824: !!fields.dinner_0824,
+      snoring: !!fields.snoring,
+      agree_covid_rules: !!fields.agree_covid_rules,
+      id_front_url: fields.id_front_url || null,
+      id_back_url: fields.id_back_url || null,
+      passport_url: fields.passport_url || null,
+      photo_url: fields.photo_url || null,
+      arrival_ticket_url: fields.arrival_ticket_url || null,
+      departure_ticket_url: fields.departure_ticket_url || null,
+      test_0817_url: fields.test_0817_url || null,
+      test_0819_url: fields.test_0819_url || null,
+      test_0820_url: fields.test_0820_url || null,
+      test_0822_url: fields.test_0822_url || null,
+      flight_arrival_date: fields.flight_arrival_date || null,
+      flight_arrival_time: fields.flight_arrival_time || null,
+      flight_departure_date: fields.flight_departure_date || null,
+      flight_departure_time: fields.flight_departure_time || null,
+    }
+
+    // 首次提交：insert（不帶 updated_at，讓 DEFAULT now() 與 created_at 同時間）
+    // 修改一次：update（顯式設 updated_at 讓它 > created_at，成為已修改狀態）
+    let lodging: any, lodgingErr: any
+    if (!existing) {
+      const res = await supabaseAdmin
+        .from('lodging_registrations')
+        .insert(payload)
+        .select()
+        .single()
+      lodging = res.data; lodgingErr = res.error
+    } else {
+      const res = await supabaseAdmin
+        .from('lodging_registrations')
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single()
+      lodging = res.data; lodgingErr = res.error
+    }
     if (lodgingErr) {
       console.error('[lodging] upsert failed:', lodgingErr)
       return NextResponse.json({ error: '儲存失敗' }, { status: 500 })

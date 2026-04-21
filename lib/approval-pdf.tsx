@@ -124,7 +124,7 @@ export async function buildApprovalPdf(reg: {
 
         <Text style={styles.h2}>二、食宿登記與繳費</Text>
         <Text style={styles.para}>
-          請先完成食宿登記（填寫飲食、交通、緊急聯絡人、證件等）。食宿登記截止：6 月 20 日晚上 8 點。<Text style={styles.bold}>本表單僅能提交一次，送出後即無法修改，請務必確認後再送出。</Text>
+          請先完成食宿登記（填寫飲食、交通、緊急聯絡人、證件等）。食宿登記截止：6 月 20 日晚上 8 點。<Text style={styles.bold}>本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</Text>
         </Text>
         <Text style={styles.para}>
           繳費截止：<Text style={styles.bold}>2026 年 6 月 15 日台北時間晚上 8 時前</Text>。
