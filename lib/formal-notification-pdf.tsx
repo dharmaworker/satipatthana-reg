@@ -80,7 +80,6 @@ function FormalNotifDoc({ reg }: { reg: FormalNotifData }) {
         <Text style={styles.h2}>一、學員資料</Text>
         <Table rows={[
           ['學號', reg.student_id],
-          ['序號', reg.member_id],
           ['中文姓名', reg.chinese_name],
           ['護照英文姓名', reg.passport_name],
           ['性別', reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : reg.gender],

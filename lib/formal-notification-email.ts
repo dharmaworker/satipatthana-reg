@@ -59,7 +59,6 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
         <h3 style="color:#2d6a4f;">一、學員資料</h3>
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
           ${row('學號', reg.student_id || '（未編號）')}
-          ${row('序號', reg.member_id || '（未編號）')}
           ${row('中文姓名', reg.chinese_name)}
           ${row('護照英文姓名', reg.passport_name)}
           ${row('性別', genderZh)}

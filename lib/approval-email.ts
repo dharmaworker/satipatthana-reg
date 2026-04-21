@@ -69,7 +69,7 @@ export async function sendApprovalEmail(reg: {
         <p style="font-size:13px;color:#666;margin-top:6px;">
           ・8/17 上午 8 點至晚上 8 點前　・8/19 上午 12 點前<br>
           （課程期間 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需線上上傳）<br>
-          檢測結果需載明日期、學號、姓名；快篩試劑請自備。
+          檢測結果需載明日期、序號、姓名；快篩試劑請自備。
         </p>
 
         <h4 style="color:#2d6a4f;margin-top:16px;">費用方案</h4>
@@ -179,10 +179,10 @@ export async function sendApprovalEmail(reg: {
         </div>
         <div style="background:#e8f4f8;padding:15px;border-radius:8px;margin:20px 0;">
           <p style="margin:0;font-weight:bold;color:#1a5276;">📋 學員查詢系統</p>
-          <p style="margin:10px 0 5px;">繳費完成後，您可以透過以下連結查詢報名狀態及學號：</p>
+          <p style="margin:10px 0 5px;">繳費完成後，您可以透過以下連結查詢報名狀態及序號：</p>
           <a href="${baseUrl}/query"
             style="display:inline-block;background:#1a5276;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:5px 0;">
-            查詢報名狀態與學號
+            查詢報名狀態與序號
           </a>
           <p style="margin:10px 0 0;font-size:13px;color:#666;">查詢時需輸入您的 Email 及繳費專屬碼：<strong>${reg.random_code}</strong></p>
         </div>
