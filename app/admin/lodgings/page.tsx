@@ -155,13 +155,31 @@ export default function LodgingsPage() {
     setSaving(true)
     setEditError('')
     try {
-      const res = await fetch('/api/admin/lodgings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(edit),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || '儲存失敗')
+      // 1) 若學號有變動，先 patch registrations.student_id（跨表，/api/admin/registrations）
+      const regId = edit.registration?.id
+      const newStudentId = edit.registration?.student_id ?? null
+      const oldStudentId = rows.find(r => r.registration?.id === regId)?.registration?.student_id ?? null
+      if (regId && newStudentId !== oldStudentId) {
+        const r1 = await fetch('/api/admin/registrations', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: regId, student_id: newStudentId || null }),
+        })
+        if (!r1.ok) {
+          const d = await r1.json().catch(() => ({}))
+          throw new Error(`學號儲存失敗：${d.error || r1.status}`)
+        }
+      }
+      // 2) patch 食宿登記欄位（若 lodging row 存在）
+      if (edit.id) {
+        const res = await fetch('/api/admin/lodgings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(edit),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || '食宿儲存失敗')
+      }
       setEdit(null)
       setDetail(null)
       fetchData()
@@ -455,6 +473,26 @@ export default function LodgingsPage() {
               </h3>
               <button onClick={() => !saving && setEdit(null)}
                 className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
+            </div>
+
+            {/* 學員資訊區：序號只讀、學號可編 */}
+            <div className="grid grid-cols-2 gap-3 text-sm mb-3 p-3 bg-gray-50 rounded-lg">
+              <div>
+                <label className="block text-black mb-1">序號（自動）</label>
+                <div className="border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white font-mono">
+                  {edit.registration?.member_id || '—'}
+                </div>
+              </div>
+              <div>
+                <label className="block text-black mb-1">學號（可手動編輯）</label>
+                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black font-mono"
+                  placeholder="例：R-001"
+                  value={edit.registration?.student_id || ''}
+                  onChange={e => setEdit({
+                    ...edit,
+                    registration: { ...edit.registration, student_id: e.target.value },
+                  })} />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
