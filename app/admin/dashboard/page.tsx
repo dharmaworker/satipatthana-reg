@@ -80,7 +80,6 @@ export default function DashboardPage() {
           email: editReg.email,
           residence: editReg.residence,
           member_id: editReg.member_id || null,
-          student_id: editReg.student_id || null,
           payment_plan: editReg.payment_plan ?? null,
           line_qr_url: editReg.line_qr_url ?? null,
           wechat_qr_url: editReg.wechat_qr_url ?? null,
@@ -450,21 +449,12 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-black font-medium mb-1">序號（T-xxx）</label>
-                  <input className="w-full border border-gray-300 rounded px-3 py-2 text-black font-mono"
-                    placeholder="例：T-001"
-                    value={editReg.member_id || ''}
-                    onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-black font-medium mb-1">學號（R-xxx 或自訂）</label>
-                  <input className="w-full border border-gray-300 rounded px-3 py-2 text-black font-mono"
-                    placeholder="例：R-001"
-                    value={editReg.student_id || ''}
-                    onChange={e => setEditReg({ ...editReg, student_id: e.target.value })} />
-                </div>
+              <div>
+                <label className="block text-black font-medium mb-1">序號</label>
+                <input className="w-full border border-gray-300 rounded px-3 py-2 text-black font-mono"
+                  placeholder="例：T-001"
+                  value={editReg.member_id || ''}
+                  onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>
 
               <div>
@@ -551,7 +541,6 @@ export default function DashboardPage() {
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
               <DetailField label="繳費碼" value={detailReg.random_code} mono />
               <DetailField label="序號" value={detailReg.member_id} />
-              <DetailField label="學號" value={detailReg.student_id} />
               <DetailField label="身分" value={detailReg.identity === 'lay' ? '在家人' : detailReg.identity === 'monastic' ? '僧眾' : detailReg.identity} />
               <DetailField label="法名" value={detailReg.dharma_name} />
               <DetailField label="性別" value={detailReg.gender === 'male' ? '男' : detailReg.gender === 'female' ? '女' : detailReg.gender} />
