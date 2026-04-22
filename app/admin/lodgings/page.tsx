@@ -206,7 +206,7 @@ export default function LodgingsPage() {
           <ol className="list-decimal pl-5 mt-2 space-y-1">
             <li><strong>本頁對象：</strong>所有狀態為「已錄取」的學員；未填食宿者食宿欄位顯示「—」。</li>
             <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生；取消錄取時自動註銷。</li>
-            <li><strong>學號 R-xxx：</strong>手動編；按「編號」自動配發下一組 R-xxx；按「註銷」可清除。</li>
+            <li><strong>學號 R-xxx：</strong>按「編號」自動配發下一組；按「✏️ 手動」可自己 key 任意值（儲存需唯一）；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
             <li><strong>批次寄信流程：</strong>先用搜尋 / 「只顯示已分配學號者」過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
@@ -296,17 +296,10 @@ export default function LodgingsPage() {
                       <td className="px-3 py-3 font-medium text-black">{reg.chinese_name}</td>
                       <td className="px-3 py-3 text-black font-mono">{reg.member_id || '—'}</td>
                       <td className="px-3 py-3 text-black">
-                        <div className="font-mono">{reg.student_id || '—'}</div>
-                        <div className="flex gap-1 mt-1">
-                          {!reg.student_id && (
-                            <button onClick={() => assignStudentId(reg.id)}
-                              className="text-[10px] text-purple-700 hover:underline">編號</button>
-                          )}
-                          {reg.student_id && (
-                            <button onClick={() => clearStudentId(reg)}
-                              className="text-[10px] text-orange-700 hover:underline">註銷</button>
-                          )}
-                        </div>
+                        <StudentIdCell reg={reg}
+                          onSave={val => patchStudentId(reg.id, val)}
+                          onAutoAssign={() => assignStudentId(reg.id)}
+                          onClear={() => clearStudentId(reg)} />
                       </td>
                       <td className="px-3 py-3 font-mono text-black">{reg.random_code}</td>
                       <td className="px-3 py-3 text-black">{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
@@ -693,6 +686,60 @@ function Field({ label, value }: { label: string; value: any }) {
     <div>
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-black">{value || '—'}</div>
+    </div>
+  )
+}
+
+function StudentIdCell({
+  reg, onSave, onAutoAssign, onClear,
+}: {
+  reg: any
+  onSave: (val: string | null) => Promise<boolean> | void
+  onAutoAssign: () => void
+  onClear: () => void
+}) {
+  const [val, setVal] = useState(reg.student_id || '')
+  const [editing, setEditing] = useState(false)
+  // 同步外部值變動
+  useEffect(() => { setVal(reg.student_id || '') }, [reg.student_id])
+
+  const save = async () => {
+    const trimmed = val.trim()
+    if (trimmed === (reg.student_id || '')) { setEditing(false); return }
+    await onSave(trimmed || null)
+    setEditing(false)
+  }
+  const cancel = () => { setVal(reg.student_id || ''); setEditing(false) }
+
+  return (
+    <div className="min-w-[120px]">
+      {editing ? (
+        <div className="flex gap-1 items-center">
+          <input autoFocus value={val}
+            onChange={e => setVal(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel() }}
+            placeholder="R-001"
+            className="w-20 border border-gray-300 rounded px-1 py-0.5 text-xs font-mono text-black" />
+          <button onClick={save} className="text-[10px] text-green-700 hover:underline">儲存</button>
+          <button onClick={cancel} className="text-[10px] text-gray-500 hover:underline">取消</button>
+        </div>
+      ) : (
+        <>
+          <div className="font-mono">{reg.student_id || '—'}</div>
+          <div className="flex gap-2 mt-1">
+            <button onClick={() => setEditing(true)}
+              className="text-[10px] text-black hover:underline">✏️ 手動</button>
+            {!reg.student_id && (
+              <button onClick={onAutoAssign}
+                className="text-[10px] text-purple-700 hover:underline">編號</button>
+            )}
+            {reg.student_id && (
+              <button onClick={onClear}
+                className="text-[10px] text-orange-700 hover:underline">註銷</button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
