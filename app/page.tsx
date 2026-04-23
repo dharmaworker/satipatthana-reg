@@ -79,8 +79,19 @@ export default function RegisterPage() {
     attended_courses: [] as string[],
   })
 
-  const update = (field: string, value: any) =>
+  const [errorField, setErrorField] = useState<string | null>(null)
+  const update = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
+    if (errorField === field) setErrorField(null)
+  }
+  const fail = (field: string, msg: string) => {
+    setError(msg)
+    setErrorField(field)
+    setTimeout(() => {
+      document.getElementById(`field-${field}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
+  const ringCls = (f: string) => errorField === f ? 'ring-2 ring-red-400 ring-offset-2 rounded-lg' : ''
 
   const toggleCourse = (course: string) => {
     setForm(prev => ({
@@ -113,36 +124,51 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     setError('')
 
-    // 報名條件檢查
-    if (form.honest_confirm !== 'yes') {
-      setError('請確認已承諾如實填寫')
-      return
-    }
+    // ===== 依 UI 由上至下做必填/條件檢查，第一個不合規就 highlight =====
+    if (form.honest_confirm !== 'yes') return fail('honest_confirm', 'Q1：請承諾如實填寫本次報名表單')
+
     // 聞法條件：Q2 / Q9 / Q10 / Q11 任一為「是」即可
     const heardDharma =
       form.attended_formal === 'yes' ||
       form.watched_recordings === 'yes' ||
       form.zoom_guidance === 'yes' ||
       form.watched_30_talks === 'yes'
-    if (!heardDharma) {
-      setError('聞法條件未達成：第 2、9、10、11 題需至少有一項選「是」（正式學員／3 屆錄影／ZOOM 指導／30 篇法談）')
-      return
-    }
-    if (form.keep_precepts !== 'yes') {
-      setError('報名條件：需持守五戒（第 12 題須選「是」）')
-      return
-    }
-    if (!form.practice_frequency) {
-      setError('請回答第 14 題：固定練習頻率')
-      return
-    }
-    if (form.pay_confirm !== 'yes') {
-      setError('需同意於 6/15 前完成繳費（第 15 題須選「是」）')
-      return
-    }
-    if (form.health_confirm !== 'yes') {
-      setError('需確認身體健康能全程參與（第 16 題須選「是」）')
-      return
+    if (!form.attended_formal) return fail('attended_formal', '請回答 Q2：是否以正式學員身份參加過課程')
+    if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q9：是否完整觀看/聆聽過 3 屆錄影')
+    if (!form.zoom_guidance) return fail('zoom_guidance', '請回答 Q10：是否透過 ZOOM 做過一對一指導')
+    if (!form.watched_30_talks) return fail('watched_30_talks', '請回答 Q11：是否聽過法談 30 篇以上')
+    if (!heardDharma) return fail('attended_formal', '聞法條件未達成：Q2、Q9、Q10、Q11 需至少一項選「是」')
+
+    if (!form.keep_precepts) return fail('keep_precepts', '請回答 Q12：是否持守五戒')
+    if (form.keep_precepts !== 'yes') return fail('keep_precepts', '報名條件：需持守五戒（Q12 須選「是」）')
+
+    if (!form.practice_years) return fail('practice_years', '請回答 Q13：學習實踐多久')
+    if (!form.practice_frequency) return fail('practice_frequency', '請回答 Q14：固定練習頻率')
+
+    if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q15：是否願意按時繳費')
+    if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q15 須選「是」）')
+
+    if (!form.health_confirm) return fail('health_confirm', '請回答 Q16：是否身體健康能全程參與')
+    if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q16 須選「是」）')
+
+    // 個人資訊必填
+    if (!form.chinese_name.trim()) return fail('chinese_name', '請填寫 Q19：中文姓名')
+    if (!form.passport_name.trim()) return fail('passport_name', '請填寫 Q20：護照英文姓名')
+    if (!form.identity) return fail('identity', '請選擇 Q21：身份類別（在家人／僧眾）')
+    if (!form.gender) return fail('gender', '請選擇 Q23：性別')
+    if (!form.age) return fail('age', '請填寫 Q24：年齡')
+    if (!form.residence) return fail('residence', '請選擇 Q26：居住地')
+    if (!form.phone.trim()) return fail('phone', '請填寫 Q27：手機號碼')
+    if (!form.email.trim()) return fail('email', '請填寫 Q28：電子信箱')
+
+    // Q29 / Q30：LINE 或 微信 擇一 + QR
+    if (!form.contact_app) return fail('contact_app', '請選擇 Q29：通訊軟體（LINE 或 微信擇一）')
+    if (form.contact_app === 'line') {
+      if (!form.line_id.trim()) return fail('contact_app', '請填寫 LINE ID')
+      if (!form.line_qr_url) return fail('contact_app', '請上傳 LINE QR Code 圖片')
+    } else if (form.contact_app === 'wechat') {
+      if (!form.wechat_id.trim()) return fail('contact_app', '請填寫 微信號')
+      if (!form.wechat_qr_url) return fail('contact_app', '請上傳 微信 QR Code 圖片')
     }
 
     setLoading(true)
@@ -307,7 +333,7 @@ export default function RegisterPage() {
         </div>
 
         {/* 第一題 */}
-        <div className={sectionClass}>
+        <div id="field-honest_confirm" className={`${sectionClass} ${ringCls('honest_confirm')}`}>
           <label className={labelClass}>1. 您是否願意承諾如實填寫本次的報名表單？*</label>
           <select className={inputClass} value={form.honest_confirm}
             onChange={e => update('honest_confirm', e.target.value)}>
@@ -326,7 +352,7 @@ export default function RegisterPage() {
         <div className={sectionClass}>
           <h2 className="text-lg font-semibold text-green-800">第二部分：報名條件確認</h2>
 
-          <div>
+          <div id="field-attended_formal" className={ringCls('attended_formal')}>
             <label className={labelClass}>2. 是否以正式學員身份參加過隆波帕默尊者體系的實體或線上課程？*</label>
             <select className={inputClass} value={form.attended_formal}
               onChange={e => update('attended_formal', e.target.value)}>
@@ -360,7 +386,7 @@ export default function RegisterPage() {
             </div>
           ))}
 
-          <div>
+          <div id="field-watched_recordings" className={ringCls('watched_recordings')}>
             <label className={labelClass}>9. 是否完整觀看/聆聽過至少3屆泰國四念處之旅的錄影/錄音？*</label>
             <select className={inputClass} value={form.watched_recordings}
               onChange={e => update('watched_recordings', e.target.value)}>
@@ -370,7 +396,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-zoom_guidance" className={ringCls('zoom_guidance')}>
             <label className={labelClass}>10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？*</label>
             <select className={inputClass} value={form.zoom_guidance}
               onChange={e => update('zoom_guidance', e.target.value)}>
@@ -380,7 +406,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-watched_30_talks" className={ringCls('watched_30_talks')}>
             <label className={labelClass}>11. 是否觀看/聆聽過隆波帕默尊者法談開示30篇以上？*</label>
             <select className={inputClass} value={form.watched_30_talks}
               onChange={e => update('watched_30_talks', e.target.value)}>
@@ -390,7 +416,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-keep_precepts" className={ringCls('keep_precepts')}>
             <label className={labelClass}>12. 您是否持守五戒？*</label>
             <select className={inputClass} value={form.keep_precepts}
               onChange={e => update('keep_precepts', e.target.value)}>
@@ -400,7 +426,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-practice_years" className={ringCls('practice_years')}>
             <label className={labelClass}>13. 您學習並實踐隆波帕默尊者的教導多久了？*</label>
             <select className={inputClass} value={form.practice_years}
               onChange={e => update('practice_years', e.target.value)}>
@@ -411,7 +437,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-practice_frequency" className={ringCls('practice_frequency')}>
             <label className={labelClass}>14. 過去三個月內，您做固定式練習的頻率是？*</label>
             <select className={inputClass} value={form.practice_frequency}
               onChange={e => update('practice_frequency', e.target.value)}>
@@ -422,7 +448,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-pay_confirm" className={ringCls('pay_confirm')}>
             <label className={labelClass}>15. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？*</label>
             <select className={inputClass} value={form.pay_confirm}
               onChange={e => update('pay_confirm', e.target.value)}>
@@ -432,7 +458,7 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-health_confirm" className={ringCls('health_confirm')}>
             <label className={labelClass}>16. 您是否身體健康，能夠全程獨立參與？*</label>
             <select className={inputClass} value={form.health_confirm}
               onChange={e => update('health_confirm', e.target.value)}>
@@ -475,19 +501,19 @@ export default function RegisterPage() {
         <div className={sectionClass}>
           <h2 className="text-lg font-semibold text-green-800">第三部分：個人資訊</h2>
 
-          <div>
+          <div id="field-chinese_name" className={ringCls('chinese_name')}>
             <label className={labelClass}>19. 中文姓名（身分證/護照姓名）*</label>
             <input className={inputClass} value={form.chinese_name}
               onChange={e => update('chinese_name', e.target.value)} />
           </div>
 
-          <div>
+          <div id="field-passport_name" className={ringCls('passport_name')}>
             <label className={labelClass}>20. 護照英文姓名*</label>
             <input className={inputClass} value={form.passport_name}
               onChange={e => update('passport_name', e.target.value)} />
           </div>
 
-          <div>
+          <div id="field-identity" className={ringCls('identity')}>
             <label className={labelClass}>21. 您屬於？*</label>
             {[['lay', '在家人（居士）'], ['monastic', '僧眾']].map(([val, label]) => (
               <label key={val} className={radioClass}>
@@ -507,7 +533,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div>
+          <div id="field-gender" className={ringCls('gender')}>
             <label className={labelClass}>23. 性別*</label>
             {[['male', '男'], ['female', '女']].map(([val, label]) => (
               <label key={val} className={radioClass}>
@@ -519,7 +545,7 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <div>
+          <div id="field-age" className={ringCls('age')}>
             <label className={labelClass}>24. 年齡*</label>
             <input type="number" className={inputClass} value={form.age}
               onChange={e => update('age', e.target.value)} />
@@ -531,7 +557,7 @@ export default function RegisterPage() {
               onChange={e => update('passport_country', e.target.value)} />
           </div>
 
-          <div>
+          <div id="field-residence" className={ringCls('residence')}>
             <label className={labelClass}>26. 居住地*</label>
             <select className={inputClass} value={form.residence}
               onChange={e => update('residence', e.target.value)}>
@@ -542,18 +568,18 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          <div>
+          <div id="field-phone" className={ringCls('phone')}>
             <label className={labelClass}>27. 手機號碼*（海外人士請加國際碼，例如：台灣886+）</label>
             <input className={inputClass} value={form.phone}
               onChange={e => update('phone', e.target.value)} />
           </div>
 
-          <div>
+          <div id="field-email" className={ringCls('email')}>
             <label className={labelClass}>28. 電子信箱（E-MAIL）*</label>
             <input type="email" className={inputClass} value={form.email}
               onChange={e => update('email', e.target.value)} />
           </div>
-<div>
+<div id="field-contact_app" className={ringCls('contact_app')}>
   <label className={labelClass}>29. 通訊軟體（擇一填寫）</label>
   <div className="space-y-3">
     <p className="text-sm text-gray-600">請擇一填寫通訊軟體，並上傳對應的 QR Code（檔案上限 500KB）</p>
@@ -663,8 +689,11 @@ export default function RegisterPage() {
 
         {/* 提交 */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
+          <div className="sticky bottom-4 z-10 bg-red-50 border-2 border-red-400 rounded-lg p-4 text-red-700 shadow-lg flex items-start gap-2">
+            <span className="text-xl">⚠️</span>
+            <div className="flex-1"><strong>{error}</strong></div>
+            <button onClick={() => { setError(''); setErrorField(null) }}
+              className="text-red-700 hover:text-red-900 font-bold">✕</button>
           </div>
         )}
 
