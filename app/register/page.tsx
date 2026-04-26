@@ -327,17 +327,16 @@ export default function RegisterPage() {
               </div>
 
               <div className="info-section">
-                <h3>課程基本資訊</h3>
+                <h3>課程資訊</h3>
                 <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
                 <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
                 <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
                 <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
-                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理（約 NT$18,600）</span></div>
-                <div className="meta-row"><span className="k">報名期間</span><span className="v">2026/05/11 ～ 05/25（台北時間）</span></div>
+                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理（NT$18,600）</span></div>
               </div>
 
               <div className="info-section">
-                <h3>傳承與指導老師</h3>
+                <h3>傳承與指導</h3>
                 <p>承蒙隆波帕默尊者慈悲指定，由助教老師團隊親自指導。</p>
                 <h4>指導老師陣容</h4>
                 <ul>
@@ -346,11 +345,6 @@ export default function RegisterPage() {
                   <li>阿姜妮 Ajahn Nitiya Petchpaiboon</li>
                   <li>阿姜松 Ajahn Napatpol Kunatanasate</li>
                 </ul>
-              </div>
-
-              <div className="alert-card" style={{ marginTop: 12 }}>
-                <div className="alert-card-title">特別提醒</div>
-                <p>提交報名表後，<strong>並不代表已錄取</strong>。錄取結果將於 <strong>6 月 6 日</strong>以 Email 發送。請勿於錄取確認前購買機票或安排行程。</p>
               </div>
             </div>
           )}
@@ -361,11 +355,11 @@ export default function RegisterPage() {
               <div className="step-header">
                 <p className="step-header-kicker">Step 02</p>
                 <h2 className="step-header-title">報名資格</h2>
-                <p className="step-header-desc">本課程為進階禪修班，僅接受具備一定基礎的學員。請確認您符合以下資格後再進入下一步。</p>
+                <p className="step-header-desc">請確認您符合以下資格後再進入下一步。</p>
               </div>
 
               <div className="info-section">
-                <h3>報名條件（須<strong>同時</strong>滿足三項）</h3>
+                <h3>報名條件（須<strong>同時</strong>滿足三條件）</h3>
                 <h4>1. 聞法條件（任一即可）</h4>
                 <ul>
                   <li>曾參加過任意一屆隆波帕默尊者體系的線下實體或線上網路課程</li>
@@ -379,18 +373,10 @@ export default function RegisterPage() {
 
               <div className="info-section">
                 <h3>錄取流程</h3>
-                <ul className="check">
-                  <li>提交報名表後，將於 <strong>6 月 6 日</strong>以 Email 發送錄取通知。</li>
-                  <li>錄取者須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</li>
-                  <li>正式錄取者，將建立 LINE 及微信群組。</li>
-                  <li>實體禪修場地條件有限，最終錄取結果由課程組決定。</li>
-                </ul>
-              </div>
-
-              <div className="alert-card">
-                <div className="alert-card-title">費用說明</div>
-                <p>8/20–8/24 禪修期間之食宿、交通及場地費用：<strong>NT$18,600 元起</strong>（依方案而異，最高約 NT$23,290）。</p>
-                <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+                <p>1. 提交報名表後，將於 <strong>6 月 6 日</strong>以 Email 發送錄取通知（提交報名表單不代表已錄取）。</p>
+                <p>2. 收到錄取通知後，須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
+                <p>3. 正式錄取者，將建立 LINE 及微信群組。</p>
+                <p>4. 實體禪修場地條件有限，最終錄取結果由課程組決定。</p>
               </div>
             </div>
           )}
@@ -732,6 +718,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="alert-card" style={{ marginTop: 18 }}>
+                <div className="alert-card-title">8/20–8/24 禪修期間之食宿、交通及場地費用</div>
+                <p>食宿、交通及場地費用：<strong>NT$18,600 元整</strong>（如需提前或延後住宿，將另計相關費用）</p>
+                <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+              </div>
+
+              <div className="alert-card" style={{ marginTop: 12 }}>
                 <div className="alert-card-title">送出前再次提醒</div>
                 <p>提交報名表後並不代表已錄取，錄取結果將於 <strong>6/6</strong> 以 Email 通知。請以您填寫的 Email 為準，注意查收（含垃圾信箱）。</p>
                 <p>送出後將自動寄送一封確認信至您的 Email，內含繳費專屬碼，請妥善保管。</p>
