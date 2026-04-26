@@ -1,20 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans_TC, Noto_Serif_TC, Ma_Shan_Zheng, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const notoSansTC = Noto_Sans_TC({
+  variable: "--font-noto-sans-tc",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const notoSerifTC = Noto_Serif_TC({
+  variable: "--font-noto-serif-tc",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const maShanZheng = Ma_Shan_Zheng({
+  variable: "--font-ma-shan-zheng",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "第二屆台灣四念處禪修 報名",
-  description: "台灣四念處學會 2026 年禪修課程線上報名",
+  title: "心的真相 · 第二屆台灣四念處禪修之旅",
+  description: "2026 年 8 月 20–24 日於南投日月潭，五日禪修。「解脫」從如實知開始。",
 };
 
 export const viewport: Viewport = {
@@ -29,10 +48,10 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="zh-Hant"
+      className={`${notoSansTC.variable} ${notoSerifTC.variable} ${maShanZheng.variable} ${cormorant.variable}`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

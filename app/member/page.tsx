@@ -28,56 +28,72 @@ export default function MemberLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-green-800">學員專區</h1>
-          <p className="text-black mt-1">第二屆台灣四念處禪修</p>
-          <p className="text-sm text-gray-500 mt-2">僅限正式學員（已完成繳費）登入</p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">電子信箱（E-MAIL）</label>
-            <input
-              type="email"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
-              placeholder="請輸入報名時填寫的 Email"
-              value={form.email}
-              onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">繳費專屬碼</label>
-            <input
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black uppercase"
-              placeholder="請輸入錄取通知信中的專屬碼"
-              value={form.random_code}
-              onChange={e => setForm(prev => ({ ...prev, random_code: e.target.value.toUpperCase() }))}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-3 rounded-xl transition-colors">
-            {loading ? '登入中...' : '進入學員專區'}
-          </button>
-        </div>
-
-        <p className="text-center text-sm text-gray-500 mt-6">
-          尚未繳費？請先完成繳費後再登入
-        </p>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
-    </div>
+
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+          </a>
+          <a href="/" className="nav-back">← 返回首頁</a>
+        </div>
+      </header>
+
+      <main className="login-wrap">
+        <div className="login-card">
+          <div className="login-icon">心</div>
+          <div className="login-kicker">Member Portal · 學員專區</div>
+          <h1 className="login-title">學員專區登入</h1>
+          <p className="login-subtitle">
+            請輸入您報名時所填寫的 E-mail 與專屬代碼。<br />
+            專屬代碼可於錄取通知信中查找。
+          </p>
+
+          {error && <div className="login-error">⚠ {error}</div>}
+
+          <form className="login-form" onSubmit={e => { e.preventDefault(); handleLogin() }}>
+            <div className="form-grid-1">
+              <div className="form-field">
+                <label className="form-label">電子信箱 <span className="required">*</span><span className="en">Email</span></label>
+                <input type="email" className="form-input" required autoComplete="email"
+                  placeholder="您報名時所填寫的 Email"
+                  value={form.email}
+                  onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} />
+              </div>
+              <div className="form-field">
+                <label className="form-label">專屬代碼 <span className="required">*</span><span className="en">Access Code</span></label>
+                <input className="form-input uppercase" required maxLength={12} autoComplete="off"
+                  placeholder="例：MMN85PUN"
+                  value={form.random_code}
+                  onChange={e => setForm(prev => ({ ...prev, random_code: e.target.value.toUpperCase() }))} />
+                <span className="form-hint">請參考錄取通知信中的專屬代碼，不分大小寫。</span>
+              </div>
+            </div>
+            <div className="login-actions">
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                {loading ? '登入中⋯' : '進入學員專區'} <span className="arrow">→</span>
+              </button>
+            </div>
+          </form>
+
+          <div className="help-link">
+            還沒錄取？請先至 <a href="/query">報名狀態查詢</a><br />
+            遺失專屬代碼？<a href="mailto:satipatthana.tw@gmail.com">寫信給我們</a>
+          </div>
+        </div>
+      </main>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
 }
