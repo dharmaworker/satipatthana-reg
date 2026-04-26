@@ -19,7 +19,7 @@ export default function MemberLoginPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      router.push('/member/dashboard')
+      router.push(`/member/dashboard?id=${data.id}&code=${encodeURIComponent(data.code)}`)
     } catch (err: any) {
       setError(err.message)
     } finally {

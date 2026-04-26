@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type MemberData = {
   id: string
@@ -23,19 +23,27 @@ const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   rejected: { label: '未錄取', cls: 'rejected' },
 }
 
-export default function MemberDashboardPage() {
+function MemberDashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id') || ''
+  const code = searchParams.get('code') || ''
+
   const [member, setMember] = useState<MemberData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/member/me')
+    if (!id || !code) {
+      router.push('/member')
+      return
+    }
+    fetch(`/api/member/me?id=${id}&code=${encodeURIComponent(code)}`)
       .then(res => {
         if (!res.ok) { router.push('/member'); return }
         return res.json()
       })
       .then(data => { if (data) setMember(data); setLoading(false) })
-  }, [])
+  }, [id, code])
 
   if (loading) {
     return (
@@ -86,10 +94,7 @@ export default function MemberDashboardPage() {
           </a>
           <div className="nav-actions">
             <a href="/" className="nav-back">← 主站</a>
-            <button className="nav-logout" onClick={async () => {
-              await fetch('/api/member/logout', { method: 'POST' })
-              router.push('/member')
-            }}>登出</button>
+            <button className="nav-logout" onClick={() => router.push('/member')}>登出</button>
           </div>
         </div>
       </header>
@@ -320,5 +325,17 @@ function TaskCard({
         <a href={actionHref} className="btn btn-primary" style={{ flex: 1, fontSize: 13, padding: '10px 16px' }}>{actionText}</a>
       </div>
     </div>
+  )
+}
+
+export default function MemberDashboardPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    }>
+      <MemberDashboardContent />
+    </Suspense>
   )
 }

@@ -2,19 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
-  const memberId = request.cookies.get('member_id')?.value
-  if (!memberId) {
-    return NextResponse.json({ error: '未登入' }, { status: 401 })
+  const url = new URL(request.url)
+  const id = url.searchParams.get('id')
+  const code = url.searchParams.get('code')
+
+  if (!id || !code) {
+    return NextResponse.json({ error: '缺少必要參數' }, { status: 400 })
   }
 
   const { data: reg, error } = await supabaseAdmin
     .from('registrations')
     .select('id, chinese_name, member_id, student_id, random_code, status, payment_status, payment_plan, residence')
-    .eq('id', memberId)
+    .eq('id', id)
+    .eq('random_code', code.toUpperCase().trim())
     .single()
 
   if (error || !reg) {
-    return NextResponse.json({ error: '無效的登入狀態' }, { status: 401 })
+    return NextResponse.json({ error: '無效的存取連結' }, { status: 401 })
   }
 
   // 食宿 + 快篩狀態（僅 approved 才查詢）

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('registrations')
-      .select('*')
+      .select('id, chinese_name, member_id, random_code')
       .eq('email', email.toLowerCase().trim())
       .eq('random_code', random_code.toUpperCase().trim())
       .single()
@@ -20,28 +20,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '帳號或繳費碼錯誤' }, { status: 401 })
     }
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
+      id: data.id,
+      code: data.random_code,
       name: data.chinese_name,
       member_id: data.member_id,
     })
-
-    response.cookies.set('member_email', data.email, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24,
-    path: '/',
-    })
-    response.cookies.set('member_id', data.id, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24,
-    path: '/',
-    })
-
-    return response
   } catch (error) {
     return NextResponse.json({ error: '登入失敗' }, { status: 500 })
   }
