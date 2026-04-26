@@ -2,9 +2,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-const TESTS: { key: string; label: string; deadline: string }[] = [
-  { key: 'test_0817_url', label: '8/17 上午 8 點至晚上 8 點前', deadline: '2026-08-17' },
-  { key: 'test_0819_url', label: '8/19 上午 12 點前', deadline: '2026-08-19' },
+const TESTS: { key: 'test_0817_url' | 'test_0819_url'; label: string; date: string; deadline: string }[] = [
+  { key: 'test_0817_url', label: '8/17 快篩上傳', date: '08.17', deadline: '8/17 上午 8 點 ～ 晚上 8 點前' },
+  { key: 'test_0819_url', label: '8/19 快篩上傳', date: '08.19', deadline: '8/19 上午 12 點前' },
 ]
 
 function QuickTestsContent() {
@@ -18,6 +18,7 @@ function QuickTestsContent() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const [files, setFiles] = useState<Record<string, string>>({
     test_0817_url: '', test_0819_url: '',
@@ -84,137 +85,253 @@ function QuickTestsContent() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">載入中...</div>
-
-  if (error && !reg) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-6 max-w-md text-center">
-          <p className="text-red-700">{error}</p>
-        </div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
       </div>
     )
   }
 
-  if (done) {
+  if (error && !reg) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center">
-          <p className="text-5xl mb-4">🙏</p>
-          <h2 className="text-xl font-bold text-green-800 mb-2">快篩上傳已收到</h2>
-          <p className="text-gray-600 mb-4">系統已寄出確認信至您的 Email。<br />未上傳的時段請於規定時間前回到此頁補上。</p>
-          <button onClick={() => setDone(false)}
-            className="inline-block bg-gray-100 hover:bg-gray-200 text-black px-6 py-2 rounded-lg">
-            返回繼續上傳
-          </button>
+      <main className="login-wrap">
+        <div className="login-card" style={{ textAlign: 'center' }}>
+          <div className="login-icon" style={{ background: 'linear-gradient(135deg,#cf8f6c,#8b4f32)' }}>!</div>
+          <h1 className="login-title">無法載入</h1>
+          <p className="login-subtitle">{error}</p>
+          <a href="/member/dashboard" className="btn btn-primary btn-block">返回學員專區</a>
         </div>
-      </div>
+      </main>
     )
   }
 
   const uploadedCount = Object.values(files).filter(Boolean).length
+  const progressClass = uploadedCount === 2 ? 'complete' : uploadedCount === 1 ? 'partial' : ''
+  const initial = reg?.chinese_name?.charAt(0) || '?'
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-green-800 text-white py-6 px-4 text-center">
-        <h1 className="text-xl font-bold">第二屆台灣四念處禪修－快篩檢測上傳</h1>
-        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 序號 {reg.member_id || '待編號'}</p>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
 
-      <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
-          <p className="font-semibold">注意事項</p>
-          <ul className="list-disc pl-5 mt-1 space-y-1">
-            <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>。</li>
-            <li>快篩試劑請<strong>自備</strong>，主辦單位不提供。</li>
-            <li>請依下方兩個時段於規定時間前上傳；可分次回到此頁補上。</li>
-            <li>課程期間的 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需於此上傳。</li>
-          </ul>
-        </div>
-
-        {lastUpdate && uploadedCount > 0 && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <p>已上傳 {uploadedCount}/2 次。最後更新：{new Date(lastUpdate).toLocaleString('zh-TW')}</p>
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/member/dashboard" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+            <span className="brand-sublabel">
+              <small>Member Portal</small>
+              <span>學員專區</span>
+            </span>
+          </a>
+          <div className="nav-actions">
+            <a href="/member/dashboard" className="nav-back">← 學員首頁</a>
           </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
-          {TESTS.map(t => {
-            const url = files[t.key]
-            const kind = t.key.replace(/_url$/, '')
-            const isImage = url && !url.toLowerCase().endsWith('.pdf')
-            const uploading = uploadingKind === kind
-            const inputId = `qt-${kind}`
-            return (
-              <div key={t.key} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/50">
-                <div className="flex justify-between items-start">
-                  <label htmlFor={inputId} className="text-black font-semibold">{t.label}</label>
-                  {url && <span className="text-xs text-green-700 font-medium whitespace-nowrap">✓ 已上傳</span>}
-                </div>
-
-                {url && (
-                  <div className="flex items-center gap-3 bg-white border border-gray-200 rounded p-2">
-                    {isImage ? (
-                      <img src={url} alt={t.label} className="w-16 h-16 object-cover border rounded" />
-                    ) : (
-                      <span className="text-2xl">📄</span>
-                    )}
-                    <a href={url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline">點此檢視</a>
-                    <button onClick={() => setFiles(prev => ({ ...prev, [t.key]: '' }))}
-                      className="ml-auto text-xs text-red-600 hover:underline">清除</button>
-                  </div>
-                )}
-
-                <label htmlFor={inputId}
-                  className={`block w-full border-2 border-dashed rounded-lg px-4 py-6 text-center cursor-pointer transition-colors ${
-                    uploading
-                      ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
-                      : url
-                      ? 'border-green-400 bg-green-50 hover:bg-green-100 text-green-800'
-                      : 'border-green-500 bg-white hover:bg-green-50 text-green-800'
-                  }`}>
-                  {uploading ? (
-                    <>
-                      <div className="text-2xl mb-1">⏳</div>
-                      <div className="text-sm font-medium">上傳中，請稍候...</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-3xl mb-1">📤</div>
-                      <div className="text-sm font-semibold">
-                        {url ? '點此重新上傳' : '點此選擇快篩照片'}
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">支援 JPG / PNG / WEBP / PDF（5MB 以下）</div>
-                    </>
-                  )}
-                  <input id={inputId} type="file"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    disabled={uploading}
-                    className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(kind, f) }} />
-                </label>
-              </div>
-            )
-          })}
         </div>
+      </header>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
-        )}
-
-        <button onClick={handleSubmit} disabled={submitting || !!uploadingKind}
-          className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting ? '送出中...' : '送出 / 更新快篩上傳'}
-        </button>
-        <p className="text-center text-xs text-gray-500">送出後系統會寄確認信。可隨時回到此頁更新。</p>
+      <div className="page-header">
+        <div className="container">
+          <p className="page-kicker">Rapid Test Upload</p>
+          <h1 className="page-title">快篩檢測上傳</h1>
+          <p className="page-subtitle">
+            8/17 與 8/19 兩個時段的快篩結果請於規定時間前上傳；可分次回到此頁補上。<br />
+            8/20、8/22 課程期間的快篩結果請於現場繳交。
+          </p>
+        </div>
       </div>
-    </div>
+
+      <main className="container">
+        <div className="layout">
+          <div>
+            <div className="member-card">
+              <div className="avatar">{initial}</div>
+              <div className="info">
+                <div className="name">{reg.chinese_name} 法友</div>
+                <div className="meta">
+                  <span><strong>序號</strong>{reg.member_id || '待編號'}</span>
+                  {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className="alert-card">
+              <div className="alert-card-title">注意事項</div>
+              <ul>
+                <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>。</li>
+                <li>快篩試劑請<strong>自備</strong>，主辦單位不提供。</li>
+                <li>請依下方兩個時段於規定時間前上傳；可分次回到此頁補上。</li>
+                <li>課程期間的 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需於此上傳。</li>
+              </ul>
+            </div>
+
+            {(uploadedCount > 0 || lastUpdate) && (
+              <div className={`progress-bar ${progressClass}`}>
+                <div className="progress-bar-text">
+                  已上傳 {uploadedCount}／2 次
+                </div>
+                {lastUpdate && (
+                  <small>最後更新：{new Date(lastUpdate).toLocaleString('zh-TW')}</small>
+                )}
+              </div>
+            )}
+
+            {TESTS.map(t => {
+              const url = files[t.key]
+              const kind = t.key.replace(/_url$/, '')
+              const isImage = url && !url.toLowerCase().endsWith('.pdf')
+              const uploading = uploadingKind === kind
+              const inputId = `qt-${kind}`
+              const filename = url ? url.split('/').pop() || '已上傳檔案' : ''
+              return (
+                <div key={t.key} className={`test-card ${url ? 'uploaded' : ''}`}>
+                  <div className="test-card-head">
+                    <div>
+                      <div className="test-card-title">{t.label}</div>
+                      <div className="test-card-date">{t.deadline}</div>
+                    </div>
+                    <span className={`test-card-status ${url ? 'uploaded' : 'pending'}`}>
+                      {url ? '✓ 已上傳' : '待上傳'}
+                    </span>
+                  </div>
+
+                  {url && (
+                    <div className="uploaded-preview">
+                      <div className="thumb">
+                        {isImage ? <img src={url} alt={t.label} /> : '📄'}
+                      </div>
+                      <div className="info">
+                        <div className="filename">{filename}</div>
+                        <div className="upload-time">已上傳</div>
+                      </div>
+                      <div className="actions">
+                        {isImage && (
+                          <span className="view-link" onClick={() => setPreviewUrl(url)}>檢視</span>
+                        )}
+                        {!isImage && (
+                          <a href={url} target="_blank" rel="noreferrer" className="view-link">開啟</a>
+                        )}
+                        <span className="clear-link" onClick={() => setFiles(prev => ({ ...prev, [t.key]: '' }))}>清除</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <label htmlFor={inputId} className={`upload-box green ${url ? 'has-file' : ''}`}>
+                    <div className="upload-icon-big">{uploading ? '⏳' : '📤'}</div>
+                    <div className="upload-text">
+                      {uploading ? '上傳中⋯' : url ? '點此重新上傳' : '點此選擇快篩照片'}
+                    </div>
+                    <div className="upload-hint">支援 JPG / PNG / WEBP / PDF（5MB 以下）</div>
+                    <input id={inputId} type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      disabled={uploading}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(kind, f) }} />
+                  </label>
+                </div>
+              )
+            })}
+
+            <div className="onsite-notice">
+              <strong>8/20、8/22 課程期間快篩</strong>請於現場繳交，毋須線上上傳。
+            </div>
+
+            {done && (
+              <div className="submit-status" style={{ marginTop: 18 }}>
+                <div className="submit-status-icon">✓</div>
+                <div className="submit-status-text">
+                  <h4>快篩上傳已收到</h4>
+                  <p>系統已寄出確認信至您的 Email。未上傳的時段請於規定時間前回到此頁補上。</p>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="alert-card" style={{ marginTop: 16 }}>
+                <div className="alert-card-title">錯誤</div>
+                <p>{error}</p>
+              </div>
+            )}
+
+            <div className="form-actions">
+              <a href="/member/dashboard" className="btn btn-ghost">← 返回</a>
+              <button onClick={handleSubmit} disabled={submitting || !!uploadingKind}
+                className="btn btn-primary">
+                {submitting ? '送出中⋯' : '送出 ／ 更新快篩上傳'} <span className="arrow">→</span>
+              </button>
+            </div>
+            <p style={{ textAlign: 'center', marginTop: 12, fontSize: 12.5, color: 'var(--ink-mute)' }}>
+              送出後系統會寄確認信。可隨時回到此頁更新。
+            </p>
+          </div>
+
+          <aside>
+            <div className="sidebar-card">
+              <h4>快篩時程 <small>Schedule</small></h4>
+              <div className="info-row">
+                <span className="k">8/17 線上上傳</span>
+                <span className="v">{files.test_0817_url ? '✓ 已上傳' : '待上傳'}</span>
+              </div>
+              <div className="info-row">
+                <span className="k">8/19 線上上傳</span>
+                <span className="v">{files.test_0819_url ? '✓ 已上傳' : '待上傳'}</span>
+              </div>
+              <div className="info-row">
+                <span className="k">8/20 現場繳交</span>
+                <span className="v">於課程現場</span>
+              </div>
+              <div className="info-row">
+                <span className="k">8/22 現場繳交</span>
+                <span className="v">於課程現場</span>
+              </div>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>使用說明 <small>How to</small></h4>
+              <ol style={{ paddingLeft: 20, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
+                <li>請於檢測當下拍下含<strong>檢測日期、序號、姓名</strong>之照片。</li>
+                <li>於各時段卡片點擊上傳區，選取照片。</li>
+                <li>檔案上傳後可預覽、清除或重新上傳。</li>
+                <li>完成後請按下方<strong>送出</strong>，系統會寄出確認信。</li>
+              </ol>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>需要協助 <small>Help</small></h4>
+              <p>聯絡學會：<br />
+                <a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a>
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {previewUrl && (
+        <div className="preview-modal show" onClick={() => setPreviewUrl(null)}>
+          <button className="close" onClick={() => setPreviewUrl(null)}>✕</button>
+          <img src={previewUrl} alt="預覽" />
+        </div>
+      )}
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
 }
 
 export default function QuickTestsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">載入中...</div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    }>
       <QuickTestsContent />
     </Suspense>
   )

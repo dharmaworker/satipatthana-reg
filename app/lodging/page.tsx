@@ -1,10 +1,9 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 function LodgingContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
@@ -14,6 +13,7 @@ function LodgingContent() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     emergency_name: '',
@@ -22,14 +22,13 @@ function LodgingContent() {
     arrival_transport: '',
     departure_transport: '',
     bus_destination: '',
-    diet: 'vegetarian',            // 預設素食（禪修課程常見）
-    noon_fasting: 'after_noon',    // 預設可以 12 點後吃
-    snacks: 'drink_only',          // 預設只需咖啡/茶
+    diet: 'vegetarian',
+    noon_fasting: 'after_noon',
+    snacks: 'drink_only',
     dinner_0819: false,
     dinner_0824: false,
     snoring: false,
     agree_covid_rules: false,
-    // 檔案
     id_front_url: '',
     id_back_url: '',
     passport_url: '',
@@ -39,7 +38,6 @@ function LodgingContent() {
     departure_ticket_url: '',
     test_0817_url: '',
     test_0819_url: '',
-    // 航班
     flight_arrival_date: '',
     flight_arrival_time: '',
     flight_departure_date: '',
@@ -58,12 +56,8 @@ function LodgingContent() {
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 50)
   }
-  const ringCls = (f: string) => errorField === f ? 'ring-2 ring-red-400 ring-offset-2 rounded-lg' : ''
+  const errCls = (f: string) => errorField === f ? 'error' : ''
 
-  // 申請人類型 — 決定要上傳什麼證件、要不要填航班。本身不存 DB，由上傳的檔案隱含判斷。
-  // 'id' = 台灣人（身分證正反）
-  // 'passport' = 外籍短期旅客（護照 + 航班必填）
-  // 'arc' = 在台外籍居民（ARC / 居留證）
   const [identityType, setIdentityType] = useState<'id' | 'passport' | 'arc'>('id')
 
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
@@ -126,7 +120,6 @@ function LodgingContent() {
             flight_departure_date: data.lodging.flight_departure_date || '',
             flight_departure_time: data.lodging.flight_departure_time || '',
           })
-          // 依已上傳的檔案推測證件類型；皆無則依居住地預設
           if (data.lodging.arc_url) setIdentityType('arc')
           else if (data.lodging.id_front_url) setIdentityType('id')
           else if (data.lodging.passport_url) setIdentityType('passport')
@@ -144,7 +137,6 @@ function LodgingContent() {
       setError('食宿登記已於 6/20 晚上 8 點截止，請聯絡學會。')
       return
     }
-    // Client-side 必填驗證（依 UI 由上到下的順序，第一個沒填的就停在那兒）
     if (!form.emergency_name) return fail('emergency_name', '請填寫「緊急聯絡人姓名」')
     if (!form.emergency_relation) return fail('emergency_relation', '請填寫「緊急聯絡人關係」')
     if (!form.emergency_phone) return fail('emergency_phone', '請填寫「緊急聯絡人電話」')
@@ -156,7 +148,6 @@ function LodgingContent() {
     if (!form.snacks) return fail('snacks', '請選擇「茶點需求」')
     if (!form.photo_url) return fail('photo', '請上傳「個人相片」')
 
-    // 依申請人類型只送對應的證件 URL，其他清空
     const payload: any = { ...form, identity_type: identityType }
     if (identityType === 'id') {
       if (!form.id_front_url) return fail('id_front', '請上傳「身分證正面」')
@@ -177,7 +168,6 @@ function LodgingContent() {
       payload.id_front_url = ''
       payload.id_back_url = ''
       payload.passport_url = ''
-      // ARC 不需航班，清掉
       payload.flight_arrival_date = ''
       payload.flight_arrival_time = ''
       payload.flight_departure_date = ''
@@ -201,6 +191,7 @@ function LodgingContent() {
       if (!res.ok) throw new Error(data.error || '送出失敗')
       if (data.lodging) setExistingLodging(data.lodging)
       setDone(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -209,496 +200,623 @@ function LodgingContent() {
   }
 
   const isDomestic = reg?.residence === '台灣'
-  const DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0) // 6/20 20:00 Taipei = 12:00 UTC
+  const DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0)
   const pastDeadline = Date.now() > DEADLINE_MS
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">載入中...</div>
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    )
+  }
 
   if (error && !reg) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-6 max-w-md text-center">
-          <p className="text-red-700">{error}</p>
+      <main className="login-wrap">
+        <div className="login-card" style={{ textAlign: 'center' }}>
+          <div className="login-icon" style={{ background: 'linear-gradient(135deg,#cf8f6c,#8b4f32)' }}>!</div>
+          <h1 className="login-title">無法載入</h1>
+          <p className="login-subtitle">{error}</p>
+          <a href="/member" className="btn btn-primary btn-block">前往學員專區</a>
         </div>
-      </div>
+      </main>
     )
   }
 
   const hasEdited = !!(existingLodging && existingLodging.updated_at !== existingLodging.created_at)
-  const locked = hasEdited // 鎖定唯讀：已修改過一次
+  const locked = hasEdited
 
-  if (done) {
+  const initial = reg?.chinese_name?.charAt(0) || '?'
+
+  const radio = (group: string, value: string, label: React.ReactNode, sub?: string) => {
+    const checked = (form as any)[group] === value
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-8 max-w-md text-center">
-          <p className="text-5xl mb-4">🙏</p>
-          <h2 className="text-xl font-bold text-green-800 mb-2">食宿登記已送出</h2>
-          <p className="text-gray-600 mb-4">
-            系統已寄出確認信至您的 Email，請注意查收。<br />
-            {hasEdited
-              ? <strong className="text-red-600">本表單已修改過一次，無法再修改。若需更動請聯絡學會。</strong>
-              : <span>如需修改，<strong className="text-red-600">僅能再修改一次</strong>（6/20 晚上 8 點前），修改後即無法再動。</span>}
-          </p>
-        </div>
-      </div>
+      <label key={value} className={`opt ${checked ? 'selected' : ''}`}>
+        <input type="radio" name={group} value={value} checked={checked}
+          onChange={() => update(group, value)} />
+        <span className="opt-text">
+          {label}
+          {sub && <small>{sub}</small>}
+        </span>
+      </label>
     )
   }
 
-  const inputCls = 'w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black bg-white'
-  const labelCls = 'block text-sm font-medium text-black mb-1'
-  const sectionCls = 'bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4'
-  const radio = (group: string, value: string, label: string) => (
-    <label key={value} className="flex items-center gap-2 cursor-pointer text-black">
-      <input type="radio" name={group} value={value}
-        checked={(form as any)[group] === value}
-        onChange={() => update(group, value)} />
-      {label}
-    </label>
-  )
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-green-800 text-white py-6 px-4 text-center">
-        <h1 className="text-xl font-bold">第二屆台灣四念處禪修－食宿登記表</h1>
-        <p className="text-sm text-green-200 mt-1">{reg.chinese_name} 法友 ／ 序號 {reg.member_id || '待編號'}</p>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
-          <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，若取消報名，所付費用恕不退款、轉讓。</p>
-          <p className="mt-2">提交時間：請於 <strong>6 月 20 日晚上 8 點（台北時間）前</strong>完成，逾期系統將拒絕提交。</p>
-          <p className="mt-2 text-red-700"><strong>⚠️ 本表單送出後僅能再修改一次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
-        </div>
-
-        {existingLodging && !hasEdited && (
-          <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-yellow-900">
-            <p className="font-semibold">✅ 您已送出食宿登記（尚有 1 次修改機會）</p>
-            <p className="mt-1">送出時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
-            <p className="mt-1">如需修改，請在此頁面調整後再次送出。<strong>修改僅能進行一次，送出後即無法再改。</strong></p>
-          </div>
-        )}
-
-        {locked && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <p className="font-semibold">✅ 您已完成食宿登記（已修改過 1 次，無法再改）</p>
-            <p className="mt-1">最後修改時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}</p>
-            <p className="mt-1">以下為您送出的內容（唯讀）。如有錯誤請聯絡學會。</p>
-          </div>
-        )}
-
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900 space-y-1">
-          <p className="font-semibold">渡假村入住說明</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>渡假村辦理入住時間：每日下午 3 點後辦理入住。</li>
-            <li><span className="text-red-600 font-semibold">辦理入住時請攜帶身分證＋健保卡（國內）或護照正本（國外）。</span></li>
-            <li>房間一律 4 人一房，採單獨床位配置，附 2 套衛浴。</li>
-            <li>每間房間皆有對外窗戶，舒適寬敞，可曬衣。</li>
-            <li>請<strong>自備盥洗用具、衣架與<span className="text-red-600">雨具</span></strong>，會館不提供一次性盥洗用品。</li>
-          </ul>
-        </div>
-
-        {/* 學員資料（由報名表帶入，唯讀） */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">學員資料</h2>
-          <p className="text-xs text-gray-500">以下資料由報名表自動帶入，如需修改請聯絡學會</p>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-xs text-gray-500">中文姓名</div>
-              <div className="text-black font-medium">{reg.chinese_name || '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">護照英文姓名</div>
-              <div className="text-black font-medium break-all">{reg.passport_name || '—'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">序號</div>
-              <div className="text-black font-medium">{reg.member_id || '待編號'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">性別</div>
-              <div className="text-black font-medium">{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</div>
-            </div>
-            {reg.dharma_name && (
-              <div>
-                <div className="text-xs text-gray-500">法名</div>
-                <div className="text-black font-medium">{reg.dharma_name}</div>
-              </div>
-            )}
-            <div>
-              <div className="text-xs text-gray-500">手機號碼</div>
-              <div className="text-black font-medium">{reg.phone || '—'}</div>
-            </div>
-            <div className={reg.dharma_name ? '' : 'col-span-2'}>
-              <div className="text-xs text-gray-500">Email</div>
-              <div className="text-black font-medium break-all">{reg.email || '—'}</div>
-            </div>
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/member/dashboard" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+            <span className="brand-sublabel">
+              <small>Member Portal</small>
+              <span>學員專區</span>
+            </span>
+          </a>
+          <div className="nav-actions">
+            <a href="/member/dashboard" className="nav-back">← 學員首頁</a>
           </div>
         </div>
+      </header>
 
-
-        <fieldset disabled={locked} style={{ display: 'contents' }}>
-        {/* 緊急聯絡人 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">二、緊急聯絡人</h2>
-          <div id="field-emergency_name" className={ringCls('emergency_name')}>
-            <label className={labelCls}>姓名 *</label>
-            <input className={inputCls} value={form.emergency_name}
-              onChange={e => update('emergency_name', e.target.value)} />
-          </div>
-          <div id="field-emergency_relation" className={ringCls('emergency_relation')}>
-            <label className={labelCls}>關係 *</label>
-            <input className={inputCls} placeholder="例：配偶、父母、朋友"
-              value={form.emergency_relation}
-              onChange={e => update('emergency_relation', e.target.value)} />
-          </div>
-          <div id="field-emergency_phone" className={ringCls('emergency_phone')}>
-            <label className={labelCls}>聯絡電話 *</label>
-            <input className={inputCls} placeholder="請加國碼，例：台灣 886+" value={form.emergency_phone}
-              onChange={e => update('emergency_phone', e.target.value)} />
-          </div>
-        </div>
-
-        {/* 課程前往方式 */}
-        <div id="field-arrival_transport" className={`${sectionCls} ${ringCls('arrival_transport')}`}>
-          <h2 className="text-lg font-semibold text-green-800">三、前往日月潭方式 *</h2>
-          <div className="space-y-2">
-            {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
-            {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合（法工人員穿著學會背心）')}
-            {form.arrival_transport === 'taipei_bus' && (
-              <LocationMap label="台北車站位置示意圖（集合點：東三門全家與郵局樓梯口）"
-                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taipei-station.jpg" />
-            )}
-            {radio('arrival_transport', 'wuri_bus', '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口 7-8 號月台（法工人員穿著學會背心）')}
-            {form.arrival_transport === 'wuri_bus' && (
-              <LocationMap label="台中高鐵站一樓 6 號出口示意圖"
-                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/wuri-hsr.jpg" />
-            )}
-            {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 2:30 桃園機場第一航廈接機大廳右邊集合（法工人員穿著學會背心）')}
-            {form.arrival_transport === 'airport_bus_0819' && (
-              <LocationMap label="桃園機場第一航廈一樓集合點示意圖"
-                src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taoyuan-airport-t1.jpg" />
-            )}
-            {radio('arrival_transport', 'self_0820', '8/20 上午 7 點前自行抵達日月潭湖畔會館')}
-          </div>
-          {!isDomestic && (form.arrival_transport === 'self' || form.arrival_transport === 'self_0820') && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800">
-              <p className="font-semibold">國外學員自行前往可聯絡：</p>
-              <ul className="list-disc pl-5 mt-1 space-y-0.5">
-                <li>桃園機場計程車預約電話：03-3834499</li>
-                <li>台灣大車隊計程車手機直撥：55688</li>
-                <li>大都會計程車手機直撥：55178</li>
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* 離開方式 */}
-        <div id="field-departure_transport" className={`${sectionCls} ${ringCls('departure_transport')}`}>
-          <h2 className="text-lg font-semibold text-green-800">四、離開渡假村方式 *</h2>
-          <div className="space-y-2">
-            {radio('departure_transport', 'self', '自行離開')}
-            {radio('departure_transport', 'bus', '乘坐主辦單位安排專車')}
-          </div>
-          {form.departure_transport === 'bus' && (
-            <div id="field-bus_destination" className={`pl-6 ${ringCls('bus_destination')}`}>
-              <label className={labelCls}>專車目的地 *</label>
-              <div className="space-y-2">
-                {radio('bus_destination', 'taipei_824_pm', '8/24 下午 6:00–6:30 專車到台北車站')}
-                {radio('bus_destination', 'taipei_825_am', '8/25 上午 9:00 專車到台北車站')}
-                {radio('bus_destination', 'wuri_825_am', '8/25 上午 9:00 專車到烏日高鐵')}
-                {radio('bus_destination', 'taoyuan_824_pm', '8/24 下午 6:00–6:30 專車到桃園機場第一航廈（車程約 3 小時）')}
-                {radio('bus_destination', 'taoyuan_825_am', '8/25 上午 9:00 專車到桃園機場第一航廈（車程約 3 小時）')}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 飲食 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">五、飲食</h2>
-          <div id="field-diet" className={ringCls('diet')}>
-            <label className={labelCls}>飲食選擇 *</label>
-            <div className="space-y-2">
-              {radio('diet', 'meat', '葷食')}
-              {radio('diet', 'vegetarian', '素食')}
-            </div>
-          </div>
-          <div id="field-noon_fasting" className={ringCls('noon_fasting')}>
-            <label className={labelCls}>課程期間是否過午不食 *</label>
-            <div className="space-y-2">
-              {radio('noon_fasting', 'before_noon', '需要 12 點前吃')}
-              {radio('noon_fasting', 'after_noon', '可以 12 點後吃')}
-            </div>
-          </div>
-          <div id="field-snacks" className={ringCls('snacks')}>
-            <label className={labelCls}>是否吃茶點 *</label>
-            <div className="space-y-2">
-              {radio('snacks', 'snacks_and_drink', '需要茶點、咖啡 OR 茶')}
-              {radio('snacks', 'drink_only', '只需要咖啡 OR 茶')}
-            </div>
-          </div>
-          <label className="flex items-center gap-2 text-black cursor-pointer">
-            <input type="checkbox" checked={form.dinner_0819}
-              onChange={e => update('dinner_0819', e.target.checked)} />
-            8/19 需要在渡假村用晚餐
-          </label>
-          <label className="flex items-center gap-2 text-black cursor-pointer">
-            <input type="checkbox" checked={form.dinner_0824}
-              onChange={e => update('dinner_0824', e.target.checked)} />
-            8/24 晚上 5–6 點需要在渡假村用晚餐
-          </label>
-        </div>
-
-        {/* 證件上傳 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">六、證件上傳</h2>
-          <p className="text-xs text-gray-500">可上傳 JPG / PNG / WEBP / PDF（5MB 以下）</p>
-          <div id="field-photo" className={ringCls('photo')}>
-            {fileField('photo', '個人相片（最近 3 個月內，勿使用美顏）*', form.photo_url, uploadingKind, handleFileUpload)}
-          </div>
-
-          <div>
-            <label className={labelCls}>申請人身份（三選一）*</label>
-            <div className="space-y-2">
-              <label className="flex items-start gap-2 cursor-pointer text-black">
-                <input type="radio" name="identity_type" value="id" className="mt-1"
-                  checked={identityType === 'id'}
-                  onChange={() => setIdentityType('id')} />
-                <span><strong>台灣人</strong>（上傳身分證正反面）</span>
-              </label>
-              <label className="flex items-start gap-2 cursor-pointer text-black">
-                <input type="radio" name="identity_type" value="passport" className="mt-1"
-                  checked={identityType === 'passport'}
-                  onChange={() => setIdentityType('passport')} />
-                <span><strong>外籍短期旅客</strong>（觀光／免簽／短期簽證入境，上傳護照 + 填寫航班資訊）</span>
-              </label>
-              <label className="flex items-start gap-2 cursor-pointer text-black">
-                <input type="radio" name="identity_type" value="arc" className="mt-1"
-                  checked={identityType === 'arc'}
-                  onChange={() => setIdentityType('arc')} />
-                <span><strong>在台外籍居民</strong>（上傳 ARC／居留證）</span>
-              </label>
-            </div>
-          </div>
-          {identityType === 'id' && (
-            <>
-              <div id="field-id_front" className={ringCls('id_front')}>
-                {fileField('id_front', '身分證正面 *', form.id_front_url, uploadingKind, handleFileUpload)}
-              </div>
-              <div id="field-id_back" className={ringCls('id_back')}>
-                {fileField('id_back', '身分證反面 *', form.id_back_url, uploadingKind, handleFileUpload)}
-              </div>
-            </>
-          )}
-          {identityType === 'passport' && (
-            <div id="field-passport" className={ringCls('passport')}>
-              {fileField('passport', '護照 *', form.passport_url, uploadingKind, handleFileUpload)}
-            </div>
-          )}
-          {identityType === 'arc' && (
-            <div id="field-arc" className={ringCls('arc')}>
-              {fileField('arc', 'ARC／居留證 *', form.arc_url, uploadingKind, handleFileUpload)}
-            </div>
-          )}
-        </div>
-
-        {/* 國外學員航班 */}
-        {identityType === 'passport' && (
-          <div className={sectionCls}>
-            <h2 className="text-lg font-semibold text-green-800">七、航班資訊（外籍短期旅客必填）</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div id="field-flight_arrival_date" className={ringCls('flight_arrival_date')}>
-                <label className={labelCls}>抵台航班日期（入境日）*</label>
-                <input type="date" className={inputCls} value={form.flight_arrival_date}
-                  onChange={e => update('flight_arrival_date', e.target.value)} />
-              </div>
-              <div id="field-flight_arrival_time" className={ringCls('flight_arrival_time')}>
-                <label className={labelCls}>抵台航班具體時間 *</label>
-                <input type="text" className={inputCls} placeholder="例：14:30" value={form.flight_arrival_time}
-                  onChange={e => update('flight_arrival_time', e.target.value)} />
-              </div>
-              <div id="field-flight_departure_date" className={ringCls('flight_departure_date')}>
-                <label className={labelCls}>離台航班日期（離境日）*</label>
-                <input type="date" className={inputCls} value={form.flight_departure_date}
-                  onChange={e => update('flight_departure_date', e.target.value)} />
-              </div>
-              <div id="field-flight_departure_time" className={ringCls('flight_departure_time')}>
-                <label className={labelCls}>離台航班具體時間 *</label>
-                <input type="text" className={inputCls} placeholder="例：16:45" value={form.flight_departure_time}
-                  onChange={e => update('flight_departure_time', e.target.value)} />
-              </div>
-            </div>
-            {fileField('arrival_ticket', '上傳來台機票（非必填）', form.arrival_ticket_url, uploadingKind, handleFileUpload)}
-            {fileField('departure_ticket', '上傳離台機票（非必填）', form.departure_ticket_url, uploadingKind, handleFileUpload)}
-          </div>
-        )}
-
-        {/* 快篩另頁上傳，這裡僅提示 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
-          <p className="font-semibold">關於快篩檢測上傳</p>
-          <p className="mt-1">快篩檢測時程在課程開始前後（8/17、8/19、8/20、8/22），時間較晚，請完成本食宿登記後另行於專屬頁面上傳。完成此食宿登記送出後，系統會在確認信中附上快篩上傳頁連結。</p>
-        </div>
-
-        {/* 防疫與課程規範 */}
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-900 space-y-2">
-          <p className="font-semibold text-red-800">防疫與課程規範（請務必閱讀）</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>若在課程前幾天<strong>感冒確診</strong>並仍具傳染力，<strong>必須取消課程</strong>。</li>
-            <li>若在課程會場（課程開始前或課程中）<strong>被檢驗出陽性</strong>，同寢室 4 人需在房間隔離，並透過 ZOOM 線上上課及互動，不能與其他學員一起上課及用餐。</li>
-            <li>若出現發燒、咳嗽、呼吸急促、胸悶、頭痛、喉嚨痛等症狀，需接受主辦單位個別檢測；即使陰性亦會移至後段座位，與其他學員隔開。</li>
-            <li><strong>快篩檢測時間</strong>（檢測結果必須載明檢測日期、序號、姓名，快篩試劑請自備，主辦單位不提供）：
-              <ul className="list-disc pl-5 mt-1 space-y-0.5 text-xs">
-                <li>開課前：8/17 上午 8:00–晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
-                <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>
-              </ul>
-            </li>
-            <li>課程期間全程配戴口罩。</li>
-            <li>課程期間一律停用手機等通訊設備。</li>
-            <li>用餐時必須禁語。</li>
-            <li>請務必全程佩戴學員證。</li>
-            <li>為示尊重，未得老師允許，上課中請勿拍照、攝影或錄音。</li>
-            <li>本次課程所有座位皆是座椅，請勿佔座位，離開時請記得將個人物品帶走。</li>
-            <li>請勿攜帶貴重物品至會場，個人隨身物品請自行妥善保管。</li>
-            <li>請穿著整齊、舒適且適宜聞法的衣著。</li>
-            <li>課程會場長時開著冷氣，畏寒者可攜帶禦寒衣物（如圍巾、披肩、襪子等）。</li>
-          </ul>
-        </div>
-
-        {/* 其他 */}
-        <div className={sectionCls}>
-          <h2 className="text-lg font-semibold text-green-800">九、其他</h2>
-          <label className="flex items-center gap-2 text-black cursor-pointer">
-            <input type="checkbox" checked={form.snoring}
-              onChange={e => update('snoring', e.target.checked)} />
-            睡覺會打鼾
-          </label>
-          <label id="field-agree_covid_rules"
-            className={`flex items-start gap-2 text-black cursor-pointer p-2 ${ringCls('agree_covid_rules')}`}>
-            <input type="checkbox" className="mt-1" checked={form.agree_covid_rules}
-              onChange={e => update('agree_covid_rules', e.target.checked)} />
-            <span>我已閱讀並<strong>願意遵守以上防疫與課程規範</strong> *</span>
-          </label>
-        </div>
-        </fieldset>
-
-        {error && (
-          <div className="sticky bottom-4 z-10 bg-red-50 border-2 border-red-400 rounded-lg p-4 text-red-700 shadow-lg flex items-start gap-2">
-            <span className="text-xl">⚠️</span>
-            <div className="flex-1"><strong>{error}</strong></div>
-            <button onClick={() => { setError(''); setErrorField(null) }}
-              className="text-red-700 hover:text-red-900 font-bold">✕</button>
-          </div>
-        )}
-
-        {pastDeadline && (
-          <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-red-700 text-sm text-center">
-            食宿登記已於 6/20 晚上 8 點（台北時間）截止，無法再提交。如有特殊狀況請聯絡學會。
-          </div>
-        )}
-        <button onClick={handleSubmit} disabled={submitting || pastDeadline || locked}
-          className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl">
-          {submitting
-            ? '送出中...'
-            : pastDeadline
-            ? '已截止'
-            : locked
-            ? '已修改過 1 次，無法再改'
-            : existingLodging
-            ? '送出修改（最後 1 次機會）'
-            : '提交食宿登記'}
-        </button>
-
-        {!locked && (
-          <p className="text-center text-sm text-gray-500">
-            {existingLodging
-              ? '本次為最後 1 次修改機會，送出後即鎖定。'
-              : '送出後可於 6/20 晚上 8 點前再修改 1 次，系統會寄出確認信。'}
+      <div className="page-header">
+        <div className="container">
+          <p className="page-kicker">Food &amp; Lodging Registration</p>
+          <h1 className="page-title">食宿登記表</h1>
+          <p className="page-subtitle">
+            請於 6 月 20 日台北時間晚上 8 點前完成。<br />
+            送出後僅能再修改一次（共 2 次送出機會）。
           </p>
-        )}
+        </div>
       </div>
-    </div>
+
+      <main className="container">
+        <div className="layout">
+          <div>
+            <div className="member-card">
+              <div className="avatar">{initial}</div>
+              <div className="info">
+                <div className="name">{reg.chinese_name} 法友</div>
+                <div className="meta">
+                  <span><strong>序號</strong>{reg.member_id || '待編號'}</span>
+                  {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
+                  <span><strong>性別</strong>{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</span>
+                </div>
+              </div>
+            </div>
+
+            {done && (
+              <div className="submit-status">
+                <div className="submit-status-icon">✓</div>
+                <div className="submit-status-text">
+                  <h4>食宿登記已送出</h4>
+                  <p>
+                    系統已寄出確認信至您的 Email。
+                    {hasEdited
+                      ? <> 本表單已修改過一次，無法再修改。若需更動請聯絡學會。</>
+                      : <> 如需修改僅能再修改一次（6/20 晚上 8 點前），修改後即無法再動。</>}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {existingLodging && !hasEdited && !done && (
+              <div className="submit-status">
+                <div className="submit-status-icon">✓</div>
+                <div className="submit-status-text">
+                  <h4>已送出（尚有 1 次修改機會）</h4>
+                  <p>送出時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}　修改僅能進行一次。</p>
+                </div>
+              </div>
+            )}
+
+            {locked && (
+              <div className="submit-status">
+                <div className="submit-status-icon">✓</div>
+                <div className="submit-status-text">
+                  <h4>已完成（已修改過 1 次，無法再改）</h4>
+                  <p>最後修改時間：{new Date(existingLodging.updated_at).toLocaleString('zh-TW')}　以下為唯讀內容，如有錯誤請聯絡學會。</p>
+                </div>
+              </div>
+            )}
+
+            <div className="alert-card">
+              <div className="alert-card-title">重要提醒</div>
+              <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，<strong>若取消報名，所付費用恕不退款、轉讓</strong>。</p>
+              <p>本表單送出後僅能再修改一次（共 2 次送出機會），請務必確認後再送出。</p>
+            </div>
+
+            <div className="info-card">
+              <h4><span className="icon">🏨</span>渡假村入住說明</h4>
+              <ul>
+                <li>渡假村辦理入住時間：每日下午 3 點後辦理入住。</li>
+                <li>辦理入住時請攜帶<strong>身分證 + 健保卡（國內）或護照正本（國外）</strong>。</li>
+                <li>房間一律 4 人一房，採單獨床位配置，附 2 套衛浴。</li>
+                <li>每間房間皆有對外窗戶，舒適寬敞，可曬衣。</li>
+                <li>請<strong>自備盥洗用具、衣架與雨具</strong>，會館不提供一次性盥洗用品。</li>
+              </ul>
+            </div>
+
+            <fieldset disabled={locked} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <div className="form-card">
+                {/* 一、緊急聯絡人 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">01</span>緊急聯絡人</div>
+                  <div className="field-row three">
+                    <div id="field-emergency_name">
+                      <label className="form-label">姓名 <span className="required">*</span></label>
+                      <input className={`form-input ${errCls('emergency_name')}`} value={form.emergency_name}
+                        onChange={e => update('emergency_name', e.target.value)} />
+                    </div>
+                    <div id="field-emergency_relation">
+                      <label className="form-label">關係 <span className="required">*</span></label>
+                      <input className={`form-input ${errCls('emergency_relation')}`} placeholder="例：配偶、父母、朋友"
+                        value={form.emergency_relation}
+                        onChange={e => update('emergency_relation', e.target.value)} />
+                    </div>
+                    <div id="field-emergency_phone">
+                      <label className="form-label">聯絡電話 <span className="required">*</span></label>
+                      <input className={`form-input ${errCls('emergency_phone')}`} placeholder="請加國碼，例：886+"
+                        value={form.emergency_phone}
+                        onChange={e => update('emergency_phone', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 二、前往日月潭 */}
+                <div className="field-group" id="field-arrival_transport">
+                  <div className="field-group-title"><span className="num">02</span>前往日月潭方式 <span className="required">*</span></div>
+                  <div className="opt-group">
+                    {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
+                    {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合', '法工人員穿著學會背心')}
+                    {form.arrival_transport === 'taipei_bus' && (
+                      <div className="branch active">
+                        <LocationMap label="台北車站位置示意圖（集合點：東三門全家與郵局樓梯口）"
+                          src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taipei-station.jpg"
+                          onPreview={setPreviewUrl} />
+                      </div>
+                    )}
+                    {radio('arrival_transport', 'wuri_bus', '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口 7-8 號月台', '法工人員穿著學會背心')}
+                    {form.arrival_transport === 'wuri_bus' && (
+                      <div className="branch active">
+                        <LocationMap label="台中高鐵站一樓 6 號出口示意圖"
+                          src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/wuri-hsr.jpg"
+                          onPreview={setPreviewUrl} />
+                      </div>
+                    )}
+                    {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 2:30 桃園機場第一航廈接機大廳右邊集合', '法工人員穿著學會背心')}
+                    {form.arrival_transport === 'airport_bus_0819' && (
+                      <div className="branch active">
+                        <LocationMap label="桃園機場第一航廈一樓集合點示意圖"
+                          src="https://stjghujtfuhbbskgbjau.supabase.co/storage/v1/object/public/location-maps/taoyuan-airport-t1.jpg"
+                          onPreview={setPreviewUrl} />
+                      </div>
+                    )}
+                    {radio('arrival_transport', 'self_0820', '8/20 上午 7 點前自行抵達日月潭湖畔會館')}
+                  </div>
+                  {!isDomestic && (form.arrival_transport === 'self' || form.arrival_transport === 'self_0820') && (
+                    <div className="alert-card" style={{ marginTop: 12 }}>
+                      <div className="alert-card-title">國外學員自行前往可聯絡</div>
+                      <ul>
+                        <li>桃園機場計程車預約電話：03-3834499</li>
+                        <li>台灣大車隊計程車手機直撥：55688</li>
+                        <li>大都會計程車手機直撥：55178</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* 三、離開方式 */}
+                <div className="field-group" id="field-departure_transport">
+                  <div className="field-group-title"><span className="num">03</span>離開渡假村方式 <span className="required">*</span></div>
+                  <div className="opt-group">
+                    {radio('departure_transport', 'self', '自行離開')}
+                    {radio('departure_transport', 'bus', '乘坐主辦單位安排專車')}
+                  </div>
+                  {form.departure_transport === 'bus' && (
+                    <div className="branch active" id="field-bus_destination">
+                      <label className="form-label">專車目的地 <span className="required">*</span></label>
+                      <div className="opt-group">
+                        {radio('bus_destination', 'taipei_824_pm', '8/24 下午 6:00–6:30 專車到台北車站')}
+                        {radio('bus_destination', 'taipei_825_am', '8/25 上午 9:00 專車到台北車站')}
+                        {radio('bus_destination', 'wuri_825_am', '8/25 上午 9:00 專車到烏日高鐵')}
+                        {radio('bus_destination', 'taoyuan_824_pm', '8/24 下午 6:00–6:30 專車到桃園機場第一航廈', '車程約 3 小時')}
+                        {radio('bus_destination', 'taoyuan_825_am', '8/25 上午 9:00 專車到桃園機場第一航廈', '車程約 3 小時')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 四、飲食 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">04</span>飲食</div>
+
+                  <div id="field-diet" style={{ marginBottom: 16 }}>
+                    <label className="form-label">飲食選擇 <span className="required">*</span></label>
+                    <div className="opt-group inline">
+                      {radio('diet', 'meat', '葷食')}
+                      {radio('diet', 'vegetarian', '素食')}
+                    </div>
+                  </div>
+
+                  <div id="field-noon_fasting" style={{ marginBottom: 16 }}>
+                    <label className="form-label">課程期間是否過午不食 <span className="required">*</span></label>
+                    <div className="opt-group inline">
+                      {radio('noon_fasting', 'before_noon', '需要 12 點前吃')}
+                      {radio('noon_fasting', 'after_noon', '可以 12 點後吃')}
+                    </div>
+                  </div>
+
+                  <div id="field-snacks" style={{ marginBottom: 16 }}>
+                    <label className="form-label">是否吃茶點 <span className="required">*</span></label>
+                    <div className="opt-group inline">
+                      {radio('snacks', 'snacks_and_drink', '需要茶點、咖啡 OR 茶')}
+                      {radio('snacks', 'drink_only', '只需要咖啡 OR 茶')}
+                    </div>
+                  </div>
+
+                  <div className="opt-group">
+                    <label className={`opt ${form.dinner_0819 ? 'selected' : ''}`}>
+                      <input type="checkbox" checked={form.dinner_0819}
+                        onChange={e => update('dinner_0819', e.target.checked)} />
+                      <span className="opt-text">8/19 需要在渡假村用晚餐</span>
+                    </label>
+                    <label className={`opt ${form.dinner_0824 ? 'selected' : ''}`}>
+                      <input type="checkbox" checked={form.dinner_0824}
+                        onChange={e => update('dinner_0824', e.target.checked)} />
+                      <span className="opt-text">8/24 晚上 5–6 點需要在渡假村用晚餐</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 五、證件上傳 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">05</span>證件上傳</div>
+                  <p className="form-hint" style={{ marginBottom: 14 }}>支援 JPG / PNG / WEBP / PDF（5MB 以下）</p>
+
+                  <div id="field-photo" style={{ marginBottom: 16 }}>
+                    <FileField kind="photo" label="個人相片（最近 3 個月內，勿使用美顏）" required
+                      currentUrl={form.photo_url} uploadingKind={uploadingKind}
+                      onUpload={handleFileUpload} onPreview={setPreviewUrl}
+                      error={errorField === 'photo'} />
+                  </div>
+
+                  <label className="form-label">申請人身份（三選一）<span className="required">*</span></label>
+                  <div className="opt-group">
+                    <label className={`opt ${identityType === 'id' ? 'selected' : ''}`}>
+                      <input type="radio" name="identity_type" value="id"
+                        checked={identityType === 'id'}
+                        onChange={() => setIdentityType('id')} />
+                      <span className="opt-text">
+                        <strong>台灣人</strong>（上傳身分證正反面）
+                      </span>
+                    </label>
+                    <label className={`opt ${identityType === 'passport' ? 'selected' : ''}`}>
+                      <input type="radio" name="identity_type" value="passport"
+                        checked={identityType === 'passport'}
+                        onChange={() => setIdentityType('passport')} />
+                      <span className="opt-text">
+                        <strong>外籍短期旅客</strong>
+                        <small>觀光／免簽／短期簽證入境，上傳護照 + 填寫航班資訊</small>
+                      </span>
+                    </label>
+                    <label className={`opt ${identityType === 'arc' ? 'selected' : ''}`}>
+                      <input type="radio" name="identity_type" value="arc"
+                        checked={identityType === 'arc'}
+                        onChange={() => setIdentityType('arc')} />
+                      <span className="opt-text">
+                        <strong>在台外籍居民</strong>（上傳 ARC／居留證）
+                      </span>
+                    </label>
+                  </div>
+
+                  {identityType === 'id' && (
+                    <div className="branch active">
+                      <div className="field-row">
+                        <div id="field-id_front">
+                          <FileField kind="id_front" label="身分證正面" required
+                            currentUrl={form.id_front_url} uploadingKind={uploadingKind}
+                            onUpload={handleFileUpload} onPreview={setPreviewUrl}
+                            error={errorField === 'id_front'} />
+                        </div>
+                        <div id="field-id_back">
+                          <FileField kind="id_back" label="身分證反面" required
+                            currentUrl={form.id_back_url} uploadingKind={uploadingKind}
+                            onUpload={handleFileUpload} onPreview={setPreviewUrl}
+                            error={errorField === 'id_back'} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {identityType === 'passport' && (
+                    <div className="branch active">
+                      <div id="field-passport">
+                        <FileField kind="passport" label="護照" required
+                          currentUrl={form.passport_url} uploadingKind={uploadingKind}
+                          onUpload={handleFileUpload} onPreview={setPreviewUrl}
+                          error={errorField === 'passport'} />
+                      </div>
+                    </div>
+                  )}
+                  {identityType === 'arc' && (
+                    <div className="branch active">
+                      <div id="field-arc">
+                        <FileField kind="arc" label="ARC／居留證" required
+                          currentUrl={form.arc_url} uploadingKind={uploadingKind}
+                          onUpload={handleFileUpload} onPreview={setPreviewUrl}
+                          error={errorField === 'arc'} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 六、航班資訊（外籍短期旅客） */}
+                {identityType === 'passport' && (
+                  <div className="field-group">
+                    <div className="field-group-title"><span className="num">06</span>航班資訊（外籍短期旅客必填）</div>
+                    <div className="field-row">
+                      <div id="field-flight_arrival_date">
+                        <label className="form-label">抵台航班日期（入境日）<span className="required">*</span></label>
+                        <input type="date" className={`form-input ${errCls('flight_arrival_date')}`} value={form.flight_arrival_date}
+                          onChange={e => update('flight_arrival_date', e.target.value)} />
+                      </div>
+                      <div id="field-flight_arrival_time">
+                        <label className="form-label">抵台航班具體時間 <span className="required">*</span></label>
+                        <input type="text" className={`form-input ${errCls('flight_arrival_time')}`} placeholder="例：14:30" value={form.flight_arrival_time}
+                          onChange={e => update('flight_arrival_time', e.target.value)} />
+                      </div>
+                      <div id="field-flight_departure_date">
+                        <label className="form-label">離台航班日期（離境日）<span className="required">*</span></label>
+                        <input type="date" className={`form-input ${errCls('flight_departure_date')}`} value={form.flight_departure_date}
+                          onChange={e => update('flight_departure_date', e.target.value)} />
+                      </div>
+                      <div id="field-flight_departure_time">
+                        <label className="form-label">離台航班具體時間 <span className="required">*</span></label>
+                        <input type="text" className={`form-input ${errCls('flight_departure_time')}`} placeholder="例：16:45" value={form.flight_departure_time}
+                          onChange={e => update('flight_departure_time', e.target.value)} />
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 14, display: 'grid', gap: 12 }}>
+                      <FileField kind="arrival_ticket" label="上傳來台機票（非必填）"
+                        currentUrl={form.arrival_ticket_url} uploadingKind={uploadingKind}
+                        onUpload={handleFileUpload} onPreview={setPreviewUrl} />
+                      <FileField kind="departure_ticket" label="上傳離台機票（非必填）"
+                        currentUrl={form.departure_ticket_url} uploadingKind={uploadingKind}
+                        onUpload={handleFileUpload} onPreview={setPreviewUrl} />
+                    </div>
+                  </div>
+                )}
+
+                {/* 快篩另頁提示 */}
+                <div className="alert-card" style={{ marginBottom: 28 }}>
+                  <div className="alert-card-title">關於快篩檢測上傳</div>
+                  <p>快篩檢測時程在課程開始前後（8/17、8/19、8/20、8/22）。請完成本食宿登記後，另行於專屬頁面上傳。確認信中會附上快篩上傳頁連結。</p>
+                </div>
+
+                {/* 防疫與課程規範 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">07</span>防疫與課程規範</div>
+                  <div className="rules-block">
+                    <h5>傳染病相關</h5>
+                    <ul>
+                      <li>若在課程前幾天<strong>感冒確診</strong>並仍具傳染力，<strong>必須取消課程</strong>。</li>
+                      <li>若在課程會場<strong>被檢驗出陽性</strong>，同寢室 4 人需在房間隔離，並透過 ZOOM 線上上課及互動。</li>
+                      <li>若出現發燒、咳嗽、呼吸急促、胸悶、頭痛、喉嚨痛等症狀，需接受個別檢測；即使陰性亦會移至後段座位。</li>
+                    </ul>
+                    <h5>快篩檢測時間</h5>
+                    <ul>
+                      <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>，快篩試劑請自備。</li>
+                      <li>開課前：8/17 上午 8:00 ～ 晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
+                      <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>
+                    </ul>
+                    <h5>課程期間規範</h5>
+                    <ul>
+                      <li>課程期間全程配戴口罩。</li>
+                      <li>課程期間一律停用手機等通訊設備。</li>
+                      <li>用餐時必須禁語。</li>
+                      <li>請務必全程佩戴學員證。</li>
+                      <li>為示尊重，未得老師允許，上課中請勿拍照、攝影或錄音。</li>
+                      <li>本次課程所有座位皆是座椅，請勿佔座位，離開時請記得將個人物品帶走。</li>
+                      <li>請勿攜帶貴重物品至會場，個人隨身物品請自行妥善保管。</li>
+                      <li>請穿著整齊、舒適且適宜聞法的衣著。</li>
+                      <li>會場長時開著冷氣，畏寒者可攜帶禦寒衣物（如圍巾、披肩、襪子等）。</li>
+                    </ul>
+                  </div>
+
+                  <label id="field-agree_covid_rules" className={`consent-check ${form.agree_covid_rules ? 'selected' : ''}`}>
+                    <input type="checkbox" checked={form.agree_covid_rules}
+                      onChange={e => update('agree_covid_rules', e.target.checked)} />
+                    <span className="consent-check-txt">
+                      我已閱讀並<strong>願意遵守以上防疫與課程規範</strong> <span className="required">*</span>
+                    </span>
+                  </label>
+                </div>
+
+                {/* 八、其他 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">08</span>其他</div>
+                  <label className={`opt ${form.snoring ? 'selected' : ''}`}>
+                    <input type="checkbox" checked={form.snoring}
+                      onChange={e => update('snoring', e.target.checked)} />
+                    <span className="opt-text">睡覺會打鼾（提供同寢室友參考）</span>
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+
+            {error && (
+              <div className="alert-card" style={{ marginTop: 18, position: 'sticky', bottom: 16, zIndex: 10 }}>
+                <div className="alert-card-title">{error}</div>
+                <p>
+                  <button onClick={() => { setError(''); setErrorField(null) }}
+                    className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>
+                    我知道了
+                  </button>
+                </p>
+              </div>
+            )}
+
+            <div className="form-actions">
+              <a href="/member/dashboard" className="btn btn-ghost">← 返回</a>
+              <button onClick={handleSubmit} disabled={submitting || pastDeadline || locked || !!uploadingKind}
+                className="btn btn-primary">
+                {submitting
+                  ? '送出中⋯'
+                  : pastDeadline
+                  ? '已截止'
+                  : locked
+                  ? '已修改過 1 次'
+                  : existingLodging
+                  ? '送出修改（最後 1 次）'
+                  : '提交食宿登記'} <span className="arrow">→</span>
+              </button>
+            </div>
+
+            {!locked && (
+              <p style={{ textAlign: 'center', marginTop: 12, fontSize: 12.5, color: 'var(--ink-mute)' }}>
+                {existingLodging
+                  ? '本次為最後 1 次修改機會，送出後即鎖定。'
+                  : '送出後可於 6/20 晚上 8 點前再修改 1 次，系統會寄出確認信。'}
+              </p>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <aside>
+            <div className="deadline-card">
+              <div className="deadline-label">Deadline</div>
+              <div className="deadline-date">06.20</div>
+              <div className="deadline-text">
+                台北時間晚上 <strong>8:00</strong> 前完成<br />
+                逾期將無法提交
+              </div>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>學員資料 <small>Profile</small></h4>
+              <div className="info-row">
+                <span className="k">中文姓名</span>
+                <span className="v">{reg.chinese_name || '—'}</span>
+              </div>
+              <div className="info-row">
+                <span className="k">護照英文姓名</span>
+                <span className="v" style={{ wordBreak: 'break-word', textAlign: 'right' }}>{reg.passport_name || '—'}</span>
+              </div>
+              {reg.dharma_name && (
+                <div className="info-row">
+                  <span className="k">法名</span>
+                  <span className="v">{reg.dharma_name}</span>
+                </div>
+              )}
+              <div className="info-row">
+                <span className="k">手機</span>
+                <span className="v">{reg.phone || '—'}</span>
+              </div>
+              <div className="info-row">
+                <span className="k">Email</span>
+                <span className="v" style={{ wordBreak: 'break-all', textAlign: 'right', fontSize: 12 }}>{reg.email || '—'}</span>
+              </div>
+              <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-mute)' }}>
+                以上資料由報名表自動帶入，如需修改請聯絡學會。
+              </p>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>需要協助 <small>Help</small></h4>
+              <p>聯絡學會：<br />
+                <a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a>
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {previewUrl && (
+        <div className="preview-modal show" onClick={() => setPreviewUrl(null)}>
+          <button className="close" onClick={() => setPreviewUrl(null)}>✕</button>
+          <img src={previewUrl} alt="預覽" />
+        </div>
+      )}
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
 }
 
-function LocationMap({ label, src }: { label: string; src: string }) {
+function LocationMap({ label, src, onPreview }: { label: string; src: string; onPreview: (u: string) => void }) {
   return (
-    <div className="ml-6 mt-1 border border-gray-200 rounded-lg overflow-hidden bg-white">
-      <div className="bg-gray-50 px-3 py-1.5 text-xs text-gray-700 border-b border-gray-200">{label}</div>
-      <a href={src} target="_blank" rel="noreferrer" title="點擊開啟原圖">
-        <img src={src} alt={label} className="w-full h-auto max-h-72 object-contain" />
-      </a>
+    <div style={{ marginTop: 4 }}>
+      <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginBottom: 6, fontWeight: 600 }}>{label}</p>
+      <button type="button" onClick={() => onPreview(src)}
+        style={{ display: 'block', padding: 0, border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden', background: 'var(--bg-pure)', width: '100%' }}>
+        <img src={src} alt={label} style={{ width: '100%', maxHeight: 240, objectFit: 'contain', display: 'block' }} />
+      </button>
     </div>
   )
 }
 
-function planDates(plan: string | null | undefined): [string, string] | null {
-  if (!plan) return null
-  const map: Record<string, [string, string]> = {
-    A: ['2026-08-20', '2026-08-24'],
-    B: ['2026-08-19', '2026-08-24'],
-    C: ['2026-08-19', '2026-08-25'],
-    D: ['2026-08-20', '2026-08-25'],
-    T: ['2026-08-20', '2026-08-24'],
-  }
-  return map[plan.charAt(0)] || null
-}
-
-function fileField(
-  kind: string,
-  label: string,
-  currentUrl: string,
-  uploadingKind: string | null,
-  onUpload: (kind: string, f: File) => void,
-) {
+function FileField({
+  kind, label, required, currentUrl, uploadingKind, onUpload, onPreview, error,
+}: {
+  kind: string
+  label: string
+  required?: boolean
+  currentUrl: string
+  uploadingKind: string | null
+  onUpload: (kind: string, f: File) => void
+  onPreview: (u: string) => void
+  error?: boolean
+}) {
   const isImage = currentUrl && !currentUrl.toLowerCase().endsWith('.pdf')
   const uploading = uploadingKind === kind
   const inputId = `file-${kind}`
+  const filename = currentUrl ? currentUrl.split('/').pop() || '已上傳檔案' : ''
   return (
-    <div key={kind} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/50">
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={inputId} className="block text-sm font-semibold text-black">{label}</label>
-        {currentUrl && <span className="text-xs text-green-700 font-medium whitespace-nowrap">✓ 已上傳</span>}
-      </div>
+    <div>
+      <label className="form-label">
+        {label}{required && <span className="required">*</span>}
+      </label>
 
       {currentUrl && (
-        <div className="flex items-center gap-3 bg-white border border-gray-200 rounded p-2">
-          {isImage ? (
-            <img src={currentUrl} alt={kind} className="w-16 h-16 object-cover border rounded" />
-          ) : (
-            <span className="text-2xl">📄</span>
-          )}
-          <a href={currentUrl} target="_blank" rel="noreferrer"
-            className="text-sm text-blue-600 underline">點此檢視</a>
+        <div className="uploaded-preview" style={{ marginBottom: 8 }}>
+          <div className="thumb">
+            {isImage ? <img src={currentUrl} alt={kind} /> : '📄'}
+          </div>
+          <div className="info">
+            <div className="filename">{filename}</div>
+            <div className="upload-time">已上傳</div>
+          </div>
+          <div className="actions">
+            {isImage
+              ? <span className="view-link" onClick={() => onPreview(currentUrl)}>檢視</span>
+              : <a href={currentUrl} target="_blank" rel="noreferrer" className="view-link">開啟</a>}
+          </div>
         </div>
       )}
 
       <label htmlFor={inputId}
-        className={`block w-full border-2 border-dashed rounded-lg px-4 py-6 text-center cursor-pointer transition-colors ${
-          uploading
-            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
-            : currentUrl
-            ? 'border-green-400 bg-green-50 hover:bg-green-100 text-green-800'
-            : 'border-green-500 bg-white hover:bg-green-50 text-green-800'
-        }`}>
-        {uploading ? (
-          <>
-            <div className="text-2xl mb-1">⏳</div>
-            <div className="text-sm font-medium">上傳中，請稍候...</div>
-          </>
-        ) : (
-          <>
-            <div className="text-3xl mb-1">📤</div>
-            <div className="text-sm font-semibold">
-              {currentUrl ? '點此重新上傳' : '點此選擇檔案上傳'}
-            </div>
-            <div className="text-xs text-gray-600 mt-1">支援 JPG / PNG / WEBP / PDF（5MB 以下）</div>
-          </>
-        )}
+        className={`upload-box ${currentUrl ? 'has-file' : ''}`}
+        style={error ? { borderColor: 'var(--error)', background: 'rgba(184,82,58,0.05)' } : undefined}>
+        <div className="upload-icon">{uploading ? '⏳' : currentUrl ? '✓' : '📤'}</div>
+        <div className="upload-text">
+          {uploading ? '上傳中⋯' : currentUrl ? '點此重新上傳' : '點此選擇檔案'}
+        </div>
+        <div className="upload-hint">JPG / PNG / WEBP / PDF（5MB 以下）</div>
         <input id={inputId} type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
           disabled={uploading}
-          className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(kind, f) }} />
       </label>
     </div>
@@ -707,7 +825,11 @@ function fileField(
 
 export default function LodgingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">載入中...</div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    }>
       <LodgingContent />
     </Suspense>
   )
