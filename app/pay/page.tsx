@@ -434,6 +434,19 @@ function PayContent() {
               </p>
             </div>
 
+            <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
+              <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
+              <p>
+                <strong>匯款</strong>方案：請務必於匯款備註中填寫您的姓名與繳費碼，並於下方回填匯款後 5 碼。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                <strong>刷卡</strong>方案：將跳轉到綠界第三方加密頁面，學會不會接觸您的卡號。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                <strong>已繳費後取消報名</strong>，已付費用恕無法退款、轉讓。
+              </p>
+            </div>
+
             <div className="sidebar-card">
               <h4>需要協助 <small>Help</small></h4>
               <p>聯絡學會：<br />

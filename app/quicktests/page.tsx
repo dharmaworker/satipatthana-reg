@@ -298,6 +298,19 @@ function QuickTestsContent() {
               </ol>
             </div>
 
+            <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
+              <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
+              <p>
+                檢測結果必須<strong>載明檢測日期、序號、姓名</strong>，建議手寫於試劑旁再拍照。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                快篩試劑請<strong>自備</strong>，主辦單位不提供。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                課程期間 <strong>8/20、8/22 改現場繳交</strong>，毋須線上上傳。
+              </p>
+            </div>
+
             <div className="sidebar-card">
               <h4>需要協助 <small>Help</small></h4>
               <p>聯絡學會：<br />

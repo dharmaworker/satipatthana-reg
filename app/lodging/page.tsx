@@ -951,6 +951,19 @@ function LodgingContent() {
               </p>
             </div>
 
+            <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
+              <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
+              <p>
+                送出後僅能再修改 <strong>1 次</strong>（共 2 次送出機會），請務必確認後再送出。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                由於飯店條款限制，學會已先代墊食宿等費用，<strong>一旦繳費後取消報名，已付費用恕無法退款、轉讓</strong>。
+              </p>
+              <p style={{ marginTop: 10 }}>
+                個人相片與證件影像務必<strong>清晰可辨</strong>，過糊將影響身份核對。
+              </p>
+            </div>
+
             <div className="sidebar-card">
               <h4>需要協助 <small>Help</small></h4>
               <p>聯絡學會：<br />

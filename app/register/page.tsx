@@ -327,6 +327,8 @@ export default function RegisterPage() {
       </div>
 
       <main className="container" style={{ paddingBottom: 60 }}>
+        <div className="layout">
+        <div>
         <div className="form-card">
 
           {/* ============== Step 1：課程資訊 ============== */}
@@ -779,6 +781,37 @@ export default function RegisterPage() {
               提交後系統會將報名資訊發送到您填寫的電子信箱，請注意查收（包括垃圾郵件）。
             </p>
           )}
+        </div>
+        </div>
+
+        <aside>
+          <div className="sidebar-card">
+            <h4>禪修概要 <small>At a Glance</small></h4>
+            <div className="info-row"><span className="k">日期</span><span className="v">08.20—24</span></div>
+            <div className="info-row"><span className="k">地點</span><span className="v">日月潭</span></div>
+            <div className="info-row"><span className="k">名額</span><span className="v">250 名</span></div>
+            <div className="info-row"><span className="k">報名截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>05.25</span></div>
+            <div className="info-row"><span className="k">錄取通知</span><span className="v">06.06</span></div>
+            <div className="info-row"><span className="k">繳費截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.15</span></div>
+          </div>
+
+          <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
+            <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
+            <p>
+              請勿在 LINE 或微信內建瀏覽器中填寫，建議使用 <strong>Chrome、Safari</strong> 等瀏覽器，避免 QR Code 上傳失敗。
+            </p>
+            <p style={{ marginTop: 10 }}>
+              提交後系統會寄出確認信，內含您的<strong>專屬繳費碼</strong>，請妥善保管。
+            </p>
+          </div>
+
+          <div className="sidebar-card">
+            <h4>需要協助 <small>Need Help</small></h4>
+            <p>聯絡學會：<br />
+              <a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a>
+            </p>
+          </div>
+        </aside>
         </div>
 
         <div style={{ textAlign: 'center', padding: '40px 0 20px' }}>
