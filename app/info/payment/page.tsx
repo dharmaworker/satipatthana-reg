@@ -1,80 +1,142 @@
 export default function PaymentPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-green-800 text-white py-8 px-4 text-center">
-        <h1 className="text-2xl font-bold">費用說明與支付方式</h1>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+          </a>
+          <a href="/member/dashboard" className="nav-back">← 返回學員專區</a>
+        </div>
+      </header>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-green-800">費用方案</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-green-50">
-                <th className="text-left px-3 py-2 text-black font-medium">方案</th>
-                <th className="text-left px-3 py-2 text-black font-medium">說明</th>
-                <th className="text-right px-3 py-2 text-black font-medium">金額(NT$)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {[
-                ['A(1)', '8/20-8/24 食宿等費用（匯款）', '18,600'],
-                ['A(2)', '8/20-8/24 食宿等費用（刷卡）', '19,300'],
-                ['B(1)', '8/19-8/24 食宿費用（匯款）', '20,350'],
-                ['B(2)', '8/19-8/24 食宿費用（刷卡）', '21,050'],
-                ['C(1)', '8/19+8/25 食宿等費用（匯款）', '22,590'],
-                ['C(2)', '8/19+8/25 食宿等費用（刷卡）', '23,290'],
-                ['D(1)', '8/20-8/25 食宿等費用（匯款）', '20,840'],
-                ['D(2)', '8/20-8/25 食宿等費用（刷卡）', '21,540'],
-              ].map(([plan, desc, amount]) => (
-                <tr key={plan}>
-                  <td className="px-3 py-2 text-black font-medium">{plan}</td>
-                  <td className="px-3 py-2 text-black">{desc}</td>
-                  <td className="px-3 py-2 text-black text-right">{amount}</td>
+      <div className="page-header">
+        <div className="container">
+          <p className="page-kicker">Payment Plans &amp; Methods</p>
+          <h1 className="page-title">費用說明與支付方式</h1>
+        </div>
+      </div>
+
+      <main className="container" style={{ paddingBottom: 60, position: 'relative', zIndex: 1 }}>
+        <div className="card with-line" style={{ marginBottom: 24 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-noto-serif-tc), serif',
+            fontSize: 20, fontWeight: 700,
+            color: 'var(--green-deep)', letterSpacing: '0.08em',
+            marginBottom: 18,
+          }}>費用方案</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ background: 'rgba(73, 85, 52, 0.08)' }}>
+                  <th style={cellHeadStyle}>方案</th>
+                  <th style={cellHeadStyle}>說明</th>
+                  <th style={{ ...cellHeadStyle, textAlign: 'right' }}>金額(NT$)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[
+                  ['A(1)', '8/20-8/24 食宿等費用（匯款）', '18,600'],
+                  ['A(2)', '8/20-8/24 食宿等費用（刷卡）', '19,300'],
+                  ['B(1)', '8/19-8/24 食宿費用（匯款）', '20,350'],
+                  ['B(2)', '8/19-8/24 食宿費用（刷卡）', '21,050'],
+                  ['C(1)', '8/19+8/25 食宿等費用（匯款）', '22,590'],
+                  ['C(2)', '8/19+8/25 食宿等費用（刷卡）', '23,290'],
+                  ['D(1)', '8/20-8/25 食宿等費用（匯款）', '20,840'],
+                  ['D(2)', '8/20-8/25 食宿等費用（刷卡）', '21,540'],
+                ].map(([plan, desc, amount]) => (
+                  <tr key={plan} style={{ borderBottom: '1px dotted var(--line)' }}>
+                    <td style={{ ...cellStyle, fontWeight: 700, fontFamily: 'var(--font-cormorant), serif', color: 'var(--gold-deep)', letterSpacing: '0.05em' }}>{plan}</td>
+                    <td style={cellStyle}>{desc}</td>
+                    <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-cormorant), serif', color: 'var(--green-deep)', letterSpacing: '0.04em' }}>{amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-green-800">支付方式</h2>
-          <div className="space-y-4">
-            <div className="bg-green-50 rounded-lg p-4">
-              <p className="font-semibold text-green-800 mb-2">匯款（台灣法友）</p>
-              <div className="text-black text-sm space-y-1">
-                <p>戶名：台灣四念處學會</p>
-                <p>銀行：第一銀行 仁和分行</p>
-                <p>代號：007</p>
-                <p className="text-lg font-bold tracking-wider">帳號：16510068750</p>
+        <div className="card" style={{ marginBottom: 24 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-noto-serif-tc), serif',
+            fontSize: 20, fontWeight: 700,
+            color: 'var(--green-deep)', letterSpacing: '0.08em',
+            marginBottom: 18,
+          }}>支付方式</h2>
+
+          <div style={{ display: 'grid', gap: 14 }}>
+            <div className="info-card" style={{ marginBottom: 0 }}>
+              <h4><span className="icon">🇹🇼</span>匯款（台灣法友）</h4>
+              <div className="info-row"><span className="k">戶名</span><span className="v">台灣四念處學會</span></div>
+              <div className="info-row"><span className="k">銀行</span><span className="v">第一銀行 仁和分行</span></div>
+              <div className="info-row"><span className="k">代號</span><span className="v">007</span></div>
+              <div className="info-row">
+                <span className="k">帳號</span>
+                <span className="v" style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 17, letterSpacing: '0.08em', color: 'var(--green-deep)' }}>16510068750</span>
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-4">
-              <p className="font-semibold text-blue-800 mb-2">匯款（國外法友）</p>
-              <div className="text-black text-sm space-y-1">
-                <p>戶名：台灣四念處學會</p>
-                <p>銀行：第一銀行 仁和分行</p>
-                <p>代號：007</p>
-                <p className="text-lg font-bold tracking-wider">帳號：16540016022</p>
+
+            <div className="info-card" style={{ marginBottom: 0 }}>
+              <h4><span className="icon">🌏</span>匯款（國外法友）</h4>
+              <div className="info-row"><span className="k">戶名</span><span className="v">台灣四念處學會</span></div>
+              <div className="info-row"><span className="k">銀行</span><span className="v">第一銀行 仁和分行</span></div>
+              <div className="info-row"><span className="k">代號</span><span className="v">007</span></div>
+              <div className="info-row">
+                <span className="k">帳號</span>
+                <span className="v" style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 17, letterSpacing: '0.08em', color: 'var(--green-deep)' }}>16540016022</span>
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <p className="font-semibold text-yellow-800 mb-2">信用卡刷卡</p>
-              <p className="text-black text-sm">收到錄取通知後，點擊信件中的「前往繳費」按鈕，選擇刷卡方案即可線上刷卡。</p>
+
+            <div className="info-card" style={{ marginBottom: 0 }}>
+              <h4><span className="icon">💳</span>信用卡刷卡</h4>
+              <p style={{ fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
+                收到錄取通知後，點擊信件中的「前往繳費」按鈕，選擇刷卡方案即可線上刷卡。
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800 space-y-1">
-          <p>⚠️ 請於 2026年6月15日晚上8時前完成繳費</p>
-          <p>⚠️ 一旦繳費後取消報名，已付費用恕無法退款或轉讓</p>
+        <div className="alert-card">
+          <div className="alert-card-title">繳費注意事項</div>
+          <ul>
+            <li>請於 <strong>2026 年 6 月 15 日晚上 8 時前</strong>完成繳費</li>
+            <li>一旦繳費後取消報名，<strong>已付費用恕無法退款或轉讓</strong></li>
+          </ul>
         </div>
 
-        <a href="/member/dashboard" className="block text-center text-green-700 hover:text-green-800">
-          ← 返回課程資訊總覽
-        </a>
-      </div>
-    </div>
+        <div style={{ textAlign: 'center', marginTop: 28 }}>
+          <a href="/member/dashboard" className="btn btn-ghost">← 返回學員專區</a>
+        </div>
+      </main>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
+}
+
+const cellHeadStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '14px 16px',
+  fontFamily: 'var(--font-noto-serif-tc), serif',
+  fontSize: 13, fontWeight: 700,
+  color: 'var(--ink)',
+  letterSpacing: '0.08em',
+  borderBottom: '1px solid var(--line-strong)',
+}
+
+const cellStyle: React.CSSProperties = {
+  padding: '14px 16px',
+  color: 'var(--ink-soft)',
+  fontSize: 14,
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { sendMail } from '@/lib/mailer'
+import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -97,41 +98,33 @@ export async function POST(request: NextRequest) {
 
     // 寄報名確認信（失敗不影響報名結果）
     try {
+      const confirmBody = `
+        ${emailKicker('Registration Received')}
+        ${emailH1('已收到您的報名 🙏')}
+        <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
+        <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修課程」。我們已收到您的報名資料，以下是您的資訊：</p>
+
+        ${emailCodeBox('您的專屬繳費碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
+
+        ${emailH3('接下來')}
+        <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
+          <li>錄取通知：將於 <strong style="color:${C.ink};">2026/06/06</strong> 由本信箱寄出</li>
+          <li>若錄取，請於 <strong style="color:${C.ink};">2026/06/15 晚上 8 點前</strong>完成繳費</li>
+          <li>課程日期：<strong style="color:${C.ink};">2026/08/20 ～ 08/24</strong>（南投日月潭湖畔會館）</li>
+        </ul>
+
+        ${emailH3('查詢報名狀態 / 學員專區')}
+        <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">您可隨時透過下方連結進入學員專區查詢審核狀態，錄取後在同一頁面完成繳費、食宿登記、快篩上傳：</p>
+        ${emailButton(`${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}`, '前往學員專區', 'green')}
+        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
+
+        ${emailSignoff()}
+        <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
+      `
       await sendMail({
         to: data.email,
         subject: '【第二屆台灣四念處禪修】報名確認',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #222;">
-            <h2 style="color: #2d6a4f;">已收到您的報名 🙏</h2>
-            <p>${data.chinese_name} 法友您好，</p>
-            <p>感謝您報名「第二屆台灣四念處禪修課程」。我們已收到您的報名資料，以下是您的資訊：</p>
-
-            <div style="background:#fff3cd;padding:15px;border-radius:8px;margin:20px 0;">
-              <p style="margin:0;font-weight:bold;">您的專屬繳費碼：</p>
-              <p style="font-size:28px;font-weight:bold;color:#2d6a4f;letter-spacing:4px;margin:10px 0;">${data.random_code}</p>
-              <p style="margin:0;font-size:13px;color:#666;">⚠️ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。</p>
-            </div>
-
-            <h3 style="color:#2d6a4f;">接下來</h3>
-            <ul style="line-height:1.8;">
-              <li>錄取通知：將於 <strong>2026/06/06</strong> 由本信箱寄出</li>
-              <li>若錄取，請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
-              <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投日月潭湖畔會館）</li>
-            </ul>
-
-            <h3 style="color:#2d6a4f;">查詢報名狀態 / 學員專區</h3>
-            <p>您可隨時透過下方連結進入學員專區查詢審核狀態，錄取後在同一頁面完成繳費、食宿登記、快篩上傳：</p>
-            <a href="${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}"
-              style="display:inline-block;background:#1a5276;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">
-              前往學員專區
-            </a>
-            <p style="margin-top:10px;font-size:13px;color:#666;">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:#1a5276;">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
-
-            <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-            <p style="color:#666;font-size:13px;">若您沒有報名本課程，請忽略此信。</p>
-            <p style="color:#666;font-size:13px;">台灣四念處學會 合十</p>
-          </div>
-        `,
+        html: emailWrap(confirmBody),
       })
     } catch (mailErr) {
       console.error('[register] 確認信寄送失敗（不影響報名）:', mailErr)
@@ -139,68 +132,66 @@ export async function POST(request: NextRequest) {
 
     // 寄備存信給學會信箱（失敗不影響報名結果）
     try {
-      const row = (label: string, value: string | number) =>
-        `<tr><td style="padding:6px 10px;border:1px solid #eee;background:#f9f9f9;width:140px;">${label}</td><td style="padding:6px 10px;border:1px solid #eee;">${value}</td></tr>`
-
       const courses = Array.isArray(data.attended_courses) && data.attended_courses.length
         ? data.attended_courses.join('、')
         : '—'
 
+      const archiveBody = `
+        ${emailKicker('Registration Archive')}
+        ${emailH1('新報名備存')}
+        <p style="color:${C.inkMute};font-size:13px;margin:0 0 16px;">本信由系統自動寄出，供學會信箱備份資料之用。最新資料請以後台為準。</p>
+
+        ${emailH3('基本資料')}
+        ${tableWrap([
+          tableRow('繳費碼', data.random_code),
+          tableRow('報名時間', new Date(data.created_at).toLocaleString('zh-TW')),
+          tableRow('中文姓名', data.chinese_name),
+          tableRow('護照英文名', data.passport_name),
+          tableRow('身分', data.identity === 'lay' ? '在家人' : '僧眾'),
+          tableRow('法名', nullable(data.dharma_name)),
+          tableRow('性別', data.gender === 'male' ? '男' : '女'),
+          tableRow('年齡', data.age),
+          tableRow('護照頒發地', nullable(data.passport_country)),
+          tableRow('居住地', data.residence),
+          tableRow('手機', data.phone),
+          tableRow('Email', data.email),
+          tableRow('LINE ID', nullable(data.line_id)),
+          tableRow('WeChat ID', nullable(data.wechat_id)),
+          tableRow('LINE QR', data.line_qr_url ? `<a href="${data.line_qr_url}" style="color:${C.green};">查看</a>` : '—'),
+          tableRow('WeChat QR', data.wechat_qr_url ? `<a href="${data.wechat_qr_url}" style="color:${C.green};">查看</a>` : '—'),
+        ].join(''))}
+
+        ${emailH3('報名條件')}
+        ${tableWrap([
+          tableRow('承諾如實填寫', yn(data.honest_confirm)),
+          tableRow('正式學員經驗', yn(data.attended_formal)),
+          tableRow('觀看錄影 3 屆以上', yn(data.watched_recordings)),
+          tableRow('Zoom 一對一指導', yn(data.zoom_guidance)),
+          tableRow('法談 30 篇以上', yn(data.watched_30_talks)),
+          tableRow('持守五戒', yn(data.keep_precepts)),
+          tableRow('修習年資', nullable(data.practice_years)),
+          tableRow('練習頻率', nullable(data.practice_frequency)),
+          tableRow('同意繳費', yn(data.pay_confirm)),
+          tableRow('身體健康', yn(data.health_confirm)),
+          tableRow('心理健康備註', nullable(data.mental_health_note)),
+          tableRow('過往參加課程', courses),
+        ].join(''))}
+
+        ${emailH3('狀態')}
+        ${tableWrap([
+          tableRow('審核狀態', data.status),
+          tableRow('繳費狀態', data.payment_status),
+        ].join(''))}
+
+        <p style="margin-top:24px;color:${C.inkMute};font-size:12px;">
+          後台連結：<a href="${baseUrl}/admin/dashboard" style="color:${C.green};">${baseUrl}/admin/dashboard</a>
+        </p>
+      `
+
       await sendMail({
         to: archiveEmail,
         subject: `【報名備存】${data.chinese_name} / ${data.random_code}`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; color: #222;">
-            <h2 style="color: #2d6a4f;">新報名備存</h2>
-            <p style="color:#666;">本信由系統自動寄出，供學會信箱備份資料之用。最新資料請以後台為準。</p>
-
-            <h3 style="color:#2d6a4f;margin-top:20px;">基本資料</h3>
-            <table style="border-collapse:collapse;width:100%;font-size:14px;">
-              ${row('繳費碼', data.random_code)}
-              ${row('報名時間', new Date(data.created_at).toLocaleString('zh-TW'))}
-              ${row('中文姓名', data.chinese_name)}
-              ${row('護照英文名', data.passport_name)}
-              ${row('身分', data.identity === 'lay' ? '在家人' : '僧眾')}
-              ${row('法名', nullable(data.dharma_name))}
-              ${row('性別', data.gender === 'male' ? '男' : '女')}
-              ${row('年齡', data.age)}
-              ${row('護照頒發地', nullable(data.passport_country))}
-              ${row('居住地', data.residence)}
-              ${row('手機', data.phone)}
-              ${row('Email', data.email)}
-              ${row('LINE ID', nullable(data.line_id))}
-              ${row('WeChat ID', nullable(data.wechat_id))}
-              ${row('LINE QR', data.line_qr_url ? `<a href="${data.line_qr_url}">查看</a>` : '—')}
-              ${row('WeChat QR', data.wechat_qr_url ? `<a href="${data.wechat_qr_url}">查看</a>` : '—')}
-            </table>
-
-            <h3 style="color:#2d6a4f;margin-top:20px;">報名條件</h3>
-            <table style="border-collapse:collapse;width:100%;font-size:14px;">
-              ${row('承諾如實填寫', yn(data.honest_confirm))}
-              ${row('正式學員經驗', yn(data.attended_formal))}
-              ${row('觀看錄影 3 屆以上', yn(data.watched_recordings))}
-              ${row('Zoom 一對一指導', yn(data.zoom_guidance))}
-              ${row('法談 30 篇以上', yn(data.watched_30_talks))}
-              ${row('持守五戒', yn(data.keep_precepts))}
-              ${row('修習年資', nullable(data.practice_years))}
-              ${row('練習頻率', nullable(data.practice_frequency))}
-              ${row('同意繳費', yn(data.pay_confirm))}
-              ${row('身體健康', yn(data.health_confirm))}
-              ${row('心理健康備註', nullable(data.mental_health_note))}
-              ${row('過往參加課程', courses)}
-            </table>
-
-            <h3 style="color:#2d6a4f;margin-top:20px;">狀態</h3>
-            <table style="border-collapse:collapse;width:100%;font-size:14px;">
-              ${row('審核狀態', data.status)}
-              ${row('繳費狀態', data.payment_status)}
-            </table>
-
-            <p style="margin-top:24px;color:#666;font-size:12px;">
-              後台連結：<a href="${baseUrl}/admin/dashboard">${baseUrl}/admin/dashboard</a>
-            </p>
-          </div>
-        `,
+        html: emailWrap(archiveBody, { maxWidth: 720 }),
       })
     } catch (archiveErr) {
       console.error('[register] 備存信寄送失敗（不影響報名）:', archiveErr)
