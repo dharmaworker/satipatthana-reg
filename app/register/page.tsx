@@ -53,10 +53,29 @@ const COURSE_GROUPS = [
   { no: 8, title: '遠程（線上）四念處禪修課程', loc: 'Zoom・線上網路', courses: ONLINE_COURSES },
 ]
 
+const STEPS = [
+  { num: 1, label: '課程資訊', en: 'Course Info' },
+  { num: 2, label: '報名資格', en: 'Eligibility' },
+  { num: 3, label: '背景承諾', en: 'Background' },
+  { num: 4, label: '個人資訊', en: 'Personal' },
+  { num: 5, label: '確認送出', en: 'Review' },
+]
+
+const RESIDENCE_OPTIONS = ['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區']
+const PRACTICE_YEARS_OPTIONS = ['1月-3個月','3月-6個月','6月-1年','1年-2年','2年-3年','3年-4年','4年-5年','5年-8年','8年-10年','10年以上']
+const PRACTICE_FREQ_LABEL: Record<string, string> = {
+  every_day: '每天至少 30 分鐘',
+  almost_every_day: '幾乎每天，偶有間斷',
+  commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時',
+}
+
 export default function RegisterPage() {
   const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [maxReached, setMaxReached] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
   const [form, setForm] = useState({
     honest_confirm: '',
     attended_formal: '',
@@ -68,7 +87,7 @@ export default function RegisterPage() {
     practice_frequency: '',
     pay_confirm: '',
     health_confirm: '',
-    mental_health_note: '',
+    mental_health_note: 'no',
     chinese_name: '',
     passport_name: '',
     identity: '',
@@ -91,6 +110,7 @@ export default function RegisterPage() {
   const update = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
     if (errorField === field) setErrorField(null)
+    if (error) setError('')
   }
   const fail = (field: string, msg: string) => {
     setError(msg)
@@ -98,6 +118,7 @@ export default function RegisterPage() {
     setTimeout(() => {
       document.getElementById(`field-${field}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 50)
+    return false
   }
   const errCls = (f: string) => errorField === f ? 'error' : ''
 
@@ -129,9 +150,8 @@ export default function RegisterPage() {
     }
   }
 
-  const handleSubmit = async () => {
-    setError('')
-
+  // 各步驟的驗證；回 true 表示通過
+  const validateStep3 = (): boolean => {
     if (form.honest_confirm !== 'yes') return fail('honest_confirm', 'Q1：請承諾如實填寫本次報名表單')
 
     const heardDharma =
@@ -140,7 +160,7 @@ export default function RegisterPage() {
       form.zoom_guidance === 'yes' ||
       form.watched_30_talks === 'yes'
     if (!form.attended_formal) return fail('attended_formal', '請回答 Q2：是否以正式學員身份參加過課程')
-    if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q9：是否完整觀看/聆聽過 3 屆錄影')
+    if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q9：是否完整觀看／聆聽過 3 屆錄影')
     if (!form.zoom_guidance) return fail('zoom_guidance', '請回答 Q10：是否透過 ZOOM 做過一對一指導')
     if (!form.watched_30_talks) return fail('watched_30_talks', '請回答 Q11：是否聽過法談 30 篇以上')
     if (!heardDharma) return fail('attended_formal', '聞法條件未達成：Q2、Q9、Q10、Q11 需至少一項選「是」')
@@ -156,7 +176,10 @@ export default function RegisterPage() {
 
     if (!form.health_confirm) return fail('health_confirm', '請回答 Q16：是否身體健康能全程參與')
     if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q16 須選「是」）')
+    return true
+  }
 
+  const validateStep4 = (): boolean => {
     if (!form.chinese_name.trim()) return fail('chinese_name', '請填寫 Q19：中文姓名')
     if (!form.passport_name.trim()) return fail('passport_name', '請填寫 Q20：護照英文姓名')
     if (!form.identity) return fail('identity', '請選擇 Q21：身份類別（在家人／僧眾）')
@@ -165,7 +188,6 @@ export default function RegisterPage() {
     if (!form.residence) return fail('residence', '請選擇 Q26：居住地')
     if (!form.phone.trim()) return fail('phone', '請填寫 Q27：手機號碼')
     if (!form.email.trim()) return fail('email', '請填寫 Q28：電子信箱')
-
     if (!form.contact_app) return fail('contact_app', '請選擇 Q29：通訊軟體（LINE 或 微信擇一）')
     if (form.contact_app === 'line') {
       if (!form.line_id.trim()) return fail('contact_app', '請填寫 LINE ID')
@@ -174,6 +196,30 @@ export default function RegisterPage() {
       if (!form.wechat_id.trim()) return fail('contact_app', '請填寫 微信號')
       if (!form.wechat_qr_url) return fail('contact_app', '請上傳 微信 QR Code 圖片')
     }
+    return true
+  }
+
+  const goToStep = (target: number) => {
+    if (target <= maxReached) {
+      setStep(target)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    // 往前推進，需要通過當前步驟驗證
+    if (target === step + 1) {
+      if (step === 3 && !validateStep3()) return
+      if (step === 4 && !validateStep4()) return
+      setStep(target)
+      setMaxReached(prev => Math.max(prev, target))
+      setError('')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handleSubmit = async () => {
+    setError('')
+    if (!validateStep3()) { setStep(3); return }
+    if (!validateStep4()) { setStep(4); return }
 
     setLoading(true)
     try {
@@ -204,7 +250,7 @@ export default function RegisterPage() {
 
   // Helper：是非選擇下拉
   const yesNoSelect = (field: string, label: string) => (
-    <div id={`field-${field}`} style={{ marginBottom: 16 }}>
+    <div id={`field-${field}`} className="question-block">
       <label className="form-label">{label} <span className="required">*</span></label>
       <select className={`form-select ${errCls(field)}`} value={(form as any)[field]}
         onChange={e => update(field, e.target.value)}>
@@ -214,6 +260,8 @@ export default function RegisterPage() {
       </select>
     </div>
   )
+
+  const stepperPct = ((step - 1) / (STEPS.length - 1)) * 100
 
   return (
     <>
@@ -240,381 +288,498 @@ export default function RegisterPage() {
             報名期間：2026/05/11 上午 10:00 — 2026/05/25 晚上 24:00（台北時間）<br />
             提交報名表單不代表已錄取，錄取結果將於 6/6 以 Email 通知。
           </p>
+
+          {/* Stepper */}
+          <div className="stepper">
+            <div className="stepper-track">
+              <div className="stepper-line" />
+              <div className="stepper-line-active" style={{ width: `${stepperPct}%` }} />
+              {STEPS.map(s => {
+                const status = s.num < step ? 'done' : s.num === step ? 'active' : ''
+                const clickable = s.num <= maxReached
+                return (
+                  <div key={s.num}
+                    className={`step ${status} ${clickable ? 'clickable' : ''}`}
+                    onClick={() => clickable && goToStep(s.num)}>
+                    <div className="step-num"><span className="n">{s.num}</span></div>
+                    <div className="step-label">
+                      <small>STEP 0{s.num}</small>
+                      {s.label}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
       <main className="container" style={{ paddingBottom: 60 }}>
-        {/* 課程介紹 */}
-        <div className="card with-line" style={{ marginBottom: 28 }}>
-          <div className="info-section">
-            <h3>課程資訊 <small style={{ marginLeft: 8, fontFamily: 'var(--font-cormorant), serif', fontStyle: 'italic', color: 'var(--gold)', fontSize: 13, fontWeight: 600 }}>Course Info</small></h3>
-            <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
-            <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
-            <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
-            <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
-            <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理（NT$18,600）</span></div>
-          </div>
-
-          <div className="info-section">
-            <h3>傳承與指導</h3>
-            <p>承蒙隆波帕默尊者慈悲指定，由助教老師團隊親自指導。</p>
-            <h4>指導老師陣容</h4>
-            <ul>
-              <li>阿姜巴山 Ajahn Prasan Bhuddhakulsomsiri</li>
-              <li>阿姜納 Ajahn Nat Sriwachirawat</li>
-              <li>阿姜妮 Ajahn Nitiya Petchpaiboon</li>
-              <li>阿姜松 Ajahn Napatpol Kunatanasate</li>
-            </ul>
-          </div>
-
-          <div className="info-section">
-            <h3>報名條件（須<strong>同時</strong>滿足三條件）</h3>
-            <h4>1. 聞法條件（任一即可）</h4>
-            <ul>
-              <li>曾參加過任意一屆隆波帕默尊者體系的線下實體或線上網路課程</li>
-              <li>參加過每月 ZOOM 指導老師線上互動</li>
-              <li>完整觀看／聆聽過 3 屆泰國禪修之旅課程錄影／錄音</li>
-              <li>觀看／聆聽隆波帕默尊者法談開示 30 篇以上</li>
-            </ul>
-            <h4>2. 持守五戒</h4>
-            <h4>3. 堅持做固定形式的練習（如：經行、靜坐⋯）</h4>
-          </div>
-
-          <div className="info-section">
-            <h3>錄取流程</h3>
-            <p>1. 提交報名表後，將於 <strong>6 月 6 日</strong>以 Email 發送錄取通知（提交報名表單不代表已錄取）。</p>
-            <p>2. 收到錄取通知後，須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
-            <p>3. 正式錄取者，將建立 LINE 及微信群組。</p>
-            <p>4. 實體禪修場地條件有限，最終錄取結果由課程組決定。</p>
-          </div>
-        </div>
-
         <div className="form-card">
-          {/* Q1 */}
-          <div className="question-block" id="field-honest_confirm">
-            <label className="form-label">
-              1. 您是否願意承諾如實填寫本次的報名表單？ <span className="required">*</span>
-            </label>
-            <select className={`form-select ${errCls('honest_confirm')}`} value={form.honest_confirm}
-              onChange={e => update('honest_confirm', e.target.value)}>
-              <option value="">請選擇</option>
-              <option value="yes">是</option>
-              <option value="no">否（將結束報名）</option>
-            </select>
-            {form.honest_confirm === 'no' && (
-              <p className="form-error" style={{ marginTop: 8 }}>感謝您的誠實，報名表將不予提交。</p>
-            )}
-          </div>
 
-          {form.honest_confirm === 'yes' && (
-            <>
-              {/* Part 2: 報名條件 */}
-              <div className="field-group">
-                <div className="field-group-title"><span className="num">PART 02</span>報名條件確認</div>
+          {/* ============== Step 1：課程資訊 ============== */}
+          {step === 1 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 01</p>
+                <h2 className="step-header-title">課程資訊</h2>
+                <p className="step-header-desc">請仔細閱讀課程基本資訊，確認後進入下一步。</p>
+              </div>
 
-                <div id="field-attended_formal" style={{ marginBottom: 16 }}>
-                  <label className="form-label">2. 是否以正式學員身份參加過隆波帕默尊者體系的實體或線上課程？ <span className="required">*</span></label>
-                  <select className={`form-select ${errCls('attended_formal')}`} value={form.attended_formal}
-                    onChange={e => update('attended_formal', e.target.value)}>
-                    <option value="">請選擇</option>
-                    <option value="yes">是</option>
-                    <option value="no">否</option>
-                  </select>
-                </div>
+              <div className="info-section">
+                <h3>課程基本資訊</h3>
+                <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
+                <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
+                <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
+                <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
+                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理（約 NT$18,600）</span></div>
+                <div className="meta-row"><span className="k">報名期間</span><span className="v">2026/05/11 ～ 05/25（台北時間）</span></div>
+              </div>
 
-                {COURSE_GROUPS.map(({ no, title, loc, courses }) => (
-                  <div key={title} style={{ marginBottom: 18 }}>
-                    <label className="form-label">{no}. {title}　<span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>{loc}・非必選</span></label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
-                      {courses.map(course => (
-                        <label key={course} className={`opt ${form.attended_courses.includes(course) ? 'selected' : ''}`}>
-                          <input type="checkbox" checked={form.attended_courses.includes(course)}
-                            onChange={() => toggleCourse(course)} />
-                          <span className="opt-text" style={{ fontSize: 13 }}>{course}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className="info-section">
+                <h3>傳承與指導老師</h3>
+                <p>承蒙隆波帕默尊者慈悲指定，由助教老師團隊親自指導。</p>
+                <h4>指導老師陣容</h4>
+                <ul>
+                  <li>阿姜巴山 Ajahn Prasan Bhuddhakulsomsiri</li>
+                  <li>阿姜納 Ajahn Nat Sriwachirawat</li>
+                  <li>阿姜妮 Ajahn Nitiya Petchpaiboon</li>
+                  <li>阿姜松 Ajahn Napatpol Kunatanasate</li>
+                </ul>
+              </div>
 
-                {yesNoSelect('watched_recordings', '9. 是否完整觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
-                {yesNoSelect('zoom_guidance', '10. 您是否透過 ZOOM 的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
-                {yesNoSelect('watched_30_talks', '11. 是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
-                {yesNoSelect('keep_precepts', '12. 您是否持守五戒？')}
+              <div className="alert-card" style={{ marginTop: 12 }}>
+                <div className="alert-card-title">特別提醒</div>
+                <p>提交報名表後，<strong>並不代表已錄取</strong>。錄取結果將於 <strong>6 月 6 日</strong>以 Email 發送。請勿於錄取確認前購買機票或安排行程。</p>
+              </div>
+            </div>
+          )}
 
-                <div id="field-practice_years" style={{ marginBottom: 16 }}>
-                  <label className="form-label">13. 您學習並實踐隆波帕默尊者的教導多久了？ <span className="required">*</span></label>
-                  <select className={`form-select ${errCls('practice_years')}`} value={form.practice_years}
-                    onChange={e => update('practice_years', e.target.value)}>
-                    <option value="">請選擇</option>
-                    {['1月-3個月','3月-6個月','6月-1年','1年-2年','2年-3年','3年-4年','4年-5年','5年-8年','8年-10年','10年以上'].map(v => (
-                      <option key={v} value={v}>{v}</option>
+          {/* ============== Step 2：報名資格 ============== */}
+          {step === 2 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 02</p>
+                <h2 className="step-header-title">報名資格</h2>
+                <p className="step-header-desc">本課程為進階禪修班，僅接受具備一定基礎的學員。請確認您符合以下資格後再進入下一步。</p>
+              </div>
+
+              <div className="info-section">
+                <h3>報名條件（須<strong>同時</strong>滿足三項）</h3>
+                <h4>1. 聞法條件（任一即可）</h4>
+                <ul>
+                  <li>曾參加過任意一屆隆波帕默尊者體系的線下實體或線上網路課程</li>
+                  <li>參加過每月 ZOOM 指導老師線上互動</li>
+                  <li>完整觀看／聆聽過 3 屆泰國禪修之旅課程錄影／錄音</li>
+                  <li>觀看／聆聽隆波帕默尊者法談開示 30 篇以上</li>
+                </ul>
+                <h4>2. 持守五戒</h4>
+                <h4>3. 堅持做固定形式的練習（如：經行、靜坐⋯）</h4>
+              </div>
+
+              <div className="info-section">
+                <h3>錄取流程</h3>
+                <ul className="check">
+                  <li>提交報名表後，將於 <strong>6 月 6 日</strong>以 Email 發送錄取通知。</li>
+                  <li>錄取者須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</li>
+                  <li>正式錄取者，將建立 LINE 及微信群組。</li>
+                  <li>實體禪修場地條件有限，最終錄取結果由課程組決定。</li>
+                </ul>
+              </div>
+
+              <div className="alert-card">
+                <div className="alert-card-title">費用說明</div>
+                <p>8/20–8/24 禪修期間之食宿、交通及場地費用：<strong>NT$18,600 元起</strong>（依方案而異，最高約 NT$23,290）。</p>
+                <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+              </div>
+            </div>
+          )}
+
+          {/* ============== Step 3：背景與承諾 ============== */}
+          {step === 3 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 03</p>
+                <h2 className="step-header-title">背景與承諾</h2>
+                <p className="step-header-desc">請依實際情況回答下列題目。本步驟所有 *標示者為必填。</p>
+              </div>
+
+              {/* Q1 */}
+              <div className="question-block" id="field-honest_confirm">
+                <label className="form-label">
+                  1. 您是否願意承諾如實填寫本次的報名表單？ <span className="required">*</span>
+                </label>
+                <select className={`form-select ${errCls('honest_confirm')}`} value={form.honest_confirm}
+                  onChange={e => update('honest_confirm', e.target.value)}>
+                  <option value="">請選擇</option>
+                  <option value="yes">是</option>
+                  <option value="no">否（將結束報名）</option>
+                </select>
+                {form.honest_confirm === 'no' && (
+                  <p className="form-error" style={{ marginTop: 8 }}>感謝您的誠實，報名表將不予提交。</p>
+                )}
+              </div>
+
+              {/* Q2 */}
+              <div className="question-block" id="field-attended_formal">
+                <label className="form-label">2. 是否以正式學員身份參加過隆波帕默尊者體系的實體或線上課程？ <span className="required">*</span></label>
+                <select className={`form-select ${errCls('attended_formal')}`} value={form.attended_formal}
+                  onChange={e => update('attended_formal', e.target.value)}>
+                  <option value="">請選擇</option>
+                  <option value="yes">是</option>
+                  <option value="no">否</option>
+                </select>
+              </div>
+
+              {/* Q3-Q8 */}
+              {COURSE_GROUPS.map(({ no, title, loc, courses }) => (
+                <div key={title} className="question-block">
+                  <label className="form-label">{no}. {title}　<span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>{loc}・非必選</span></label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
+                    {courses.map(course => (
+                      <label key={course} className={`opt ${form.attended_courses.includes(course) ? 'selected' : ''}`}>
+                        <input type="checkbox" checked={form.attended_courses.includes(course)}
+                          onChange={() => toggleCourse(course)} />
+                        <span className="opt-text" style={{ fontSize: 13 }}>{course}</span>
+                      </label>
                     ))}
-                  </select>
-                </div>
-
-                <div id="field-practice_frequency" style={{ marginBottom: 16 }}>
-                  <label className="form-label">14. 過去三個月內，您做固定式練習的頻率是？ <span className="required">*</span></label>
-                  <select className={`form-select ${errCls('practice_frequency')}`} value={form.practice_frequency}
-                    onChange={e => update('practice_frequency', e.target.value)}>
-                    <option value="">請選擇</option>
-                    <option value="every_day">每天至少 30 分鐘</option>
-                    <option value="almost_every_day">幾乎每天，偶有間斷</option>
-                    <option value="commit_from_now">未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束</option>
-                  </select>
-                </div>
-
-                <div id="field-pay_confirm" style={{ marginBottom: 16 }}>
-                  <label className="form-label">15. 食宿、場地及交通等費用需由學員自行負擔，並請於 6/15 前完成支付。是否可於期限內完成？ <span className="required">*</span></label>
-                  <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
-                    onChange={e => update('pay_confirm', e.target.value)}>
-                    <option value="">請選擇</option>
-                    <option value="yes">是，我願意按時全額支付</option>
-                    <option value="no">否</option>
-                  </select>
-                </div>
-
-                {yesNoSelect('health_confirm', '16. 您是否身體健康，能夠全程獨立參與？')}
-
-                <div style={{ marginBottom: 16 }}>
-                  <label className="form-label">17. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
-                  <div className="opt-group">
-                    <label className={`opt ${(form.mental_health_note === 'no' || form.mental_health_note === '') ? 'selected' : ''}`}>
-                      <input type="radio" name="mental_health" value="no"
-                        checked={form.mental_health_note === 'no' || form.mental_health_note === ''}
-                        onChange={() => update('mental_health_note', 'no')} />
-                      <span className="opt-text">否，無心理或精神疾病史</span>
-                    </label>
-                    <label className={`opt ${form.mental_health_note.startsWith('yes') ? 'selected' : ''}`}>
-                      <input type="radio" name="mental_health" value="yes"
-                        checked={form.mental_health_note.startsWith('yes')}
-                        onChange={() => update('mental_health_note', 'yes:')} />
-                      <span className="opt-text">是，請詳細說明</span>
-                    </label>
                   </div>
-                  {form.mental_health_note.startsWith('yes') && (
-                    <div className="branch-reveal active" style={{ marginTop: 10 }}>
-                      <textarea className="form-textarea" rows={3} placeholder="請詳細說明您的狀況"
-                        value={form.mental_health_note.replace('yes:', '')}
-                        onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
-                    </div>
-                  )}
+                </div>
+              ))}
+
+              {yesNoSelect('watched_recordings', '9. 是否完整觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
+              {yesNoSelect('zoom_guidance', '10. 您是否透過 ZOOM 的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
+              {yesNoSelect('watched_30_talks', '11. 是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
+              {yesNoSelect('keep_precepts', '12. 您是否持守五戒？')}
+
+              <div className="question-block" id="field-practice_years">
+                <label className="form-label">13. 您學習並實踐隆波帕默尊者的教導多久了？ <span className="required">*</span></label>
+                <select className={`form-select ${errCls('practice_years')}`} value={form.practice_years}
+                  onChange={e => update('practice_years', e.target.value)}>
+                  <option value="">請選擇</option>
+                  {PRACTICE_YEARS_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div className="question-block" id="field-practice_frequency">
+                <label className="form-label">14. 過去三個月內，您做固定式練習的頻率是？ <span className="required">*</span></label>
+                <select className={`form-select ${errCls('practice_frequency')}`} value={form.practice_frequency}
+                  onChange={e => update('practice_frequency', e.target.value)}>
+                  <option value="">請選擇</option>
+                  <option value="every_day">每天至少 30 分鐘</option>
+                  <option value="almost_every_day">幾乎每天，偶有間斷</option>
+                  <option value="commit_from_now">未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束</option>
+                </select>
+              </div>
+
+              <div className="question-block" id="field-pay_confirm">
+                <label className="form-label">15. 食宿、場地及交通等費用需由學員自行負擔，並請於 6/15 前完成支付。是否可於期限內完成？ <span className="required">*</span></label>
+                <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
+                  onChange={e => update('pay_confirm', e.target.value)}>
+                  <option value="">請選擇</option>
+                  <option value="yes">是，我願意按時全額支付</option>
+                  <option value="no">否</option>
+                </select>
+              </div>
+
+              {yesNoSelect('health_confirm', '16. 您是否身體健康，能夠全程獨立參與？')}
+
+              <div className="question-block">
+                <label className="form-label">17. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
+                <div className="opt-group">
+                  <label className={`opt ${form.mental_health_note === 'no' ? 'selected' : ''}`}>
+                    <input type="radio" name="mental_health" value="no"
+                      checked={form.mental_health_note === 'no'}
+                      onChange={() => update('mental_health_note', 'no')} />
+                    <span className="opt-text">否，無心理或精神疾病史</span>
+                  </label>
+                  <label className={`opt ${form.mental_health_note.startsWith('yes') ? 'selected' : ''}`}>
+                    <input type="radio" name="mental_health" value="yes"
+                      checked={form.mental_health_note.startsWith('yes')}
+                      onChange={() => update('mental_health_note', 'yes:')} />
+                    <span className="opt-text">是，請詳細說明</span>
+                  </label>
+                </div>
+                {form.mental_health_note.startsWith('yes') && (
+                  <div className="branch-reveal active" style={{ marginTop: 10 }}>
+                    <textarea className="form-textarea" rows={3} placeholder="請詳細說明您的狀況"
+                      value={form.mental_health_note.replace('yes:', '')}
+                      onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ============== Step 4：個人資訊 ============== */}
+          {step === 4 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 04</p>
+                <h2 className="step-header-title">個人資訊</h2>
+                <p className="step-header-desc">提供報名所需的聯絡與身份資料。所有資料僅供本次禪修使用。</p>
+              </div>
+
+              <div className="field-row">
+                <div id="field-chinese_name">
+                  <label className="form-label">19. 中文姓名（身分證／護照姓名）<span className="required">*</span></label>
+                  <input className={`form-input ${errCls('chinese_name')}`} value={form.chinese_name}
+                    onChange={e => update('chinese_name', e.target.value)} />
+                </div>
+                <div id="field-passport_name">
+                  <label className="form-label">20. 護照英文姓名 <span className="required">*</span></label>
+                  <input className={`form-input ${errCls('passport_name')}`} value={form.passport_name}
+                    onChange={e => update('passport_name', e.target.value)} />
                 </div>
               </div>
 
-              {/* Part 3: 個人資訊 */}
-              <div className="field-group">
-                <div className="field-group-title"><span className="num">PART 03</span>個人資訊</div>
-
-                <div className="field-row">
-                  <div id="field-chinese_name">
-                    <label className="form-label">19. 中文姓名（身分證／護照姓名）<span className="required">*</span></label>
-                    <input className={`form-input ${errCls('chinese_name')}`} value={form.chinese_name}
-                      onChange={e => update('chinese_name', e.target.value)} />
-                  </div>
-                  <div id="field-passport_name">
-                    <label className="form-label">20. 護照英文姓名 <span className="required">*</span></label>
-                    <input className={`form-input ${errCls('passport_name')}`} value={form.passport_name}
-                      onChange={e => update('passport_name', e.target.value)} />
-                  </div>
+              <div id="field-identity" style={{ marginTop: 14 }}>
+                <label className="form-label">21. 您屬於？ <span className="required">*</span></label>
+                <div className="opt-group inline">
+                  {[['lay', '在家人（居士）'], ['monastic', '僧眾']].map(([val, label]) => (
+                    <label key={val} className={`opt ${form.identity === val ? 'selected' : ''}`}>
+                      <input type="radio" name="identity" value={val}
+                        checked={form.identity === val}
+                        onChange={e => update('identity', e.target.value)} />
+                      <span className="opt-text">{label}</span>
+                    </label>
+                  ))}
                 </div>
+              </div>
 
-                <div id="field-identity" style={{ marginTop: 14 }}>
-                  <label className="form-label">21. 您屬於？ <span className="required">*</span></label>
+              {form.identity === 'monastic' && (
+                <div className="branch-reveal active" style={{ marginTop: 12 }}>
+                  <label className="form-label">22. 法名（僅出家師父填寫）</label>
+                  <input className="form-input" value={form.dharma_name}
+                    onChange={e => update('dharma_name', e.target.value)} />
+                </div>
+              )}
+
+              <div className="field-row" style={{ marginTop: 14 }}>
+                <div id="field-gender">
+                  <label className="form-label">23. 性別 <span className="required">*</span></label>
                   <div className="opt-group inline">
-                    {[['lay', '在家人（居士）'], ['monastic', '僧眾']].map(([val, label]) => (
-                      <label key={val} className={`opt ${form.identity === val ? 'selected' : ''}`}>
-                        <input type="radio" name="identity" value={val}
-                          checked={form.identity === val}
-                          onChange={e => update('identity', e.target.value)} />
+                    {[['male', '男'], ['female', '女']].map(([val, label]) => (
+                      <label key={val} className={`opt ${form.gender === val ? 'selected' : ''}`}>
+                        <input type="radio" name="gender" value={val}
+                          checked={form.gender === val}
+                          onChange={e => update('gender', e.target.value)} />
                         <span className="opt-text">{label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
+                <div id="field-age">
+                  <label className="form-label">24. 年齡 <span className="required">*</span></label>
+                  <input type="number" className={`form-input ${errCls('age')}`} value={form.age}
+                    onChange={e => update('age', e.target.value)} />
+                </div>
+              </div>
 
-                {form.identity === 'monastic' && (
+              <div className="field-row" style={{ marginTop: 14 }}>
+                <div>
+                  <label className="form-label">25. 護照頒發地</label>
+                  <input className="form-input" value={form.passport_country}
+                    onChange={e => update('passport_country', e.target.value)} />
+                </div>
+                <div id="field-residence">
+                  <label className="form-label">26. 居住地 <span className="required">*</span></label>
+                  <select className={`form-select ${errCls('residence')}`} value={form.residence}
+                    onChange={e => update('residence', e.target.value)}>
+                    <option value="">請選擇</option>
+                    {RESIDENCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="field-row" style={{ marginTop: 14 }}>
+                <div id="field-phone">
+                  <label className="form-label">27. 手機號碼 <span className="required">*</span><span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>海外請加國際碼，例：886+</span></label>
+                  <input className={`form-input ${errCls('phone')}`} value={form.phone}
+                    onChange={e => update('phone', e.target.value)} />
+                </div>
+                <div id="field-email">
+                  <label className="form-label">28. 電子信箱 <span className="required">*</span></label>
+                  <input type="email" className={`form-input ${errCls('email')}`} value={form.email}
+                    onChange={e => update('email', e.target.value)} />
+                </div>
+              </div>
+
+              <div id="field-contact_app" style={{ marginTop: 18 }}>
+                <label className="form-label">29. 通訊軟體（LINE 或 微信擇一）<span className="required">*</span></label>
+                <p className="form-hint" style={{ marginBottom: 10 }}>請擇一填寫並上傳對應 QR Code（檔案上限 500KB）</p>
+                <div className="opt-group inline">
+                  <label className={`opt ${form.contact_app === 'line' ? 'selected' : ''}`}>
+                    <input type="radio" name="contact_app" value="line"
+                      checked={form.contact_app === 'line'}
+                      onChange={() => update('contact_app', 'line')} />
+                    <span className="opt-text">LINE</span>
+                  </label>
+                  <label className={`opt ${form.contact_app === 'wechat' ? 'selected' : ''}`}>
+                    <input type="radio" name="contact_app" value="wechat"
+                      checked={form.contact_app === 'wechat'}
+                      onChange={() => update('contact_app', 'wechat')} />
+                    <span className="opt-text">微信（WeChat）</span>
+                  </label>
+                </div>
+
+                {form.contact_app === 'line' && (
                   <div className="branch-reveal active" style={{ marginTop: 12 }}>
-                    <label className="form-label">22. 法名（僅出家師父填寫）</label>
-                    <input className="form-input" value={form.dharma_name}
-                      onChange={e => update('dharma_name', e.target.value)} />
+                    <label className="form-label">LINE ID <span className="required">*</span></label>
+                    <input className="form-input" placeholder="請填寫 LINE ID" value={form.line_id}
+                      onChange={e => update('line_id', e.target.value)} />
+                    <div style={{ marginTop: 12 }}>
+                      <label className="form-label">LINE QR Code 圖片 <span className="required">*</span></label>
+                      {form.line_qr_url && (
+                        <div className="uploaded-preview" style={{ marginBottom: 8 }}>
+                          <div className="thumb"><img src={form.line_qr_url} alt="LINE QR" /></div>
+                          <div className="info">
+                            <div className="filename">已上傳 LINE QR</div>
+                          </div>
+                        </div>
+                      )}
+                      <label htmlFor="qr-line" className={`upload-box ${form.line_qr_url ? 'has-file' : ''}`}>
+                        <div className="upload-icon">{uploadingQr === 'line' ? '⏳' : form.line_qr_url ? '✓' : '📤'}</div>
+                        <div className="upload-text">
+                          {uploadingQr === 'line' ? '上傳中⋯' : form.line_qr_url ? '點此重新上傳 LINE QR' : '點此選擇 LINE QR Code'}
+                        </div>
+                        <div className="upload-hint">JPG / PNG / WEBP（500KB 以下）</div>
+                        <input id="qr-line" type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          disabled={uploadingQr === 'line'}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('line', f) }} />
+                      </label>
+                    </div>
                   </div>
                 )}
 
-                <div className="field-row" style={{ marginTop: 14 }}>
-                  <div id="field-gender">
-                    <label className="form-label">23. 性別 <span className="required">*</span></label>
-                    <div className="opt-group inline">
-                      {[['male', '男'], ['female', '女']].map(([val, label]) => (
-                        <label key={val} className={`opt ${form.gender === val ? 'selected' : ''}`}>
-                          <input type="radio" name="gender" value={val}
-                            checked={form.gender === val}
-                            onChange={e => update('gender', e.target.value)} />
-                          <span className="opt-text">{label}</span>
-                        </label>
-                      ))}
+                {form.contact_app === 'wechat' && (
+                  <div className="branch-reveal active" style={{ marginTop: 12 }}>
+                    <label className="form-label">微信號 <span className="required">*</span></label>
+                    <input className="form-input" placeholder="請填寫微信號" value={form.wechat_id}
+                      onChange={e => update('wechat_id', e.target.value)} />
+                    <div style={{ marginTop: 12 }}>
+                      <label className="form-label">微信二維碼圖片 <span className="required">*</span></label>
+                      {form.wechat_qr_url && (
+                        <div className="uploaded-preview" style={{ marginBottom: 8 }}>
+                          <div className="thumb"><img src={form.wechat_qr_url} alt="WeChat QR" /></div>
+                          <div className="info">
+                            <div className="filename">已上傳 WeChat QR</div>
+                          </div>
+                        </div>
+                      )}
+                      <label htmlFor="qr-wechat" className={`upload-box ${form.wechat_qr_url ? 'has-file' : ''}`}>
+                        <div className="upload-icon">{uploadingQr === 'wechat' ? '⏳' : form.wechat_qr_url ? '✓' : '📤'}</div>
+                        <div className="upload-text">
+                          {uploadingQr === 'wechat' ? '上傳中⋯' : form.wechat_qr_url ? '點此重新上傳 微信 QR' : '點此選擇微信二維碼'}
+                        </div>
+                        <div className="upload-hint">JPG / PNG / WEBP（500KB 以下）</div>
+                        <input id="qr-wechat" type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          disabled={uploadingQr === 'wechat'}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('wechat', f) }} />
+                      </label>
                     </div>
                   </div>
-                  <div id="field-age">
-                    <label className="form-label">24. 年齡 <span className="required">*</span></label>
-                    <input type="number" className={`form-input ${errCls('age')}`} value={form.age}
-                      onChange={e => update('age', e.target.value)} />
-                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ============== Step 5：確認送出 ============== */}
+          {step === 5 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 05</p>
+                <h2 className="step-header-title">確認資料</h2>
+                <p className="step-header-desc">請最後確認以下資料，無誤後送出。送出後可在學員專區查詢狀態。</p>
+              </div>
+
+              <div className="review-grid">
+                <div className="review-group">
+                  <h4>背景與承諾 <span className="edit-link" onClick={() => setStep(3)}>編輯 Edit</span></h4>
+                  <ReviewRow k="如實填寫" v={form.honest_confirm === 'yes' ? '是' : '—'} />
+                  <ReviewRow k="正式學員參加課程" v={form.attended_formal === 'yes' ? '是' : form.attended_formal === 'no' ? '否' : '—'} />
+                  <ReviewRow k="3 屆錄影／錄音" v={form.watched_recordings === 'yes' ? '是' : form.watched_recordings === 'no' ? '否' : '—'} />
+                  <ReviewRow k="ZOOM 一對一指導" v={form.zoom_guidance === 'yes' ? '是' : form.zoom_guidance === 'no' ? '否' : '—'} />
+                  <ReviewRow k="法談 30 篇以上" v={form.watched_30_talks === 'yes' ? '是' : form.watched_30_talks === 'no' ? '否' : '—'} />
+                  <ReviewRow k="參加過課程" v={form.attended_courses.length > 0 ? `${form.attended_courses.length} 屆` : '—'} />
+                  <ReviewRow k="持守五戒" v={form.keep_precepts === 'yes' ? '是' : form.keep_precepts === 'no' ? '否' : '—'} />
+                  <ReviewRow k="學習實踐多久" v={form.practice_years || '—'} />
+                  <ReviewRow k="固定練習頻率" v={PRACTICE_FREQ_LABEL[form.practice_frequency] || '—'} />
+                  <ReviewRow k="可按時繳費" v={form.pay_confirm === 'yes' ? '是' : form.pay_confirm === 'no' ? '否' : '—'} />
+                  <ReviewRow k="身體健康可全程參與" v={form.health_confirm === 'yes' ? '是' : form.health_confirm === 'no' ? '否' : '—'} />
+                  <ReviewRow k="心理／精神疾病史" v={form.mental_health_note === 'no' ? '無' : form.mental_health_note.startsWith('yes:') ? `是：${form.mental_health_note.replace('yes:', '') || '（未填寫說明）'}` : '—'} />
                 </div>
 
-                <div className="field-row" style={{ marginTop: 14 }}>
-                  <div>
-                    <label className="form-label">25. 護照頒發地</label>
-                    <input className="form-input" value={form.passport_country}
-                      onChange={e => update('passport_country', e.target.value)} />
-                  </div>
-                  <div id="field-residence">
-                    <label className="form-label">26. 居住地 <span className="required">*</span></label>
-                    <select className={`form-select ${errCls('residence')}`} value={form.residence}
-                      onChange={e => update('residence', e.target.value)}>
-                      <option value="">請選擇</option>
-                      {['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區'].map(v => (
-                        <option key={v} value={v}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="field-row" style={{ marginTop: 14 }}>
-                  <div id="field-phone">
-                    <label className="form-label">27. 手機號碼 <span className="required">*</span><span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>海外請加國際碼，例：886+</span></label>
-                    <input className={`form-input ${errCls('phone')}`} value={form.phone}
-                      onChange={e => update('phone', e.target.value)} />
-                  </div>
-                  <div id="field-email">
-                    <label className="form-label">28. 電子信箱 <span className="required">*</span></label>
-                    <input type="email" className={`form-input ${errCls('email')}`} value={form.email}
-                      onChange={e => update('email', e.target.value)} />
-                  </div>
-                </div>
-
-                <div id="field-contact_app" style={{ marginTop: 18 }}>
-                  <label className="form-label">29. 通訊軟體（LINE 或 微信擇一）<span className="required">*</span></label>
-                  <p className="form-hint" style={{ marginBottom: 10 }}>請擇一填寫並上傳對應 QR Code（檔案上限 500KB）</p>
-                  <div className="opt-group inline">
-                    <label className={`opt ${form.contact_app === 'line' ? 'selected' : ''}`}>
-                      <input type="radio" name="contact_app" value="line"
-                        checked={form.contact_app === 'line'}
-                        onChange={() => update('contact_app', 'line')} />
-                      <span className="opt-text">LINE</span>
-                    </label>
-                    <label className={`opt ${form.contact_app === 'wechat' ? 'selected' : ''}`}>
-                      <input type="radio" name="contact_app" value="wechat"
-                        checked={form.contact_app === 'wechat'}
-                        onChange={() => update('contact_app', 'wechat')} />
-                      <span className="opt-text">微信（WeChat）</span>
-                    </label>
-                  </div>
-
-                  {form.contact_app === 'line' && (
-                    <div className="branch-reveal active" style={{ marginTop: 12 }}>
-                      <label className="form-label">LINE ID <span className="required">*</span></label>
-                      <input className="form-input" placeholder="請填寫 LINE ID" value={form.line_id}
-                        onChange={e => update('line_id', e.target.value)} />
-                      <div style={{ marginTop: 12 }}>
-                        <label className="form-label">LINE QR Code 圖片 <span className="required">*</span></label>
-                        {form.line_qr_url && (
-                          <div className="uploaded-preview" style={{ marginBottom: 8 }}>
-                            <div className="thumb"><img src={form.line_qr_url} alt="LINE QR" /></div>
-                            <div className="info">
-                              <div className="filename">已上傳 LINE QR</div>
-                            </div>
-                          </div>
-                        )}
-                        <label htmlFor="qr-line" className={`upload-box ${form.line_qr_url ? 'has-file' : ''}`}>
-                          <div className="upload-icon">{uploadingQr === 'line' ? '⏳' : form.line_qr_url ? '✓' : '📤'}</div>
-                          <div className="upload-text">
-                            {uploadingQr === 'line' ? '上傳中⋯' : form.line_qr_url ? '點此重新上傳 LINE QR' : '點此選擇 LINE QR Code'}
-                          </div>
-                          <div className="upload-hint">JPG / PNG / WEBP（500KB 以下）</div>
-                          <input id="qr-line" type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            disabled={uploadingQr === 'line'}
-                            onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('line', f) }} />
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
-                  {form.contact_app === 'wechat' && (
-                    <div className="branch-reveal active" style={{ marginTop: 12 }}>
-                      <label className="form-label">微信號 <span className="required">*</span></label>
-                      <input className="form-input" placeholder="請填寫微信號" value={form.wechat_id}
-                        onChange={e => update('wechat_id', e.target.value)} />
-                      <div style={{ marginTop: 12 }}>
-                        <label className="form-label">微信二維碼圖片 <span className="required">*</span></label>
-                        {form.wechat_qr_url && (
-                          <div className="uploaded-preview" style={{ marginBottom: 8 }}>
-                            <div className="thumb"><img src={form.wechat_qr_url} alt="WeChat QR" /></div>
-                            <div className="info">
-                              <div className="filename">已上傳 WeChat QR</div>
-                            </div>
-                          </div>
-                        )}
-                        <label htmlFor="qr-wechat" className={`upload-box ${form.wechat_qr_url ? 'has-file' : ''}`}>
-                          <div className="upload-icon">{uploadingQr === 'wechat' ? '⏳' : form.wechat_qr_url ? '✓' : '📤'}</div>
-                          <div className="upload-text">
-                            {uploadingQr === 'wechat' ? '上傳中⋯' : form.wechat_qr_url ? '點此重新上傳 微信 QR' : '點此選擇微信二維碼'}
-                          </div>
-                          <div className="upload-hint">JPG / PNG / WEBP（500KB 以下）</div>
-                          <input id="qr-wechat" type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            disabled={uploadingQr === 'wechat'}
-                            onChange={e => { const f = e.target.files?.[0]; if (f) handleQrUpload('wechat', f) }} />
-                        </label>
-                      </div>
-                    </div>
-                  )}
+                <div className="review-group">
+                  <h4>個人資訊 <span className="edit-link" onClick={() => setStep(4)}>編輯 Edit</span></h4>
+                  <ReviewRow k="中文姓名" v={form.chinese_name} />
+                  <ReviewRow k="護照英文姓名" v={form.passport_name} />
+                  <ReviewRow k="身份" v={form.identity === 'lay' ? '在家人（居士）' : form.identity === 'monastic' ? '僧眾' : '—'} />
+                  {form.identity === 'monastic' && <ReviewRow k="法名" v={form.dharma_name} />}
+                  <ReviewRow k="性別" v={form.gender === 'male' ? '男' : form.gender === 'female' ? '女' : '—'} />
+                  <ReviewRow k="年齡" v={form.age} />
+                  <ReviewRow k="護照頒發地" v={form.passport_country} />
+                  <ReviewRow k="居住地" v={form.residence} />
+                  <ReviewRow k="手機號碼" v={form.phone} />
+                  <ReviewRow k="電子信箱" v={form.email} />
+                  <ReviewRow k="通訊軟體" v={
+                    form.contact_app === 'line' ? `LINE ${form.line_id}` :
+                    form.contact_app === 'wechat' ? `微信 ${form.wechat_id}` : '—'
+                  } />
                 </div>
               </div>
 
-              {/* 費用說明 */}
-              <div className="alert-card" style={{ marginBottom: 28 }}>
-                <div className="alert-card-title">8/20–8/24 禪修期間費用</div>
-                <p>食宿、交通及場地費用：<strong>NT$18,600 元整</strong>（如需提前或延後住宿，將另計相關費用）</p>
-                <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+              <div className="alert-card" style={{ marginTop: 18 }}>
+                <div className="alert-card-title">送出前再次提醒</div>
+                <p>提交報名表後並不代表已錄取，錄取結果將於 <strong>6/6</strong> 以 Email 通知。請以您填寫的 Email 為準，注意查收（含垃圾信箱）。</p>
+                <p>送出後將自動寄送一封確認信至您的 Email，內含繳費專屬碼，請妥善保管。</p>
               </div>
+            </div>
+          )}
 
-              {error && (
-                <div className="alert-card" style={{ marginBottom: 18, position: 'sticky', bottom: 16, zIndex: 10 }}>
-                  <div className="alert-card-title">{error}</div>
-                  <p>
-                    <button onClick={() => { setError(''); setErrorField(null) }}
-                      className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>
-                      我知道了
-                    </button>
-                  </p>
-                </div>
-              )}
-
-              <div className="form-actions">
-                <a href="/" className="btn btn-ghost">← 返回首頁</a>
-                <button onClick={handleSubmit} disabled={loading}
-                  className="btn btn-primary">
-                  {loading ? '提交中⋯' : '提交報名表'} <span className="arrow">→</span>
+          {error && (
+            <div className="alert-card" style={{ marginTop: 18, position: 'sticky', bottom: 16, zIndex: 10 }}>
+              <div className="alert-card-title">{error}</div>
+              <p>
+                <button onClick={() => { setError(''); setErrorField(null) }}
+                  className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>
+                  我知道了
                 </button>
-              </div>
-
-              <p style={{ textAlign: 'center', marginTop: 14, fontSize: 12.5, color: 'var(--ink-mute)' }}>
-                提交後系統會將報名資訊發送到您填寫的電子信箱，請注意查收（包括垃圾郵件）。
               </p>
-            </>
+            </div>
+          )}
+
+          <div className="form-actions">
+            {step > 1 ? (
+              <button onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
+            ) : (
+              <a href="/" className="btn btn-ghost">← 返回首頁</a>
+            )}
+            {step < STEPS.length ? (
+              <button onClick={() => goToStep(step + 1)} className="btn btn-primary">
+                下一步 <span className="arrow">→</span>
+              </button>
+            ) : (
+              <button onClick={handleSubmit} disabled={loading} className="btn btn-primary">
+                {loading ? '提交中⋯' : '提交報名表'} <span className="arrow">→</span>
+              </button>
+            )}
+          </div>
+
+          {step === STEPS.length && (
+            <p style={{ textAlign: 'center', marginTop: 14, fontSize: 12.5, color: 'var(--ink-mute)' }}>
+              提交後系統會將報名資訊發送到您填寫的電子信箱，請注意查收（包括垃圾郵件）。
+            </p>
           )}
         </div>
 
         <div style={{ textAlign: 'center', padding: '40px 0 20px' }}>
-          <p style={{ fontFamily: 'var(--font-noto-serif-tc), serif', color: 'var(--green-deep)', fontWeight: 600, marginBottom: 6 }}>
-            報名表填寫結束，感謝您的報名
-          </p>
-          <p style={{ color: 'var(--ink-mute)', fontSize: 14, marginBottom: 4 }}>隨喜功德</p>
           <p style={{ fontFamily: 'var(--font-noto-serif-tc), serif', color: 'var(--green-deep)', fontWeight: 700 }}>
             台灣四念處學會 合十
           </p>
+          <p style={{ color: 'var(--ink-mute)', fontSize: 14, marginTop: 4 }}>隨喜功德</p>
         </div>
       </main>
 
@@ -625,5 +790,15 @@ export default function RegisterPage() {
         </div>
       </footer>
     </>
+  )
+}
+
+function ReviewRow({ k, v }: { k: string; v: string | undefined }) {
+  const empty = !v || v === '—' || v.trim?.() === ''
+  return (
+    <div className="review-row">
+      <span className="k">{k}</span>
+      <span className={`v ${empty ? 'empty' : ''}`}>{empty ? '未填寫' : v}</span>
+    </div>
   )
 }
