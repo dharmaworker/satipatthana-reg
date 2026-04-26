@@ -1767,6 +1767,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
    Upload (registration form: photo / lodging: docs / screening: green tests)
    ============================================================ */
 .upload-area {
+  display: block;
+  width: 100%;
   border: 2px dashed var(--line-strong);
   border-radius: 18px;
   padding: 32px 24px;
@@ -1775,6 +1777,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  box-sizing: border-box;
 }
 .upload-area:hover { border-color: var(--gold); background: rgba(216, 194, 154, 0.1); }
 .upload-area.has-file {
@@ -1799,6 +1802,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .upload-area.has-file .upload-icon { background: rgba(73, 85, 52, 0.15); color: var(--green); }
 
 .upload-box {
+  display: block;
+  width: 100%;
   border: 2px dashed var(--line-strong);
   border-radius: 12px;
   padding: 16px 18px;
@@ -1807,6 +1812,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  box-sizing: border-box;
 }
 .upload-box:hover { border-color: var(--gold); background: rgba(216, 194, 154, 0.08); }
 .upload-box.has-file { border-style: solid; border-color: var(--green); background: rgba(73, 85, 52, 0.04); }
