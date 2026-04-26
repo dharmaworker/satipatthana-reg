@@ -37,11 +37,10 @@ export default function DocumentsPage() {
     const hasId = !!(r.id_front_url && r.id_back_url)
     const hasPassport = !!r.passport_url
     const hasArc = !!r.arc_url
-    let total = 2 // 相片 + 證件一組（身分證正反 / 護照 / ARC）擇一
+    let total = 2
     let uploaded = 0
     if (r.photo_url) uploaded += 1
     if (hasId || hasPassport || hasArc) uploaded += 1
-    // 短期旅客才計機票；ARC 與台灣人不計
     if (hasPassport) {
       total += 2
       if (r.arrival_ticket_url) uploaded += 1
@@ -69,96 +68,90 @@ export default function DocumentsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-page">
       <AdminHeader />
 
-      <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
-          <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
+      <div className="admin-main">
+        <div className="admin-toolbar">
+          <input type="text"
             placeholder="搜尋姓名 / 英文姓名 / 序號 / 學號"
-            value={search} onChange={e => setSearch(e.target.value)} />
-          <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width: 260 }} />
+          <label>
             <input type="checkbox" checked={missingOnly}
               onChange={e => setMissingOnly(e.target.checked)} />
             只顯示未繳齊
           </label>
-          <button onClick={fetchData}
-            className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">重新整理</button>
-          <span className="text-sm text-gray-600 ml-auto">共 {filtered.length} 筆</span>
+          <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <span className="count">共 {filtered.length} 筆</span>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">姓名</th>
-                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">序號</th>
-                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">學號</th>
-                  <th className="px-3 py-3 text-left text-black font-medium whitespace-nowrap">居住地</th>
-                  {DOC_COLS.map(c => (
-                    <th key={c.key} className="px-3 py-3 text-center text-black font-medium whitespace-nowrap">{c.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {loading ? (
-                  <tr><td colSpan={4 + DOC_COLS.length} className="px-4 py-8 text-center text-black">載入中...</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={4 + DOC_COLS.length} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
-                ) : filtered.map(r => {
-                  const reg = r.registration || {}
-                  return (
-                    <tr key={r.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-3 font-medium text-black whitespace-nowrap">
-                        {reg.chinese_name}
-                        {reg.passport_name && (
-                          <div className="text-xs text-gray-500">{reg.passport_name}</div>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.member_id || '—'}</td>
-                      <td className="px-3 py-3 text-black whitespace-nowrap font-mono">{reg.student_id || '—'}</td>
-                      <td className="px-3 py-3 text-black text-xs whitespace-nowrap">{reg.residence || '—'}</td>
-                      {DOC_COLS.map(c => {
-                        const url: string = r[c.key] || ''
-                        return (
-                          <td key={c.key} className="px-2 py-2 text-center">
-                            {url ? (
-                              <DocCell url={url} label={c.label} onOpen={() => setPreview({ url, title: `${reg.chinese_name}　${c.label}` })} />
-                            ) : (
-                              <span className="text-gray-300 text-xs">—</span>
-                            )}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className="admin-table-card scroll">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>序號</th>
+                <th>學號</th>
+                <th>居住地</th>
+                {DOC_COLS.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.label}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={4 + DOC_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={4 + DOC_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+              ) : filtered.map(r => {
+                const reg = r.registration || {}
+                return (
+                  <tr key={r.id}>
+                    <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+                      {reg.chinese_name}
+                      {reg.passport_name && (
+                        <div className="muted">{reg.passport_name}</div>
+                      )}
+                    </td>
+                    <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.member_id || '—'}</td>
+                    <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.student_id || '—'}</td>
+                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.residence || '—'}</td>
+                    {DOC_COLS.map(c => {
+                      const url: string = r[c.key] || ''
+                      return (
+                        <td key={c.key} style={{ textAlign: 'center', padding: '8px 6px' }}>
+                          {url ? (
+                            <DocCell url={url} label={c.label}
+                              onOpen={() => setPreview({ url, title: `${reg.chinese_name}　${c.label}` })} />
+                          ) : (
+                            <span style={{ color: 'var(--ink-mute)', fontSize: 12 }}>—</span>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {preview && (
-        <div onClick={() => setPreview(null)}
-          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-4xl w-full p-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-black">{preview.title}</h3>
-              <div className="flex gap-2">
+        <div onClick={() => setPreview(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>{preview.title}</span>
+              <span style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <a href={preview.url} target="_blank" rel="noreferrer"
-                  className="text-sm text-blue-600 underline">開新視窗</a>
-                <button onClick={() => setPreview(null)}
-                  className="text-gray-500 hover:text-black">✕</button>
-              </div>
-            </div>
+                  style={{ fontSize: 12.5, color: 'var(--green)', fontWeight: 600 }}>開新視窗</a>
+                <button onClick={() => setPreview(null)} className="admin-btn-sm">✕</button>
+              </span>
+            </h3>
             {preview.url.toLowerCase().endsWith('.pdf') ? (
-              <iframe src={preview.url} className="w-full h-[70vh] border rounded" />
+              <iframe src={preview.url} style={{ width: '100%', height: '70vh', border: '1px solid var(--line)', borderRadius: 8 }} />
             ) : (
               <img src={preview.url} alt={preview.title}
-                className="max-w-full max-h-[75vh] mx-auto object-contain" />
+                style={{ maxWidth: '100%', maxHeight: '75vh', display: 'block', margin: '0 auto', objectFit: 'contain' }} />
             )}
           </div>
         </div>
@@ -171,16 +164,15 @@ function DocCell({ url, label, onOpen }: { url: string; label: string; onOpen: (
   const isPdf = url.toLowerCase().endsWith('.pdf')
   if (isPdf) {
     return (
-      <button onClick={onOpen}
-        className="inline-flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded text-xs">
+      <button onClick={onOpen} className="admin-btn-sm danger" style={{ fontSize: 11 }}>
         📄 PDF
       </button>
     )
   }
   return (
-    <button onClick={onOpen} className="block mx-auto">
+    <button onClick={onOpen} style={{ display: 'block', padding: 0, border: 'none', background: 'none', cursor: 'pointer', margin: '0 auto' }}>
       <img src={url} alt={label}
-        className="w-12 h-12 object-cover border rounded hover:opacity-80" />
+        style={{ width: 48, height: 48, objectFit: 'cover', border: '1px solid var(--line)', borderRadius: 6, display: 'block' }} />
     </button>
   )
 }

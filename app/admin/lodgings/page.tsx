@@ -39,7 +39,6 @@ export default function LodgingsPage() {
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
 
-  // 學號管理（R-001）：計算下一個可用編號（掃全部 rows 找最大 R-N）
   const nextStudentId = () => {
     let maxN = 0
     for (const r of rows) {
@@ -62,11 +61,6 @@ export default function LodgingsPage() {
     fetchData()
     return true
   }
-  const assignStudentId = async (regId: string) => {
-    const next = nextStudentId()
-    if (!confirm(`配發學號 ${next}？`)) return
-    if (await patchStudentId(regId, next)) setBulkMessage(`已編學號 ${next}`)
-  }
   const clearStudentId = async (reg: any) => {
     if (!confirm(`確定註銷 ${reg.chinese_name} 的學號「${reg.student_id}」？`)) return
     if (await patchStudentId(reg.id, null)) setBulkMessage(`已註銷 ${reg.chinese_name} 的學號`)
@@ -87,10 +81,7 @@ export default function LodgingsPage() {
   }
 
   const sendApprovalNotifications = async () => {
-    if (bulkSelected.length === 0) {
-      alert('請先勾選至少一位學員')
-      return
-    }
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
     if (!confirm(`寄出錄取通知信給 ${bulkSelected.length} 位學員？`)) return
     setBulkSending('approval')
     setBulkMessage('')
@@ -106,11 +97,7 @@ export default function LodgingsPage() {
   }
 
   const sendFormalNotifications = async () => {
-    if (bulkSelected.length === 0) {
-      alert('請先勾選至少一位學員')
-      return
-    }
-    // 正式通知信需要已填食宿，提醒操作員
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
     const noLodgingCount = filtered
       .filter(r => bulkSelected.includes(r.registration?.id) && !r.id)
       .length
@@ -155,7 +142,6 @@ export default function LodgingsPage() {
     setSaving(true)
     setEditError('')
     try {
-      // 1) 若學號有變動，先 patch registrations.student_id（跨表，/api/admin/registrations）
       const regId = edit.registration?.id
       const newStudentId = edit.registration?.student_id ?? null
       const oldStudentId = rows.find(r => r.registration?.id === regId)?.registration?.student_id ?? null
@@ -170,7 +156,6 @@ export default function LodgingsPage() {
           throw new Error(`學號儲存失敗：${d.error || r1.status}`)
         }
       }
-      // 2) patch 食宿登記欄位（若 lodging row 存在）
       if (edit.id) {
         const res = await fetch('/api/admin/lodgings', {
           method: 'PATCH',
@@ -215,39 +200,34 @@ export default function LodgingsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-page">
       <AdminHeader />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
-        <details open className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
-          <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
-          <ol className="list-decimal pl-5 mt-2 space-y-1">
+      <div className="admin-main">
+        <details open className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--green-deep)', fontSize: 13.5, userSelect: 'none' }}>💡 操作說明（點擊可折疊）</summary>
+          <ol style={{ paddingLeft: 22, marginTop: 8, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
             <li><strong>本頁對象：</strong>所有狀態為「已錄取」的學員；未填食宿者食宿欄位顯示「—」。</li>
             <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生；取消錄取時自動註銷。</li>
-            <li><strong>學號 R-xxx：</strong>按「✏️ 手動」自己 key（儲存需唯一）；按「註銷」可清除。</li>
+            <li><strong>學號 R-xxx：</strong>按「✏ 手動」自己 key（儲存需唯一）；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
-            <li><strong>批次寄信流程：</strong>先用搜尋 / 「只顯示已分配學號者」過濾 → 勾選想要送出的學員 → 按對應的批次寄信按鈕。未勾選會提示。
-              <ul className="list-disc pl-5 mt-1 space-y-0.5">
-                <li><strong>批次寄出錄取通知信：</strong>通知學員已錄取，內含繳費/食宿/快篩連結（首次寄，或需補寄）。</li>
-                <li><strong>批次寄出正式學員通知信：</strong>彙整學員完整資料（含食宿、證件、學號）寄出。建議確認學號與資料皆正確後再寄。</li>
-              </ul>
-            </li>
+            <li><strong>批次寄信：</strong>用搜尋／「只顯示已分配學號者」過濾後勾選學員 → 按對應的批次寄信按鈕。</li>
           </ol>
         </details>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-4 flex gap-2 items-center flex-wrap">
-          <input className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64"
+        <div className="admin-toolbar">
+          <input type="text"
             placeholder="搜尋姓名 / Email / 繳費碼 / 序號 / 學號"
-            value={search} onChange={e => setSearch(e.target.value)} />
-          <label className="flex items-center gap-2 text-sm text-black cursor-pointer bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width: 280 }} />
+          <label style={{ background: 'rgba(216, 194, 154, 0.18)', border: '1px solid rgba(180, 147, 88, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
             <input type="checkbox" checked={onlyWithStudentId}
               onChange={e => setOnlyWithStudentId(e.target.checked)} />
             只顯示已分配學號者
           </label>
-          <button onClick={fetchData}
-            className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">重新整理</button>
-          <label className="flex items-center gap-2 text-sm text-black cursor-pointer">
+          <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <label>
             <input type="checkbox" checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
               onChange={() => {
                 if (bulkSelected.length === filtered.length) setBulkSelected([])
@@ -257,143 +237,126 @@ export default function LodgingsPage() {
           </label>
           <button onClick={sendApprovalNotifications}
             disabled={bulkSending !== null}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {bulkSending === 'approval' ? '寄送中...' : `批次寄出錄取通知信 (${bulkSelected.length})`}
+            className="admin-btn-sm primary">
+            {bulkSending === 'approval' ? '寄送中⋯' : `批次寄錄取通知（${bulkSelected.length}）`}
           </button>
           <button onClick={sendFormalNotifications}
             disabled={bulkSending !== null}
-            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            {bulkSending === 'formal' ? '寄送中...' : `批次寄出正式學員通知信 (${bulkSelected.length})`}
+            className="admin-btn-sm gold">
+            {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
-          {bulkMessage && <span className="text-sm text-green-700 font-medium">{bulkMessage}</span>}
-          <span className="text-sm text-gray-600 ml-auto">共 {filtered.length} 筆</span>
+          {bulkMessage && (
+            <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{bulkMessage}</span>
+          )}
+          <span className="count">共 {filtered.length} 筆</span>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-3 py-3 text-left text-black font-medium">
-                    <input type="checkbox"
-                      checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
-                      onChange={() => {
-                        if (bulkSelected.length === filtered.length) setBulkSelected([])
-                        else setBulkSelected(filtered.map(r => r.registration?.id).filter(Boolean))
-                      }} />
-                  </th>
-                  <th className="px-3 py-3 text-left text-black font-medium">姓名</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">序號<br /><span className="text-xs font-normal text-gray-500">T-xxx 錄取自動</span></th>
-                  <th className="px-3 py-3 text-left text-black font-medium">學號<br /><span className="text-xs font-normal text-gray-500">R-xxx 手動</span></th>
-                  <th className="px-3 py-3 text-left text-black font-medium">繳費碼</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">方案</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">繳費</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">入住－離開</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">飲食</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">打鼾</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">緊急聯絡人</th>
-                  <th className="px-3 py-3 text-left text-black font-medium">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {loading ? (
-                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">載入中...</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={12} className="px-4 py-8 text-center text-black">尚無食宿登記</td></tr>
-                ) : filtered.map(r => {
-                  const reg = r.registration || {}
-                  return (
-                    <tr key={r.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-3">
-                        <input type="checkbox"
-                          checked={bulkSelected.includes(reg.id)}
-                          onChange={() => setBulkSelected(prev =>
-                            prev.includes(reg.id) ? prev.filter(x => x !== reg.id) : [...prev, reg.id]
-                          )} />
-                      </td>
-                      <td className="px-3 py-3 font-medium text-black">{reg.chinese_name}</td>
-                      <td className="px-3 py-3 text-black font-mono">{reg.member_id || '—'}</td>
-                      <td className="px-3 py-3 text-black">
-                        <StudentIdCell reg={reg}
-                          onSave={val => patchStudentId(reg.id, val)}
-                          onClear={() => clearStudentId(reg)} />
-                      </td>
-                      <td className="px-3 py-3 font-mono text-black">{reg.random_code}</td>
-                      <td className="px-3 py-3 text-black">{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
-                      <td className="px-3 py-3 text-xs">
-                        <select value={reg.payment_status || 'unpaid'}
-                          onChange={e => updatePaymentStatus(reg.id, e.target.value)}
-                          className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
-                            reg.payment_status === 'unpaid' ? 'bg-gray-100 text-gray-800' :
-                            reg.payment_status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                          <option value="unpaid">未繳費</option>
-                          <option value="paid">待確認</option>
-                          <option value="verified">已確認</option>
-                        </select>
-                        {r.payment_method === 'transfer' ? (
-                          <div className="text-black mt-1">匯款</div>
-                        ) : r.payment_method === 'credit_card' ? (
-                          <div className="text-black mt-1">刷卡</div>
-                        ) : null}
-                        {reg.payment_note && (
-                          <div className="text-gray-500 mt-1 max-w-[200px] truncate" title={reg.payment_note}>
-                            {shortNote(reg.payment_note)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-black text-xs">
-                        {r.arrival_date ? <>{r.arrival_date}<br />{r.departure_date}</> : <span className="text-gray-400">未填食宿</span>}
-                      </td>
-                      <td className="px-3 py-3 text-black text-xs">
-                        {r.diet ? <>{r.diet === 'meat' ? '葷' : '素'}<br />{r.noon_fasting === 'before_noon' ? '12前' : '12後'}</> : '—'}
-                      </td>
-                      <td className="px-3 py-3 text-black text-xs">{r.id ? (r.snoring ? '會' : '否') : '—'}</td>
-                      <td className="px-3 py-3 text-black text-xs">
-                        {r.emergency_name ? <>
-                          {r.emergency_name}<br />
-                          <span className="text-gray-500">{r.emergency_relation}</span><br />
-                          {r.emergency_phone}
-                        </> : '—'}
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex gap-1">
-                          <button onClick={() => setDetail(r)}
-                            disabled={!r.id}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 px-2 py-1 rounded text-xs">
-                            詳細
-                          </button>
-                          <button onClick={() => { setEdit({ ...r }); setEditError('') }}
-                            disabled={!r.id}
-                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 disabled:bg-gray-50 disabled:text-gray-400 px-2 py-1 rounded text-xs">
-                            編輯
-                          </button>
+        <div className="admin-table-card scroll">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>
+                  <input type="checkbox"
+                    checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
+                    onChange={() => {
+                      if (bulkSelected.length === filtered.length) setBulkSelected([])
+                      else setBulkSelected(filtered.map(r => r.registration?.id).filter(Boolean))
+                    }} />
+                </th>
+                <th>姓名</th>
+                <th>序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>T-xxx 自動</span></th>
+                <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>R-xxx 手動</span></th>
+                <th>繳費碼</th>
+                <th>方案</th>
+                <th>繳費</th>
+                <th>入住—離開</th>
+                <th>飲食</th>
+                <th>打鼾</th>
+                <th>緊急聯絡人</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無食宿登記</td></tr>
+              ) : filtered.map(r => {
+                const reg = r.registration || {}
+                return (
+                  <tr key={r.id}>
+                    <td>
+                      <input type="checkbox"
+                        checked={bulkSelected.includes(reg.id)}
+                        onChange={() => setBulkSelected(prev =>
+                          prev.includes(reg.id) ? prev.filter(x => x !== reg.id) : [...prev, reg.id]
+                        )} />
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{reg.chinese_name}</td>
+                    <td className="mono">{reg.member_id || '—'}</td>
+                    <td>
+                      <StudentIdCell reg={reg}
+                        onSave={val => patchStudentId(reg.id, val)}
+                        onClear={() => clearStudentId(reg)} />
+                    </td>
+                    <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
+                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
+                    <td>
+                      <select value={reg.payment_status || 'unpaid'}
+                        onChange={e => updatePaymentStatus(reg.id, e.target.value)}
+                        className={`admin-status-badge ${reg.payment_status === 'unpaid' ? 'muted' : reg.payment_status === 'paid' ? 'warn' : 'ok'}`}
+                        style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
+                        <option value="unpaid">未繳費</option>
+                        <option value="paid">待確認</option>
+                        <option value="verified">已確認</option>
+                      </select>
+                      {r.payment_method && (
+                        <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>{r.payment_method === 'transfer' ? '匯款' : '刷卡'}</div>
+                      )}
+                      {reg.payment_note && (
+                        <div className="muted" style={{ fontSize: 11, marginTop: 2, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={reg.payment_note}>
+                          {shortNote(reg.payment_note)}
                         </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                    </td>
+                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                      {r.arrival_date ? <>{r.arrival_date}<br />{r.departure_date}</> : <span style={{ color: 'var(--ink-mute)' }}>未填食宿</span>}
+                    </td>
+                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                      {r.diet ? <>{r.diet === 'meat' ? '葷' : '素'}<br />{r.noon_fasting === 'before_noon' ? '12 前' : '12 後'}</> : '—'}
+                    </td>
+                    <td className="muted" style={{ fontSize: 12 }}>{r.id ? (r.snoring ? '會' : '否') : '—'}</td>
+                    <td style={{ fontSize: 12 }}>
+                      {r.emergency_name ? <>
+                        {r.emergency_name}<br />
+                        <span className="muted">{r.emergency_relation}</span><br />
+                        <span className="muted">{r.emergency_phone}</span>
+                      </> : '—'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => setDetail(r)} disabled={!r.id} className="admin-btn-sm">詳細</button>
+                        <button onClick={() => { setEdit({ ...r }); setEditError('') }} disabled={!r.id} className="admin-btn-sm gold">編輯</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* Detail Modal */}
       {detail && (
-        <div onClick={() => setDetail(null)}
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-black text-lg">
-                {detail.registration?.chinese_name}（{detail.registration?.random_code}）
-              </h3>
-              <button onClick={() => setDetail(null)}
-                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
-            </div>
+        <div onClick={() => setDetail(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>{detail.registration?.chinese_name}（{detail.registration?.random_code}）</span>
+              <button onClick={() => setDetail(null)} className="admin-btn-sm">✕</button>
+            </h3>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
               <Field label="序號" value={detail.registration?.member_id} />
               <Field label="學號" value={detail.registration?.student_id} />
               <Field label="Email" value={detail.registration?.email} />
@@ -404,9 +367,11 @@ export default function LodgingsPage() {
               <Field label="繳費狀態" value={({ unpaid: '未繳費', paid: '已回報待確認', verified: '已確認繳費' } as Record<string, string>)[detail.registration?.payment_status] || detail.registration?.payment_status} />
               <Field label="繳費確認時間" value={detail.registration?.payment_confirmed_at ? new Date(detail.registration.payment_confirmed_at).toLocaleString('zh-TW') : '—'} />
               {detail.registration?.payment_note && (
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-500">繳費備註</div>
-                  <div className="text-black text-xs bg-gray-50 rounded p-2 break-all">{detail.registration.payment_note}</div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <FieldLabel>繳費備註</FieldLabel>
+                  <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 8, padding: 10, marginTop: 4, fontSize: 12, color: 'var(--ink)', wordBreak: 'break-all' }}>
+                    {detail.registration.payment_note}
+                  </div>
                 </div>
               )}
               <Field label="入住日" value={detail.arrival_date} />
@@ -423,159 +388,90 @@ export default function LodgingsPage() {
             </div>
 
             {(detail.flight_arrival_date || detail.flight_departure_date) && (
-              <div className="mt-4 border-t border-gray-100 pt-4">
-                <h4 className="font-semibold text-black mb-2">航班資訊</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <>
+                <h4 style={detailH4Style}>航班資訊</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
                   <Field label="抵台日期" value={detail.flight_arrival_date} />
                   <Field label="抵台時間" value={detail.flight_arrival_time} />
                   <Field label="離台日期" value={detail.flight_departure_date} />
                   <Field label="離台時間" value={detail.flight_departure_time} />
                 </div>
-              </div>
+              </>
             )}
 
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <h4 className="font-semibold text-black mb-2">已上傳檔案</h4>
-              <div className="grid grid-cols-3 gap-3">
-                {Object.entries(DOC_LABEL).map(([k, label]) => {
-                  const url = detail[k]
-                  if (!url) return null
-                  const isImage = !url.toLowerCase().endsWith('.pdf')
-                  return (
-                    <button key={k} onClick={() => setPreview({ url, title: label })}
-                      className="border border-gray-200 rounded p-2 text-left hover:border-green-500">
-                      {isImage ? (
-                        <img src={url} alt={label} className="w-full h-24 object-cover rounded" />
-                      ) : (
-                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-600 text-xs">PDF</div>
-                      )}
-                      <p className="text-xs text-black mt-1">{label}</p>
-                    </button>
-                  )
-                })}
-              </div>
-              {!Object.keys(DOC_LABEL).some(k => detail[k]) && (
-                <p className="text-gray-400 text-sm">尚未上傳任何檔案</p>
-              )}
+            <h4 style={detailH4Style}>已上傳檔案</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {Object.entries(DOC_LABEL).map(([k, label]) => {
+                const url = detail[k]
+                if (!url) return null
+                const isImage = !url.toLowerCase().endsWith('.pdf')
+                return (
+                  <button key={k} onClick={() => setPreview({ url, title: label })}
+                    style={{ border: '1px solid var(--line)', borderRadius: 10, padding: 8, background: 'var(--bg-pure)', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--green)')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--line)')}>
+                    {isImage ? (
+                      <img src={url} alt={label} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 6, display: 'block' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: 90, background: 'var(--bg-deep)', display: 'grid', placeItems: 'center', borderRadius: 6, color: 'var(--ink-mute)', fontSize: 13 }}>📄 PDF</div>
+                    )}
+                    <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 6, fontWeight: 500 }}>{label}</p>
+                  </button>
+                )
+              })}
             </div>
+            {!Object.keys(DOC_LABEL).some(k => detail[k]) && (
+              <p style={{ color: 'var(--ink-mute)', fontSize: 13 }}>尚未上傳任何檔案</p>
+            )}
           </div>
         </div>
       )}
 
+      {/* Edit Modal */}
       {edit && (
-        <div onClick={() => !saving && setEdit(null)}
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-black text-lg">
-                編輯食宿登記：{edit.registration?.chinese_name}
-              </h3>
-              <button onClick={() => !saving && setEdit(null)}
-                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
-            </div>
+        <div onClick={() => !saving && setEdit(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>編輯食宿登記：{edit.registration?.chinese_name}</span>
+              <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">✕</button>
+            </h3>
 
-            {/* 學員資訊區：序號只讀、學號可編 */}
-            <div className="grid grid-cols-2 gap-3 text-sm mb-3 p-3 bg-gray-50 rounded-lg">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: 14, background: 'rgba(216, 194, 154, 0.12)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--line)' }}>
               <div>
-                <label className="block text-black mb-1">序號（自動）</label>
-                <div className="border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white font-mono">
+                <label className="form-label">序號（自動）</label>
+                <div style={{ padding: '9px 14px', borderRadius: 10, background: 'var(--bg-pure)', border: '1px solid var(--line)', color: 'var(--ink-mute)', fontFamily: 'var(--font-cormorant), monospace' }}>
                   {edit.registration?.member_id || '—'}
                 </div>
               </div>
               <div>
-                <label className="block text-black mb-1">學號（可手動編輯）</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black font-mono"
-                  placeholder="例：R-001"
+                <label className="form-label">學號（手動）</label>
+                <input className="form-input uppercase" placeholder="例：R-001"
                   value={edit.registration?.student_id || ''}
-                  onChange={e => setEdit({
-                    ...edit,
-                    registration: { ...edit.registration, student_id: e.target.value },
-                  })} />
+                  onChange={e => setEdit({ ...edit, registration: { ...edit.registration, student_id: e.target.value } })} />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <label className="block text-black mb-1">入住日</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.arrival_date || ''}
-                  onChange={e => setEdit({ ...edit, arrival_date: e.target.value })}>
-                  <option value="2026-08-19">2026-08-19</option>
-                  <option value="2026-08-20">2026-08-20</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">離開日</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.departure_date || ''}
-                  onChange={e => setEdit({ ...edit, departure_date: e.target.value })}>
-                  <option value="2026-08-24">2026-08-24</option>
-                  <option value="2026-08-25">2026-08-25</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">繳費方式</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.payment_method || ''}
-                  onChange={e => setEdit({ ...edit, payment_method: e.target.value })}>
-                  <option value="transfer">匯款</option>
-                  <option value="credit_card">刷卡</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">飲食</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.diet || ''}
-                  onChange={e => setEdit({ ...edit, diet: e.target.value })}>
-                  <option value="meat">葷食</option>
-                  <option value="vegetarian">素食</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">過午不食</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.noon_fasting || ''}
-                  onChange={e => setEdit({ ...edit, noon_fasting: e.target.value })}>
-                  <option value="before_noon">12 前吃</option>
-                  <option value="after_noon">12 後吃</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">茶點</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.snacks || ''}
-                  onChange={e => setEdit({ ...edit, snacks: e.target.value })}>
-                  <option value="snacks_and_drink">茶點+咖啡/茶</option>
-                  <option value="drink_only">只咖啡/茶</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">前往方式</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.arrival_transport || ''}
-                  onChange={e => setEdit({ ...edit, arrival_transport: e.target.value })}>
-                  <option value="self">8/19 自行</option>
-                  <option value="taipei_bus">台北專車</option>
-                  <option value="wuri_bus">烏日專車</option>
-                  <option value="airport_bus_0819">桃園機場專車</option>
-                  <option value="self_0820">8/20 自行</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-black mb-1">離開方式</label>
-                <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.departure_transport || ''}
-                  onChange={e => setEdit({ ...edit, departure_transport: e.target.value })}>
-                  <option value="self">自行</option>
-                  <option value="bus">專車</option>
-                </select>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+              <SelectField label="入住日" value={edit.arrival_date} onChange={v => setEdit({ ...edit, arrival_date: v })}
+                options={[['2026-08-19', '2026-08-19'], ['2026-08-20', '2026-08-20']]} />
+              <SelectField label="離開日" value={edit.departure_date} onChange={v => setEdit({ ...edit, departure_date: v })}
+                options={[['2026-08-24', '2026-08-24'], ['2026-08-25', '2026-08-25']]} />
+              <SelectField label="繳費方式" value={edit.payment_method} onChange={v => setEdit({ ...edit, payment_method: v })}
+                options={[['transfer', '匯款'], ['credit_card', '刷卡']]} />
+              <SelectField label="飲食" value={edit.diet} onChange={v => setEdit({ ...edit, diet: v })}
+                options={[['meat', '葷食'], ['vegetarian', '素食']]} />
+              <SelectField label="過午不食" value={edit.noon_fasting} onChange={v => setEdit({ ...edit, noon_fasting: v })}
+                options={[['before_noon', '12 前吃'], ['after_noon', '12 後吃']]} />
+              <SelectField label="茶點" value={edit.snacks} onChange={v => setEdit({ ...edit, snacks: v })}
+                options={[['snacks_and_drink', '茶點+咖啡/茶'], ['drink_only', '只咖啡/茶']]} />
+              <SelectField label="前往方式" value={edit.arrival_transport} onChange={v => setEdit({ ...edit, arrival_transport: v })}
+                options={[['self', '8/19 自行'], ['taipei_bus', '台北專車'], ['wuri_bus', '烏日專車'], ['airport_bus_0819', '桃園機場專車'], ['self_0820', '8/20 自行']]} />
+              <SelectField label="離開方式" value={edit.departure_transport} onChange={v => setEdit({ ...edit, departure_transport: v })}
+                options={[['self', '自行'], ['bus', '專車']]} />
               {edit.departure_transport === 'bus' && (
-                <div className="col-span-2">
-                  <label className="block text-black mb-1">專車目的地</label>
-                  <select className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                    value={edit.bus_destination || ''}
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">專車目的地</label>
+                  <select className="form-select" value={edit.bus_destination || ''}
                     onChange={e => setEdit({ ...edit, bus_destination: e.target.value })}>
                     <option value="">—</option>
                     <option value="taipei_824_pm">8/24 下午台北</option>
@@ -586,105 +482,84 @@ export default function LodgingsPage() {
                   </select>
                 </div>
               )}
-              <div>
-                <label className="block text-black mb-1">緊急聯絡人姓名</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.emergency_name || ''}
-                  onChange={e => setEdit({ ...edit, emergency_name: e.target.value })} />
+              <InputField label="緊急聯絡人姓名" value={edit.emergency_name} onChange={v => setEdit({ ...edit, emergency_name: v })} />
+              <InputField label="關係" value={edit.emergency_relation} onChange={v => setEdit({ ...edit, emergency_relation: v })} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <InputField label="緊急聯絡電話" value={edit.emergency_phone} onChange={v => setEdit({ ...edit, emergency_phone: v })} />
               </div>
               <div>
-                <label className="block text-black mb-1">關係</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.emergency_relation || ''}
-                  onChange={e => setEdit({ ...edit, emergency_relation: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-black mb-1">緊急聯絡電話</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.emergency_phone || ''}
-                  onChange={e => setEdit({ ...edit, emergency_phone: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-black mb-1">抵台日期</label>
-                <input type="date" className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.flight_arrival_date || ''}
+                <label className="form-label">抵台日期</label>
+                <input type="date" className="form-input" value={edit.flight_arrival_date || ''}
                   onChange={e => setEdit({ ...edit, flight_arrival_date: e.target.value })} />
               </div>
+              <InputField label="抵台時間" value={edit.flight_arrival_time} onChange={v => setEdit({ ...edit, flight_arrival_time: v })} />
               <div>
-                <label className="block text-black mb-1">抵台時間</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.flight_arrival_time || ''}
-                  onChange={e => setEdit({ ...edit, flight_arrival_time: e.target.value })} />
-              </div>
-              <div>
-                <label className="block text-black mb-1">離台日期</label>
-                <input type="date" className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.flight_departure_date || ''}
+                <label className="form-label">離台日期</label>
+                <input type="date" className="form-input" value={edit.flight_departure_date || ''}
                   onChange={e => setEdit({ ...edit, flight_departure_date: e.target.value })} />
               </div>
-              <div>
-                <label className="block text-black mb-1">離台時間</label>
-                <input className="w-full border border-gray-300 rounded px-2 py-1 text-black"
-                  value={edit.flight_departure_time || ''}
-                  onChange={e => setEdit({ ...edit, flight_departure_time: e.target.value })} />
-              </div>
-              <label className="col-span-2 flex items-center gap-2 text-black">
+              <InputField label="離台時間" value={edit.flight_departure_time} onChange={v => setEdit({ ...edit, flight_departure_time: v })} />
+
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
                 <input type="checkbox" checked={!!edit.dinner_0819}
-                  onChange={e => setEdit({ ...edit, dinner_0819: e.target.checked })} />
+                  onChange={e => setEdit({ ...edit, dinner_0819: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
                 8/19 晚餐
               </label>
-              <label className="col-span-2 flex items-center gap-2 text-black">
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
                 <input type="checkbox" checked={!!edit.dinner_0824}
-                  onChange={e => setEdit({ ...edit, dinner_0824: e.target.checked })} />
+                  onChange={e => setEdit({ ...edit, dinner_0824: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
                 8/24 晚餐
               </label>
-              <label className="col-span-2 flex items-center gap-2 text-black">
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
                 <input type="checkbox" checked={!!edit.snoring}
-                  onChange={e => setEdit({ ...edit, snoring: e.target.checked })} />
+                  onChange={e => setEdit({ ...edit, snoring: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
                 打鼾
               </label>
             </div>
 
-            <h4 className="font-semibold text-black mt-6 mb-2">檔案管理</h4>
-            <p className="text-xs text-gray-500 mb-2">學員傳錯檔可在此重新上傳或清除</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <h4 style={detailH4Style}>檔案管理</h4>
+            <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginBottom: 8 }}>學員傳錯檔可在此重新上傳或清除</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, fontSize: 12 }}>
               {Object.entries(DOC_LABEL).map(([k, label]) => {
                 const kind = k.replace(/_url$/, '')
                 const url = edit[k]
                 return (
-                  <div key={k} className="border border-gray-200 rounded p-2 space-y-1">
-                    <p className="text-black font-medium">{label}</p>
+                  <div key={k} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: 10, background: 'var(--bg-pure)' }}>
+                    <p style={{ color: 'var(--ink)', fontWeight: 600, marginBottom: 6 }}>{label}</p>
                     {url ? (
-                      <div className="flex items-center gap-2">
+                      <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 6 }}>
                         <a href={url} target="_blank" rel="noreferrer"
-                          className="text-blue-600 underline">檢視</a>
+                          style={{ color: 'var(--green)', fontWeight: 600 }}>檢視</a>
                         <button onClick={() => setEdit({ ...edit, [k]: null })}
-                          className="text-red-600 hover:underline">清除</button>
+                          style={{ color: 'var(--error)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>清除</button>
                       </div>
                     ) : (
-                      <p className="text-gray-400">未上傳</p>
+                      <p style={{ color: 'var(--ink-mute)', marginBottom: 6 }}>未上傳</p>
                     )}
                     <input type="file"
                       accept="image/jpeg,image/png,image/webp,application/pdf"
                       disabled={uploadingKind === kind}
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleEditUpload(kind, f) }}
-                      className="text-xs" />
-                    {uploadingKind === kind && <p className="text-gray-500">上傳中...</p>}
+                      style={{ fontSize: 11, color: 'var(--ink-soft)' }} />
+                    {uploadingKind === kind && <p style={{ color: 'var(--ink-mute)', marginTop: 4 }}>上傳中⋯</p>}
                   </div>
                 )
               })}
             </div>
 
             {editError && (
-              <div className="mt-3 bg-red-50 border border-red-200 rounded p-2 text-red-700 text-sm">{editError}</div>
+              <div style={{ marginTop: 12, background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 8, padding: 10, color: 'var(--error)', fontSize: 13 }}>
+                {editError}
+              </div>
             )}
 
-            <div className="mt-4 flex gap-2 justify-end">
-              <button onClick={() => !saving && setEdit(null)}
-                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">取消</button>
-              <button onClick={saveEdit} disabled={saving || !!uploadingKind}
-                className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm">
-                {saving ? '儲存中...' : '儲存'}
+            <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">取消</button>
+              <button onClick={saveEdit} disabled={saving || !!uploadingKind} className="admin-btn-sm primary">
+                {saving ? '儲存中⋯' : '儲存'}
               </button>
             </div>
           </div>
@@ -692,24 +567,20 @@ export default function LodgingsPage() {
       )}
 
       {preview && (
-        <div onClick={() => setPreview(null)}
-          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-3xl w-full p-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-black">{preview.title}</h3>
-              <button onClick={() => setPreview(null)} className="text-gray-500 hover:text-black text-xl">✕</button>
-            </div>
+        <div onClick={() => setPreview(null)} className="admin-modal-overlay" style={{ zIndex: 110 }}>
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>{preview.title}</span>
+              <button onClick={() => setPreview(null)} className="admin-btn-sm">✕</button>
+            </h3>
             {preview.url.toLowerCase().endsWith('.pdf') ? (
-              <iframe src={preview.url} className="w-full h-[70vh] border" />
+              <iframe src={preview.url} style={{ width: '100%', height: '70vh', border: '1px solid var(--line)', borderRadius: 8 }} />
             ) : (
-              <img src={preview.url} alt={preview.title} className="w-full h-auto" />
+              <img src={preview.url} alt={preview.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
             )}
-            <div className="mt-3 flex gap-2 justify-end">
-              <a href={preview.url} target="_blank" rel="noreferrer"
-                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">新分頁</a>
-              <a href={preview.url} download
-                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm">下載</a>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <a href={preview.url} target="_blank" rel="noreferrer" className="admin-btn-sm">新分頁</a>
+              <a href={preview.url} download className="admin-btn-sm primary">下載</a>
             </div>
           </div>
         </div>
@@ -718,11 +589,46 @@ export default function LodgingsPage() {
   )
 }
 
+const detailH4Style: React.CSSProperties = {
+  fontFamily: 'var(--font-noto-serif-tc), serif',
+  fontSize: 14, fontWeight: 700,
+  color: 'var(--green-deep)', letterSpacing: '0.08em',
+  marginTop: 18, marginBottom: 10,
+  paddingBottom: 6,
+  borderBottom: '1px dotted var(--line-strong)',
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>{children}</div>
+}
+
 function Field({ label, value }: { label: string; value: any }) {
   return (
     <div>
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-black">{value || '—'}</div>
+      <FieldLabel>{label}</FieldLabel>
+      <div style={{ color: 'var(--ink)', marginTop: 2 }}>{value || '—'}</div>
+    </div>
+  )
+}
+
+function InputField({ label, value, onChange }: { label: string; value: any; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="form-label">{label}</label>
+      <input className="form-input" value={value || ''} onChange={e => onChange(e.target.value)} />
+    </div>
+  )
+}
+
+function SelectField({ label, value, onChange, options }: {
+  label: string; value: any; onChange: (v: string) => void; options: [string, string][]
+}) {
+  return (
+    <div>
+      <label className="form-label">{label}</label>
+      <select className="form-select" value={value || ''} onChange={e => onChange(e.target.value)}>
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
     </div>
   )
 }
@@ -736,7 +642,6 @@ function StudentIdCell({
 }) {
   const [val, setVal] = useState(reg.student_id || '')
   const [editing, setEditing] = useState(false)
-  // 同步外部值變動
   useEffect(() => { setVal(reg.student_id || '') }, [reg.student_id])
 
   const save = async () => {
@@ -748,26 +653,26 @@ function StudentIdCell({
   const cancel = () => { setVal(reg.student_id || ''); setEditing(false) }
 
   return (
-    <div className="min-w-[120px]">
+    <div style={{ minWidth: 110 }}>
       {editing ? (
-        <div className="flex gap-1 items-center">
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <input autoFocus value={val}
             onChange={e => setVal(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel() }}
             placeholder="R-001"
-            className="w-20 border border-gray-300 rounded px-1 py-0.5 text-xs font-mono text-black" />
-          <button onClick={save} className="text-[10px] text-green-700 hover:underline">儲存</button>
-          <button onClick={cancel} className="text-[10px] text-gray-500 hover:underline">取消</button>
+            style={{ width: 80, border: '1px solid var(--line)', borderRadius: 6, padding: '3px 6px', fontFamily: 'var(--font-cormorant), monospace', fontSize: 12, color: 'var(--ink)' }} />
+          <button onClick={save} style={{ fontSize: 11, color: 'var(--green-deep)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>儲存</button>
+          <button onClick={cancel} style={{ fontSize: 11, color: 'var(--ink-mute)', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
         </div>
       ) : (
         <>
-          <div className="font-mono">{reg.student_id || '—'}</div>
-          <div className="flex gap-2 mt-1">
+          <div className="mono">{reg.student_id || '—'}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
             <button onClick={() => setEditing(true)}
-              className="text-[10px] text-black hover:underline">✏️ 手動</button>
+              style={{ fontSize: 10, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>✏ 手動</button>
             {reg.student_id && (
               <button onClick={onClear}
-                className="text-[10px] text-orange-700 hover:underline">註銷</button>
+                style={{ fontSize: 10, color: 'var(--warning)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>註銷</button>
             )}
           </div>
         </>
@@ -776,24 +681,13 @@ function StudentIdCell({
   )
 }
 
-function paymentStatusBadge(status: string) {
-  const map: Record<string, { cls: string; label: string }> = {
-    unpaid: { cls: 'bg-gray-100 text-gray-700', label: '未繳費' },
-    paid: { cls: 'bg-blue-100 text-blue-800', label: '待確認' },
-    verified: { cls: 'bg-green-100 text-green-800', label: '已確認' },
-  }
-  const info = map[status] || { cls: 'bg-gray-100 text-gray-700', label: status || '—' }
-  return <span className={`px-2 py-0.5 rounded text-xs font-medium ${info.cls}`}>{info.label}</span>
-}
-
-// 把 payment_note 精簡成一行摘要。匯款：抓後五碼；刷卡：抓交易號
 function shortNote(note: string): string {
   if (!note) return ''
   const match5 = note.match(/後五碼[:：]\s*(\d{5})/)
   if (match5) return `後五碼 ${match5[1]}`
   const tradeNo = note.match(/交易號[:：]\s*(\S+)/)
   if (tradeNo) return `綠界 ${tradeNo[1]}`
-  return note.length > 20 ? note.slice(0, 20) + '…' : note
+  return note.length > 20 ? note.slice(0, 20) + '⋯' : note
 }
 
 function transportLabel(v: string) {

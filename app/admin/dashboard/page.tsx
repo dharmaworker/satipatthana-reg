@@ -17,6 +17,8 @@ const PLAN_OPTIONS: [string, string][] = [
   ['T2', '【測試】刷卡 30 元'],
 ]
 
+const PLAN_LABEL: Record<string, string> = Object.fromEntries(PLAN_OPTIONS)
+
 export default function DashboardPage() {
   const router = useRouter()
   const [registrations, setRegistrations] = useState<any[]>([])
@@ -31,7 +33,6 @@ export default function DashboardPage() {
   const [detailReg, setDetailReg] = useState<any | null>(null)
   const [editReg, setEditReg] = useState<any | null>(null)
 
-  // 點 row 外面關閉下拉
   useEffect(() => {
     if (!openMenuId) return
     const close = (e: MouseEvent) => {
@@ -41,6 +42,7 @@ export default function DashboardPage() {
     document.addEventListener('click', close)
     return () => document.removeEventListener('click', close)
   }, [openMenuId])
+
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [editUploading, setEditUploading] = useState<'line' | 'wechat' | null>(null)
@@ -96,23 +98,6 @@ export default function DashboardPage() {
     }
   }
 
-  const planLabel = (p: string | null | undefined) => {
-    if (!p) return '—'
-    const map: Record<string, string> = {
-      A1: 'A(1) 8/20-8/24 食宿等費用（匯款）',
-      A2: 'A(2) 8/20-8/24 食宿等費用（刷卡）',
-      B1: 'B(1) 8/19-8/24 食宿費用（匯款）',
-      B2: 'B(2) 8/19-8/24 食宿費用（刷卡）',
-      C1: 'C(1) 8/19+8/25 食宿等費用（匯款）',
-      C2: 'C(2) 8/19+8/25 食宿等費用（刷卡）',
-      D1: 'D(1) 8/20-8/25 食宿等費用（匯款）',
-      D2: 'D(2) 8/20-8/25 食宿等費用（刷卡）',
-      T1: '【測試】匯款 1 元',
-      T2: '【測試】刷卡 30 元',
-    }
-    return map[p] || p
-  }
-
   const fetchData = async () => {
     setLoading(true)
     const params = new URLSearchParams()
@@ -120,10 +105,7 @@ export default function DashboardPage() {
     if (search) params.set('search', search)
     const res = await fetch(`/api/admin/registrations?${params}`)
     const data = await res.json()
-    if (res.status === 401) {
-      router.push('/admin')
-      return
-    }
+    if (res.status === 401) { router.push('/admin'); return }
     setRegistrations(data.data || [])
     setLoading(false)
   }
@@ -135,17 +117,11 @@ export default function DashboardPage() {
   }
 
   const toggleSelect = (id: string) => {
-    setSelected(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    )
+    setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
   const selectAll = () => {
-    if (selected.length === registrations.length) {
-      setSelected([])
-    } else {
-      setSelected(registrations.map(r => r.id))
-    }
+    setSelected(selected.length === registrations.length ? [] : registrations.map(r => r.id))
   }
 
   const updateStatus = async (id: string, status: string) => {
@@ -164,16 +140,10 @@ export default function DashboardPage() {
   }
 
   const batchAction = async (action: 'approve' | 'reject' | 'delete') => {
-    if (selected.length === 0) {
-      setMessage('請先勾選項目')
-      return
-    }
+    if (selected.length === 0) { setMessage('請先勾選項目'); return }
     const verb = action === 'approve' ? '錄取' : action === 'reject' ? '拒絕' : '刪除'
     const destructive = action === 'delete'
-    if (!confirm(
-      `確定要批次${verb} ${selected.length} 筆嗎？` +
-      (destructive ? '\n\n此操作無法復原，會連同 QR 圖檔一併清除。' : '')
-    )) return
+    if (!confirm(`確定要批次${verb} ${selected.length} 筆嗎？` + (destructive ? '\n\n此操作無法復原，會連同 QR 圖檔一併清除。' : ''))) return
 
     setSending(true)
     const res = await fetch('/api/admin/batch', {
@@ -194,10 +164,7 @@ export default function DashboardPage() {
   }
 
   const deleteRegistration = async (reg: any) => {
-    const confirmed = window.confirm(
-      `確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`
-    )
-    if (!confirmed) return
+    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`)) return
     const res = await fetch('/api/admin/registrations', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -212,9 +179,6 @@ export default function DashboardPage() {
     fetchData()
   }
 
-  // 註：學號（序號）管理 buttons 已移至「食宿登記」tab。這裡不再提供。
-  // 按錄取時系統會自動編序號（T-001, T-002...）；取消錄取時自動註銷。
-
   const stats = {
     total: registrations.length,
     pending: registrations.filter(r => r.status === 'pending').length,
@@ -223,32 +187,45 @@ export default function DashboardPage() {
     paid: registrations.filter(r => r.payment_status === 'verified').length,
   }
 
+  const STAT_CARDS = [
+    { label: '總報名', value: stats.total, accent: 'var(--ink-mute)' },
+    { label: '審核中', value: stats.pending, accent: 'var(--warning)' },
+    { label: '已錄取', value: stats.approved, accent: 'var(--success)' },
+    { label: '未錄取', value: stats.rejected, accent: 'var(--error)' },
+    { label: '已繳費', value: stats.paid, accent: 'var(--green)' },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-page">
       <AdminHeader />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-
+      <div className="admin-main">
         {/* 統計卡片 */}
-        <div className="grid grid-cols-5 gap-4">
-          {[
-            { label: '總報名', value: stats.total, color: 'bg-white' },
-            { label: '審核中', value: stats.pending, color: 'bg-yellow-50' },
-            { label: '已錄取', value: stats.approved, color: 'bg-green-50' },
-            { label: '未錄取', value: stats.rejected, color: 'bg-red-50' },
-            { label: '已繳費', value: stats.paid, color: 'bg-blue-50' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className={`${color} rounded-xl border border-gray-100 p-4 text-center`}>
-              <div className="text-3xl font-bold text-green-800">{value}</div>
-              <div className="text-sm text-black mt-1">{label}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 18 }}>
+          {STAT_CARDS.map(({ label, value, accent }) => (
+            <div key={label} style={{
+              background: 'rgba(251, 248, 242, 0.92)',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '20px 18px',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow-sm)',
+              borderTop: `3px solid ${accent}`,
+            }}>
+              <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 36, fontWeight: 700, color: accent, lineHeight: 1, letterSpacing: '0.04em' }}>
+                {value}
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 600, letterSpacing: '0.08em' }}>
+                {label}
+              </div>
             </div>
           ))}
         </div>
 
         {/* 操作說明 */}
-        <details open className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
-          <summary className="cursor-pointer font-semibold select-none">💡 操作說明（點擊可折疊）</summary>
-          <ol className="list-decimal pl-5 mt-2 space-y-1">
+        <details open className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--green-deep)', fontSize: 13.5, userSelect: 'none' }}>💡 操作說明（點擊可折疊）</summary>
+          <ol style={{ paddingLeft: 22, marginTop: 8, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
             <li><strong>審核報名：</strong>在「審核狀態」下拉切換，或勾選多筆後按上方「批次錄取／批次拒絕」。</li>
             <li><strong>序號自動化：</strong>錄取時系統自動編序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
             <li><strong>編輯資料：</strong>單筆按「編輯」修改姓名／Email／居住地等；⋯ 可刪除。</li>
@@ -257,286 +234,214 @@ export default function DashboardPage() {
         </details>
 
         {/* 操作列 */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap gap-3 items-center">
-          <input
-            className="border border-gray-300 rounded-lg px-4 py-2 text-black w-64 focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="搜尋姓名、Email、繳費碼..."
+        <div className="admin-toolbar">
+          <input type="text"
+            placeholder="搜尋姓名、Email、繳費碼⋯"
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={handleSearch}
-          />
-          <select
-            className="border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-green-500"
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}>
+            style={{ width: 240 }} />
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="all">全部狀態</option>
             <option value="pending">審核中</option>
             <option value="approved">已錄取</option>
             <option value="rejected">未錄取</option>
           </select>
-          <button
-            onClick={fetchData}
-            className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">
-            重新整理
-          </button>
-          <button
-            onClick={() => window.open('/api/admin/export', '_blank')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
-            匯出 CSV
-          </button>
-          <button
-            onClick={() => batchAction('approve')}
-            disabled={sending || selected.length === 0}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            批次錄取 ({selected.length})
-          </button>
-          <button
-            onClick={() => batchAction('reject')}
-            disabled={sending || selected.length === 0}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            批次拒絕 ({selected.length})
-          </button>
-          <button
-            onClick={() => batchAction('delete')}
-            disabled={sending || selected.length === 0}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg text-sm">
-            批次刪除 ({selected.length})
-          </button>
+          <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button>
+          <button onClick={() => batchAction('approve')} disabled={sending || selected.length === 0}
+            className="admin-btn-sm primary">批次錄取（{selected.length}）</button>
+          <button onClick={() => batchAction('reject')} disabled={sending || selected.length === 0}
+            className="admin-btn-sm">批次拒絕（{selected.length}）</button>
+          <button onClick={() => batchAction('delete')} disabled={sending || selected.length === 0}
+            className="admin-btn-sm danger">批次刪除（{selected.length}）</button>
           {message && (
-            <span className="text-sm text-green-700 font-medium">{message}</span>
+            <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message}</span>
           )}
         </div>
 
         {/* 資料表格 */}
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-4 py-3 text-left">
+        <div className="admin-table-card scroll">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>
+                  <input type="checkbox"
+                    checked={selected.length === registrations.length && registrations.length > 0}
+                    onChange={selectAll} />
+                </th>
+                <th>報名時間</th>
+                <th>姓名</th>
+                <th>Email</th>
+                <th>居住地</th>
+                <th>繳費碼</th>
+                <th>審核狀態</th>
+                <th>序號</th>
+                <th>方案</th>
+                <th>QR</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+              ) : registrations.length === 0 ? (
+                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+              ) : registrations.map((reg) => (
+                <tr key={reg.id}>
+                  <td>
                     <input type="checkbox"
-                      checked={selected.length === registrations.length && registrations.length > 0}
-                      onChange={selectAll} />
-                  </th>
-                  <th className="px-4 py-3 text-left text-black font-medium">報名時間</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">姓名</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">Email</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">居住地</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">繳費碼</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">審核狀態</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">序號</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">方案</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">QR</th>
-                  <th className="px-4 py-3 text-left text-black font-medium">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {loading ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">載入中...</td></tr>
-                ) : registrations.length === 0 ? (
-                  <tr><td colSpan={11} className="px-4 py-8 text-center text-black">尚無資料</td></tr>
-                ) : registrations.map((reg, index) => (
-                  <tr key={reg.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <input type="checkbox"
-                        checked={selected.includes(reg.id)}
-                        onChange={() => toggleSelect(reg.id)} />
-                    </td>
-                    <td className="px-4 py-3 text-black">
-                      {new Date(reg.created_at).toLocaleDateString('zh-TW')}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-black">{reg.chinese_name}</td>
-                    <td className="px-4 py-3 text-black">{reg.email}</td>
-                    <td className="px-4 py-3 text-black">{reg.residence}</td>
-                    <td className="px-4 py-3 font-mono text-black">{reg.random_code}</td>
-                    <td className="px-4 py-3">
-                      <select value={reg.status}
-                        onChange={e => updateStatus(reg.id, e.target.value)}
-                        className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
-                          reg.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          reg.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                        <option value="pending">審核中</option>
-                        <option value="approved">已錄取</option>
-                        <option value="rejected">未錄取</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-black font-mono">{reg.member_id || '-'}</td>
-                    <td className="px-4 py-3 text-xs text-black whitespace-nowrap">{planLabel(reg.payment_plan)}</td>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const qrUrl = reg.line_qr_url || reg.wechat_qr_url
-                        const qrLabel = reg.line_qr_url ? 'LINE' : reg.wechat_qr_url ? 'WeChat' : null
-                        if (!qrUrl) return <span className="text-gray-400">—</span>
-                        return (
-                          <button
-                            onClick={() => setQrPreview({ url: qrUrl, title: `${reg.chinese_name} - ${qrLabel} QR` })}
-                            title="點擊放大"
-                            className="block">
-                            <img src={qrUrl} alt={qrLabel || 'QR'}
-                              className="w-12 h-12 object-cover rounded border border-gray-200 hover:border-green-500 transition-colors" />
-                          </button>
-                        )
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 relative" data-row-menu>
-                      <div className="flex gap-1">
-                        <button onClick={() => setDetailReg(reg)}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs">
-                          詳細
+                      checked={selected.includes(reg.id)}
+                      onChange={() => toggleSelect(reg.id)} />
+                  </td>
+                  <td className="muted" style={{ whiteSpace: 'nowrap' }}>{new Date(reg.created_at).toLocaleDateString('zh-TW')}</td>
+                  <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{reg.chinese_name}</td>
+                  <td style={{ whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{reg.email}</td>
+                  <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.residence}</td>
+                  <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
+                  <td>
+                    <select value={reg.status}
+                      onChange={e => updateStatus(reg.id, e.target.value)}
+                      className={`admin-status-badge ${reg.status === 'pending' ? 'warn' : reg.status === 'approved' ? 'ok' : 'error'}`}
+                      style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
+                      <option value="pending">審核中</option>
+                      <option value="approved">已錄取</option>
+                      <option value="rejected">未錄取</option>
+                    </select>
+                  </td>
+                  <td className="mono">{reg.member_id || '—'}</td>
+                  <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}
+                  </td>
+                  <td>
+                    {(() => {
+                      const qrUrl = reg.line_qr_url || reg.wechat_qr_url
+                      const qrLabel = reg.line_qr_url ? 'LINE' : reg.wechat_qr_url ? 'WeChat' : null
+                      if (!qrUrl) return <span style={{ color: 'var(--ink-mute)' }}>—</span>
+                      return (
+                        <button onClick={() => setQrPreview({ url: qrUrl, title: `${reg.chinese_name} - ${qrLabel} QR` })}
+                          title="點擊放大"
+                          style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}>
+                          <img src={qrUrl} alt={qrLabel || 'QR'}
+                            style={{ width: 44, height: 44, objectFit: 'cover', border: '1px solid var(--line)', borderRadius: 6, display: 'block' }} />
                         </button>
-                        <button onClick={() => { setEditReg({ ...reg }); setEditError('') }}
-                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">
-                          編輯
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === reg.id ? null : reg.id) }}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs"
-                          title="更多操作">
-                          ⋯
+                      )
+                    })()}
+                  </td>
+                  <td style={{ position: 'relative' }} data-row-menu>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => setDetailReg(reg)} className="admin-btn-sm">詳細</button>
+                      <button onClick={() => { setEditReg({ ...reg }); setEditError('') }} className="admin-btn-sm gold">編輯</button>
+                      <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === reg.id ? null : reg.id) }}
+                        className="admin-btn-sm" title="更多操作">⋯</button>
+                    </div>
+                    {openMenuId === reg.id && (
+                      <div style={{
+                        position: 'absolute', right: 8, top: '100%', marginTop: 4,
+                        background: 'var(--bg-pure)', border: '1px solid var(--line)',
+                        borderRadius: 10, boxShadow: 'var(--shadow)',
+                        zIndex: 10, minWidth: 140, padding: 4,
+                      }}>
+                        <button onClick={() => { setOpenMenuId(null); deleteRegistration(reg) }}
+                          style={{
+                            width: '100%', textAlign: 'left', padding: '8px 12px',
+                            fontSize: 12.5, color: 'var(--error)',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            borderRadius: 6,
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(184,82,58,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                          🗑 刪除報名
                         </button>
                       </div>
-                      {openMenuId === reg.id && (
-                        <div className="absolute right-2 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px] py-1">
-                          <button onClick={() => { setOpenMenuId(null); deleteRegistration(reg) }}
-                            className="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">
-                            🗑️ 刪除報名
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* Edit Modal */}
       {editReg && (
-        <div onClick={() => !editSaving && setEditReg(null)}
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-black text-lg">編輯報名：{editReg.chinese_name}</h3>
-              <button onClick={() => !editSaving && setEditReg(null)}
-                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
-            </div>
+        <div onClick={() => !editSaving && setEditReg(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card" style={{ maxWidth: 520 }}>
+            <h3>
+              <span>編輯報名：{editReg.chinese_name}</span>
+              <button onClick={() => !editSaving && setEditReg(null)} className="admin-btn-sm">✕</button>
+            </h3>
 
-            <div className="space-y-4 text-sm">
+            <div style={{ display: 'grid', gap: 14 }}>
               <div>
-                <label className="block text-black font-medium mb-1">姓名 *</label>
-                <input className="w-full border border-gray-300 rounded px-3 py-2 text-black"
-                  value={editReg.chinese_name || ''}
+                <label className="form-label">姓名 <span className="required">*</span></label>
+                <input className="form-input" value={editReg.chinese_name || ''}
                   onChange={e => setEditReg({ ...editReg, chinese_name: e.target.value })} />
               </div>
-
               <div>
-                <label className="block text-black font-medium mb-1">Email *</label>
-                <input type="email" className="w-full border border-gray-300 rounded px-3 py-2 text-black"
-                  value={editReg.email || ''}
+                <label className="form-label">Email <span className="required">*</span></label>
+                <input type="email" className="form-input" value={editReg.email || ''}
                   onChange={e => setEditReg({ ...editReg, email: e.target.value })} />
               </div>
-
               <div>
-                <label className="block text-black font-medium mb-1">居住地</label>
-                <select className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
-                  value={editReg.residence || ''}
+                <label className="form-label">居住地</label>
+                <select className="form-select" value={editReg.residence || ''}
                   onChange={e => setEditReg({ ...editReg, residence: e.target.value })}>
                   <option value="">請選擇</option>
                   {RESIDENCE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
-
               <div>
-                <label className="block text-black font-medium mb-1">序號</label>
-                <input className="w-full border border-gray-300 rounded px-3 py-2 text-black font-mono"
-                  placeholder="例：T-001"
+                <label className="form-label">序號</label>
+                <input className="form-input uppercase" placeholder="例：T-001"
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>
-
               <div>
-                <label className="block text-black font-medium mb-1">食宿方案</label>
-                <select className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
-                  value={editReg.payment_plan || ''}
+                <label className="form-label">食宿方案</label>
+                <select className="form-select" value={editReg.payment_plan || ''}
                   onChange={e => setEditReg({ ...editReg, payment_plan: e.target.value })}>
                   <option value="">（未選擇）</option>
                   {PLAN_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
 
-              <div>
-                <label className="block text-black font-medium mb-1">LINE QR</label>
-                {editReg.line_qr_url && (
-                  <img src={editReg.line_qr_url} alt="LINE QR"
-                    className="w-24 h-24 object-contain border rounded mb-2" />
-                )}
-                <input type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={editUploading === 'line'}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleEditQrUpload('line', f) }} />
-                {editUploading === 'line' && <p className="text-xs text-gray-500 mt-1">上傳中...</p>}
-                {editReg.line_qr_url && (
-                  <button onClick={() => setEditReg({ ...editReg, line_qr_url: null })}
-                    className="mt-1 text-xs text-red-600 hover:underline">清除</button>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-black font-medium mb-1">WeChat QR</label>
-                {editReg.wechat_qr_url && (
-                  <img src={editReg.wechat_qr_url} alt="WeChat QR"
-                    className="w-24 h-24 object-contain border rounded mb-2" />
-                )}
-                <input type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={editUploading === 'wechat'}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleEditQrUpload('wechat', f) }} />
-                {editUploading === 'wechat' && <p className="text-xs text-gray-500 mt-1">上傳中...</p>}
-                {editReg.wechat_qr_url && (
-                  <button onClick={() => setEditReg({ ...editReg, wechat_qr_url: null })}
-                    className="mt-1 text-xs text-red-600 hover:underline">清除</button>
-                )}
-              </div>
+              <QrEditField label="LINE QR" kind="line"
+                url={editReg.line_qr_url} uploading={editUploading === 'line'}
+                onUpload={f => handleEditQrUpload('line', f)}
+                onClear={() => setEditReg({ ...editReg, line_qr_url: null })} />
+              <QrEditField label="WeChat QR" kind="wechat"
+                url={editReg.wechat_qr_url} uploading={editUploading === 'wechat'}
+                onUpload={f => handleEditQrUpload('wechat', f)}
+                onClear={() => setEditReg({ ...editReg, wechat_qr_url: null })} />
 
               {editError && (
-                <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm">
+                <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 8, padding: 10, color: 'var(--error)', fontSize: 13 }}>
                   {editError}
                 </div>
               )}
             </div>
 
-            <div className="mt-6 flex gap-2 justify-end">
-              <button onClick={() => !editSaving && setEditReg(null)}
-                disabled={editSaving}
-                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded text-sm">
-                取消
-              </button>
-              <button onClick={saveEdit}
-                disabled={editSaving || !!editUploading}
-                className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm">
-                {editSaving ? '儲存中...' : '儲存'}
+            <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => !editSaving && setEditReg(null)} disabled={editSaving} className="admin-btn-sm">取消</button>
+              <button onClick={saveEdit} disabled={editSaving || !!editUploading} className="admin-btn-sm primary">
+                {editSaving ? '儲存中⋯' : '儲存'}
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Detail Modal */}
       {detailReg && (
-        <div onClick={() => setDetailReg(null)}
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-black text-lg">{detailReg.chinese_name}　學員詳細資料</h3>
-              <button onClick={() => setDetailReg(null)}
-                className="text-gray-500 hover:text-black text-xl">✕</button>
-            </div>
+        <div onClick={() => setDetailReg(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>{detailReg.chinese_name}　學員詳細資料</span>
+              <button onClick={() => setDetailReg(null)} className="admin-btn-sm">✕</button>
+            </h3>
 
-            <h4 className="font-semibold text-green-800 mb-2 mt-2">基本資料</h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailSection title="基本資料">
               <DetailField label="中文姓名" value={detailReg.chinese_name} />
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
               <DetailField label="繳費碼" value={detailReg.random_code} mono />
@@ -550,30 +455,30 @@ export default function DashboardPage() {
               <DetailField label="手機" value={detailReg.phone} />
               <DetailField label="Email" value={detailReg.email} />
               <DetailField label="報名時間" value={detailReg.created_at ? new Date(detailReg.created_at).toLocaleString('zh-TW') : '—'} />
-            </div>
+            </DetailSection>
 
-            <h4 className="font-semibold text-green-800 mb-2 mt-5">通訊軟體</h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailSection title="通訊軟體">
               <DetailField label="LINE ID" value={detailReg.line_id} />
               <DetailField label="WeChat ID" value={detailReg.wechat_id} />
-            </div>
-            <div className="flex gap-3 mt-2">
+            </DetailSection>
+            <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
               {detailReg.line_qr_url && (
-                <button onClick={() => setQrPreview({ url: detailReg.line_qr_url, title: `${detailReg.chinese_name} - LINE QR` })}>
-                  <img src={detailReg.line_qr_url} alt="LINE QR" className="w-20 h-20 object-cover border rounded" />
-                  <p className="text-xs text-black mt-1">LINE</p>
+                <button onClick={() => setQrPreview({ url: detailReg.line_qr_url, title: `${detailReg.chinese_name} - LINE QR` })}
+                  style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}>
+                  <img src={detailReg.line_qr_url} alt="LINE QR" style={{ width: 80, height: 80, objectFit: 'cover', border: '1px solid var(--line)', borderRadius: 8 }} />
+                  <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, textAlign: 'center' }}>LINE</p>
                 </button>
               )}
               {detailReg.wechat_qr_url && (
-                <button onClick={() => setQrPreview({ url: detailReg.wechat_qr_url, title: `${detailReg.chinese_name} - WeChat QR` })}>
-                  <img src={detailReg.wechat_qr_url} alt="WeChat QR" className="w-20 h-20 object-cover border rounded" />
-                  <p className="text-xs text-black mt-1">WeChat</p>
+                <button onClick={() => setQrPreview({ url: detailReg.wechat_qr_url, title: `${detailReg.chinese_name} - WeChat QR` })}
+                  style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}>
+                  <img src={detailReg.wechat_qr_url} alt="WeChat QR" style={{ width: 80, height: 80, objectFit: 'cover', border: '1px solid var(--line)', borderRadius: 8 }} />
+                  <p style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, textAlign: 'center' }}>WeChat</p>
                 </button>
               )}
             </div>
 
-            <h4 className="font-semibold text-green-800 mb-2 mt-5">報名條件</h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailSection title="報名條件">
               <DetailField label="承諾如實填寫" value={yn(detailReg.honest_confirm)} />
               <DetailField label="正式學員經驗" value={yn(detailReg.attended_formal)} />
               <DetailField label="觀看 3 屆錄影" value={yn(detailReg.watched_recordings)} />
@@ -584,61 +489,55 @@ export default function DashboardPage() {
               <DetailField label="身體健康" value={yn(detailReg.health_confirm)} />
               <DetailField label="修習年資" value={detailReg.practice_years} />
               <DetailField label="練習頻率" value={detailReg.practice_frequency} />
-            </div>
+            </DetailSection>
             {detailReg.mental_health_note && (
-              <div className="mt-2">
-                <div className="text-xs text-gray-500">心理健康備註</div>
-                <div className="text-black text-sm bg-gray-50 rounded p-2">{detailReg.mental_health_note}</div>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>心理健康備註</div>
+                <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 8, padding: 10, marginTop: 4, fontSize: 13, color: 'var(--ink)' }}>
+                  {detailReg.mental_health_note}
+                </div>
               </div>
             )}
 
             {Array.isArray(detailReg.attended_courses) && detailReg.attended_courses.length > 0 && (
               <>
-                <h4 className="font-semibold text-green-800 mb-2 mt-5">過往參加課程</h4>
-                <ul className="text-sm text-black list-disc pl-6">
+                <h4 style={detailH4Style}>過往參加課程</h4>
+                <ul style={{ paddingLeft: 22, fontSize: 13, color: 'var(--ink-soft)' }}>
                   {detailReg.attended_courses.map((c: string, i: number) => <li key={i}>{c}</li>)}
                 </ul>
               </>
             )}
 
-            <h4 className="font-semibold text-green-800 mb-2 mt-5">狀態 / 繳費</h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <DetailSection title="狀態 / 繳費">
               <DetailField label="審核狀態" value={({ pending: '審核中', approved: '已錄取', rejected: '未錄取' } as Record<string, string>)[detailReg.status] || detailReg.status} />
               <DetailField label="繳費狀態" value={({ unpaid: '未繳費', paid: '已回報待確認', verified: '已確認繳費' } as Record<string, string>)[detailReg.payment_status] || detailReg.payment_status} />
               <DetailField label="繳費方案" value={detailReg.payment_plan} />
               <DetailField label="繳費確認時間" value={detailReg.payment_confirmed_at ? new Date(detailReg.payment_confirmed_at).toLocaleString('zh-TW') : '—'} />
-            </div>
+            </DetailSection>
             {detailReg.payment_note && (
-              <div className="mt-2">
-                <div className="text-xs text-gray-500">繳費備註</div>
-                <div className="text-black text-xs bg-gray-50 rounded p-2 break-all">{detailReg.payment_note}</div>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>繳費備註</div>
+                <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 8, padding: 10, marginTop: 4, fontSize: 12, color: 'var(--ink)', wordBreak: 'break-all' }}>
+                  {detailReg.payment_note}
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
 
+      {/* QR Preview Modal */}
       {qrPreview && (
-        <div onClick={() => setQrPreview(null)}
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div onClick={e => e.stopPropagation()}
-            className="bg-white rounded-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-black">{qrPreview.title}</h3>
-              <button onClick={() => setQrPreview(null)}
-                className="text-gray-500 hover:text-black text-xl leading-none">✕</button>
-            </div>
-            <img src={qrPreview.url} alt="QR"
-              className="w-full rounded border border-gray-200" />
-            <div className="mt-4 flex gap-2 justify-end">
-              <a href={qrPreview.url} target="_blank" rel="noreferrer"
-                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg text-sm">
-                新分頁開啟
-              </a>
-              <a href={qrPreview.url} download
-                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm">
-                下載
-              </a>
+        <div onClick={() => setQrPreview(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card" style={{ maxWidth: 460 }}>
+            <h3>
+              <span>{qrPreview.title}</span>
+              <button onClick={() => setQrPreview(null)} className="admin-btn-sm">✕</button>
+            </h3>
+            <img src={qrPreview.url} alt="QR" style={{ width: '100%', borderRadius: 8, border: '1px solid var(--line)' }} />
+            <div style={{ marginTop: 14, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <a href={qrPreview.url} target="_blank" rel="noreferrer" className="admin-btn-sm">新分頁開啟</a>
+              <a href={qrPreview.url} download className="admin-btn-sm primary">下載</a>
             </div>
           </div>
         </div>
@@ -647,11 +546,31 @@ export default function DashboardPage() {
   )
 }
 
+const detailH4Style: React.CSSProperties = {
+  fontFamily: 'var(--font-noto-serif-tc), serif',
+  fontSize: 14, fontWeight: 700,
+  color: 'var(--green-deep)', letterSpacing: '0.08em',
+  marginTop: 18, marginBottom: 8,
+}
+
+function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <>
+      <h4 style={detailH4Style}>{title}</h4>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
+        {children}
+      </div>
+    </>
+  )
+}
+
 function DetailField({ label, value, mono }: { label: string; value: any; mono?: boolean }) {
   return (
     <div>
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className={`text-black ${mono ? 'font-mono' : ''}`}>{value || value === 0 ? value : '—'}</div>
+      <div style={{ fontSize: 11, color: 'var(--gold)', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
+      <div style={{ color: 'var(--ink)', marginTop: 2, fontFamily: mono ? 'var(--font-cormorant), monospace' : undefined }}>
+        {value || value === 0 ? value : '—'}
+      </div>
     </div>
   )
 }
@@ -660,4 +579,34 @@ function yn(v: boolean | null | undefined) {
   if (v === true) return '是'
   if (v === false) return '否'
   return '—'
+}
+
+function QrEditField({ label, kind, url, uploading, onUpload, onClear }: {
+  label: string; kind: 'line' | 'wechat'
+  url: string | null
+  uploading: boolean
+  onUpload: (f: File) => void
+  onClear: () => void
+}) {
+  return (
+    <div>
+      <label className="form-label">{label}</label>
+      {url && (
+        <img src={url} alt={label}
+          style={{ width: 96, height: 96, objectFit: 'contain', border: '1px solid var(--line)', borderRadius: 8, marginBottom: 8 }} />
+      )}
+      <input type="file"
+        accept="image/jpeg,image/png,image/webp"
+        disabled={uploading}
+        onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(f) }}
+        style={{ fontSize: 12.5 }} />
+      {uploading && <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginTop: 4 }}>上傳中⋯</p>}
+      {url && (
+        <button onClick={onClear}
+          style={{ marginTop: 6, fontSize: 12, color: 'var(--error)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+          清除
+        </button>
+      )}
+    </div>
+  )
 }

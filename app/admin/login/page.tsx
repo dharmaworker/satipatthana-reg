@@ -28,49 +28,61 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-green-800">後台管理系統</h1>
-          <p className="text-black mt-1">第二屆台灣四念處禪修</p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">帳號</label>
-            <input
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
-              value={form.username}
-              onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">密碼</label>
-            <input
-              type="password"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
-              value={form.password}
-              onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-3 rounded-xl transition-colors">
-            {loading ? '登入中...' : '登入'}
-          </button>
-        </div>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
-    </div>
+
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+          </a>
+          <a href="/" className="nav-back">← 返回首頁</a>
+        </div>
+      </header>
+
+      <main className="login-wrap">
+        <form className="login-card" onSubmit={e => { e.preventDefault(); handleLogin() }}>
+          <div className="login-icon" style={{ background: 'linear-gradient(135deg, var(--green-soft), var(--green-deep))' }}>管</div>
+          <div className="login-kicker">Admin Console · 後台管理</div>
+          <h1 className="login-title">後台管理系統</h1>
+          <p className="login-subtitle">第二屆台灣四念處禪修</p>
+
+          {error && <div className="login-error">⚠ {error}</div>}
+
+          <div className="login-form">
+            <div className="form-grid-1">
+              <div className="form-field">
+                <label className="form-label">帳號 <span className="en">Username</span></label>
+                <input className="form-input" required autoComplete="username"
+                  value={form.username}
+                  onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))} />
+              </div>
+              <div className="form-field">
+                <label className="form-label">密碼 <span className="en">Password</span></label>
+                <input type="password" className="form-input" required autoComplete="current-password"
+                  value={form.password}
+                  onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))} />
+              </div>
+            </div>
+            <div className="login-actions">
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                {loading ? '登入中⋯' : '登入後台'} <span className="arrow">→</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </main>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
 }
