@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     const params: Record<string, string> = {
       ChoosePayment: 'Credit',
-      ClientBackURL: `${baseUrl}/query`,
+      ClientBackURL: `${baseUrl}/member`,
       CustomField1: registration_id,
       CustomField2: reg.random_code,
       EncryptType: '1',

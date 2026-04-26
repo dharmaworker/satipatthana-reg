@@ -51,7 +51,7 @@ export default function MemberLoginPage() {
           <h1 className="login-title">學員專區登入</h1>
           <p className="login-subtitle">
             請輸入您報名時所填寫的 E-mail 與專屬代碼。<br />
-            專屬代碼可於錄取通知信中查找。
+            專屬代碼可於報名確認信／錄取通知信中查找。
           </p>
 
           {error && <div className="login-error">⚠ {error}</div>}
@@ -82,7 +82,6 @@ export default function MemberLoginPage() {
           </form>
 
           <div className="help-link">
-            還沒錄取？請先至 <a href="/query">報名狀態查詢</a><br />
             遺失專屬代碼？<a href="mailto:satipatthana.tw@gmail.com">寫信給我們</a>
           </div>
         </div>

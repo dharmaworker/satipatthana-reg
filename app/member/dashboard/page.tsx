@@ -86,9 +86,8 @@ export default function MemberDashboardPage() {
           </a>
           <div className="nav-actions">
             <a href="/" className="nav-back">← 主站</a>
-            <button className="nav-logout" onClick={() => {
-              document.cookie = 'member_email=; Max-Age=0'
-              document.cookie = 'member_id=; Max-Age=0'
+            <button className="nav-logout" onClick={async () => {
+              await fetch('/api/member/logout', { method: 'POST' })
               router.push('/member')
             }}>登出</button>
           </div>
