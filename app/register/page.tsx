@@ -200,21 +200,32 @@ export default function RegisterPage() {
     return true
   }
 
+  const validateStep = (n: number): boolean => {
+    if (n === 3) return validateStep3()
+    if (n === 4) return validateStep4()
+    return true // step 1, 2, 5 純資訊不卡 validation
+  }
+
   const goToStep = (target: number) => {
-    if (target <= maxReached) {
+    if (target === step) return
+    // 往回：自由
+    if (target < step) {
       setStep(target)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    // 往前推進，需要通過當前步驟驗證
-    if (target === step + 1) {
-      if (step === 3 && !validateStep3()) return
-      if (step === 4 && !validateStep4()) return
-      setStep(target)
-      setMaxReached(prev => Math.max(prev, target))
-      setError('')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    // 往前：逐步驗證每一個經過的 step
+    for (let s = step; s < target; s++) {
+      if (!validateStep(s)) {
+        setStep(s)
+        setMaxReached(prev => Math.max(prev, s))
+        return
+      }
     }
+    setStep(target)
+    setMaxReached(prev => Math.max(prev, target))
+    setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSubmit = async () => {

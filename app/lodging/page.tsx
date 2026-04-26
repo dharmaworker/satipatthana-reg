@@ -206,20 +206,31 @@ function LodgingContent() {
     return true
   }
 
+  const validateStep = (n: number): boolean => {
+    if (n === 1) return validateStep1()
+    if (n === 2) return validateStep2()
+    if (n === 3) return validateStep3()
+    return true // step 4 純 review
+  }
+
   const goToStep = (target: number) => {
-    if (target <= maxReached) {
+    if (target === step) return
+    if (target < step) {
       setStep(target)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    if (target === step + 1) {
-      const ok = step === 1 ? validateStep1() : step === 2 ? validateStep2() : step === 3 ? validateStep3() : true
-      if (!ok) return
-      setStep(target)
-      setMaxReached(prev => Math.max(prev, target))
-      setError('')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    for (let s = step; s < target; s++) {
+      if (!validateStep(s)) {
+        setStep(s)
+        setMaxReached(prev => Math.max(prev, s))
+        return
+      }
     }
+    setStep(target)
+    setMaxReached(prev => Math.max(prev, target))
+    setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSubmit = async () => {
@@ -416,7 +427,7 @@ function LodgingContent() {
               </div>
             )}
 
-            {locked && (
+            {locked && !pastDeadline && (
               <div className="submit-status">
                 <div className="submit-status-icon">✓</div>
                 <div className="submit-status-text">
@@ -426,7 +437,17 @@ function LodgingContent() {
               </div>
             )}
 
-            <fieldset disabled={locked} style={{ border: 'none', padding: 0, margin: 0 }}>
+            {pastDeadline && (
+              <div className="submit-status" style={{ background: 'rgba(184, 82, 58, 0.08)', borderColor: 'rgba(184, 82, 58, 0.3)' }}>
+                <div className="submit-status-icon" style={{ background: 'var(--error)' }}>!</div>
+                <div className="submit-status-text">
+                  <h4>食宿登記已截止</h4>
+                  <p>食宿登記已於 <strong>6/20 晚上 8 點</strong>（台北時間）截止，無法再提交。{existingLodging ? '以下為您送出的內容，僅供參考。' : ''}如有特殊狀況請聯絡學會。</p>
+                </div>
+              </div>
+            )}
+
+            <fieldset disabled={locked || pastDeadline} style={{ border: 'none', padding: 0, margin: 0 }}>
               <div className="form-card">
 
                 {/* ============== Step 1：行程安排 ============== */}
@@ -881,7 +902,7 @@ function LodgingContent() {
               )}
             </div>
 
-            {step === STEPS.length && !locked && (
+            {step === STEPS.length && !locked && !pastDeadline && (
               <p style={{ textAlign: 'center', marginTop: 12, fontSize: 12.5, color: 'var(--ink-mute)' }}>
                 {existingLodging
                   ? '本次為最後 1 次修改機會，送出後即鎖定。'
