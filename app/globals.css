@@ -213,7 +213,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .hero-bg {
   position: absolute; inset: 0;
-  background-image: url('/webpage/sunset-bg.jpg');
   background-size: cover;
   background-position: center 60%;
   transform: scale(1.04);

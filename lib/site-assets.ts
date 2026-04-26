@@ -1,0 +1,11 @@
+// 主頁與會員區用到的視覺素材，存於 Supabase site-assets bucket（public）
+// 換檔不需重新 deploy，學會可直接於 Supabase Dashboard 替換。
+const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const BUCKET = 'site-assets'
+const asset = (path: string) => `${baseUrl}/storage/v1/object/public/${BUCKET}/${path}`
+
+export const SITE_ASSETS = {
+  poster: asset('poster.jpg'),
+  sunsetBg: asset('sunset-bg.jpg'),
+  teacher: (file: string) => asset(`teachers/${file}`),
+}

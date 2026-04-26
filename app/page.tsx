@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
+import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHERS = {
   'luangpu-pramote': {
-    photo: '/teachers/luangpu-pramote.webp',
+    photo: SITE_ASSETS.teacher('luangpu-pramote.webp'),
     name: '隆波帕默尊者',
     nameEn: 'Luangpu Pramote Pamojjo',
     tagline: '廣受尊崇的禪修導師，其教法尤其契合現代都市人。',
@@ -16,7 +17,7 @@ const TEACHERS = {
     ],
   },
   'somchai': {
-    photo: '/teachers/somchai.webp',
+    photo: SITE_ASSETS.teacher('somchai.webp'),
     name: '阿姜宋彩尊者',
     nameEn: 'Phra Ajahn Somchai Kittiyano',
     tagline: '解脫園寺代理住持，多年擔任隆波帕默尊者的侍者。',
@@ -27,7 +28,7 @@ const TEACHERS = {
     ],
   },
   'oranuch': {
-    photo: '/teachers/oranuch.webp',
+    photo: SITE_ASSETS.teacher('oranuch.webp'),
     name: '麥琪奧蘭努',
     nameEn: 'Ajahn Khun Mae Oranuch Santayakorn',
     tagline: '資深女性傳法者，由尊者親自指定為資深助理禪師。',
@@ -38,7 +39,7 @@ const TEACHERS = {
     ],
   },
   'nat': {
-    photo: '/teachers/nat.jpeg',
+    photo: SITE_ASSETS.teacher('nat.jpeg'),
     name: '阿姜納',
     nameEn: 'Ajahn Nat Sriwachirawat',
     tagline: '退休前曾為牙科醫生，以深厚的禪定修證而聞名。',
@@ -49,7 +50,7 @@ const TEACHERS = {
     ],
   },
   'prasan': {
-    photo: '/teachers/prasan.webp',
+    photo: SITE_ASSETS.teacher('prasan.webp'),
     name: '阿姜巴山',
     nameEn: 'Ajahn Prasan Bhuddhakulsomsiri',
     tagline: '教學風格直率而活潑，足跡遍及華語禪修群體。',
@@ -62,7 +63,7 @@ const TEACHERS = {
     ],
   },
   'nitiya': {
-    photo: '/teachers/nitiya.webp',
+    photo: SITE_ASSETS.teacher('nitiya.webp'),
     name: '阿姜妮',
     nameEn: 'Ajahn Nitiya Petchpaiboon',
     tagline: '化工碩士，2017 年獲尊者指派為助理老師。',
@@ -74,7 +75,7 @@ const TEACHERS = {
     ],
   },
   'napatpol': {
-    photo: '/teachers/napatpol.webp',
+    photo: SITE_ASSETS.teacher('napatpol.webp'),
     name: '阿姜松',
     nameEn: 'Ajahn Napatpol Kunatanasate',
     tagline: '「心要想能夠明白法，一定要靠自己去領悟。」',
@@ -115,7 +116,7 @@ export default function HomePage() {
       <main id="top">
         {/* Hero */}
         <section className="hero">
-          <div className="hero-bg" />
+          <div className="hero-bg" style={{ backgroundImage: `url(${SITE_ASSETS.sunsetBg})` }} />
           <div className="hero-overlay" />
           <div className="hero-ink" />
           <div className="container hero-grid">
@@ -153,7 +154,7 @@ export default function HomePage() {
         <section className="section" id="about">
           <div className="container intro-grid">
             <div className="intro-poster">
-              <img src="/webpage/poster.jpg" alt="活動海報" />
+              <img src={SITE_ASSETS.poster} alt="活動海報" />
             </div>
             <div className="intro-content">
               <p className="section-kicker">About the Retreat</p>
