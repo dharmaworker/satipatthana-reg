@@ -1,30 +1,28 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 
-type PlanRow = { id: string; label: string; amount: number; test?: boolean }
+type PlanRow = { id: string; label: string; date: string; amount: number; method: 'transfer' | 'card'; test?: boolean }
 const PLANS: PlanRow[] = [
-  { id: 'A1', label: 'A(1) 8/20-8/24 食宿等費用（匯款）', amount: 18600 },
-  { id: 'A2', label: 'A(2) 8/20-8/24 食宿等費用（刷卡）', amount: 19300 },
-  { id: 'B1', label: 'B(1) 8/19-8/24 食宿費用（匯款）', amount: 20350 },
-  { id: 'B2', label: 'B(2) 8/19-8/24 食宿費用（刷卡）', amount: 21050 },
-  { id: 'C1', label: 'C(1) 8/19-8/25 食宿等費用（匯款）', amount: 22590 },
-  { id: 'C2', label: 'C(2) 8/19-8/25 食宿等費用（刷卡）', amount: 23290 },
-  { id: 'D1', label: 'D(1) 8/20-8/25 食宿等費用（匯款）', amount: 20840 },
-  { id: 'D2', label: 'D(2) 8/20-8/25 食宿等費用（刷卡）', amount: 21540 },
-  { id: 'T1', label: '【測試】匯款 1 元', amount: 1, test: true },
-  { id: 'T2', label: '【測試】刷卡 30 元', amount: 30, test: true },
+  { id: 'A1', label: 'A 方案', date: '8/20 — 8/24 食宿等費用', amount: 18600, method: 'transfer' },
+  { id: 'A2', label: 'A 方案', date: '8/20 — 8/24 食宿等費用', amount: 19300, method: 'card' },
+  { id: 'B1', label: 'B 方案', date: '8/19 — 8/24 食宿費用', amount: 20350, method: 'transfer' },
+  { id: 'B2', label: 'B 方案', date: '8/19 — 8/24 食宿費用', amount: 21050, method: 'card' },
+  { id: 'C1', label: 'C 方案', date: '8/19 — 8/25 食宿等費用', amount: 22590, method: 'transfer' },
+  { id: 'C2', label: 'C 方案', date: '8/19 — 8/25 食宿等費用', amount: 23290, method: 'card' },
+  { id: 'D1', label: 'D 方案', date: '8/20 — 8/25 食宿等費用', amount: 20840, method: 'transfer' },
+  { id: 'D2', label: 'D 方案', date: '8/20 — 8/25 食宿等費用', amount: 21540, method: 'card' },
+  { id: 'T1', label: '【測試】匯款', date: '測試專用', amount: 1, method: 'transfer', test: true },
+  { id: 'T2', label: '【測試】刷卡', date: '測試專用', amount: 30, method: 'card', test: true },
 ]
-const PLAN_INFO: Record<string, { label: string; amount: number }> = Object.fromEntries(
-  PLANS.map(p => [p.id, { label: p.label, amount: p.amount }])
-)
+const PLAN_INFO: Record<string, PlanRow> = Object.fromEntries(PLANS.map(p => [p.id, p]))
 
 function PayContent() {
   const searchParams = useSearchParams()
   const registration_id = searchParams.get('id') || ''
   const random_code = searchParams.get('code') || ''
 
+  const [reg, setReg] = useState<any>(null)
   const [plan, setPlan] = useState('A1')
   const [loadingInit, setLoadingInit] = useState(true)
   const [initError, setInitError] = useState('')
@@ -32,7 +30,6 @@ function PayContent() {
   const [showBank, setShowBank] = useState(false)
   const [error, setError] = useState('')
 
-  // 進頁面時驗證身份；若已有 payment_plan 則預設選那個
   useEffect(() => {
     if (!registration_id || !random_code) {
       setInitError('網址缺少參數，請從錄取通知信進入')
@@ -43,6 +40,7 @@ function PayContent() {
       .then(async r => {
         const data = await r.json()
         if (!r.ok) throw new Error(data.error || '載入失敗')
+        setReg(data.registration)
         if (data.registration?.payment_plan) {
           setPlan(data.registration.payment_plan)
         }
@@ -52,30 +50,30 @@ function PayContent() {
   }, [registration_id, random_code])
 
   const [transferForm, setTransferForm] = useState({
-  last5: '',
-  transfer_date: '',
-  account_name: '',
+    last5: '',
+    transfer_date: '',
+    account_name: '',
   })
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferError, setTransferError] = useState('')
   const [transferDone, setTransferDone] = useState(false)
 
   const handleTransferSubmit = async () => {
-  setTransferLoading(true)
-  setTransferError('')
-  try {
-    const res = await fetch('/api/payment/transfer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        registration_id,
-        plan,
-        last5: transferForm.last5,
-        transfer_date: transferForm.transfer_date,
-        account_name: transferForm.account_name,
-      }),
-    })
-    const data = await res.json()
+    setTransferLoading(true)
+    setTransferError('')
+    try {
+      const res = await fetch('/api/payment/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registration_id,
+          plan,
+          last5: transferForm.last5,
+          transfer_date: transferForm.transfer_date,
+          account_name: transferForm.account_name,
+        }),
+      })
+      const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setTransferDone(true)
     } catch (err: any) {
@@ -86,21 +84,20 @@ function PayContent() {
   }
 
   const selectedPlan = plan ? PLAN_INFO[plan] : null
-  const isTransfer = ['A1', 'B1', 'C1', 'D1', 'T1'].includes(plan)
+  const isTransfer = selectedPlan?.method === 'transfer'
 
   const handlePay = async () => {
     if (!registration_id) {
       setError('找不到報名資料，請透過錄取通知信的連結進入')
       return
     }
-
-    // 匯款方案直接顯示銀行帳號
     if (isTransfer) {
       setShowBank(true)
+      setTimeout(() => {
+        document.getElementById('bank-info')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
       return
     }
-
-    // 刷卡方案導向綠界
     setLoading(true)
     setError('')
     try {
@@ -113,10 +110,10 @@ function PayContent() {
         const data = await res.json()
         throw new Error(data.error)
       }
-    const html = await res.text()
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    window.location.href = url
+      const html = await res.text()
+      const blob = new Blob([html], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      window.location.href = url
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
@@ -124,199 +121,346 @@ function PayContent() {
   }
 
   if (loadingInit) {
-    return <div className="min-h-screen flex items-center justify-center">載入中...</div>
-  }
-
-  if (initError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl p-6 max-w-md text-center">
-          <p className="text-red-700">{initError}</p>
-        </div>
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
       </div>
     )
   }
 
+  if (initError) {
+    return (
+      <main className="login-wrap">
+        <div className="login-card" style={{ textAlign: 'center' }}>
+          <div className="login-icon" style={{ background: 'linear-gradient(135deg,#cf8f6c,#8b4f32)' }}>!</div>
+          <h1 className="login-title">無法載入</h1>
+          <p className="login-subtitle">{initError}</p>
+          <a href="/member" className="btn btn-primary btn-block">前往學員專區</a>
+        </div>
+      </main>
+    )
+  }
+
+  const initial = reg?.chinese_name?.charAt(0) || '$'
+  const paidStatus = reg?.payment_status
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-green-800 text-white py-8 px-4 text-center">
-        <h1 className="text-2xl font-bold">第二屆台灣四念處禪修</h1>
-        <p className="mt-2 text-green-200">食宿費用繳費</p>
+    <>
+      <div className="page-bg">
+        <div className="page-blob b1" />
+        <div className="page-blob b2" />
+        <div className="page-blob b3" />
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-
-        {random_code && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-            <p className="text-sm text-green-700">您的繳費專屬碼</p>
-            <p className="text-2xl font-bold text-green-800 tracking-widest mt-1">{random_code}</p>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-green-800">請選擇費用方案</h2>
-          <p className="text-xs text-gray-500">繳費完成後系統會寄信邀請您完成食宿登記，方案內容會自動帶入食宿登記表。</p>
-          <div className="space-y-2">
-            {PLANS.map(p => (
-              <label key={p.id}
-                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors
-                  ${plan === p.id
-                    ? (p.test ? 'border-amber-500 bg-amber-50' : 'border-green-500 bg-green-50')
-                    : (p.test ? 'border-amber-200 bg-amber-50/40 hover:border-amber-300' : 'border-gray-200 hover:border-gray-300')}`}>
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="plan" value={p.id}
-                    checked={plan === p.id}
-                    onChange={e => { setPlan(e.target.value); setShowBank(false) }} />
-                  <span className={`text-sm ${p.test ? 'text-amber-900' : 'text-black'}`}>{p.label}</span>
-                </div>
-                <span className={`font-semibold ${p.test ? 'text-amber-700' : 'text-green-800'}`}>
-                  NT${p.amount.toLocaleString()}
-                </span>
-              </label>
-            ))}
+      <header className="site-header">
+        <div className="container nav">
+          <a href="/member/dashboard" className="brand">
+            <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
+            <span className="brand-sublabel">
+              <small>Member Portal</small>
+              <span>學員專區</span>
+            </span>
+          </a>
+          <div className="nav-actions">
+            <a href="/member/dashboard" className="nav-back">← 學員首頁</a>
           </div>
         </div>
+      </header>
 
-        {selectedPlan && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-black font-medium">應付金額</span>
-              <span className="text-2xl font-bold text-green-800">
-                NT${selectedPlan.amount.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 space-y-1">
-          <p>⚠️ 一旦繳費後取消報名，已付費用恕無法退款或轉讓</p>
-          <p>⚠️ 請於 2026年6月15日晚上8時前完成繳費</p>
+      <div className="page-header">
+        <div className="container">
+          <p className="page-kicker">Payment</p>
+          <h1 className="page-title">食宿費用繳費</h1>
+          <p className="page-subtitle">
+            請於 <strong>6 月 15 日台北時間晚上 8 點前</strong>完成繳費。<br />
+            繳費完成後系統會寄信邀請您完成食宿登記，方案內容會自動帶入食宿登記表。
+          </p>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-
-        <button
-          onClick={handlePay}
-          disabled={loading}
-          className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-4 rounded-xl transition-colors text-lg">
-          {loading ? '處理中...' : isTransfer ? '查看匯款帳號' : '前往綠界刷卡付款'}
-        </button>
-
-        {/* 匯款帳號顯示 */}
-        {showBank && (
-          <div className="bg-white rounded-xl shadow-sm border border-green-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-green-800">匯款帳號資訊</h2>
-
-            <div className="space-y-4">
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="font-semibold text-green-800 mb-2">台灣法友匯款</p>
-                <div className="text-black text-sm space-y-1">
-                  <p>戶名：台灣四念處學會</p>
-                  <p>銀行：第一銀行 仁和分行</p>
-                  <p>代號：007</p>
-                  <p className="text-lg font-bold tracking-wider">帳號：16510068750</p>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="font-semibold text-blue-800 mb-2">國外法友匯款</p>
-                <div className="text-black text-sm space-y-1">
-                  <p>戶名：台灣四念處學會</p>
-                  <p>銀行：第一銀行 仁和分行</p>
-                  <p>代號：007</p>
-                  <p className="text-lg font-bold tracking-wider">帳號：16540016022</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 space-y-1">
-              <p>⚠️ 匯款時請備注您的姓名及繳費碼：<strong className="tracking-wider">{random_code}</strong></p>
-              <p>⚠️ 匯款完成後請填寫下方資訊並截圖上傳至學會 LINE 官方帳號</p>
-              <p>⚠️ 請於 2026年6月15日晚上8時前完成匯款</p>
-            </div>
-
-            {/* 匯款回報表單 */}
-            {!transferDone ? (
-              <div className="border border-gray-200 rounded-xl p-4 space-y-3">
-                <h3 className="font-semibold text-black">匯款完成後請填寫</h3>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    匯款帳號後五碼 *
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={5}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="請輸入5位數字"
-                    value={transferForm.last5}
-                    onChange={e => setTransferForm(prev => ({ ...prev, last5: e.target.value.replace(/\D/g, '') }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    匯款日期 *
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={transferForm.transfer_date}
-                    onChange={e => setTransferForm(prev => ({ ...prev, transfer_date: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-black mb-1">
-                    匯款人姓名
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="若與報名姓名不同請填寫"
-                    value={transferForm.account_name}
-                    onChange={e => setTransferForm(prev => ({ ...prev, account_name: e.target.value }))}
-                  />
-                </div>
-
-                {transferError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-                    {transferError}
+      <main className="container">
+        <div className="layout">
+          <div>
+            {reg && (
+              <div className="member-card">
+                <div className="avatar">{initial}</div>
+                <div className="info">
+                  <div className="name">{reg.chinese_name} 法友</div>
+                  <div className="meta">
+                    <span><strong>序號</strong>{reg.member_id || '待編號'}</span>
+                    {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
+                    <span><strong>繳費碼</strong>{random_code}</span>
                   </div>
-                )}
-
-                <button
-                  onClick={handleTransferSubmit}
-                  disabled={transferLoading}
-                  className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold py-3 rounded-xl transition-colors">
-                  {transferLoading ? '提交中...' : '確認提交匯款資訊'}
-                </button>
-              </div>
-            ) : (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                <p className="text-2xl mb-2">✅</p>
-                <p className="font-semibold text-green-800">匯款資訊已提交！</p>
-                <p className="text-sm text-green-700 mt-1">學會確認後將通知您完成正式錄取</p>
+                </div>
               </div>
             )}
-          </div>
-        )}
 
-        <p className="text-center text-sm text-gray-500">
-          刷卡交易由綠界科技處理，安全加密
-        </p>
-      </div>
-    </div>
+            {paidStatus === 'verified' && (
+              <div className="submit-status">
+                <div className="submit-status-icon">✓</div>
+                <div className="submit-status-text">
+                  <h4>繳費已確認</h4>
+                  <p>您的繳費資料已由學會確認，本頁僅供參考。如有疑問請聯絡學會。</p>
+                </div>
+              </div>
+            )}
+            {paidStatus === 'paid' && (
+              <div className="submit-status">
+                <div className="submit-status-icon">⏳</div>
+                <div className="submit-status-text">
+                  <h4>繳費資訊已回報，待學會確認</h4>
+                  <p>學會將於收到匯款後核對並通知您。如需更新可重新填寫下方表單。</p>
+                </div>
+              </div>
+            )}
+
+            <div className="alert-card">
+              <div className="alert-card-title">繳費前請務必確認</div>
+              <ul>
+                <li>請於 <strong>2026/06/15 晚上 8 點前</strong>（台北時間）完成繳費。</li>
+                <li>一旦繳費後取消報名，<strong>已付費用恕無法退款或轉讓</strong>。</li>
+                <li>方案內容會自動帶入食宿登記表，請選擇對應的入住天數。</li>
+              </ul>
+            </div>
+
+            <div className="form-card">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 01</p>
+                <h2 className="step-header-title">選擇費用方案</h2>
+                <p className="step-header-desc">請依您預計入住的天數選擇方案，並選擇匯款或刷卡支付方式。</p>
+              </div>
+
+              <div className="opt-group">
+                {PLANS.map(p => {
+                  const checked = plan === p.id
+                  return (
+                    <label key={p.id} className={`opt ${checked ? 'selected' : ''}`}
+                      style={p.test ? {
+                        borderColor: checked ? 'var(--gold-deep)' : 'rgba(184, 133, 44, 0.4)',
+                        background: checked ? 'rgba(216, 194, 154, 0.18)' : 'rgba(216, 194, 154, 0.08)',
+                      } : undefined}>
+                      <input type="radio" name="plan" value={p.id}
+                        checked={checked}
+                        onChange={() => { setPlan(p.id); setShowBank(false) }} />
+                      <span className="opt-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <span>
+                          <strong>{p.label}</strong>　<span style={{ color: 'var(--ink-mute)', fontWeight: 500, fontSize: 13 }}>{p.date}</span>
+                          <small>{p.method === 'transfer' ? '匯款' : '信用卡刷卡'}{p.test ? '（測試專用）' : ''}</small>
+                        </span>
+                        <span style={{
+                          fontFamily: 'var(--font-cormorant), serif', fontWeight: 700,
+                          fontSize: 18, color: p.test ? 'var(--gold-deep)' : 'var(--green-deep)',
+                          letterSpacing: '0.04em', whiteSpace: 'nowrap',
+                        }}>
+                          NT${p.amount.toLocaleString()}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+
+              {selectedPlan && (
+                <div style={{
+                  marginTop: 18, padding: '16px 20px',
+                  background: 'rgba(73, 85, 52, 0.06)',
+                  border: '1px solid rgba(73, 85, 52, 0.25)',
+                  borderRadius: 14,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  flexWrap: 'wrap', gap: 12,
+                }}>
+                  <span style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontWeight: 600, color: 'var(--ink)', letterSpacing: '0.06em' }}>
+                    應付金額
+                  </span>
+                  <span style={{
+                    fontFamily: 'var(--font-cormorant), serif',
+                    fontSize: 28, fontWeight: 700, color: 'var(--green-deep)',
+                    letterSpacing: '0.05em',
+                  }}>
+                    NT${selectedPlan.amount.toLocaleString()}
+                  </span>
+                </div>
+              )}
+
+              {error && (
+                <div className="alert-card" style={{ marginTop: 16 }}>
+                  <div className="alert-card-title">{error}</div>
+                </div>
+              )}
+
+              <div className="form-actions">
+                <a href="/member/dashboard" className="btn btn-ghost">← 返回</a>
+                <button onClick={handlePay} disabled={loading}
+                  className="btn btn-primary">
+                  {loading ? '處理中⋯' : isTransfer ? '查看匯款帳號' : '前往綠界刷卡付款'} <span className="arrow">→</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 匯款帳號顯示 */}
+            {showBank && (
+              <div className="form-card" id="bank-info" style={{ marginTop: 24 }}>
+                <div className="step-header">
+                  <p className="step-header-kicker">Step 02</p>
+                  <h2 className="step-header-title">匯款帳號資訊</h2>
+                  <p className="step-header-desc">請依下列帳號完成匯款，匯款備註填寫您的姓名及繳費碼。</p>
+                </div>
+
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">本國</span>台灣法友匯款</div>
+                  <div className="info-row"><span className="k">戶名</span><span className="v">台灣四念處學會</span></div>
+                  <div className="info-row"><span className="k">銀行</span><span className="v">第一銀行 仁和分行</span></div>
+                  <div className="info-row"><span className="k">代號</span><span className="v">007</span></div>
+                  <div className="info-row">
+                    <span className="k">帳號</span>
+                    <span className="v" style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 18, letterSpacing: '0.08em', color: 'var(--green-deep)' }}>
+                      16510068750
+                    </span>
+                  </div>
+                </div>
+
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">海外</span>國外法友匯款</div>
+                  <div className="info-row"><span className="k">戶名</span><span className="v">台灣四念處學會</span></div>
+                  <div className="info-row"><span className="k">銀行</span><span className="v">第一銀行 仁和分行</span></div>
+                  <div className="info-row"><span className="k">代號</span><span className="v">007</span></div>
+                  <div className="info-row">
+                    <span className="k">帳號</span>
+                    <span className="v" style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 18, letterSpacing: '0.08em', color: 'var(--green-deep)' }}>
+                      16540016022
+                    </span>
+                  </div>
+                </div>
+
+                <div className="alert-card" style={{ marginTop: 8 }}>
+                  <div className="alert-card-title">匯款注意事項</div>
+                  <ul>
+                    <li>匯款時請備注您的姓名及繳費碼：<strong style={{ letterSpacing: '0.12em' }}>{random_code}</strong></li>
+                    <li>匯款完成後請填寫下方匯款資訊回報，並截圖上傳至學會 LINE 官方帳號。</li>
+                    <li>請於 <strong>2026/06/15 晚上 8 點前</strong>完成匯款。</li>
+                  </ul>
+                </div>
+
+                {/* 匯款回報表單 */}
+                <div className="field-group">
+                  <div className="field-group-title"><span className="num">回報</span>匯款完成後請填寫</div>
+                  {transferDone ? (
+                    <div className="submit-status">
+                      <div className="submit-status-icon">✓</div>
+                      <div className="submit-status-text">
+                        <h4>匯款資訊已提交</h4>
+                        <p>學會確認後將通知您完成正式錄取。如需更新可重新填寫送出。</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="field-row" style={{ gap: 14 }}>
+                        <div>
+                          <label className="form-label">匯款帳號後 5 碼 <span className="required">*</span></label>
+                          <input type="text" maxLength={5} className="form-input"
+                            placeholder="5 位數字"
+                            value={transferForm.last5}
+                            onChange={e => setTransferForm(prev => ({ ...prev, last5: e.target.value.replace(/\D/g, '') }))} />
+                        </div>
+                        <div>
+                          <label className="form-label">匯款日期 <span className="required">*</span></label>
+                          <input type="date" className="form-input"
+                            value={transferForm.transfer_date}
+                            onChange={e => setTransferForm(prev => ({ ...prev, transfer_date: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 14 }}>
+                        <label className="form-label">匯款人姓名</label>
+                        <input type="text" className="form-input"
+                          placeholder="若與報名姓名不同請填寫"
+                          value={transferForm.account_name}
+                          onChange={e => setTransferForm(prev => ({ ...prev, account_name: e.target.value }))} />
+                      </div>
+
+                      {transferError && (
+                        <div className="alert-card" style={{ marginTop: 14 }}>
+                          <div className="alert-card-title">{transferError}</div>
+                        </div>
+                      )}
+
+                      <div className="form-actions">
+                        <button onClick={handleTransferSubmit} disabled={transferLoading}
+                          className="btn btn-primary btn-block">
+                          {transferLoading ? '提交中⋯' : '確認提交匯款資訊'} <span className="arrow">→</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12.5, color: 'var(--ink-mute)' }}>
+              刷卡交易由綠界科技處理，安全加密。
+            </p>
+          </div>
+
+          {/* Sidebar */}
+          <aside>
+            <div className="deadline-card">
+              <div className="deadline-label">Deadline</div>
+              <div className="deadline-date">06.15</div>
+              <div className="deadline-text">
+                台北時間晚上 <strong>8:00</strong> 前完成<br />
+                逾期視同放棄錄取
+              </div>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>方案說明 <small>About</small></h4>
+              <div className="info-row">
+                <span className="k">A 方案</span>
+                <span className="v">8/20 — 8/24</span>
+              </div>
+              <div className="info-row">
+                <span className="k">B 方案</span>
+                <span className="v">8/19 — 8/24</span>
+              </div>
+              <div className="info-row">
+                <span className="k">C 方案</span>
+                <span className="v">8/19 — 8/25</span>
+              </div>
+              <div className="info-row">
+                <span className="k">D 方案</span>
+                <span className="v">8/20 — 8/25</span>
+              </div>
+              <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-mute)' }}>
+                匯款方案較刷卡優惠，刷卡含金流手續費。
+              </p>
+            </div>
+
+            <div className="sidebar-card">
+              <h4>需要協助 <small>Help</small></h4>
+              <p>聯絡學會：<br />
+                <a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a>
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+        </div>
+      </footer>
+    </>
   )
 }
 
 export default function PayPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">載入中...</div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    }>
       <PayContent />
     </Suspense>
   )
