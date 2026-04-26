@@ -82,10 +82,11 @@ function LodgingContent() {
   const fail = (field: string, msg: string): false => {
     setError(msg)
     setErrorField(field)
+    // 跨 step validate 時要等 setStep 後 React re-render 完，欄位才存在 DOM
     setTimeout(() => {
       const el = document.getElementById(`field-${field}`)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 50)
+    }, 150)
     return false
   }
   const errCls = (f: string) => errorField === f ? 'error' : ''
@@ -791,14 +792,14 @@ function LodgingContent() {
                       <div className="field-group-title"><span className="num">03</span>資料確認</div>
                       <div className="review-grid">
                         <div className="review-group">
-                          <h4>行程安排 <span className="edit-link" onClick={() => setStep(1)}>編輯 Edit</span></h4>
+                          <h4>行程安排 <span className="edit-link" onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                           <ReviewRow k="緊急聯絡人" v={`${form.emergency_name}（${form.emergency_relation}）${form.emergency_phone}`} />
                           <ReviewRow k="前往日月潭" v={TRANSPORT_LABEL[form.arrival_transport] || ''} />
                           <ReviewRow k="離開渡假村" v={form.departure_transport === 'self' ? '自行離開' : form.departure_transport === 'bus' ? `主辦專車（${BUS_DEST_LABEL[form.bus_destination] || '未選擇'}）` : ''} />
                         </div>
 
                         <div className="review-group">
-                          <h4>飲食偏好 <span className="edit-link" onClick={() => setStep(2)}>編輯 Edit</span></h4>
+                          <h4>飲食偏好 <span className="edit-link" onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                           <ReviewRow k="飲食" v={DIET_LABEL[form.diet] || ''} />
                           <ReviewRow k="過午不食" v={NOON_LABEL[form.noon_fasting] || ''} />
                           <ReviewRow k="茶點" v={SNACKS_LABEL[form.snacks] || ''} />
@@ -807,7 +808,7 @@ function LodgingContent() {
                         </div>
 
                         <div className="review-group">
-                          <h4>證件上傳 <span className="edit-link" onClick={() => setStep(3)}>編輯 Edit</span></h4>
+                          <h4>證件上傳 <span className="edit-link" onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                           <ReviewRow k="個人相片" v={form.photo_url ? '✓ 已上傳' : ''} />
                           <ReviewRow k="申請人身份" v={IDENTITY_LABEL[identityType]} />
                           {identityType === 'id' && (

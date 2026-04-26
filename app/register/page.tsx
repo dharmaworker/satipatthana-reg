@@ -115,9 +115,10 @@ export default function RegisterPage() {
   const fail = (field: string, msg: string) => {
     setError(msg)
     setErrorField(field)
+    // 跨 step validate 時要等 setStep 後 React re-render 完，欄位才存在 DOM
     setTimeout(() => {
       document.getElementById(`field-${field}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 50)
+    }, 150)
     return false
   }
   const errCls = (f: string) => errorField === f ? 'error' : ''
@@ -683,7 +684,7 @@ export default function RegisterPage() {
 
               <div className="review-grid">
                 <div className="review-group">
-                  <h4>背景與承諾 <span className="edit-link" onClick={() => setStep(3)}>編輯 Edit</span></h4>
+                  <h4>背景與承諾 <span className="edit-link" onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="如實填寫" v={form.honest_confirm === 'yes' ? '是' : '—'} />
                   <ReviewRow k="正式學員參加課程" v={form.attended_formal === 'yes' ? '是' : form.attended_formal === 'no' ? '否' : '—'} />
                   <ReviewRow k="3 屆錄影／錄音" v={form.watched_recordings === 'yes' ? '是' : form.watched_recordings === 'no' ? '否' : '—'} />
@@ -699,7 +700,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="review-group">
-                  <h4>個人資訊 <span className="edit-link" onClick={() => setStep(4)}>編輯 Edit</span></h4>
+                  <h4>個人資訊 <span className="edit-link" onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="中文姓名" v={form.chinese_name} />
                   <ReviewRow k="護照英文姓名" v={form.passport_name} />
                   <ReviewRow k="身份" v={form.identity === 'lay' ? '在家人（居士）' : form.identity === 'monastic' ? '僧眾' : '—'} />
@@ -750,7 +751,9 @@ export default function RegisterPage() {
               <a href="/" className="btn btn-ghost">← 返回首頁</a>
             )}
             {step < STEPS.length ? (
-              <button onClick={() => goToStep(step + 1)} className="btn btn-primary">
+              <button onClick={() => goToStep(step + 1)}
+                disabled={step === 3 && form.honest_confirm === 'no'}
+                className="btn btn-primary">
                 下一步 <span className="arrow">→</span>
               </button>
             ) : (
