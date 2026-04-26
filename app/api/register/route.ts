@@ -120,12 +120,12 @@ export async function POST(request: NextRequest) {
             </ul>
 
             <h3 style="color:#2d6a4f;">查詢報名狀態 / 學員專區</h3>
-            <p>您可隨時至學員專區查詢審核狀態，錄取後在同一頁面完成繳費、食宿登記、快篩上傳：</p>
-            <a href="${baseUrl}/member"
+            <p>您可隨時透過下方連結進入學員專區查詢審核狀態，錄取後在同一頁面完成繳費、食宿登記、快篩上傳：</p>
+            <a href="${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}"
               style="display:inline-block;background:#1a5276;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">
               前往學員專區
             </a>
-            <p style="margin-top:10px;font-size:13px;color:#666;">登入時需輸入您的 Email 及上方繳費碼。</p>
+            <p style="margin-top:10px;font-size:13px;color:#666;">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:#1a5276;">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
 
             <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
             <p style="color:#666;font-size:13px;">若您沒有報名本課程，請忽略此信。</p>
