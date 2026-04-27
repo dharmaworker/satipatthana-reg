@@ -74,7 +74,7 @@ export default function DocumentsPage() {
       <div className="admin-main">
         <div className="admin-toolbar">
           <input type="text"
-            placeholder="搜尋姓名 / 英文姓名 / 序號 / 學號"
+            placeholder="搜尋姓名 / 英文姓名 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 260 }} />
           <label>
@@ -91,7 +91,7 @@ export default function DocumentsPage() {
             <thead>
               <tr>
                 <th>姓名</th>
-                <th>序號</th>
+                <th>報名序號</th>
                 <th>學號</th>
                 <th>居住地</th>
                 {DOC_COLS.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.label}</th>)}

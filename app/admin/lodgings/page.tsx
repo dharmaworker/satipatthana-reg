@@ -208,7 +208,7 @@ export default function LodgingsPage() {
           <summary style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--green-deep)', fontSize: 13.5, userSelect: 'none' }}>💡 操作說明（點擊可折疊）</summary>
           <ol style={{ paddingLeft: 22, marginTop: 8, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
             <li><strong>本頁對象：</strong>所有狀態為「已錄取」的學員；未填食宿者食宿欄位顯示「—」。</li>
-            <li><strong>序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生；取消錄取時自動註銷。</li>
+            <li><strong>報名序號 T-xxx：</strong>僅顯示，由「報名管理」錄取時自動產生；取消錄取時自動註銷。</li>
             <li><strong>學號 R-xxx：</strong>按「✏ 手動」自己 key（儲存需唯一）；按「註銷」可清除。</li>
             <li><strong>繳費狀態：</strong>下拉切換 未繳費／待確認／已確認（學員匯款後由財務人員更新）。</li>
             <li><strong>詳細／編輯：</strong>僅對已填食宿者可用；尚未填寫則不顯示。</li>
@@ -218,7 +218,7 @@ export default function LodgingsPage() {
 
         <div className="admin-toolbar">
           <input type="text"
-            placeholder="搜尋姓名 / Email / 繳費碼 / 序號 / 學號"
+            placeholder="搜尋姓名 / Email / 繳費碼 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 280 }} />
           <label style={{ background: 'rgba(216, 194, 154, 0.18)', border: '1px solid rgba(180, 147, 88, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
@@ -264,7 +264,7 @@ export default function LodgingsPage() {
                     }} />
                 </th>
                 <th>姓名</th>
-                <th>序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>T-xxx 自動</span></th>
+                <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>T-xxx 自動</span></th>
                 <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>R-xxx 手動</span></th>
                 <th>繳費碼</th>
                 <th>方案</th>
@@ -357,7 +357,7 @@ export default function LodgingsPage() {
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
-              <Field label="序號" value={detail.registration?.member_id} />
+              <Field label="報名序號" value={detail.registration?.member_id} />
               <Field label="學號" value={detail.registration?.student_id} />
               <Field label="Email" value={detail.registration?.email} />
               <Field label="手機" value={detail.registration?.phone} />
@@ -438,7 +438,7 @@ export default function LodgingsPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: 14, background: 'rgba(216, 194, 154, 0.12)', borderRadius: 10, marginBottom: 14, border: '1px solid var(--line)' }}>
               <div>
-                <label className="form-label">序號（自動）</label>
+                <label className="form-label">報名序號（自動）</label>
                 <div style={{ padding: '9px 14px', borderRadius: 10, background: 'var(--bg-pure)', border: '1px solid var(--line)', color: 'var(--ink-mute)', fontFamily: 'var(--font-cormorant), monospace' }}>
                   {edit.registration?.member_id || '—'}
                 </div>

@@ -14,7 +14,7 @@ export function quickTestsButtonHtml(reg: { id: string; random_code: string }) {
   return `
     ${emailButton(`${baseUrl}/quicktests?id=${reg.id}&code=${reg.random_code}`, '前往上傳快篩檢測結果', 'green')}
     <p style="font-size:13px;color:${C.inkMute};margin-top:8px;line-height:1.85;">
-      請依下列時間上傳檢測結果（檢測結果需載明日期、序號、姓名；快篩試劑請自備）：<br>
+      請依下列時間上傳檢測結果（檢測結果需載明日期、報名序號、姓名；快篩試劑請自備）：<br>
       ・8/17 上午 8:00 至晚上 8:00 前<br>
       ・8/19 上午 12:00 前<br>
       （課程期間 8/20、8/22 快篩結果現場繳交，不需線上上傳）

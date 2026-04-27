@@ -112,11 +112,11 @@ export async function PATCH(request: NextRequest) {
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
 
-  // 狀態首次轉為 approved → 自動編序號（若尚未編過）
+  // 狀態首次轉為 approved → 自動編報名序號（若尚未編過）
   if (status === 'approved' && currentReg?.status !== 'approved' && !currentReg?.member_id && member_id === undefined) {
     updateData.member_id = await nextAvailableMemberId()
   }
-  // 狀態從 approved 轉走 → 註銷序號
+  // 狀態從 approved 轉走 → 註銷報名序號
   if (status && status !== 'approved' && currentReg?.status === 'approved' && member_id === undefined) {
     updateData.member_id = null
   }

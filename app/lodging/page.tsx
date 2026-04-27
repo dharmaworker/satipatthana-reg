@@ -395,7 +395,7 @@ function LodgingContent() {
               <div className="info">
                 <div className="name">{reg.chinese_name} 法友</div>
                 <div className="meta">
-                  <span><strong>序號</strong>{reg.member_id || '待編號'}</span>
+                  <span><strong>報名序號</strong>{reg.member_id || '待編號'}</span>
                   {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
                   <span><strong>性別</strong>{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</span>
                 </div>
@@ -771,7 +771,7 @@ function LodgingContent() {
                         </ul>
                         <h5>快篩檢測時間</h5>
                         <ul>
-                          <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>，快篩試劑請自備。</li>
+                          <li>檢測結果必須<strong>載明檢測日期、報名序號、姓名</strong>，快篩試劑請自備。</li>
                           <li>開課前：8/17 上午 8:00 ～ 晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
                           <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>
                         </ul>

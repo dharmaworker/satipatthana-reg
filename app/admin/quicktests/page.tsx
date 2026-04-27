@@ -52,7 +52,7 @@ export default function QuickTestsAdminPage() {
       <div className="admin-main" style={{ maxWidth: 1200 }}>
         <div className="admin-toolbar">
           <input type="text"
-            placeholder="搜尋姓名 / 序號 / 學號"
+            placeholder="搜尋姓名 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 240 }} />
           <label>
@@ -70,7 +70,7 @@ export default function QuickTestsAdminPage() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>序號</th>
+                <th>報名序號</th>
                 <th>學號</th>
                 <th>姓名</th>
                 {TEST_COLS.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.label}</th>)}

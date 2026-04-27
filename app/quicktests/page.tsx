@@ -152,7 +152,7 @@ function QuickTestsContent() {
               <div className="info">
                 <div className="name">{reg.chinese_name} 法友</div>
                 <div className="meta">
-                  <span><strong>序號</strong>{reg.member_id || '待編號'}</span>
+                  <span><strong>報名序號</strong>{reg.member_id || '待編號'}</span>
                   {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
                 </div>
               </div>
@@ -161,7 +161,7 @@ function QuickTestsContent() {
             <div className="alert-card">
               <div className="alert-card-title">注意事項</div>
               <ul>
-                <li>檢測結果必須<strong>載明檢測日期、序號、姓名</strong>。</li>
+                <li>檢測結果必須<strong>載明檢測日期、報名序號、姓名</strong>。</li>
                 <li>快篩試劑請<strong>自備</strong>，主辦單位不提供。</li>
                 <li>請依下方兩個時段於規定時間前上傳；可分次回到此頁補上。</li>
                 <li>課程期間的 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需於此上傳。</li>
@@ -291,7 +291,7 @@ function QuickTestsContent() {
             <div className="sidebar-card">
               <h4>使用說明 <small>How to</small></h4>
               <ol style={{ paddingLeft: 20, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
-                <li>請於檢測當下拍下含<strong>檢測日期、序號、姓名</strong>之照片。</li>
+                <li>請於檢測當下拍下含<strong>檢測日期、報名序號、姓名</strong>之照片。</li>
                 <li>於各時段卡片點擊上傳區，選取照片。</li>
                 <li>檔案上傳後可預覽、清除或重新上傳。</li>
                 <li>完成後請按下方<strong>送出</strong>，系統會寄出確認信。</li>
@@ -301,7 +301,7 @@ function QuickTestsContent() {
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
               <p>
-                檢測結果必須<strong>載明檢測日期、序號、姓名</strong>，建議手寫於試劑旁再拍照。
+                檢測結果必須<strong>載明檢測日期、報名序號、姓名</strong>，建議手寫於試劑旁再拍照。
               </p>
               <p style={{ marginTop: 10 }}>
                 快篩試劑請<strong>自備</strong>，主辦單位不提供。

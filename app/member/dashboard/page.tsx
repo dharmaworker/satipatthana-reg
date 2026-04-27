@@ -117,7 +117,7 @@ function MemberDashboardContent() {
           </div>
           <div className="welcome-status">
             <div className="ref">
-              <span className="k">序號</span>
+              <span className="k">報名序號</span>
               <strong>{member.member_id || '待編號'}</strong>
             </div>
             {member.student_id && (

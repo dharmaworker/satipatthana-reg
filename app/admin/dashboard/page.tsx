@@ -227,7 +227,7 @@ export default function DashboardPage() {
           <summary style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--green-deep)', fontSize: 13.5, userSelect: 'none' }}>💡 操作說明（點擊可折疊）</summary>
           <ol style={{ paddingLeft: 22, marginTop: 8, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
             <li><strong>審核報名：</strong>在「審核狀態」下拉切換，或勾選多筆後按上方「批次錄取／批次拒絕」。</li>
-            <li><strong>序號自動化：</strong>錄取時系統自動編序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
+            <li><strong>報名序號自動化：</strong>錄取時系統自動編報名序號（T-001、T-002…）；取消錄取會自動註銷。不需手動。</li>
             <li><strong>編輯資料：</strong>單筆按「編輯」修改姓名／Email／居住地等；⋯ 可刪除。</li>
             <li><strong>批次寄信 / 繳費狀態 / 學號（R-xxx）管理：</strong>都請到「錄取學員」分頁操作。</li>
           </ol>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                 <th>居住地</th>
                 <th>繳費碼</th>
                 <th>審核狀態</th>
-                <th>序號</th>
+                <th>報名序號</th>
                 <th>方案</th>
                 <th>QR</th>
                 <th>操作</th>
@@ -392,7 +392,7 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div>
-                <label className="form-label">序號</label>
+                <label className="form-label">報名序號</label>
                 <input className="form-input uppercase" placeholder="例：T-001"
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
@@ -445,7 +445,7 @@ export default function DashboardPage() {
               <DetailField label="中文姓名" value={detailReg.chinese_name} />
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
               <DetailField label="繳費碼" value={detailReg.random_code} mono />
-              <DetailField label="序號" value={detailReg.member_id} />
+              <DetailField label="報名序號" value={detailReg.member_id} />
               <DetailField label="身分" value={detailReg.identity === 'lay' ? '在家人' : detailReg.identity === 'monastic' ? '僧眾' : detailReg.identity} />
               <DetailField label="法名" value={detailReg.dharma_name} />
               <DetailField label="性別" value={detailReg.gender === 'male' ? '男' : detailReg.gender === 'female' ? '女' : detailReg.gender} />

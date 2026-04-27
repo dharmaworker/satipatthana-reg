@@ -96,7 +96,7 @@ export async function sendLodgingArchiveEmail(reg: {
     ${tableWrap([
       tableRow('繳費碼', reg.random_code),
       tableRow('中文姓名', reg.chinese_name),
-      tableRow('序號', reg.member_id),
+      tableRow('報名序號', reg.member_id),
       tableRow('選擇方案', planLabel),
       tableRow('金額 (NT$)', typeof amount === 'number' ? amount.toLocaleString() : amount),
       tableRow('繳費方式', method),

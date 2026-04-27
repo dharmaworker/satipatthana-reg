@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase'
 
-// 序號（member_id）：T-001/T-002 ... 錄取時由系統自動編
+// 報名序號（member_id）：T-001/T-002 ... 錄取時由系統自動編
 const SERIAL_REGEX = /^T-(\d+)$/
 // 學號（student_id）：R-001/R-002 ... 食宿管理頁由操作員手動編
 const STUDENT_REGEX = /^R-(\d+)$/

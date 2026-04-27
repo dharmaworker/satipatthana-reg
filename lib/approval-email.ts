@@ -18,7 +18,7 @@ export async function sendApprovalEmail(reg: {
     ${emailKicker('Approval Notice')}
     ${emailH1('第二屆台灣四念處禪修課程－錄取通知')}
     <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
-    <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
+    <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
 
     ${emailH3('一、請詳讀以下內容')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
@@ -39,7 +39,7 @@ export async function sendApprovalEmail(reg: {
     <p style="font-size:13px;color:${C.inkMute};margin:6px 0 0;line-height:1.85;">
       ・8/17 上午 8 點至晚上 8 點前　・8/19 上午 12 點前<br>
       （課程期間 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需線上上傳）<br>
-      檢測結果需載明日期、序號、姓名；快篩試劑請自備。
+      檢測結果需載明日期、報名序號、姓名；快篩試劑請自備。
     </p>
 
     ${emailH4('費用方案')}
