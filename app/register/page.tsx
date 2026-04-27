@@ -609,8 +609,32 @@ export default function RegisterPage() {
               <div className="field-row" style={{ marginTop: 14 }}>
                 <div>
                   <label className="form-label">25. 護照頒發地</label>
-                  <input className="form-input" value={form.passport_country}
-                    onChange={e => update('passport_country', e.target.value)} />
+                  {(() => {
+                    const isOther = form.passport_country === '其他地區' || form.passport_country.startsWith('其他地區：')
+                    const otherText = form.passport_country.startsWith('其他地區：')
+                      ? form.passport_country.slice('其他地區：'.length)
+                      : ''
+                    return (
+                      <>
+                        <select className="form-select"
+                          value={isOther ? '其他地區' : form.passport_country}
+                          onChange={e => update('passport_country', e.target.value)}>
+                          <option value="">請選擇（非必填）</option>
+                          {RESIDENCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                        {isOther && (
+                          <input className="form-input"
+                            style={{ marginTop: 8 }}
+                            placeholder="請填寫護照頒發地"
+                            value={otherText}
+                            onChange={e => {
+                              const t = e.target.value
+                              update('passport_country', t ? `其他地區：${t}` : '其他地區')
+                            }} />
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
                 <div id="field-residence">
                   <label className="form-label">26. 居住地 <span className="required">*</span></label>
