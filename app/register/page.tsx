@@ -635,8 +635,8 @@ export default function RegisterPage() {
               </div>
 
               <div id="field-contact_app" style={{ marginTop: 18 }}>
-                <label className="form-label">29. 通訊軟體（LINE 或 微信擇一）<span className="required">*</span></label>
-                <p className="form-hint" style={{ marginBottom: 10 }}>請擇一填寫並上傳對應 QR Code（檔案上限 500KB）</p>
+                <label className="form-label">29. 通訊軟體 <span className="required">*</span></label>
+                <p className="form-hint" style={{ marginBottom: 10 }}>必填，請於 LINE 或 微信擇一填寫並上傳對應 QR Code（檔案上限 500KB）</p>
                 <div className="opt-group inline">
                   <label className={`opt ${form.contact_app === 'line' ? 'selected' : ''}`}>
                     <input type="radio" name="contact_app" value="line"
