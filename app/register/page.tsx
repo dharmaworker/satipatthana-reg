@@ -132,6 +132,20 @@ export default function RegisterPage() {
     }))
   }
 
+  // 課程類別摺疊狀態（標題的 checkbox 控制；勾→展開、取消→收合並清空該類別）
+  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({})
+  const toggleCourseGroup = (groupNo: number, courses: readonly string[]) => {
+    const wasOpen = expandedGroups[groupNo]
+    setExpandedGroups(prev => ({ ...prev, [groupNo]: !wasOpen }))
+    if (wasOpen) {
+      // 收合 → 清空該類別已選的所有課程
+      setForm(prev => ({
+        ...prev,
+        attended_courses: prev.attended_courses.filter(c => !courses.includes(c)),
+      }))
+    }
+  }
+
   const [uploadingQr, setUploadingQr] = useState<'line' | 'wechat' | null>(null)
   const handleQrUpload = async (kind: 'line' | 'wechat', file: File) => {
     setUploadingQr(kind)
@@ -432,20 +446,35 @@ export default function RegisterPage() {
               </div>
 
               {/* Q3-Q8 */}
-              {COURSE_GROUPS.map(({ no, title, loc, courses }) => (
-                <div key={title} className="question-block">
-                  <label className="form-label">{no}. {title}　<span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>{loc}・非必選</span></label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
-                    {courses.map(course => (
-                      <label key={course} className={`opt ${form.attended_courses.includes(course) ? 'selected' : ''}`}>
-                        <input type="checkbox" checked={form.attended_courses.includes(course)}
-                          onChange={() => toggleCourse(course)} />
-                        <span className="opt-text" style={{ fontSize: 13 }}>{course}</span>
-                      </label>
-                    ))}
+              {COURSE_GROUPS.map(({ no, title, loc, courses }) => {
+                const open = !!expandedGroups[no]
+                const selectedCount = courses.filter(c => form.attended_courses.includes(c)).length
+                return (
+                  <div key={title} className="question-block">
+                    <label className={`opt ${open ? 'selected' : ''}`} style={{ marginBottom: 0 }}>
+                      <input type="checkbox" checked={open}
+                        onChange={() => toggleCourseGroup(no, courses)} />
+                      <span className="opt-text">
+                        <strong>{no}. {title}</strong>
+                        <small>{loc}・非必選{selectedCount > 0 && open ? `（已勾 ${selectedCount} 屆）` : ''}</small>
+                      </span>
+                    </label>
+                    {open && (
+                      <div className="branch-reveal active" style={{ marginTop: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
+                          {courses.map(course => (
+                            <label key={course} className={`opt ${form.attended_courses.includes(course) ? 'selected' : ''}`}>
+                              <input type="checkbox" checked={form.attended_courses.includes(course)}
+                                onChange={() => toggleCourse(course)} />
+                              <span className="opt-text" style={{ fontSize: 13 }}>{course}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {yesNoSelect('watched_recordings', '9. 是否完整觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
               {yesNoSelect('zoom_guidance', '10. 您是否透過 ZOOM 的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
