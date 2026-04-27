@@ -12,13 +12,14 @@ const TEACHERS = [
 const TEACHER_LABEL: Record<string, string> = Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
 
 const SESSIONS = [
-  { id: 's1', label: '8/21（五）巴山' },
-  { id: 's2', label: '8/21（五）納' },
-  { id: 's3', label: '8/22（六）妮' },
-  { id: 's4', label: '8/22（六）松' },
-  { id: 's5', label: '8/23（日）巴山' },
-  { id: 's6', label: '8/23（日）妮' },
+  { id: 's1', label: '8/21（五）巴山', cap: 8 },
+  { id: 's2', label: '8/21（五）納', cap: 8 },
+  { id: 's3', label: '8/22（六）妮', cap: 8 },
+  { id: 's4', label: '8/22（六）松', cap: 8 },
+  { id: 's5', label: '8/23（日）巴山', cap: 8 },
+  { id: 's6', label: '8/23（日）妮', cap: 8 },
 ]
+const SMALL_GROUP_CAP = 8 // 每個分組老師 × 每天的容量假設
 const SESSION_LABEL: Record<string, string> = Object.fromEntries(SESSIONS.map(s => [s.id, s.label]))
 
 type Row = {
@@ -45,7 +46,7 @@ export default function InteractiveAdminPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'submitted' | 'group_won' | 'small_won' | 'pending'>('all')
+  const [filter, setFilter] = useState<'all' | 'submitted' | 'group_won' | 'small_won' | 'has_pending' | 'not_notified'>('all')
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
   const [message, setMessage] = useState('')
@@ -60,6 +61,30 @@ export default function InteractiveAdminPage() {
     setLoading(false)
   }
   useEffect(() => { fetchData() }, [])
+
+  // 容量統計：各集體場次與各分組（老師 × 日期）已分配的人數
+  const sessionCounts = (() => {
+    const m = new Map<string, number>()
+    for (const r of rows) {
+      const it = r.interactive
+      if (it?.group_status === 'won' && it.assigned_session) {
+        m.set(it.assigned_session, (m.get(it.assigned_session) || 0) + 1)
+      }
+    }
+    return m
+  })()
+  const smallCounts = (() => {
+    // key = "teacher|date"
+    const m = new Map<string, number>()
+    for (const r of rows) {
+      const it = r.interactive
+      if (it?.small_status === 'won' && it.assigned_group && it.assigned_date) {
+        const k = `${it.assigned_group}|${it.assigned_date}`
+        m.set(k, (m.get(k) || 0) + 1)
+      }
+    }
+    return m
+  })()
 
   const filtered = rows.filter(r => {
     const reg = r.registration
@@ -76,8 +101,18 @@ export default function InteractiveAdminPage() {
     if (filter === 'submitted' && !it) return false
     if (filter === 'group_won' && it?.group_status !== 'won') return false
     if (filter === 'small_won' && it?.small_status !== 'won') return false
-    if (filter === 'pending' && it && (it.group_status !== 'pending' || it.small_status !== 'pending')) return false
-    if (filter === 'pending' && !it) return false
+    // 「有未定」= 已送出但至少一邊還是 pending（admin 還沒處理完）
+    if (filter === 'has_pending') {
+      if (!it) return false
+      if (it.group_status !== 'pending' && it.small_status !== 'pending') return false
+    }
+    // 「中簽未通知」= 任一邊中簽但還沒寄通知信
+    if (filter === 'not_notified') {
+      if (!it) return false
+      const hasWon = it.group_status === 'won' || it.small_status === 'won'
+      if (!hasWon) return false
+      if (it.notification_sent_at) return false
+    }
     return true
   })
 
@@ -134,9 +169,10 @@ export default function InteractiveAdminPage() {
           <select value={filter} onChange={e => setFilter(e.target.value as any)}>
             <option value="all">全部錄取者</option>
             <option value="submitted">已送出互動報名</option>
+            <option value="has_pending">有未定（admin 還沒處理完）</option>
             <option value="group_won">集體中簽</option>
             <option value="small_won">分組中簽</option>
-            <option value="pending">未定（已送出但 admin 未處理）</option>
+            <option value="not_notified">中簽但未寄通知信</option>
           </select>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
           <label>
@@ -151,6 +187,8 @@ export default function InteractiveAdminPage() {
           {message && <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message}</span>}
           <span className="count">共 {filtered.length} 筆</span>
         </div>
+
+        <CapacityPanel sessionCounts={sessionCounts} smallCounts={smallCounts} />
 
         <div className="admin-table-card scroll">
           <table className="admin-table">
@@ -402,6 +440,115 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
             className="admin-btn-sm primary">儲存</button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function CapacityPanel({ sessionCounts, smallCounts }: {
+  sessionCounts: Map<string, number>
+  smallCounts: Map<string, number>
+}) {
+  const [open, setOpen] = useState(false)
+  const dates = ["2026-08-21", "2026-08-22", "2026-08-23"]
+  const dateLabel: Record<string, string> = {
+    "2026-08-21": "8/21",
+    "2026-08-22": "8/22",
+    "2026-08-23": "8/23",
+  }
+
+  const totalGroup = SESSIONS.reduce((s, x) => s + (sessionCounts.get(x.id) || 0), 0)
+  const groupCap = SESSIONS.reduce((s, x) => s + x.cap, 0)
+  const totalSmall = Array.from(smallCounts.values()).reduce((s, x) => s + x, 0)
+  const smallCap = TEACHERS.length * dates.length * SMALL_GROUP_CAP
+
+  const anyOver = SESSIONS.some(s => (sessionCounts.get(s.id) || 0) > s.cap)
+    || Array.from(smallCounts.entries()).some(([_, c]) => c > SMALL_GROUP_CAP)
+
+  return (
+    <div className="admin-table-card" style={{ padding: 0, marginBottom: 14 }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", textAlign: "left", padding: "12px 18px",
+          background: anyOver ? "rgba(184, 82, 58, 0.06)" : "rgba(73, 85, 52, 0.04)",
+          border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+          fontFamily: "var(--font-noto-serif-tc), serif", fontWeight: 700, fontSize: 14,
+          color: "var(--ink)", letterSpacing: "0.06em",
+        }}>
+        <span>{open ? "▼" : "▶"}</span>
+        <span>容量統計</span>
+        <span style={{ fontSize: 12.5, color: "var(--ink-mute)", fontWeight: 500 }}>
+          集體 {totalGroup}／{groupCap}　·　分組 {totalSmall}／{smallCap}
+        </span>
+        {anyOver && <span className="admin-status-badge error" style={{ marginLeft: "auto" }}>有超額</span>}
+      </button>
+
+      {open && (
+        <div style={{ padding: "14px 18px 18px", borderTop: "1px solid var(--line)" }}>
+          <div style={{ marginBottom: 14 }}>
+            <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--green-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
+              集體互動場次
+            </h5>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+              {SESSIONS.map(s => {
+                const c = sessionCounts.get(s.id) || 0
+                const over = c > s.cap
+                return (
+                  <div key={s.id} style={{
+                    padding: "8px 12px",
+                    background: over ? "rgba(184, 82, 58, 0.08)" : "var(--bg-pure)",
+                    border: `1px solid ${over ? "rgba(184, 82, 58, 0.3)" : "var(--line)"}`,
+                    borderRadius: 8, fontSize: 12.5,
+                  }}>
+                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{s.label}</div>
+                    <div style={{
+                      fontFamily: "var(--font-cormorant), serif", fontWeight: 700, fontSize: 16,
+                      color: over ? "var(--error)" : c >= s.cap ? "var(--gold-deep)" : "var(--green-deep)",
+                      marginTop: 2,
+                    }}>
+                      {c} ／ {s.cap}{over && " ⚠"}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--gold-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
+              分組互動（老師 × 日期，每格容量 {SMALL_GROUP_CAP}）
+            </h5>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ borderCollapse: "collapse", fontSize: 12.5, width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th style={{ padding: 6, textAlign: "left", color: "var(--ink-mute)" }}>分組</th>
+                    {dates.map(d => <th key={d} style={{ padding: 6, textAlign: "center", color: "var(--ink-mute)" }}>{dateLabel[d]}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {TEACHERS.map(t => (
+                    <tr key={t.id}>
+                      <td style={{ padding: 6, color: "var(--ink)", fontWeight: 600 }}>{t.name}</td>
+                      {dates.map(d => {
+                        const c = smallCounts.get(`${t.id}|${d}`) || 0
+                        const over = c > SMALL_GROUP_CAP
+                        return (
+                          <td key={d} style={{
+                            padding: 6, textAlign: "center",
+                            color: over ? "var(--error)" : c >= SMALL_GROUP_CAP ? "var(--gold-deep)" : "var(--green-deep)",
+                            fontFamily: "var(--font-cormorant), serif", fontWeight: 700,
+                          }}>
+                            {c}／{SMALL_GROUP_CAP}{over && " ⚠"}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

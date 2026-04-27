@@ -8,4 +8,5 @@ CREATE TABLE IF NOT EXISTS public.site_config (
 
 -- 由 service role 寫入；anon 不需 RLS（API 都走 supabaseAdmin）
 ALTER TABLE public.site_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all" ON public.site_config;
 CREATE POLICY "service_role_all" ON public.site_config FOR ALL TO service_role USING (true) WITH CHECK (true);

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.interactive_registrations (
 ALTER TABLE public.interactive_registrations ADD COLUMN IF NOT EXISTS group_serial INTEGER;
 ALTER TABLE public.interactive_registrations ADD COLUMN IF NOT EXISTS small_serial INTEGER;
 ALTER TABLE public.interactive_registrations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all" ON public.interactive_registrations;
 CREATE POLICY "service_role_all" ON public.interactive_registrations FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- 互動作業：中簽後學員填寫
@@ -38,4 +39,5 @@ CREATE TABLE IF NOT EXISTS public.interactive_tasks (
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE public.interactive_tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "service_role_all" ON public.interactive_tasks;
 CREATE POLICY "service_role_all" ON public.interactive_tasks FOR ALL TO service_role USING (true) WITH CHECK (true);
