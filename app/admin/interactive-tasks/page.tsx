@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '../_components/AdminHeader'
 
-const TEACHER_LABEL: Record<string, string> = { prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松' }
+const TEACHER_LABEL: Record<string, string> = { nat: '阿姜納', prasan: '阿姜巴山', nitiya: '阿姜妮', napatpol: '阿姜松' }
 const SESSION_LABEL: Record<string, string> = {
-  s1: '8/21 巴山', s2: '8/21 納',
+  s2: '8/21 納', s1: '8/21 巴山',
   s3: '8/22 妮',  s4: '8/22 松',
-  s5: '8/23 巴山', s6: '8/23 妮',
+  s6: '8/23 妮', s5: '8/23 巴山',
 }
 
 type Row = {

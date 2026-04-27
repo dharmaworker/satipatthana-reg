@@ -4,20 +4,20 @@ import { useRouter } from 'next/navigation'
 import { AdminHeader } from '../_components/AdminHeader'
 
 const TEACHERS = [
-  { id: 'prasan',   name: '阿姜巴山' },
   { id: 'nat',      name: '阿姜納' },
+  { id: 'prasan',   name: '阿姜巴山' },
   { id: 'nitiya',   name: '阿姜妮' },
   { id: 'napatpol', name: '阿姜松' },
 ]
 const TEACHER_LABEL: Record<string, string> = Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
 
 const SESSIONS = [
-  { id: 's1', label: '8/21（五）巴山', cap: 8 },
   { id: 's2', label: '8/21（五）納', cap: 8 },
+  { id: 's1', label: '8/21（五）巴山', cap: 8 },
   { id: 's3', label: '8/22（六）妮', cap: 8 },
   { id: 's4', label: '8/22（六）松', cap: 8 },
-  { id: 's5', label: '8/23（日）巴山', cap: 8 },
   { id: 's6', label: '8/23（日）妮', cap: 8 },
+  { id: 's5', label: '8/23（日）巴山', cap: 8 },
 ]
 const SMALL_GROUP_CAP = 8 // 每個分組老師 × 每天的容量假設
 const SESSION_LABEL: Record<string, string> = Object.fromEntries(SESSIONS.map(s => [s.id, s.label]))

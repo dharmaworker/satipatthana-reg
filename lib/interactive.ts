@@ -6,8 +6,8 @@ export type TeacherId = 'prasan' | 'nat' | 'nitiya' | 'napatpol'
 export type StatusValue = 'pending' | 'won' | 'lost'
 
 export const TEACHERS: { id: TeacherId; name: string; nameEn: string }[] = [
-  { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan' },
   { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat' },
+  { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan' },
   { id: 'nitiya',   name: '阿姜妮',   nameEn: 'Ajahn Nitiya' },
   { id: 'napatpol', name: '阿姜松',   nameEn: 'Ajahn Napatpol' },
 ]
@@ -16,12 +16,12 @@ export const TEACHER_LABEL: Record<string, string> =
 
 // 集體互動場次（webpage 寫死的 6 場）
 export const SESSIONS: { id: SessionId; date: string; weekday: string; time: string; teacher: TeacherId; seats: number }[] = [
-  { id: 's1', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
   { id: 's2', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'nat',      seats: 8 },
+  { id: 's1', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
   { id: 's3', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
   { id: 's4', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'napatpol', seats: 8 },
-  { id: 's5', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
   { id: 's6', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
+  { id: 's5', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
 ]
 export const SESSION_LABEL: Record<string, string> = Object.fromEntries(
   SESSIONS.map(s => [s.id, `${s.date}（${s.weekday}）${s.time}　${TEACHER_LABEL[s.teacher]}`])
