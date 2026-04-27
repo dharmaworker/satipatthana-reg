@@ -172,7 +172,7 @@ function LodgingContent() {
     if (!form.emergency_relation) return fail('emergency_relation', '請填寫「緊急聯絡人關係」')
     if (!form.emergency_phone) return fail('emergency_phone', '請填寫「緊急聯絡人電話」')
     if (!form.arrival_transport) return fail('arrival_transport', '請選擇「前往日月潭方式」')
-    if (!form.departure_transport) return fail('departure_transport', '請選擇「離開渡假村方式」')
+    if (!form.departure_transport) return fail('departure_transport', '請選擇「離開日月潭會館方式」')
     if (form.departure_transport === 'bus' && !form.bus_destination) return fail('bus_destination', '請選擇「專車目的地」')
     return true
   }
@@ -466,9 +466,9 @@ function LodgingContent() {
                     </div>
 
                     <div className="info-card">
-                      <h4><span className="icon">🏨</span>渡假村入住說明</h4>
+                      <h4><span className="icon">🏨</span>日月潭會館入住說明</h4>
                       <ul>
-                        <li>渡假村辦理入住時間：每日下午 3 點後辦理入住。</li>
+                        <li>日月潭會館辦理入住時間：每日下午 3 點後辦理入住。</li>
                         <li>辦理入住時請攜帶<strong>身分證 + 健保卡（國內）或護照正本（國外）</strong>。</li>
                         <li>房間一律 4 人一房，採單獨床位配置，附 2 套衛浴。</li>
                         <li>每間房間皆有對外窗戶，舒適寬敞，可曬衣。</li>
@@ -545,7 +545,7 @@ function LodgingContent() {
 
                     {/* 離開方式 */}
                     <div className="field-group" id="field-departure_transport">
-                      <div className="field-group-title"><span className="num">03</span>離開渡假村方式 <span className="required">*</span></div>
+                      <div className="field-group-title"><span className="num">03</span>離開日月潭會館方式 <span className="required">*</span></div>
                       <div className="opt-group">
                         {radio('departure_transport', 'self', '自行離開')}
                         {radio('departure_transport', 'bus', '乘坐主辦單位安排專車')}
@@ -605,12 +605,12 @@ function LodgingContent() {
                         <label className={`opt ${form.dinner_0819 ? 'selected' : ''}`}>
                           <input type="checkbox" checked={form.dinner_0819}
                             onChange={e => update('dinner_0819', e.target.checked)} disabled={locked} />
-                          <span className="opt-text">8/19 需要在渡假村用晚餐</span>
+                          <span className="opt-text">8/19 需要在日月潭會館用晚餐</span>
                         </label>
                         <label className={`opt ${form.dinner_0824 ? 'selected' : ''}`}>
                           <input type="checkbox" checked={form.dinner_0824}
                             onChange={e => update('dinner_0824', e.target.checked)} disabled={locked} />
-                          <span className="opt-text">8/24 晚上 5–6 點需要在渡假村用晚餐</span>
+                          <span className="opt-text">8/24 晚上 5–6 點需要在日月潭會館用晚餐</span>
                         </label>
                       </div>
                     </div>
@@ -816,7 +816,7 @@ function LodgingContent() {
                           <h4>行程安排 <span className="edit-link" onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                           <ReviewRow k="緊急聯絡人" v={`${form.emergency_name}（${form.emergency_relation}）${form.emergency_phone}`} />
                           <ReviewRow k="前往日月潭" v={TRANSPORT_LABEL[form.arrival_transport] || ''} />
-                          <ReviewRow k="離開渡假村" v={form.departure_transport === 'self' ? '自行離開' : form.departure_transport === 'bus' ? `主辦專車（${BUS_DEST_LABEL[form.bus_destination] || '未選擇'}）` : ''} />
+                          <ReviewRow k="離開日月潭會館" v={form.departure_transport === 'self' ? '自行離開' : form.departure_transport === 'bus' ? `主辦專車（${BUS_DEST_LABEL[form.bus_destination] || '未選擇'}）` : ''} />
                         </div>
 
                         <div className="review-group">
