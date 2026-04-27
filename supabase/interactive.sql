@@ -13,9 +13,14 @@ CREATE TABLE IF NOT EXISTS public.interactive_registrations (
   assigned_group   TEXT,                          -- 分組中簽：老師 id
   assigned_date    TEXT,                          -- 分組中簽：日期 (yyyy-mm-dd)
   notification_sent_at TIMESTAMPTZ,               -- 中簽通知信寄送時間
+  group_serial INTEGER,                           -- 集體互動序號（-1 ~ 15，可先編）
+  small_serial INTEGER,                           -- 分組互動序號（-1 ~ 15，可先編）
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- 既有 DB 升級：缺欄位才補上
+ALTER TABLE public.interactive_registrations ADD COLUMN IF NOT EXISTS group_serial INTEGER;
+ALTER TABLE public.interactive_registrations ADD COLUMN IF NOT EXISTS small_serial INTEGER;
 ALTER TABLE public.interactive_registrations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.interactive_registrations FOR ALL TO service_role USING (true) WITH CHECK (true);
 

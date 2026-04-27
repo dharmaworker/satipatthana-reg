@@ -45,10 +45,18 @@ export type InteractiveRegistration = {
   assigned_session: SessionId | null
   assigned_group: TeacherId | null
   assigned_date: string | null
+  group_serial: number | null   // -1 ~ 15
+  small_serial: number | null   // -1 ~ 15
   notification_sent_at: string | null
   submitted_at: string
   updated_at: string
 }
+
+export const SERIAL_OPTIONS: number[] = (() => {
+  const arr: number[] = []
+  for (let i = -1; i <= 15; i++) arr.push(i)
+  return arr
+})()
 
 export type InteractiveTask = {
   registration_id: string

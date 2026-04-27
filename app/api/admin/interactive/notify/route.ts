@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
         assigned_session: i.assigned_session,
         assigned_group: i.assigned_group,
         assigned_date: i.assigned_date,
+        group_serial: i.group_serial,
+        small_serial: i.small_serial,
       })
       await supabaseAdmin
         .from('interactive_registrations')

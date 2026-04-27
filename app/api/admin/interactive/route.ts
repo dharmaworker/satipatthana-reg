@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
-  const { registration_id, group_status, small_status, assigned_session, assigned_group, assigned_date } = body
+  const { registration_id, group_status, small_status, assigned_session, assigned_group, assigned_date, group_serial, small_serial } = body
   if (!registration_id) return NextResponse.json({ error: '缺少 registration_id' }, { status: 400 })
 
   const update: Record<string, any> = { updated_at: new Date().toISOString() }
@@ -62,6 +62,18 @@ export async function PATCH(request: NextRequest) {
     update.assigned_group = assigned_group || null
   }
   if (assigned_date !== undefined) update.assigned_date = assigned_date || null
+  if (group_serial !== undefined) {
+    if (group_serial !== null && (typeof group_serial !== 'number' || group_serial < -1 || group_serial > 15)) {
+      return NextResponse.json({ error: 'group_serial 不合法（-1 ~ 15）' }, { status: 400 })
+    }
+    update.group_serial = group_serial
+  }
+  if (small_serial !== undefined) {
+    if (small_serial !== null && (typeof small_serial !== 'number' || small_serial < -1 || small_serial > 15)) {
+      return NextResponse.json({ error: 'small_serial 不合法（-1 ~ 15）' }, { status: 400 })
+    }
+    update.small_serial = small_serial
+  }
 
   const { error } = await supabaseAdmin
     .from('interactive_registrations')

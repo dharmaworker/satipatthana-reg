@@ -31,9 +31,14 @@ type Row = {
     assigned_session: string | null
     assigned_group: string | null
     assigned_date: string | null
+    group_serial: number | null
+    small_serial: number | null
     notification_sent_at: string | null
   } | null
 }
+
+const SERIAL_OPTIONS: number[] = Array.from({ length: 17 }, (_, i) => i - 1) // -1, 0, 1, ..., 15
+const fmtSerial = (n: number | null | undefined) => (n === null || n === undefined ? '—' : String(n))
 
 export default function InteractiveAdminPage() {
   const router = useRouter()
@@ -157,18 +162,20 @@ export default function InteractiveAdminPage() {
                 <th>想要的集體場次</th>
                 <th>集體狀態</th>
                 <th>指定場次</th>
+                <th>集體序號</th>
                 <th>想要的分組排序</th>
                 <th>分組狀態</th>
                 <th>指定分組</th>
+                <th>分組序號</th>
                 <th>通知信</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : filtered.map(r => {
                 const it = r.interactive
                 return (
@@ -198,9 +205,14 @@ export default function InteractiveAdminPage() {
                       ) : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
-                      {it?.group_status === 'won'
-                        ? (it.assigned_session ? SESSION_LABEL[it.assigned_session] : <span style={{ color: 'var(--error)' }}>需指定</span>)
-                        : '—'}
+                      {it?.assigned_session
+                        ? SESSION_LABEL[it.assigned_session]
+                        : it?.group_status === 'won'
+                          ? <span style={{ color: 'var(--error)' }}>需指定</span>
+                          : '—'}
+                    </td>
+                    <td className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+                      {fmtSerial(it?.group_serial)}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_ranking?.length
@@ -220,11 +232,14 @@ export default function InteractiveAdminPage() {
                       ) : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
-                      {it?.small_status === 'won'
-                        ? (it.assigned_group
-                            ? <>{TEACHER_LABEL[it.assigned_group]}<br /><span style={{ fontSize: 11 }}>{it.assigned_date || <span style={{ color: 'var(--error)' }}>需指定日期</span>}</span></>
-                            : <span style={{ color: 'var(--error)' }}>需指定</span>)
-                        : '—'}
+                      {it?.assigned_group
+                        ? <>{TEACHER_LABEL[it.assigned_group]}<br /><span style={{ fontSize: 11 }}>{it.assigned_date || (it.small_status === 'won' ? <span style={{ color: 'var(--error)' }}>需指定日期</span> : '')}</span></>
+                        : it?.small_status === 'won'
+                          ? <span style={{ color: 'var(--error)' }}>需指定</span>
+                          : '—'}
+                    </td>
+                    <td className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+                      {fmtSerial(it?.small_serial)}
                     </td>
                     <td className="muted" style={{ fontSize: 11 }}>
                       {it?.notification_sent_at
@@ -265,68 +280,110 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
   const [assignedSession, setAssignedSession] = useState(it.assigned_session || '')
   const [assignedGroup, setAssignedGroup] = useState(it.assigned_group || '')
   const [assignedDate, setAssignedDate] = useState(it.assigned_date || '')
+  const [groupSerial, setGroupSerial] = useState<string>(it.group_serial !== null && it.group_serial !== undefined ? String(it.group_serial) : '')
+  const [smallSerial, setSmallSerial] = useState<string>(it.small_serial !== null && it.small_serial !== undefined ? String(it.small_serial) : '')
 
   return (
     <div className="admin-modal-overlay" onClick={onClose}>
-      <div className="admin-modal-card" onClick={e => e.stopPropagation()}>
+      <div className="admin-modal-card lg" onClick={e => e.stopPropagation()}>
         <h3>
           <span>互動指定：{row.registration.chinese_name}（{row.registration.member_id || '—'}）</span>
           <button onClick={onClose} className="admin-btn-sm">✕</button>
         </h3>
 
-        <div style={{ display: 'grid', gap: 14 }}>
-          <div>
-            <label className="form-label">集體互動狀態</label>
-            <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
-              <option value="pending">未定</option>
-              <option value="won">中簽</option>
-              <option value="lost">沒中簽</option>
-            </select>
-            {groupStatus === 'won' && (
-              <div style={{ marginTop: 10 }}>
-                <label className="form-label">指定場次 <span className="required">*</span></label>
-                <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
-                  <option value="">請選擇場次</option>
-                  {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+        <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 6, marginBottom: 18 }}>
+          可先編場次與互動序號（狀態維持「未定」），全部分配妥當後再批次改成「中簽」並寄通知信。「沒中簽」會清空場次與序號。
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+
+          {/* 集體互動 */}
+          <div style={{ background: 'rgba(73, 85, 52, 0.04)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
+            <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--green-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
+              集體互動
+            </h4>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div>
+                <label className="form-label">狀態</label>
+                <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
+                  <option value="pending">未定</option>
+                  <option value="won">中簽</option>
+                  <option value="lost">沒中簽</option>
                 </select>
-                {it.wanted_sessions?.length > 0 && (
-                  <p className="form-hint">學員想要：{it.wanted_sessions.map(s => SESSION_LABEL[s]).join('、')}</p>
-                )}
               </div>
-            )}
+              {groupStatus !== 'lost' && (
+                <>
+                  <div>
+                    <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
+                    <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
+                      <option value="">（未指定）</option>
+                      {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </select>
+                    {it.wanted_sessions?.length > 0 && (
+                      <p className="form-hint">學員想要：{it.wanted_sessions.map(s => SESSION_LABEL[s]).join('、')}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="form-label">互動序號</label>
+                    <select className="form-select" value={groupSerial} onChange={e => setGroupSerial(e.target.value)}>
+                      <option value="">（未指定）</option>
+                      {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                    <p className="form-hint">範圍 -1 ~ 15</p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="form-label">分組互動狀態</label>
-            <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
-              <option value="pending">未定</option>
-              <option value="won">中簽</option>
-              <option value="lost">沒中簽</option>
-            </select>
-            {smallStatus === 'won' && (
-              <>
-                <div style={{ marginTop: 10 }}>
-                  <label className="form-label">指定分組 <span className="required">*</span></label>
-                  <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
-                    <option value="">請選擇</option>
-                    {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name} 組</option>)}
-                  </select>
-                  {it.wanted_ranking?.length > 0 && (
-                    <p className="form-hint">學員排序：{it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')}</p>
-                  )}
-                </div>
-                <div style={{ marginTop: 10 }}>
-                  <label className="form-label">指定日期 <span className="required">*</span></label>
-                  <select className="form-select" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}>
-                    <option value="">請選擇</option>
-                    <option value="2026-08-21">2026-08-21（週五）</option>
-                    <option value="2026-08-22">2026-08-22（週六）</option>
-                    <option value="2026-08-23">2026-08-23（週日）</option>
-                  </select>
-                </div>
-              </>
-            )}
+          {/* 分組互動 */}
+          <div style={{ background: 'rgba(180, 147, 88, 0.06)', border: '1px solid var(--line)', borderRadius: 12, padding: 16 }}>
+            <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--gold-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
+              分組互動
+            </h4>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div>
+                <label className="form-label">狀態</label>
+                <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
+                  <option value="pending">未定</option>
+                  <option value="won">中簽</option>
+                  <option value="lost">沒中簽</option>
+                </select>
+              </div>
+              {smallStatus !== 'lost' && (
+                <>
+                  <div>
+                    <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
+                    <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
+                      <option value="">（未指定）</option>
+                      {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name} 組</option>)}
+                    </select>
+                    {it.wanted_ranking?.length > 0 && (
+                      <p className="form-hint">學員排序：{it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="form-label">指定日期{smallStatus === 'won' && <span className="required">*</span>}</label>
+                    <select className="form-select" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}>
+                      <option value="">（未指定）</option>
+                      <option value="2026-08-21">2026-08-21（週五）</option>
+                      <option value="2026-08-22">2026-08-22（週六）</option>
+                      <option value="2026-08-23">2026-08-23（週日）</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">互動序號</label>
+                    <select className="form-select" value={smallSerial} onChange={e => setSmallSerial(e.target.value)}>
+                      <option value="">（未指定）</option>
+                      {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                    <p className="form-hint">範圍 -1 ~ 15</p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
+
         </div>
 
         <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -335,9 +392,12 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
             onClick={() => onSave({
               group_status: groupStatus,
               small_status: smallStatus,
-              assigned_session: groupStatus === 'won' ? assignedSession : null,
-              assigned_group: smallStatus === 'won' ? assignedGroup : null,
-              assigned_date: smallStatus === 'won' ? assignedDate : null,
+              // 'lost' 清空；其他狀態 (pending/won) 保留 admin 填的值
+              assigned_session: groupStatus === 'lost' ? null : (assignedSession || null),
+              group_serial: groupStatus === 'lost' ? null : (groupSerial === '' ? null : Number(groupSerial)),
+              assigned_group: smallStatus === 'lost' ? null : (assignedGroup || null),
+              assigned_date: smallStatus === 'lost' ? null : (assignedDate || null),
+              small_serial: smallStatus === 'lost' ? null : (smallSerial === '' ? null : Number(smallSerial)),
             })}
             className="admin-btn-sm primary">儲存</button>
         </div>

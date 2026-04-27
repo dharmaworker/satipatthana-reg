@@ -15,23 +15,30 @@ export async function sendInteractiveNotificationEmail(opts: {
   assigned_session: string | null
   assigned_group: string | null
   assigned_date: string | null
+  group_serial: number | null
+  small_serial: number | null
 }) {
   const { email, chinese_name, random_code, registration_id,
-    group_status, small_status, assigned_session, assigned_group, assigned_date } = opts
+    group_status, small_status, assigned_session, assigned_group, assigned_date,
+    group_serial, small_serial } = opts
 
   const wonAny = group_status === 'won' || small_status === 'won'
+  const serialBadge = (n: number | null | undefined) =>
+    (n === null || n === undefined) ? '' :
+    `<span style="display:inline-block;background:${C.gold};color:#fff8ee;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;letter-spacing:0.04em;margin-left:6px;">序號 ${n}</span>`
+
   const groupLine = group_status === 'won'
     ? (() => {
         const s = SESSIONS.find(x => x.id === assigned_session)
         const txt = s ? `${s.date}（${s.weekday}）${s.time}　${TEACHER_LABEL[s.teacher]}` : '（場次待補）'
-        return `<strong style="color:${C.green};">✓ 集體互動：中簽</strong><br><span style="color:${C.inkSoft};font-size:13px;">場次：${txt}</span>`
+        return `<strong style="color:${C.green};">✓ 集體互動：中簽</strong>${serialBadge(group_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">場次：${txt}</span>`
       })()
     : group_status === 'lost'
       ? `<span style="color:${C.inkMute};">✗ 集體互動：未中簽</span>`
       : `<span style="color:${C.inkMute};">⏳ 集體互動：未定</span>`
 
   const smallLine = small_status === 'won'
-    ? `<strong style="color:${C.green};">✓ 分組互動：中簽</strong><br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? TEACHER_LABEL[assigned_group] || assigned_group : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
+    ? `<strong style="color:${C.green};">✓ 分組互動：中簽</strong>${serialBadge(small_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? TEACHER_LABEL[assigned_group] || assigned_group : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
     : small_status === 'lost'
       ? `<span style="color:${C.inkMute};">✗ 分組互動：未中簽</span>`
       : `<span style="color:${C.inkMute};">⏳ 分組互動：未定</span>`
