@@ -122,7 +122,7 @@ export default function HomePage() {
           <div className="container hero-grid">
             <div className="hero-copy">
               <p className="eyebrow">第二屆・台灣四念處禪修之旅 · 2026</p>
-              <h1>心的真相</h1>
+              <h1>唯一路</h1>
               <p className="hero-subtitle"><span className="quote">「</span>解脫<span className="quote">」</span>從如實知開始</p>
 
               <div className="hero-meta">
@@ -357,7 +357,7 @@ export default function HomePage() {
           </div>
           <div className="footer-bottom">
             <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
-            <div>心的真相 · 從如實知開始</div>
+            <div>唯一路 · 從如實知開始</div>
           </div>
         </div>
       </footer>

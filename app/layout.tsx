@@ -32,7 +32,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "心的真相 · 第二屆台灣四念處禪修之旅",
+  title: "唯一路 · 第二屆台灣四念處禪修之旅",
   description: "2026 年 8 月 20–24 日於南投日月潭，五日禪修。「解脫」從如實知開始。",
 };
 
