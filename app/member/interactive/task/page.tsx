@@ -3,15 +3,15 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const TEACHER_LABEL: Record<string, string> = {
-  nat: '阿姜納', prasan: '阿姜巴山', nitiya: '阿姜妮', napatpol: '阿姜松',
+  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
 }
 const SESSION_LABEL: Record<string, string> = {
-  s2: '8/21（週五）14:00 — 15:30　阿姜納',
   s1: '8/21（週五）14:00 — 15:30　阿姜巴山',
+  s2: '8/21（週五）14:00 — 15:30　阿姜納',
   s3: '8/22（週六）14:00 — 15:30　阿姜妮',
   s4: '8/22（週六）14:00 — 15:30　阿姜松',
-  s6: '8/23（週日）14:00 — 15:30　阿姜妮',
   s5: '8/23（週日）14:00 — 15:30　阿姜巴山',
+  s6: '8/23（週日）14:00 — 15:30　阿姜妮',
 }
 
 type Reg = { id: string; chinese_name: string; member_id: string | null; gender: string | null; identity: string | null; email: string }

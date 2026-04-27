@@ -8,20 +8,20 @@ type Reg = { id: string; chinese_name: string; member_id: string | null; status:
 type Interactive = { wanted_sessions: SessionId[]; wanted_ranking: TeacherId[]; group_status: string; small_status: string }
 
 const TEACHERS: { id: TeacherId; name: string; nameEn: string }[] = [
-  { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat' },
   { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan' },
+  { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat' },
   { id: 'nitiya',   name: '阿姜妮',   nameEn: 'Ajahn Nitiya' },
   { id: 'napatpol', name: '阿姜松',   nameEn: 'Ajahn Napatpol' },
 ]
 const TEACHER_LABEL: Record<string, string> = Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
 
 const SESSIONS = [
-  { id: 's2', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'nat',      seats: 8 },
   { id: 's1', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
+  { id: 's2', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'nat',      seats: 8 },
   { id: 's3', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
   { id: 's4', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'napatpol', seats: 8 },
-  { id: 's6', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
   { id: 's5', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
+  { id: 's6', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
 ]
 
 const STEPS = [
