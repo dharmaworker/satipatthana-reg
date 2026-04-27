@@ -190,15 +190,13 @@ satipatthana-reg/
 
 ## 7. 已知限制 / 可改善點
 
-非致命，但留紀錄：
-
-| 項目 | 說明 | 影響 |
+| 項目 | 說明 | 狀態 |
 |---|---|---|
-| SQL 重跑可能 fail | `CREATE POLICY` 沒 `IF NOT EXISTS`，跑第二次會錯 | 第一次跑沒事；補解法：跑前先 `DROP POLICY IF EXISTS` |
-| 後端沒強制「中簽要有指定」 | admin 可存 `status='won'` + `assigned_session=null` | Email 會顯示「（場次待補）」，不爆但不一致 |
-| 沒場次容量警示 | s1 8 人額滿可被指定給 9 個人 | admin 自己抓 |
-| 「未定」filter 太窄 | 要兩邊都 pending 才算 | 想看「至少一邊還沒處理」要改 OR 邏輯 |
-| `/api/admin/interactive` PATCH 可建空 row | upsert 對沒提交者也會建 row | 前端把按鈕 gate 在 `it` 存在，實務不會發生 |
+| SQL 重跑可能 fail | `CREATE POLICY` 沒 `IF NOT EXISTS` | ✅ 已修：CREATE 之前加 `DROP POLICY IF EXISTS` |
+| 後端沒強制「中簽要有指定」 | `status='won'` + `assigned_*=null` 是不一致狀態 | ✅ 已修：API PATCH 計算最終狀態，中簽必須有指定否則 400 |
+| 沒場次容量警示 | s1 8 人額滿可被指定給 9 個人 | ✅ 已修：admin 頁加 CapacityPanel 摺疊區塊（集體 6 場 + 分組 4×3 網格），超額顯示紅 ⚠ |
+| filter 不實用 | 「未定」要兩邊都 pending 太窄 | ✅ 已修：改成「有未定（任一邊）」+ 加「中簽未通知」filter |
+| PATCH 可建空 row | upsert 對沒提交者也會建 row | ✅ 已修：改 update + 先查 row 存在，否則 404 |
 
 ---
 

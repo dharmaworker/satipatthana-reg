@@ -123,7 +123,12 @@ export default function InteractiveAdminPage() {
       body: JSON.stringify({ registration_id: regId, ...patch }),
     })
     const d = await res.json().catch(() => ({}))
-    if (!res.ok) { setMessage(`更新失敗：${d.error || res.status}`); return false }
+    if (!res.ok) {
+      setMessage(`更新失敗：${d.error || res.status}`)
+      fetchData() // 還原 UI 為 DB 狀態
+      return false
+    }
+    setMessage('')
     fetchData()
     return true
   }
