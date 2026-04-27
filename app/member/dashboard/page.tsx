@@ -224,7 +224,7 @@ function MemberDashboardContent() {
 
             {/* 資源 */}
             <div className="resources-grid">
-              <a href="/info/schedule" className="resource-link">
+              <a href={withAuth('/info/schedule')} className="resource-link">
                 <div className="icon">📋</div>
                 <div className="text"><h4>課程時間表</h4><p>五日完整課程安排</p></div>
                 <div className="arrow">→</div>
