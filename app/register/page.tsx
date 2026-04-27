@@ -201,6 +201,7 @@ export default function RegisterPage() {
     if (!form.gender) return fail('gender', '請選擇 Q23：性別')
     if (!form.age) return fail('age', '請填寫 Q24：年齡')
     if (!form.residence) return fail('residence', '請選擇 Q26：居住地')
+    if (form.residence === '其他地區') return fail('residence', 'Q26：選了「其他地區」請填寫實際居住地')
     if (!form.phone.trim()) return fail('phone', '請填寫 Q27：手機號碼')
     if (!form.email.trim()) return fail('email', '請填寫 Q28：電子信箱')
     if (!form.contact_app) return fail('contact_app', '請選擇 Q29：通訊軟體（LINE 或 微信擇一）')
@@ -613,11 +614,32 @@ export default function RegisterPage() {
                 </div>
                 <div id="field-residence">
                   <label className="form-label">26. 居住地 <span className="required">*</span></label>
-                  <select className={`form-select ${errCls('residence')}`} value={form.residence}
-                    onChange={e => update('residence', e.target.value)}>
-                    <option value="">請選擇</option>
-                    {RESIDENCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
+                  {(() => {
+                    const isOther = form.residence === '其他地區' || form.residence.startsWith('其他地區：')
+                    const otherText = form.residence.startsWith('其他地區：')
+                      ? form.residence.slice('其他地區：'.length)
+                      : ''
+                    return (
+                      <>
+                        <select className={`form-select ${errCls('residence')}`}
+                          value={isOther ? '其他地區' : form.residence}
+                          onChange={e => update('residence', e.target.value)}>
+                          <option value="">請選擇</option>
+                          {RESIDENCE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                        {isOther && (
+                          <input className={`form-input ${errCls('residence')}`}
+                            style={{ marginTop: 8 }}
+                            placeholder="請填寫居住地（例：日本沖繩、加拿大溫哥華）"
+                            value={otherText}
+                            onChange={e => {
+                              const t = e.target.value
+                              update('residence', t ? `其他地區：${t}` : '其他地區')
+                            }} />
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
               </div>
 
