@@ -6,6 +6,7 @@ const TABS = [
   { path: '/admin/lodgings', label: '錄取學員' },
   { path: '/admin/documents', label: '所有證件' },
   { path: '/admin/quicktests', label: '快篩上傳' },
+  { path: '/admin/interactive', label: '互動報名' },
   { path: '/admin/timetable', label: '課程時間表' },
 ]
 
