@@ -477,7 +477,7 @@ export default function RegisterPage() {
               })}
 
               {yesNoSelect('watched_recordings', '9. 是否完整觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
-              {yesNoSelect('zoom_guidance', '10. 您是否透過 ZOOM 的方式，獲得阿姜納、阿姜巴山、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
+              {yesNoSelect('zoom_guidance', '10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊的一對一禪修指導？')}
               {yesNoSelect('watched_30_talks', '11. 是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
               {yesNoSelect('keep_precepts', '12. 您是否持守五戒？')}
 
