@@ -15,6 +15,10 @@ type MemberData = {
   lodging_status: 'none' | 'submitted_editable' | 'locked'
   tests_uploaded: number
   tests_total: number
+  interactive_submitted: boolean
+  interactive_group_status: 'pending' | 'won' | 'lost'
+  interactive_small_status: 'pending' | 'won' | 'lost'
+  interactive_task_submitted: boolean
 }
 
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
@@ -208,6 +212,40 @@ function MemberDashboardContent() {
                 actionHref={withAuth('/quicktests')}
                 actionText={testsDone ? '查看' : '前往上傳 →'}
               />
+
+              {/* 互動報名 */}
+              <TaskCard
+                idLabel="互" label="Interactive" title="互動報名"
+                state={member.interactive_submitted ? 'done' : 'todo'}
+                statusBadge={member.interactive_submitted ? '已送出' : '待填寫'}
+                badgeKind={member.interactive_submitted ? 'done' : 'todo'}
+                deadline="07/15 晚上 8 點前"
+                urgent={!member.interactive_submitted}
+                rows={[
+                  ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                  ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                ]}
+                actionHref={withAuth('/member/interactive')}
+                actionText={member.interactive_submitted ? '查看／修改' : '前往報名 →'}
+              />
+
+              {/* 互動作業（中簽才顯示） */}
+              {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+                <TaskCard
+                  idLabel="作" label="Interactive Task" title="互動作業"
+                  state={member.interactive_task_submitted ? 'done' : 'todo'}
+                  statusBadge={member.interactive_task_submitted ? '已送出' : '待填寫'}
+                  badgeKind={member.interactive_task_submitted ? 'done' : 'urgent'}
+                  deadline="課程開始前完成"
+                  urgent={!member.interactive_task_submitted}
+                  rows={[
+                    ['集體', member.interactive_group_status === 'won' ? '✓ 已中簽' : '—'],
+                    ['分組', member.interactive_small_status === 'won' ? '✓ 已中簽' : '—'],
+                  ]}
+                  actionHref={withAuth('/member/interactive/task')}
+                  actionText={member.interactive_task_submitted ? '查看／修改' : '前往填寫 →'}
+                />
+              )}
             </div>
 
             {/* 重要時程 */}

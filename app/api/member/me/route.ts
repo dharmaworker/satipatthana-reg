@@ -21,22 +21,44 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '無效的存取連結' }, { status: 401 })
   }
 
-  // 食宿 + 快篩狀態（僅 approved 才查詢）
+  // 食宿 + 快篩 + 互動狀態（僅 approved 才查詢）
   let lodgingStatus: 'none' | 'submitted_editable' | 'locked' = 'none'
   let testsUploaded = 0
+  let interactiveSubmitted = false
+  let interactiveGroupStatus: 'pending' | 'won' | 'lost' = 'pending'
+  let interactiveSmallStatus: 'pending' | 'won' | 'lost' = 'pending'
+  let interactiveTaskSubmitted = false
+
   if (reg.status === 'approved') {
     const { data: lodging } = await supabaseAdmin
       .from('lodging_registrations')
       .select('id, created_at, updated_at, test_0817_url, test_0819_url')
       .eq('registration_id', reg.id)
       .maybeSingle()
-
     if (lodging) {
       lodgingStatus = lodging.updated_at !== lodging.created_at ? 'locked' : 'submitted_editable'
     }
     testsUploaded = lodging
       ? Number(!!lodging.test_0817_url) + Number(!!lodging.test_0819_url)
       : 0
+
+    const { data: it } = await supabaseAdmin
+      .from('interactive_registrations')
+      .select('group_status, small_status')
+      .eq('registration_id', reg.id)
+      .maybeSingle()
+    if (it) {
+      interactiveSubmitted = true
+      interactiveGroupStatus = it.group_status
+      interactiveSmallStatus = it.small_status
+    }
+
+    const { data: task } = await supabaseAdmin
+      .from('interactive_tasks')
+      .select('registration_id')
+      .eq('registration_id', reg.id)
+      .maybeSingle()
+    interactiveTaskSubmitted = !!task
   }
 
   return NextResponse.json({
@@ -44,5 +66,9 @@ export async function GET(request: NextRequest) {
     lodging_status: lodgingStatus,
     tests_uploaded: testsUploaded,
     tests_total: 2,
+    interactive_submitted: interactiveSubmitted,
+    interactive_group_status: interactiveGroupStatus,
+    interactive_small_status: interactiveSmallStatus,
+    interactive_task_submitted: interactiveTaskSubmitted,
   })
 }
