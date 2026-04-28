@@ -250,7 +250,7 @@ export default function HomePage() {
               <TimelineItem side="left" date="05.11 — 05.25" title="報名期間" desc="線上填寫報名表，提交個人資料與修學背景。" />
               <TimelineItem side="right" date="06.06　錄取通知" title="錄取通知發送" desc="錄取者將於 6 月 6 日收到 E-mail 通知。提交報名表單不代表已錄取。" />
               <TimelineItem side="left" date="06.15　繳費截止" title="完成繳費以正式錄取" desc="錄取者須於 6 月 15 日台北時間晚上 8 時前完成繳費，才算正式錄取。" />
-              <TimelineItem side="right" date="08.20 — 08.24" title="禪修正式開始" desc="報到、安單、開始為期五日四夜的四念處禪修。" />
+              <TimelineItem side="right" date="08.20 — 08.24" title="報到、入住後" desc="展開為期五日四夜的四念處禪修" />
             </div>
           </div>
         </section>
@@ -293,8 +293,8 @@ export default function HomePage() {
                 <p>可自行開車或搭乘大眾運輸前往日月潭禪修場地，<br />或選擇主辦單位提供之台北／台中／桃園機場（供國外學員）專車接送服務。<br />接駁路線、集合地點、時間及費用，<br />將於錄取後於學員專區公布。</p>
               </details>
               <details>
-                <summary>費用大約多少？</summary>
-                <p>禪修課程本身免費。食宿、場地及交通等費用依房型由參加者自理，具體金額會在錄取通知中載明，並由學員專區完成登記繳費。</p>
+                <summary>禪修需要費用嗎？</summary>
+                <p>禪修課程免費。<br />學員需負擔食宿等相關費用</p>
               </details>
               <details>
                 <summary>需要自備什麼物品？</summary>
