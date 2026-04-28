@@ -53,6 +53,7 @@ export default function InteractiveAdminPage() {
   const [editing, setEditing] = useState<Row | null>(null)
   const [configOpen, setConfigOpen] = useState(false)
   const [configSaving, setConfigSaving] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -69,6 +70,24 @@ export default function InteractiveAdminPage() {
     setLoading(false)
   }
   useEffect(() => { fetchData() }, [])
+
+  const openPreview = async () => {
+    setPreviewing(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/admin/preview-test-student', { method: 'POST' })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || `${res.status}`)
+      const url = `/member/interactive?id=${d.id}&code=${encodeURIComponent(d.code)}`
+      window.open(url, '_blank', 'noopener')
+      if (d.created) setMessage(`已建立測試學員「[預覽] 測試學員」，已開新分頁進入互動報名表單`)
+      else setMessage('已開新分頁進入互動報名表單（測試學員）')
+    } catch (e: any) {
+      setMessage(`預覽失敗：${e.message}`)
+    } finally {
+      setPreviewing(false)
+    }
+  }
 
   const toggleOpen = async () => {
     const next = !configOpen
@@ -228,6 +247,14 @@ export default function InteractiveAdminPage() {
               ? '會員專區 dashboard 顯示「互動報名」task card，學員可填寫送出。'
               : '會員專區 dashboard 不顯示「互動報名」task card；學員無法送出。已送出資料不受影響。'}
           </p>
+          <button
+            onClick={openPreview}
+            disabled={previewing}
+            className="admin-btn-sm"
+            title="用測試學員身分開啟互動報名表單，學員不會看到"
+          >
+            {previewing ? '開啟中⋯' : '🔧 預覽表單（測試學員）'}
+          </button>
           <button
             onClick={toggleOpen}
             disabled={configSaving}
