@@ -40,6 +40,7 @@ function InteractiveContent() {
   const [interactive, setInteractive] = useState<Interactive | null>(null)
   const [deadline, setDeadline] = useState<number>(0)
   const [open, setOpen] = useState(true)
+  const [preview, setPreview] = useState(false)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
 
@@ -61,6 +62,7 @@ function InteractiveContent() {
         setReg(d.registration)
         setDeadline(d.deadline)
         setOpen(d.open !== false)
+        setPreview(!!d.preview)
         if (d.interactive) {
           setInteractive(d.interactive)
           setSessions(d.interactive.wanted_sessions || [])
@@ -217,7 +219,17 @@ function InteractiveContent() {
               </div>
             )}
 
-            {!open && (
+            {preview && (
+              <div className="submit-status" style={{ background: 'rgba(73, 85, 52, 0.08)', borderColor: 'rgba(73, 85, 52, 0.35)' }}>
+                <div className="submit-status-icon" style={{ background: 'var(--green-deep)' }}>🔧</div>
+                <div className="submit-status-text">
+                  <h4>後台預覽模式</h4>
+                  <p>此頁尚未對學員開放，您（admin）以預覽身分操作，<strong>送出的內容會真實寫入此學員的互動報名</strong>。請使用測試學員，並於開放前清理測試資料。</p>
+                </div>
+              </div>
+            )}
+
+            {!open && !preview && (
               <div className="submit-status" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
                 <div className="submit-status-icon" style={{ background: 'var(--gold-deep)' }}>⏳</div>
                 <div className="submit-status-text">

@@ -63,13 +63,15 @@ export async function GET(request: NextRequest) {
   }
 
   const interactiveConfig = await fetchInteractiveConfig()
+  const isAdmin = request.cookies.get('admin_role')?.value === 'admin'
 
   return NextResponse.json({
     ...reg,
     lodging_status: lodgingStatus,
     tests_uploaded: testsUploaded,
     tests_total: 2,
-    interactive_open: interactiveConfig.open,
+    interactive_open: interactiveConfig.open || isAdmin,
+    interactive_preview: isAdmin && !interactiveConfig.open,
     interactive_submitted: interactiveSubmitted,
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,

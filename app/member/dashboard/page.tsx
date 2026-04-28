@@ -16,6 +16,7 @@ type MemberData = {
   tests_uploaded: number
   tests_total: number
   interactive_open: boolean
+  interactive_preview?: boolean
   interactive_submitted: boolean
   interactive_group_status: 'pending' | 'won' | 'lost'
   interactive_small_status: 'pending' | 'won' | 'lost'
@@ -214,15 +215,15 @@ function MemberDashboardContent() {
                 actionText={testsDone ? '查看' : '前往上傳 →'}
               />
 
-              {/* 互動報名（admin 開啟才顯示） */}
+              {/* 互動報名（admin 開啟才顯示；admin preview 模式也會看到，title 加 🔧 提示） */}
               {member.interactive_open && (
                 <TaskCard
-                  idLabel="互" label="Interactive" title="互動報名"
+                  idLabel="互" label="Interactive" title={member.interactive_preview ? '互動報名 🔧 預覽' : '互動報名'}
                   state={member.interactive_submitted ? 'done' : 'todo'}
-                  statusBadge={member.interactive_submitted ? '已送出' : '待填寫'}
+                  statusBadge={member.interactive_preview ? '預覽' : member.interactive_submitted ? '已送出' : '待填寫'}
                   badgeKind={member.interactive_submitted ? 'done' : 'todo'}
-                  deadline="07/15 晚上 8 點前"
-                  urgent={!member.interactive_submitted}
+                  deadline={member.interactive_preview ? '對學員未開放（admin 預覽中）' : '07/15 晚上 8 點前'}
+                  urgent={!member.interactive_preview && !member.interactive_submitted}
                   rows={[
                     ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
                     ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],

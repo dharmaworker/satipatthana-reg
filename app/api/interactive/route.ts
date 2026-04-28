@@ -35,11 +35,13 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   const config = await fetchInteractiveConfig()
+  const isAdmin = request.cookies.get('admin_role')?.value === 'admin'
   return NextResponse.json({
     registration: a.reg,
     interactive: row,
     deadline: INTERACTIVE_DEADLINE_MS,
-    open: config.open,
+    open: config.open || isAdmin,
+    preview: isAdmin && !config.open,
   })
 }
 
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
   const config = await fetchInteractiveConfig()
-  if (!config.open) {
+  const isAdmin = request.cookies.get('admin_role')?.value === 'admin'
+  if (!config.open && !isAdmin) {
     return NextResponse.json({ error: '互動報名尚未開放' }, { status: 400 })
   }
   if (Date.now() > INTERACTIVE_DEADLINE_MS) {
