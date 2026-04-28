@@ -27,9 +27,6 @@ function generateCheckMacValue(params: Record<string, string>): string {
     .replace(/%5f/g, '_')
     .replace(/%7e/g, '~')
 
-
-  console.log('CheckMac string:', str)
-  console.log('CheckMac result:', crypto.createHash('sha256').update(str).digest('hex').toUpperCase())
   return crypto.createHash('sha256').update(str).digest('hex').toUpperCase()
 }
 

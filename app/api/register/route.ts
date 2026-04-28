@@ -6,6 +6,11 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox,
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
+// 報名期間：2026/05/11 上午 10:00 — 2026/05/25 晚上 24:00（台北時間）
+// Taipei UTC+8：5/11 10:00 = 5/11 02:00 UTC；5/26 00:00 = 5/25 16:00 UTC
+const REG_OPEN_MS  = Date.UTC(2026, 4, 11, 2, 0, 0)
+const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
+
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'
 }
@@ -15,6 +20,15 @@ function nullable(v: string | null | undefined) {
 
 export async function POST(request: NextRequest) {
   try {
+    // 報名期間檢查
+    const now = Date.now()
+    if (now < REG_OPEN_MS) {
+      return NextResponse.json({ error: '報名尚未開放（2026/05/11 上午 10 點起）' }, { status: 400 })
+    }
+    if (now > REG_CLOSE_MS) {
+      return NextResponse.json({ error: '報名已截止（2026/05/25 晚上 24 點止）' }, { status: 400 })
+    }
+
     const body = await request.json()
 
     // 驗證通訊軟體：LINE 或 WeChat 擇一，選了就要填 ID + 上傳 QR

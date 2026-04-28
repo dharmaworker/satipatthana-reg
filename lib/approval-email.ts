@@ -53,8 +53,8 @@ export async function sendApprovalEmail(reg: {
       <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">A(2)</td><td style="${tableTd}">8/20-8/24 食宿等費用（刷卡）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">19,300</td></tr>
       <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">B(1)</td><td style="${tableTd}">8/19-8/24 食宿費用（匯款）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">20,350</td></tr>
       <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">B(2)</td><td style="${tableTd}">8/19-8/24 食宿費用（刷卡）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">21,050</td></tr>
-      <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">C(1)</td><td style="${tableTd}">8/19+8/25 食宿等費用（匯款）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">22,590</td></tr>
-      <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">C(2)</td><td style="${tableTd}">8/19+8/25 食宿等費用（刷卡）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">23,290</td></tr>
+      <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">C(1)</td><td style="${tableTd}">8/19 — 8/25 食宿等費用（匯款）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">22,590</td></tr>
+      <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">C(2)</td><td style="${tableTd}">8/19 — 8/25 食宿等費用（刷卡）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">23,290</td></tr>
       <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">D(1)</td><td style="${tableTd}">8/20-8/25 食宿等費用（匯款）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">20,840</td></tr>
       <tr><td style="${tableTd};font-weight:700;color:${C.goldDeep};">D(2)</td><td style="${tableTd}">8/20-8/25 食宿等費用（刷卡）</td><td style="${tableTd};text-align:right;font-weight:700;color:${C.greenDeep};">21,540</td></tr>
     </table>

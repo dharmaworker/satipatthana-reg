@@ -69,12 +69,22 @@ const PRACTICE_FREQ_LABEL: Record<string, string> = {
   commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時',
 }
 
+// 報名期間（台北時間）：2026/05/11 10:00 — 2026/05/25 24:00
+const REG_OPEN_MS  = Date.UTC(2026, 4, 11, 2, 0, 0)
+const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
+
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [maxReached, setMaxReached] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // 報名期間檢查（前端 + 後端雙保險）
+  const now = Date.now()
+  const notYetOpen = now < REG_OPEN_MS
+  const pastDeadline = now > REG_CLOSE_MS
+  const outOfPeriod = notYetOpen || pastDeadline
 
   const [form, setForm] = useState({
     honest_confirm: '',
@@ -342,6 +352,35 @@ export default function RegisterPage() {
       </div>
 
       <main className="container" style={{ paddingBottom: 60 }}>
+        {outOfPeriod && (
+          <div className="card with-line" style={{ textAlign: 'center', padding: '60px 40px', maxWidth: 560, margin: '40px auto' }}>
+            <div style={{
+              width: 64, height: 64,
+              borderRadius: '50%',
+              background: 'rgba(216, 194, 154, 0.3)',
+              color: 'var(--gold-deep)',
+              fontSize: 28,
+              display: 'grid', placeItems: 'center',
+              margin: '0 auto 18px',
+            }}>{notYetOpen ? '⏳' : '🔒'}</div>
+            <h2 style={{
+              fontFamily: 'var(--font-noto-serif-tc), serif',
+              fontSize: 22, fontWeight: 700,
+              color: 'var(--ink)', letterSpacing: '0.08em',
+              marginBottom: 12,
+            }}>{notYetOpen ? '報名尚未開放' : '報名已截止'}</h2>
+            <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.85 }}>
+              {notYetOpen
+                ? <>報名將於 <strong>2026/05/11 上午 10 點（台北時間）</strong>開放。<br />感謝您的關注，請屆時再回到本頁。</>
+                : <>報名期間已於 <strong>2026/05/25 晚上 24 點（台北時間）</strong>截止。<br />如有疑問請<a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'var(--green)', fontWeight: 600 }}>聯繫學會</a>。</>}
+            </p>
+            <div style={{ marginTop: 22 }}>
+              <a href="/" className="btn btn-ghost">← 返回首頁</a>
+            </div>
+          </div>
+        )}
+
+        {!outOfPeriod && (
         <div className="layout">
         <div>
         <div className="form-card">
@@ -888,13 +927,16 @@ export default function RegisterPage() {
           </div>
         </aside>
         </div>
+        )}
 
-        <div style={{ textAlign: 'center', padding: '40px 0 20px' }}>
-          <p style={{ fontFamily: 'var(--font-noto-serif-tc), serif', color: 'var(--green-deep)', fontWeight: 700 }}>
-            台灣四念處學會 合十
-          </p>
-          <p style={{ color: 'var(--ink-mute)', fontSize: 14, marginTop: 4 }}>隨喜功德</p>
-        </div>
+        {!outOfPeriod && (
+          <div style={{ textAlign: 'center', padding: '40px 0 20px' }}>
+            <p style={{ fontFamily: 'var(--font-noto-serif-tc), serif', color: 'var(--green-deep)', fontWeight: 700 }}>
+              台灣四念處學會 合十
+            </p>
+            <p style={{ color: 'var(--ink-mute)', fontSize: 14, marginTop: 4 }}>隨喜功德</p>
+          </div>
+        )}
       </main>
 
       <footer className="footer">
