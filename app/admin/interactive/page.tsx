@@ -51,6 +51,8 @@ export default function InteractiveAdminPage() {
   const [bulkSending, setBulkSending] = useState(false)
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
+  const [configOpen, setConfigOpen] = useState(false)
+  const [configSaving, setConfigSaving] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -58,9 +60,38 @@ export default function InteractiveAdminPage() {
     if (res.status === 401 || res.status === 403) { router.push('/admin'); return }
     const d = await res.json()
     setRows(d.data || [])
+    // 同步抓 config
+    const cRes = await fetch('/api/admin/interactive-config')
+    if (cRes.ok) {
+      const cfg = await cRes.json()
+      setConfigOpen(!!cfg.open)
+    }
     setLoading(false)
   }
   useEffect(() => { fetchData() }, [])
+
+  const toggleOpen = async () => {
+    const next = !configOpen
+    if (!confirm(next
+      ? '確定開放互動報名？學員 dashboard 將出現「互動報名」task card。'
+      : '確定關閉互動報名？學員無法繼續送出，dashboard 不再顯示 task card。已送出的資料不受影響。'
+    )) return
+    setConfigSaving(true)
+    setMessage('')
+    const res = await fetch('/api/admin/interactive-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ open: next }),
+    })
+    if (res.ok) {
+      setConfigOpen(next)
+      setMessage(next ? '互動報名已開放' : '互動報名已關閉')
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`切換失敗：${d.error || res.status}`)
+    }
+    setConfigSaving(false)
+  }
 
   // 容量統計：各集體場次與各分組（老師 × 日期）已分配的人數
   const sessionCounts = (() => {
@@ -166,6 +197,44 @@ export default function InteractiveAdminPage() {
           <p>🎲 列出所有錄取學員。<strong>已送出互動報名</strong>者會顯示「想要的場次／排序」。</p>
           <p>👇 「集體狀態」「分組狀態」下拉選 <strong>未定 / 中簽 / 沒中簽</strong>。中簽時請按「編輯」填指定的場次／組別／日期。</p>
           <p>📧 勾選後按「批次寄中簽通知信」，學員會收到結果信，中簽者信內含填寫互動作業的連結。</p>
+        </div>
+
+        <div className="admin-table-card" style={{
+          padding: '14px 18px',
+          marginBottom: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          flexWrap: 'wrap',
+          background: configOpen ? 'rgba(73, 85, 52, 0.04)' : 'rgba(216, 194, 154, 0.10)',
+          borderLeft: `4px solid ${configOpen ? 'var(--green)' : 'var(--gold-deep)'}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              fontFamily: 'var(--font-noto-serif-tc), serif',
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: '0.06em',
+              color: 'var(--ink)',
+            }}>
+              互動報名開放狀態
+            </span>
+            <span className={`admin-status-badge ${configOpen ? 'ok' : 'warn'}`}>
+              {configOpen ? '✓ 已開放' : '○ 未開放'}
+            </span>
+          </div>
+          <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0, flex: 1, minWidth: 220 }}>
+            {configOpen
+              ? '會員專區 dashboard 顯示「互動報名」task card，學員可填寫送出。'
+              : '會員專區 dashboard 不顯示「互動報名」task card；學員無法送出。已送出資料不受影響。'}
+          </p>
+          <button
+            onClick={toggleOpen}
+            disabled={configSaving}
+            className={`admin-btn-sm ${configOpen ? '' : 'primary'}`}
+          >
+            {configSaving ? '儲存中⋯' : configOpen ? '關閉互動報名' : '開放互動報名'}
+          </button>
         </div>
 
         <div className="admin-toolbar">

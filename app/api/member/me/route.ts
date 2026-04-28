@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { fetchInteractiveConfig } from '@/lib/interactive-config'
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -61,11 +62,14 @@ export async function GET(request: NextRequest) {
     interactiveTaskSubmitted = !!task
   }
 
+  const interactiveConfig = await fetchInteractiveConfig()
+
   return NextResponse.json({
     ...reg,
     lodging_status: lodgingStatus,
     tests_uploaded: testsUploaded,
     tests_total: 2,
+    interactive_open: interactiveConfig.open,
     interactive_submitted: interactiveSubmitted,
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,

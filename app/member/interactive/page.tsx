@@ -39,6 +39,7 @@ function InteractiveContent() {
   const [reg, setReg] = useState<Reg | null>(null)
   const [interactive, setInteractive] = useState<Interactive | null>(null)
   const [deadline, setDeadline] = useState<number>(0)
+  const [open, setOpen] = useState(true)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
 
@@ -59,6 +60,7 @@ function InteractiveContent() {
         if (!r.ok) { setAuthError(d.error || '載入失敗'); return }
         setReg(d.registration)
         setDeadline(d.deadline)
+        setOpen(d.open !== false)
         if (d.interactive) {
           setInteractive(d.interactive)
           setSessions(d.interactive.wanted_sessions || [])
@@ -107,6 +109,7 @@ function InteractiveContent() {
 
   const handleSubmit = async () => {
     setError('')
+    if (!open) { setError('互動報名尚未開放'); return }
     if (pastDeadline) { setError('互動報名已截止'); return }
 
     const filled = ranking.filter(Boolean) as TeacherId[]
@@ -214,7 +217,17 @@ function InteractiveContent() {
               </div>
             )}
 
-            {pastDeadline && (
+            {!open && (
+              <div className="submit-status" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
+                <div className="submit-status-icon" style={{ background: 'var(--gold-deep)' }}>⏳</div>
+                <div className="submit-status-text">
+                  <h4>互動報名尚未開放</h4>
+                  <p>互動報名尚未開放，學會將另行寄信通知開放時間，請留意您的 Email。如有疑問請聯絡學會。</p>
+                </div>
+              </div>
+            )}
+
+            {open && pastDeadline && (
               <div className="submit-status" style={{ background: 'rgba(184,82,58,0.08)', borderColor: 'rgba(184,82,58,0.3)' }}>
                 <div className="submit-status-icon" style={{ background: 'var(--error)' }}>!</div>
                 <div className="submit-status-text">
@@ -243,7 +256,7 @@ function InteractiveContent() {
               </div>
             )}
 
-            <fieldset disabled={pastDeadline} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <fieldset disabled={pastDeadline || !open} style={{ border: 'none', padding: 0, margin: 0 }}>
             <div className="form-card">
 
               {step === 1 && (
@@ -380,8 +393,8 @@ function InteractiveContent() {
                 ? <button onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
                 : <a href={dashboardHref} className="btn btn-ghost">← 返回學員專區</a>}
               {step < STEPS.length
-                ? <button onClick={() => goToStep(step + 1)} disabled={pastDeadline} className="btn btn-primary">下一步 <span className="arrow">→</span></button>
-                : <button onClick={handleSubmit} disabled={submitting || pastDeadline} className="btn btn-primary">
+                ? <button onClick={() => goToStep(step + 1)} disabled={pastDeadline || !open} className="btn btn-primary">下一步 <span className="arrow">→</span></button>
+                : <button onClick={handleSubmit} disabled={submitting || pastDeadline || !open} className="btn btn-primary">
                     {submitting ? '送出中⋯' : interactive ? '送出修改' : '送出互動報名'} <span className="arrow">→</span>
                   </button>}
             </div>

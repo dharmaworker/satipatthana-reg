@@ -21,10 +21,10 @@ export async function sendApprovalEmail(reg: {
     <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
 
     ${emailH3('一、請詳讀以下內容')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、互動報名、承諾書、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、承諾書、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
 
-    ${emailH3('二、繳費 / 食宿登記 / 快篩 / 互動報名 / 承諾書')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>。前四項為線上完成，第五項為下載列印後<strong style="color:${C.ink};">現場繳交</strong>：</p>
+    ${emailH3('二、繳費 / 食宿登記 / 快篩 / 承諾書')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>。前三項為線上完成，第四項為下載列印後<strong style="color:${C.ink};">現場繳交</strong>。<strong style="color:${C.ink};">互動報名</strong>將另行寄信通知開放時間。</p>
 
     <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>6 月 15 日台北時間晚上 8 時前</strong></p>
     ${emailButton(`${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}`, '前往繳費', 'green')}
@@ -42,14 +42,7 @@ export async function sendApprovalEmail(reg: {
       檢測結果需載明日期、報名序號、姓名；快篩試劑請自備。
     </p>
 
-    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">④ 互動報名</strong>　截止：<strong>7 月 15 日晚上 8 點前</strong></p>
-    ${emailButton(`${baseUrl}/member/interactive?id=${reg.id}&code=${reg.random_code}`, '前往填寫互動報名', 'green')}
-    <p style="font-size:13px;color:${C.inkMute};margin:6px 0 0;line-height:1.85;">
-      登記想參加的集體互動場次與分組互動意願順序。集體互動以隨機抽籤決定名單；分組互動以意願順序分配。<br>
-      抽籤結果由學會於截止後另行寄信通知；中簽者再填寫互動作業。
-    </p>
-
-    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.goldDeep};">⑤ 承諾書</strong>　現場繳交（不需線上送出）</p>
+    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.goldDeep};">④ 承諾書</strong>　現場繳交（不需線上送出）</p>
     ${emailButton(`${baseUrl}/api/pledge?id=${reg.id}&code=${reg.random_code}`, '下載承諾書 (Word)', 'gold')}
     ${emailWarning('請下載列印並<strong>親筆簽名</strong>，於 8/19 報到當日交給現場法工。本文件不需線上送出，但<strong>未繳交承諾書恕無法入營</strong>。')}
 

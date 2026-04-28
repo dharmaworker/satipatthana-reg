@@ -35,7 +35,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal'>(null)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
 
@@ -86,6 +86,22 @@ export default function LodgingsPage() {
     setBulkSending('approval')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendInteractiveInvite = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    if (!confirm(`寄出互動報名開放通知信給 ${bulkSelected.length} 位學員？\n\n提醒：寄信前請確認後台「互動」分頁已開啟「互動報名」，否則學員點開連結將看到「尚未開放」。`)) return
+    setBulkSending('invite')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-interactive-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: bulkSelected }),
@@ -244,6 +260,11 @@ export default function LodgingsPage() {
             disabled={bulkSending !== null}
             className="admin-btn-sm gold">
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendInteractiveInvite}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm">
+            {bulkSending === 'invite' ? '寄送中⋯' : `批次寄互動報名通知（${bulkSelected.length}）`}
           </button>
           {bulkMessage && (
             <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{bulkMessage}</span>

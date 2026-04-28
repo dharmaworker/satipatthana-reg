@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { SESSIONS, TEACHERS, INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
+import { fetchInteractiveConfig } from '@/lib/interactive-config'
 
 // 驗證 id+code 並確認 status=approved，回 registration row
 async function authMember(request: NextRequest) {
@@ -33,10 +34,12 @@ export async function GET(request: NextRequest) {
     .eq('registration_id', a.reg.id)
     .maybeSingle()
 
+  const config = await fetchInteractiveConfig()
   return NextResponse.json({
     registration: a.reg,
     interactive: row,
     deadline: INTERACTIVE_DEADLINE_MS,
+    open: config.open,
   })
 }
 
@@ -44,6 +47,10 @@ export async function POST(request: NextRequest) {
   const a = await authMember(request)
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
+  const config = await fetchInteractiveConfig()
+  if (!config.open) {
+    return NextResponse.json({ error: '互動報名尚未開放' }, { status: 400 })
+  }
   if (Date.now() > INTERACTIVE_DEADLINE_MS) {
     return NextResponse.json({ error: '互動報名已截止' }, { status: 400 })
   }
