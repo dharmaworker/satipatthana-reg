@@ -28,7 +28,7 @@ export async function sendApprovalEmail(reg: {
 
     <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>6 月 15 日台北時間晚上 8 時前</strong></p>
     ${emailButton(`${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}`, '前往繳費', 'green')}
-    ${emailWarning('匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。')}
+    ${emailWarning('匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。感謝您的諒解及配合！')}
 
     <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">② 食宿登記</strong>　截止：<strong>6 月 20 日晚上 8 點前</strong></p>
     ${emailButton(`${baseUrl}/lodging?id=${reg.id}&code=${reg.random_code}`, '前往食宿登記', 'green')}
@@ -109,11 +109,11 @@ export async function sendApprovalEmail(reg: {
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請從本信第二段「② 前往食宿登記」連結進入填寫，截止時間為 6/20 晚上 8 點。<strong style="color:${C.ink};">本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
 
     ${emailH3('八、禪修課程群組')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">資料經確認無誤後，學會將以學員所提供之 LINE 或微信，邀請您加入 <strong style="color:${C.ink};">8 月禪修課程群組</strong>。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">資料經確認無誤後，學會將會以學員所提供之 LINE 或微信進入學會 <strong style="color:${C.ink};">8 月禪修課程群組</strong>。</p>
 
     ${emailH3('九、承諾事項')}
     <ol type="a" style="font-size:13px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
-      <li>請遵從指導老師的課程安排指導及主辦方的規定。課程期間將全程進行拍攝與錄音，作為法佈施；學員需接受出鏡，並在課後不要求刪減個人互動的相關音視頻。</li>
+      <li>請遵從指導老師的課程安排指導及主辦方的規定。課程期間將全程進行拍攝與錄音，作為法佈施；學員需接受出鏡，並在課後不要求刪減個人互動的相關影音視頻。</li>
       <li>用餐時間，禁語。</li>
       <li>請務必全程佩戴學員證。</li>
       <li>課程期間請遵守作息時間，勿遲到早退，影響他人。</li>
@@ -127,7 +127,7 @@ export async function sendApprovalEmail(reg: {
     </ol>
 
     ${emailH3('十、海外入境須知')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請進入中華民國移民署查詢：<a href="https://www.immigration.gov.tw/" style="color:${C.green};">https://www.immigration.gov.tw/</a></p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請進入中華民國移民署中文網查詢相關資訊：<a href="https://www.immigration.gov.tw/" style="color:${C.green};">https://www.immigration.gov.tw/</a></p>
 
     ${emailH3('十一、航班建議')}
     <p style="font-size:13.5px;color:${C.ink};margin:0 0 4px;"><strong>a. 來台抵達時間</strong></p>
