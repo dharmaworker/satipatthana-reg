@@ -69,8 +69,7 @@ const PRACTICE_FREQ_LABEL: Record<string, string> = {
   commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時',
 }
 
-// 報名期間（台北時間）：2026/05/11 10:00 — 2026/05/25 24:00
-const REG_OPEN_MS  = Date.UTC(2026, 4, 11, 2, 0, 0)
+// 截止：2026/05/25 晚上 24:00（台北時間）= UTC 5/25 16:00
 const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
 
 export default function RegisterPage() {
@@ -80,11 +79,11 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // 報名期間檢查（前端 + 後端雙保險）
+  // 截止日檢查
   const now = Date.now()
-  const notYetOpen = now < REG_OPEN_MS
+  const notYetOpen = false
   const pastDeadline = now > REG_CLOSE_MS
-  const outOfPeriod = notYetOpen || pastDeadline
+  const outOfPeriod = pastDeadline
 
   const [form, setForm] = useState({
     honest_confirm: '',
