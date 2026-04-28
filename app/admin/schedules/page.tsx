@@ -94,7 +94,7 @@ export default function SchedulesPage() {
       <div className="admin-main" style={{ maxWidth: 1100 }}>
         <div className="admin-info-strip">
           <p>⚙ 系統每天台灣時間 00:00 自動檢查並執行到期的排程。</p>
-          <p>📎 Excel 含：全部 / 待審核 / 已錄取未繳費 / 已繳費 / 未錄取 五個工作表。</p>
+          <p>📎 Excel 含 8 個工作表：全部 / 待審核 / 已錄取未繳費 / 已繳費 / 未錄取 / 食宿登記 / 互動報名 / 互動作業。</p>
           <p>⏰ 資料截止時間 = 排程日期的前一日 24:00（台灣時間）。最多 10 筆排程。</p>
         </div>
 

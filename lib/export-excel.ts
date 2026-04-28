@@ -161,6 +161,123 @@ function addLodgingSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
+// ========== 互動報名 ==========
+const INTERACTIVE_COLUMNS = [
+  { key: 'updated_at', header: '更新時間', width: 20 },
+  { key: 'chinese_name', header: '中文姓名', width: 12 },
+  { key: 'member_id', header: '報名序號', width: 12 },
+  { key: 'student_id', header: '學號', width: 12 },
+  { key: 'random_code', header: '繳費碼', width: 10 },
+  { key: 'wanted_sessions_str', header: '想要的集體場次', width: 30 },
+  { key: 'wanted_ranking_str', header: '想要的分組排序', width: 30 },
+  { key: 'group_status_zh', header: '集體狀態', width: 10 },
+  { key: 'assigned_session_label', header: '指定集體場次', width: 26 },
+  { key: 'group_serial', header: '集體序號', width: 10 },
+  { key: 'small_status_zh', header: '分組狀態', width: 10 },
+  { key: 'assigned_group_label', header: '指定分組', width: 12 },
+  { key: 'assigned_date', header: '指定日期', width: 12 },
+  { key: 'small_serial', header: '分組序號', width: 10 },
+  { key: 'notification_sent_at', header: '通知信寄出時間', width: 20 },
+  { key: 'submitted_at', header: '學員送出時間', width: 20 },
+]
+
+const SESSION_LABEL_EXPORT: Record<string, string> = {
+  s1: '8/21（五）巴山', s2: '8/21（五）納',
+  s3: '8/22（六）妮',  s4: '8/22（六）松',
+  s5: '8/23（日）巴山', s6: '8/23（日）妮',
+}
+const TEACHER_LABEL_EXPORT: Record<string, string> = {
+  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
+}
+const STATUS_ZH: Record<string, string> = { pending: '未定', won: '中簽', lost: '沒中簽' }
+
+function transformInteractiveRow(i: any) {
+  const reg = i.registration || {}
+  const wantedSessions = Array.isArray(i.wanted_sessions) ? i.wanted_sessions : []
+  const wantedRanking = Array.isArray(i.wanted_ranking) ? i.wanted_ranking : []
+  return {
+    updated_at: i.updated_at ? new Date(i.updated_at).toLocaleString('zh-TW') : '',
+    chinese_name: reg.chinese_name || '',
+    member_id: reg.member_id || '',
+    student_id: reg.student_id || '',
+    random_code: reg.random_code || '',
+    wanted_sessions_str: wantedSessions.map((s: string) => SESSION_LABEL_EXPORT[s] || s).join('、') || '（不報名）',
+    wanted_ranking_str: wantedRanking.length === 0
+      ? '（不報名）'
+      : wantedRanking.map((t: string, idx: number) => `${idx + 1}.${TEACHER_LABEL_EXPORT[t] || t}`).join(' '),
+    group_status_zh: STATUS_ZH[i.group_status] || i.group_status || '',
+    assigned_session_label: i.assigned_session ? SESSION_LABEL_EXPORT[i.assigned_session] || i.assigned_session : '',
+    group_serial: i.group_serial ?? '',
+    small_status_zh: STATUS_ZH[i.small_status] || i.small_status || '',
+    assigned_group_label: i.assigned_group ? `${TEACHER_LABEL_EXPORT[i.assigned_group] || i.assigned_group} 組` : '',
+    assigned_date: i.assigned_date || '',
+    small_serial: i.small_serial ?? '',
+    notification_sent_at: i.notification_sent_at ? new Date(i.notification_sent_at).toLocaleString('zh-TW') : '',
+    submitted_at: i.submitted_at ? new Date(i.submitted_at).toLocaleString('zh-TW') : '',
+  }
+}
+
+function addInteractiveSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
+  const sheet = wb.addWorksheet(name)
+  sheet.columns = INTERACTIVE_COLUMNS
+  sheet.getRow(1).font = { bold: true }
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
+  rows.forEach(r => sheet.addRow(transformInteractiveRow(r)))
+  sheet.views = [{ state: 'frozen', ySplit: 1 }]
+}
+
+// ========== 互動作業 ==========
+const INTERACTIVE_TASK_COLUMNS = [
+  { key: 'updated_at', header: '更新時間', width: 20 },
+  { key: 'chinese_name', header: '中文姓名', width: 12 },
+  { key: 'member_id', header: '報名序號', width: 12 },
+  { key: 'student_id', header: '學號', width: 12 },
+  { key: 'email', header: 'Email', width: 24 },
+  { key: 'assigned_session_label', header: '中簽集體場次', width: 26 },
+  { key: 'group_prior_interaction_zh', header: '集體：曾互動', width: 12 },
+  { key: 'group_question', header: '集體：互動問題', width: 60 },
+  { key: 'assigned_group_label', header: '中簽分組', width: 16 },
+  { key: 'assigned_date', header: '中簽日期', width: 12 },
+  { key: 'small_prior_interaction_zh', header: '分組：曾互動', width: 12 },
+  { key: 'small_question', header: '分組：互動問題', width: 60 },
+  { key: 'learning_duration', header: '修習年資', width: 16 },
+  { key: 'formal_practice', header: '固定形式練習', width: 40 },
+  { key: 'daily_practice', header: '日常練習', width: 40 },
+  { key: 'submitted_at', header: '送出時間', width: 20 },
+]
+
+function transformInteractiveTaskRow(t: any) {
+  const reg = t.registration || {}
+  const it = t.interactive || {}
+  return {
+    updated_at: t.updated_at ? new Date(t.updated_at).toLocaleString('zh-TW') : '',
+    chinese_name: reg.chinese_name || '',
+    member_id: reg.member_id || '',
+    student_id: reg.student_id || '',
+    email: reg.email || '',
+    assigned_session_label: it.assigned_session ? SESSION_LABEL_EXPORT[it.assigned_session] || it.assigned_session : '',
+    group_prior_interaction_zh: t.group_prior_interaction === 'yes' ? '是' : t.group_prior_interaction === 'no' ? '否' : '',
+    group_question: t.group_question || '',
+    assigned_group_label: it.assigned_group ? `${TEACHER_LABEL_EXPORT[it.assigned_group] || it.assigned_group} 組` : '',
+    assigned_date: it.assigned_date || '',
+    small_prior_interaction_zh: t.small_prior_interaction === 'yes' ? '是' : t.small_prior_interaction === 'no' ? '否' : '',
+    small_question: t.small_question || '',
+    learning_duration: t.learning_duration || '',
+    formal_practice: t.formal_practice || '',
+    daily_practice: t.daily_practice || '',
+    submitted_at: t.submitted_at ? new Date(t.submitted_at).toLocaleString('zh-TW') : '',
+  }
+}
+
+function addInteractiveTaskSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
+  const sheet = wb.addWorksheet(name)
+  sheet.columns = INTERACTIVE_TASK_COLUMNS
+  sheet.getRow(1).font = { bold: true }
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
+  rows.forEach(r => sheet.addRow(transformInteractiveTaskRow(r)))
+  sheet.views = [{ state: 'frozen', ySplit: 1 }]
+}
+
 export async function generateExportWorkbook(cutoff?: Date): Promise<{
   buffer: Buffer
   filename: string
@@ -180,6 +297,28 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
   const { data: lodgingData } = await lodgingQuery
 
+  // 互動報名 + 互動作業
+  let interactiveQuery = supabaseAdmin
+    .from('interactive_registrations')
+    .select('*, registration:registrations (chinese_name, member_id, student_id, random_code)')
+    .order('updated_at', { ascending: true })
+  if (cutoff) interactiveQuery = interactiveQuery.lte('updated_at', cutoff.toISOString())
+  const { data: interactiveData } = await interactiveQuery
+
+  let taskQuery = supabaseAdmin
+    .from('interactive_tasks')
+    .select('*, registration:registrations (chinese_name, member_id, student_id, email)')
+    .order('updated_at', { ascending: true })
+  if (cutoff) taskQuery = taskQuery.lte('updated_at', cutoff.toISOString())
+  const { data: taskData } = await taskQuery
+
+  // Task 需要 assigned_* 從 interactive_registrations 帶入；建 map
+  const intMap = new Map((interactiveData || []).map((i: any) => [i.registration_id, i]))
+  const tasksWithInteractive = (taskData || []).map((t: any) => ({
+    ...t,
+    interactive: intMap.get(t.registration_id) || null,
+  }))
+
   const wb = new ExcelJS.Workbook()
   wb.created = new Date()
   wb.creator = 'satipatthana-reg'
@@ -190,6 +329,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wb, '已繳費', all.filter(r => r.payment_status === 'verified'))
   addSheet(wb, '未錄取', all.filter(r => r.status === 'rejected'))
   addLodgingSheet(wb, '食宿登記', lodgingData || [])
+  addInteractiveSheet(wb, '互動報名', interactiveData || [])
+  addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
@@ -205,6 +346,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
       verified: all.filter(r => r.payment_status === 'verified').length,
       rejected: all.filter(r => r.status === 'rejected').length,
       lodgings: (lodgingData || []).length,
+      interactive_registrations: (interactiveData || []).length,
+      interactive_tasks: (taskData || []).length,
     },
   }
 }
