@@ -1,6 +1,8 @@
 # 互動報名 / 互動作業
 
-學員報名集體互動與分組互動 → admin 抽籤分配 → 批次寄通知信 → 中簽者填互動作業 → admin 檢視作業。
+admin 開放互動報名 → 批次寄邀請信 → 學員報名集體互動與分組互動 → admin 抽籤分配 → 批次寄中簽通知信 → 中簽者填互動作業 → admin 檢視作業。
+
+> **委託人需求**：互動報名與錄取通知信解耦（日期不確定，由委託人決定何時開放）。錄取信不含互動報名段，互動報名邀請信另行寄出。
 
 ---
 
@@ -51,13 +53,21 @@
 | 報名截止 | 2026/07/15 20:00 (台北) | `lib/interactive.ts` `INTERACTIVE_DEADLINE_MS` |
 | 序號範圍 | -1 ~ 15 | `lib/interactive.ts` `SERIAL_OPTIONS` |
 
+### 動態設定（site_config K/V）
+
+| key | shape | 寫入者 | 說明 |
+|---|---|---|---|
+| `interactive_config` | `{ open: boolean }` | admin（後台 toggle） | 是否開放互動報名；關閉時 dashboard 不顯示 task card、API 拒收送出 |
+
 ---
 
 ## 2. 學員流程
 
 ### 第一階段：互動報名（送出截止 7/15）
 
-進入點：dashboard 的「互動報名」task card → `/member/interactive?id=&code=`
+進入點：dashboard 的「互動報名」task card（admin 開放才顯示）→ `/member/interactive?id=&code=`
+
+> 若 admin 未開放（`interactive_config.open=false`），dashboard 不顯示卡片；直接進入連結會看到「尚未開放」banner，表單停用、無法送出。
 
 **3 步驟：**
 
@@ -97,6 +107,8 @@
 
 ### `/admin/interactive` — 互動報名管理
 
+頁首有 **互動報名開放狀態 toggle**（綠 = 已開放、金 = 未開放）。切換寫入 `site_config.interactive_config.open`。
+
 列出**所有錄取學員**，已送出者在「想要的場次／排序」欄會顯示內容，未送出者「—」。
 
 **主表格欄位：**
@@ -104,14 +116,19 @@
 
 **操作建議流程：**
 
-1. **先批次過篩** — 用搜尋 + filter（全部 / 已送出 / 集體中簽 / 分組中簽 / 未定）
-2. **編輯指定**（modal） — 集體與分組分兩塊：
-   - 「未定」與「中簽」狀態都能編場次／分組／日期／序號（**讓你可以先全部編好再標中簽**）
+1. **先開放互動報名** — 頁首 toggle → 學員 dashboard 才會出現 task card
+2. **批次寄邀請信** — 在 `/admin/lodgings` 按「批次寄互動報名通知（N）」（不在 `/admin/interactive`，因為對象是錄取學員整批）
+3. **等學員送出** — 用搜尋 + filter（全部 / 已送出 / 集體中簽 / 分組中簽 / 有未定 / 中簽未通知）
+4. **編輯指定**（modal） — 集體與分組分兩塊：
+   - 任何狀態（pending / won）都能編場次／分組／日期／序號 — **順序自由：可先標中簽再補指定，或先排好再標中簽**
+   - 實務上委託人通常先標中簽，過幾天才安排場次／組別／序號（且 admin 指定的場次／組別**不一定是學員 `wanted_sessions` / `wanted_ranking` 第一順位**，依容量分配；EditModal 會顯示「學員想要：X」做參考）
    - 「沒中簽」收起欄位，儲存時清空
-   - 「中簽」狀態下對應欄位顯示 \* 必填星號（前端提示，後端不強制）
-3. **改狀態為「中簽」** — 用 inline 下拉或 modal 設 `group_status='won'` / `small_status='won'`
-4. **批次寄信** — 勾選對象 → 按「批次寄中簽通知信（N）」→ confirm → 發送
-5. 寄成功的「通知信」欄會顯示綠 ✓ + 日期
+   - 「中簽」狀態下對應欄位顯示 \* 必填星號（前端提示）
+5. **批次寄中簽通知信** — 勾選對象 → 按「批次寄中簽通知信（N）」→ confirm → 發送
+   - 都沒中（`group_status !== 'won' && small_status !== 'won'`）→ 跳過不寄
+   - **中簽但場次／組別未指定** → 跳過不寄（避免寄出含「待補」的尷尬信）；補完後再按一次即可
+   - 回傳訊息會分開計數：成功 N 封 / 跳過 N 封（都沒中）/ 跳過 N 封（中簽但未指定）
+6. 寄成功的「通知信」欄會顯示綠 ✓ + 日期
 
 ### `/admin/interactive-tasks` — 互動作業檢視（唯讀）
 
@@ -132,26 +149,35 @@ pending（預設） ──┬──▶ won  ──┬──▶ pending（admin �
                  └──▶ lost ──▶ pending / won（重新分配）
 ```
 
-任何狀態都可以改任何狀態。`pending` 與 `won` 下都能編場次／序號。`lost` 會清空 assigned_* 與 serial。
+任何狀態都可以改任何狀態。`pending` 與 `won` 下都能編場次／序號（API 不擋「中簽無指定」，由 notify 端跳過）。`lost` 會清空 assigned_* 與 serial。
 
-### 通知信寄送條件
+### 通知信寄送條件（`/api/admin/interactive/notify`）
 
-- 任何時候都能按按鈕（沒擋）
-- 寄成功後 `notification_sent_at` 更新
-- 同一人重複寄會覆蓋寄送時間（用於補寄或更正）
+| 對象條件 | 行為 |
+|---|---|
+| 都沒中（任一邊都不是 `won`） | 跳過，計入 `skippedNoWin` |
+| 中簽但場次／組別未指定 | 跳過，計入 `skippedIncomplete`（補完後再按） |
+| 集體或分組已中簽且指定完整 | 寄送，更新 `notification_sent_at` |
+
+同一人重複寄會覆蓋 `notification_sent_at`（用於補寄或更正）。
 
 ---
 
 ## 5. Email 觸發
 
-| 事件 | 觸發者 | 收件人 | 模板 |
-|---|---|---|---|
-| 互動結果通知 | admin 按「批次寄」 | 學員 + bcc 學會 | `lib/interactive-notify-email.ts` |
+| 事件 | 觸發者 | 收件人 | 模板 | 觸發 API |
+|---|---|---|---|---|
+| 互動報名邀請信 | admin 在 `/admin/lodgings` 按「批次寄互動報名通知」 | 錄取學員 + bcc 學會 | `lib/interactive-invite-email.ts` | `/api/admin/send-interactive-invite` |
+| 互動結果通知 | admin 在 `/admin/interactive` 按「批次寄中簽通知信」 | 中簽且指定完整者 + bcc 學會 | `lib/interactive-notify-email.ts` | `/api/admin/interactive/notify` |
 
-通知信內容：
+**邀請信內容**：解釋集體 / 分組規則、報名截止；含「前往填寫互動報名」按鈕。寄信前請先把後台 toggle 開啟，否則學員點連結會看到「尚未開放」（前端 confirm 對話框會提醒）。
+
+**結果通知信內容**：
 - 集體 / 分組各自的中簽結果（含金色 pill「序號 N」）
 - 中簽者：含「前往填寫互動作業」按鈕（連到 `/member/interactive/task`）
 - 都沒中：金色 alert 提示
+
+> 錄取通知信（`lib/approval-email.ts`）**不含**互動報名段，僅在二、總覽段提到「互動報名將另行寄信通知」。
 
 ---
 
@@ -160,30 +186,37 @@ pending（預設） ──┬──▶ won  ──┬──▶ pending（admin �
 ```
 satipatthana-reg/
 ├── supabase/
-│   └── interactive.sql            -- 兩張表 + RLS policy
+│   ├── interactive.sql            -- 兩張表 + RLS policy
+│   └── site_config.sql            -- K/V 設定表（含 interactive_config）
 ├── lib/
 │   ├── interactive.ts             -- 常數（SESSIONS, TEACHERS, deadline, SERIAL_OPTIONS）+ types
+│   ├── interactive-config.ts      -- open/close toggle 讀寫（site_config K/V）
+│   ├── interactive-invite-email.ts-- 互動報名邀請信模板
 │   └── interactive-notify-email.ts-- 中簽通知信模板
 ├── app/
 │   ├── api/
 │   │   ├── interactive/
-│   │   │   ├── route.ts           -- 學員 GET/POST（auth + 截止檢查）
+│   │   │   ├── route.ts           -- 學員 GET/POST（auth + 截止 + open 檢查）
 │   │   │   └── task/route.ts      -- 學員 GET/POST 作業（含中簽 gate）
+│   │   ├── member/
+│   │   │   └── me/route.ts        -- 擴充 interactive_open / interactive_*/task_submitted
 │   │   └── admin/
+│   │       ├── interactive-config/route.ts    -- toggle GET/PUT
+│   │       ├── send-interactive-invite/route.ts -- 批次寄邀請信
 │   │       ├── interactive/
-│   │       │   ├── route.ts       -- admin GET/PATCH
-│   │       │   └── notify/route.ts-- admin POST 批次寄信
+│   │       │   ├── route.ts       -- admin GET/PATCH（移除中簽必有指定 gate）
+│   │       │   └── notify/route.ts-- admin POST 批次寄信（跳過未指定）
 │   │       └── interactive-tasks/
 │   │           └── route.ts       -- admin GET 作業列表
 │   ├── member/
-│   │   └── interactive/
-│   │       ├── page.tsx           -- 互動報名頁（3 step）
-│   │       └── task/page.tsx      -- 互動作業頁（動態 step）
+│   │   ├── interactive/
+│   │   │   ├── page.tsx           -- 互動報名頁（3 step；未開放顯示 banner）
+│   │   │   └── task/page.tsx      -- 互動作業頁（動態 step；中簽 gate）
+│   │   └── dashboard/page.tsx     -- task-grid 卡片（互動報名僅 open=true 才顯示；作業僅中簽顯示）
 │   └── admin/
-│       ├── interactive/page.tsx   -- 互動報名管理（含 EditModal）
-│       └── interactive-tasks/page.tsx -- 互動作業檢視
-├── app/api/member/me/route.ts     -- 擴充：多回 interactive_*/task_submitted
-└── app/member/dashboard/page.tsx  -- task-grid 加 2 張卡（互動報名 / 作業）
+│       ├── interactive/page.tsx   -- 互動報名管理（含 toggle + EditModal）
+│       ├── interactive-tasks/page.tsx -- 互動作業檢視
+│       └── lodgings/page.tsx      -- 「批次寄互動報名通知」按鈕在此
 ```
 
 ---
@@ -193,10 +226,11 @@ satipatthana-reg/
 | 項目 | 說明 | 狀態 |
 |---|---|---|
 | SQL 重跑可能 fail | `CREATE POLICY` 沒 `IF NOT EXISTS` | ✅ 已修：CREATE 之前加 `DROP POLICY IF EXISTS` |
-| 後端沒強制「中簽要有指定」 | `status='won'` + `assigned_*=null` 是不一致狀態 | ✅ 已修：API PATCH 計算最終狀態，中簽必須有指定否則 400 |
+| 後端強制「中簽要有指定」太僵 | 委託人想先標中簽再排場次 | ✅ 已改：移除 PATCH gate，改在 notify 端跳過未指定者，避免寄出含「待補」的尷尬信 |
 | 沒場次容量警示 | s1 8 人額滿可被指定給 9 個人 | ✅ 已修：admin 頁加 CapacityPanel 摺疊區塊（集體 6 場 + 分組 4×3 網格），超額顯示紅 ⚠ |
 | filter 不實用 | 「未定」要兩邊都 pending 太窄 | ✅ 已修：改成「有未定（任一邊）」+ 加「中簽未通知」filter |
 | PATCH 可建空 row | upsert 對沒提交者也會建 row | ✅ 已修：改 update + 先查 row 存在，否則 404 |
+| 互動報名與錄取信耦合 | 委託人想獨立寄、日期不確定 | ✅ 已改：錄取信移除互動段，互動報名邀請信獨立、後台 toggle 控制何時開放 |
 
 ---
 
