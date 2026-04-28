@@ -54,11 +54,12 @@ const COURSE_GROUPS = [
 ]
 
 const STEPS = [
-  { num: 1, label: '課程資訊', en: 'Course Info' },
-  { num: 2, label: '報名資格', en: 'Eligibility' },
-  { num: 3, label: '背景承諾', en: 'Background' },
-  { num: 4, label: '個人資訊', en: 'Personal' },
-  { num: 5, label: '確認送出', en: 'Review' },
+  { num: 1, label: '師資團隊', en: 'Teachers' },
+  { num: 2, label: '課程資訊', en: 'Course Info' },
+  { num: 3, label: '報名資格', en: 'Eligibility' },
+  { num: 4, label: '背景承諾', en: 'Background' },
+  { num: 5, label: '個人資訊', en: 'Personal' },
+  { num: 6, label: '確認送出', en: 'Review' },
 ]
 
 const RESIDENCE_OPTIONS = ['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區']
@@ -225,9 +226,9 @@ export default function RegisterPage() {
   }
 
   const validateStep = (n: number): boolean => {
-    if (n === 3) return validateStep3()
-    if (n === 4) return validateStep4()
-    return true // step 1, 2, 5 純資訊不卡 validation
+    if (n === 4) return validateStep3()
+    if (n === 5) return validateStep4()
+    return true // step 1, 2, 3, 6 純資訊不卡 validation
   }
 
   const goToStep = (target: number) => {
@@ -254,8 +255,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async () => {
     setError('')
-    if (!validateStep3()) { setStep(3); return }
-    if (!validateStep4()) { setStep(4); return }
+    if (!validateStep3()) { setStep(4); return }
+    if (!validateStep4()) { setStep(5); return }
 
     setLoading(true)
     try {
@@ -384,22 +385,13 @@ export default function RegisterPage() {
         <div>
         <div className="form-card">
 
-          {/* ============== Step 1：課程資訊 ============== */}
+          {/* ============== Step 1：師資團隊 ============== */}
           {step === 1 && (
             <div className="step-content active">
               <div className="step-header">
                 <p className="step-header-kicker">Step 01</p>
-                <h2 className="step-header-title">課程資訊</h2>
-                <p className="step-header-desc">請仔細閱讀課程基本資訊，確認後進入下一步。</p>
-              </div>
-
-              <div className="info-section">
-                <h3>課程資訊</h3>
-                <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
-                <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
-                <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
-                <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
-                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理</span></div>
+                <h2 className="step-header-title">師資團隊</h2>
+                <p className="step-header-desc">本次禪修由隆波帕默尊者體系助教老師親臨授課指導。</p>
               </div>
 
               <div className="info-section">
@@ -426,11 +418,31 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ============== Step 2：報名資格 ============== */}
+          {/* ============== Step 2：課程資訊 ============== */}
           {step === 2 && (
             <div className="step-content active">
               <div className="step-header">
                 <p className="step-header-kicker">Step 02</p>
+                <h2 className="step-header-title">課程資訊</h2>
+                <p className="step-header-desc">請仔細閱讀課程基本資訊，確認後進入下一步。</p>
+              </div>
+
+              <div className="info-section">
+                <h3>課程資訊</h3>
+                <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
+                <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
+                <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
+                <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
+                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理</span></div>
+              </div>
+            </div>
+          )}
+
+          {/* ============== Step 3：報名資格 ============== */}
+          {step === 3 && (
+            <div className="step-content active">
+              <div className="step-header">
+                <p className="step-header-kicker">Step 03</p>
                 <h2 className="step-header-title">報名資格</h2>
                 <p className="step-header-desc">請確認您符合以下資格後再進入下一步。</p>
               </div>
@@ -458,11 +470,11 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ============== Step 3：背景與承諾 ============== */}
-          {step === 3 && (
+          {/* ============== Step 4：背景與承諾 ============== */}
+          {step === 4 && (
             <div className="step-content active">
               <div className="step-header">
-                <p className="step-header-kicker">Step 03</p>
+                <p className="step-header-kicker">Step 04</p>
                 <h2 className="step-header-title">背景與承諾</h2>
                 <p className="step-header-desc">請依實際情況回答下列題目。本步驟所有 *標示者為必填。</p>
               </div>
@@ -589,11 +601,11 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ============== Step 4：個人資訊 ============== */}
-          {step === 4 && (
+          {/* ============== Step 5：個人資訊 ============== */}
+          {step === 5 && (
             <div className="step-content active">
               <div className="step-header">
-                <p className="step-header-kicker">Step 04</p>
+                <p className="step-header-kicker">Step 05</p>
                 <h2 className="step-header-title">個人資訊</h2>
                 <p className="step-header-desc">提供報名所需的聯絡與身份資料。所有資料僅供本次禪修使用。</p>
               </div>
@@ -809,18 +821,18 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ============== Step 5：確認送出 ============== */}
-          {step === 5 && (
+          {/* ============== Step 6：確認送出 ============== */}
+          {step === 6 && (
             <div className="step-content active">
               <div className="step-header">
-                <p className="step-header-kicker">Step 05</p>
+                <p className="step-header-kicker">Step 06</p>
                 <h2 className="step-header-title">確認資料</h2>
                 <p className="step-header-desc">請最後確認以下資料，無誤後送出。送出後可在學員專區查詢狀態。</p>
               </div>
 
               <div className="review-grid">
                 <div className="review-group">
-                  <h4>背景與承諾 <span className="edit-link" onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
+                  <h4>背景與承諾 <span className="edit-link" onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="如實填寫" v={form.honest_confirm === 'yes' ? '是' : '—'} />
                   <ReviewRow k="正式學員參加課程" v={form.attended_formal === 'yes' ? '是' : form.attended_formal === 'no' ? '否' : '—'} />
                   <ReviewRow k="3 屆錄影／錄音" v={form.watched_recordings === 'yes' ? '是' : form.watched_recordings === 'no' ? '否' : '—'} />
@@ -836,7 +848,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="review-group">
-                  <h4>個人資訊 <span className="edit-link" onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
+                  <h4>個人資訊 <span className="edit-link" onClick={() => { setStep(5); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="中文姓名" v={form.chinese_name} />
                   <ReviewRow k="護照英文姓名" v={form.passport_name} />
                   <ReviewRow k="身份" v={form.identity === 'lay' ? '在家人（居士）' : form.identity === 'monastic' ? '僧眾' : '—'} />
@@ -888,7 +900,7 @@ export default function RegisterPage() {
             )}
             {step < STEPS.length ? (
               <button onClick={() => goToStep(step + 1)}
-                disabled={step === 3 && form.honest_confirm === 'no'}
+                disabled={step === 4 && form.honest_confirm === 'no'}
                 className="btn btn-primary">
                 下一步 <span className="arrow">→</span>
               </button>
