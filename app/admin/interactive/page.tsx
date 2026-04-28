@@ -195,8 +195,8 @@ export default function InteractiveAdminPage() {
       <div className="admin-main">
         <div className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
           <p>🎲 列出所有錄取學員。<strong>已送出互動報名</strong>者會顯示「想要的場次／排序」。</p>
-          <p>👇 「集體狀態」「分組狀態」下拉選 <strong>未定 / 中簽 / 沒中簽</strong>。中簽時請按「編輯」填指定的場次／組別／日期。</p>
-          <p>📧 勾選後按「批次寄中簽通知信」，學員會收到結果信，中簽者信內含填寫互動作業的連結。</p>
+          <p>👇 「集體狀態」「分組狀態」可獨立切換 <strong>未定 / 中簽 / 沒中簽</strong>，可先標中簽再用「編輯指定」補場次／組別／日期，順序自由。</p>
+          <p>📧 勾選後按「批次寄中簽通知信」會寄結果信給中簽者；<strong>中簽但場次／組別未指定者會自動跳過</strong>，請補完再按一次。中簽信內含填寫互動作業的連結。</p>
         </div>
 
         <div className="admin-table-card" style={{

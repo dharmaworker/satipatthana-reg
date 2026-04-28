@@ -78,27 +78,14 @@ export async function PATCH(request: NextRequest) {
   // #5：禁止 PATCH 對不存在的 row（前端應走學員自行送出建立 row）。先查現況。
   const { data: existing } = await supabaseAdmin
     .from('interactive_registrations')
-    .select('group_status, small_status, assigned_session, assigned_group, assigned_date')
+    .select('group_status, small_status')
     .eq('registration_id', registration_id)
     .maybeSingle()
   if (!existing) {
     return NextResponse.json({ error: '此學員尚未送出互動報名，無法編輯' }, { status: 404 })
   }
 
-  // #2：算出套用後的最終狀態，驗證「中簽必須有指定」
-  const final = {
-    group_status: update.group_status ?? existing.group_status,
-    small_status: update.small_status ?? existing.small_status,
-    assigned_session: update.assigned_session !== undefined ? update.assigned_session : existing.assigned_session,
-    assigned_group: update.assigned_group !== undefined ? update.assigned_group : existing.assigned_group,
-    assigned_date: update.assigned_date !== undefined ? update.assigned_date : existing.assigned_date,
-  }
-  if (final.group_status === 'won' && !final.assigned_session) {
-    return NextResponse.json({ error: '集體中簽必須指定場次（請開「編輯指定」填寫）' }, { status: 400 })
-  }
-  if (final.small_status === 'won' && (!final.assigned_group || !final.assigned_date)) {
-    return NextResponse.json({ error: '分組中簽必須指定組別與日期（請開「編輯指定」填寫）' }, { status: 400 })
-  }
+  // 允許「先中簽、後排場次／組別／序號」；notify 端會跳過尚未指定者，不會寄出含「待補」的信。
 
   const { error } = await supabaseAdmin
     .from('interactive_registrations')
