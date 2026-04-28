@@ -278,7 +278,7 @@ export default function HomePage() {
               </details>
               <details>
                 <summary>禪修期間需要全程禁語嗎？</summary>
-                <p>是的，禪修期間全程禁語（除與助教老師小參時間外），這是維持禪修品質的重要規範。</p>
+                <p>是的。為維持禪修品質，禪修期間採全程禁語。<br />除必要事務外，請將覺知帶回自身，時時保持覺知。<br />靜默，是為了讓心更清晰地看見。</p>
               </details>
               <details>
                 <summary>住宿安排是怎樣的？</summary>
