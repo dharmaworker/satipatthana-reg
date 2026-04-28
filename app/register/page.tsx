@@ -65,9 +65,9 @@ const STEPS = [
 const RESIDENCE_OPTIONS = ['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區']
 const PRACTICE_YEARS_OPTIONS = ['1月-3個月','3月-6個月','6月-1年','1年-2年','2年-3年','3年-4年','4年-5年','5年-8年','8年-10年','10年以上']
 const PRACTICE_FREQ_LABEL: Record<string, string> = {
-  every_day: '每天至少 30 分鐘',
-  almost_every_day: '幾乎每天，偶有間斷',
-  commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時',
+  every_day: '每天做固定形式的練習至少 30 分鐘',
+  almost_every_day: '幾乎每天都做固定形式的練習至少 30 分鐘，偶有間斷（三個月間斷不多於5天）',
+  commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束',
 }
 
 // 截止：2026/05/25 晚上 24:00（台北時間）= UTC 5/25 16:00
@@ -431,7 +431,7 @@ export default function RegisterPage() {
                 <h3>課程資訊</h3>
                 <div className="meta-row"><span className="k">課程時間</span><span className="v">2026/08/20 ～ 08/24（共 5 天）</span></div>
                 <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
-                <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
+                <div className="meta-row"><span className="k">課程地點</span><span className="v">南投日月潭湖畔會館</span></div>
                 <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
                 <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理</span></div>
               </div>
@@ -537,9 +537,9 @@ export default function RegisterPage() {
                 )
               })}
 
-              {yesNoSelect('watched_recordings', '9. 是否完整觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
-              {yesNoSelect('zoom_guidance', '10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊的一對一禪修指導？')}
-              {yesNoSelect('watched_30_talks', '11. 是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
+              {yesNoSelect('watched_recordings', '9. 您是否完整地觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
+              {yesNoSelect('zoom_guidance', '10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
+              {yesNoSelect('watched_30_talks', '11. 您是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
               {yesNoSelect('keep_precepts', '12. 您是否持守五戒？')}
 
               <div className="question-block" id="field-practice_years">
@@ -552,27 +552,27 @@ export default function RegisterPage() {
               </div>
 
               <div className="question-block" id="field-practice_frequency">
-                <label className="form-label">14. 過去三個月內，您做固定式練習的頻率是？ <span className="required">*</span></label>
+                <label className="form-label">14. 在過去的三個月內，您做固定式練習的頻率是： <span className="required">*</span></label>
                 <select className={`form-select ${errCls('practice_frequency')}`} value={form.practice_frequency}
                   onChange={e => update('practice_frequency', e.target.value)}>
                   <option value="">請選擇</option>
-                  <option value="every_day">每天至少 30 分鐘</option>
-                  <option value="almost_every_day">幾乎每天，偶有間斷</option>
+                  <option value="every_day">每天做固定形式的練習至少 30 分鐘</option>
+                  <option value="almost_every_day">幾乎每天都做固定形式的練習至少 30 分鐘，偶有間斷（三個月間斷不多於5天）</option>
                   <option value="commit_from_now">未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束</option>
                 </select>
               </div>
 
               <div className="question-block" id="field-pay_confirm">
-                <label className="form-label">15. 食宿、場地及交通等費用需由學員自行負擔，並請於 6/15 前完成支付。是否可於期限內完成？ <span className="required">*</span></label>
+                <label className="form-label">15. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
                 <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
                   onChange={e => update('pay_confirm', e.target.value)}>
                   <option value="">請選擇</option>
                   <option value="yes">是，我願意按時全額支付</option>
-                  <option value="no">否</option>
+                  <option value="no">否，我不願意支付</option>
                 </select>
               </div>
 
-              {yesNoSelect('health_confirm', '16. 您是否身體健康，能夠全程獨立參與？')}
+              {yesNoSelect('health_confirm', '16. 您是否身體健康，能夠全程獨立參與實體禪修課程？')}
 
               <div className="question-block">
                 <label className="form-label">17. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
@@ -624,7 +624,7 @@ export default function RegisterPage() {
               </div>
 
               <div id="field-identity" style={{ marginTop: 14 }}>
-                <label className="form-label">21. 您屬於？ <span className="required">*</span></label>
+                <label className="form-label">21. 請問您屬於： <span className="required">*</span></label>
                 <div className="opt-group inline">
                   {[['lay', '在家人（居士）'], ['monastic', '僧眾']].map(([val, label]) => (
                     <label key={val} className={`opt ${form.identity === val ? 'selected' : ''}`}>
