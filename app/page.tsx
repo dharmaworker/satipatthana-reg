@@ -357,7 +357,7 @@ export default function HomePage() {
           </div>
           <div className="footer-bottom">
             <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
-            <div>唯一路 · 從如實知開始</div>
+            <div>唯一路</div>
           </div>
         </div>
       </footer>

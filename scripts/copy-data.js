@@ -113,7 +113,7 @@ module.exports = {
         ['首頁 > FAQ > Q8', 'home.faq.q8.answer', '說明', '建議準備寬鬆舒適的禪修服、個人盥洗用品、保暖衣物等。詳細打包清單會於錄取後一併提供。', ''],
         // Footer
         ['首頁 > Footer', 'home.footer.about', '段落', '護持佛法四念處，推廣隆波帕默尊者教導的禪修法門，邀請大眾一起踏上覺醒之路。', ''],
-        ['首頁 > Footer', 'home.footer.tagline', '段落', '唯一路 · 從如實知開始', ''],
+        ['首頁 > Footer', 'home.footer.tagline', '段落', '唯一路', ''],
       ],
     },
 
