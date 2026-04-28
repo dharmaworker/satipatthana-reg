@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     // 必填檢查（不再要求 dates / payment_method，這些由 plan 帶入）
     const FIELD_LABEL: Record<string, string> = {
+      checkin_date: '入住日期',
       emergency_name: '緊急聯絡人姓名',
       emergency_relation: '緊急聯絡人關係',
       emergency_phone: '緊急聯絡人電話',
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       registration_id: reg.id,
-      arrival_date: planDefaults?.arrival_date ?? null,
+      arrival_date: fields.checkin_date || planDefaults?.arrival_date ?? null,
       departure_date: planDefaults?.departure_date ?? null,
       payment_method: planDefaults?.payment_method ?? null,
       emergency_name: fields.emergency_name,
@@ -192,7 +193,7 @@ export async function POST(request: NextRequest) {
     // 寄確認信給學員 + bcc 學會（失敗不影響主流程）
     try {
       const dietZh = fields.diet === 'meat' ? '葷食' : '素食'
-      const noonZh = fields.noon_fasting === 'before_noon' ? '需要 12 點前吃' : '可以 12 點後吃'
+      const noonZh = ({ fasting_yes: '是，過午不食', fasting_no: '否，不是過午不食', before_noon: '需於中午12點前用餐', after_noon: '可於中午12點後用餐' } as Record<string, string>)[fields.noon_fasting as string] || fields.noon_fasting
       const arrivalZh = { self: '自行抵達', taipei_bus: '搭主辦專車（8/19 上午 8:30 台北車站）', wuri_bus: '搭主辦專車（8/19 上午 9:30 烏日高鐵）' }[fields.arrival_transport as string] || fields.arrival_transport
       const departureZh = fields.departure_transport === 'self' ? '自行離開' : '乘坐主辦單位專車'
       const busDestZh = {

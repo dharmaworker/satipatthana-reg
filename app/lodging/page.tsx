@@ -26,7 +26,12 @@ const BUS_DEST_LABEL: Record<string, string> = {
 }
 
 const DIET_LABEL: Record<string, string> = { meat: '葷食', vegetarian: '素食' }
-const NOON_LABEL: Record<string, string> = { before_noon: '需要 12 點前吃', after_noon: '可以 12 點後吃' }
+const NOON_LABEL: Record<string, string> = {
+  fasting_yes: '是，過午不食',
+  fasting_no: '否，不是過午不食',
+  before_noon: '需於中午12點前用餐',
+  after_noon: '可於中午12點後用餐',
+}
 const SNACKS_LABEL: Record<string, string> = { snacks_and_drink: '需要茶點、咖啡 OR 茶', drink_only: '只需要咖啡 OR 茶' }
 const IDENTITY_LABEL: Record<string, string> = { id: '台灣人（身分證正反面）', passport: '外籍短期旅客（護照 + 航班）', arc: '在台外籍居民（ARC／居留證）' }
 
@@ -46,6 +51,7 @@ function LodgingContent() {
   const [maxReached, setMaxReached] = useState(1)
 
   const [form, setForm] = useState({
+    checkin_date: '',
     emergency_name: '',
     emergency_relation: '',
     emergency_phone: '',
@@ -53,7 +59,7 @@ function LodgingContent() {
     departure_transport: '',
     bus_destination: '',
     diet: 'vegetarian',
-    noon_fasting: 'after_noon',
+    noon_fasting: '',
     snacks: 'drink_only',
     dinner_0819: false,
     dinner_0824: false,
@@ -126,6 +132,7 @@ function LodgingContent() {
         if (data.lodging) {
           setExistingLodging(data.lodging)
           setForm({
+            checkin_date: data.lodging.arrival_date || '',
             emergency_name: data.lodging.emergency_name || '',
             emergency_relation: data.lodging.emergency_relation || '',
             emergency_phone: data.lodging.emergency_phone || '',
@@ -168,6 +175,7 @@ function LodgingContent() {
   }, [id, code])
 
   const validateStep1 = (): boolean => {
+    if (!form.checkin_date) return fail('checkin_date', '請選擇「入住日期」')
     if (!form.emergency_name) return fail('emergency_name', '請填寫「緊急聯絡人姓名」')
     if (!form.emergency_relation) return fail('emergency_relation', '請填寫「緊急聯絡人關係」')
     if (!form.emergency_phone) return fail('emergency_phone', '請填寫「緊急聯絡人電話」')
@@ -461,8 +469,9 @@ function LodgingContent() {
 
                     <div className="alert-card">
                       <div className="alert-card-title">重要提醒</div>
-                      <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，<strong>若取消報名，所付費用恕不退款、轉讓</strong>。</p>
+                      <p>請慎重考慮並如實填寫。由於飯店條款限制，學會已先代墊食宿等費用，<strong>若取消報名，所付費用恕不退款、轉讓</strong>。感謝您的諒解。請確認您能全然接受主辦單位在課程期間對課程及防疫措施的安排。</p>
                       <p>本表單送出後僅能再修改一次（共 2 次送出機會），請務必確認後再送出。</p>
+                      <p>表單成功提交後，系統將自動發送確認通知至您的電子信箱，請注意查收（含垃圾郵件）。</p>
                     </div>
 
                     <div className="info-card">
@@ -476,9 +485,19 @@ function LodgingContent() {
                       </ul>
                     </div>
 
+                    {/* 入住日期 */}
+                    <div className="field-group" id="field-checkin_date">
+                      <div className="field-group-title"><span className="num">01</span>入住日期 <span className="required">*</span></div>
+                      <div className="opt-group inline">
+                        {radio('checkin_date', '8/18', '8/18 入住')}
+                        {radio('checkin_date', '8/19', '8/19 入住')}
+                        {radio('checkin_date', '8/20', '8/20 入住')}
+                      </div>
+                    </div>
+
                     {/* 緊急聯絡人 */}
                     <div className="field-group">
-                      <div className="field-group-title"><span className="num">01</span>緊急聯絡人</div>
+                      <div className="field-group-title"><span className="num">02</span>緊急聯絡人</div>
                       <div className="field-row three">
                         <div id="field-emergency_name">
                           <label className="form-label">姓名 <span className="required">*</span></label>
@@ -502,7 +521,7 @@ function LodgingContent() {
 
                     {/* 前往日月潭 */}
                     <div className="field-group" id="field-arrival_transport">
-                      <div className="field-group-title"><span className="num">02</span>前往日月潭方式 <span className="required">*</span></div>
+                      <div className="field-group-title"><span className="num">03</span>前往日月潭方式 <span className="required">*</span></div>
                       <div className="opt-group">
                         {radio('arrival_transport', 'self', '8/19 自行抵達日月潭湖畔會館')}
                         {radio('arrival_transport', 'taipei_bus', '主辦專車：8/19 上午 8:30 台北車站東 3 門集合', '法工人員穿著學會背心')}
@@ -545,7 +564,7 @@ function LodgingContent() {
 
                     {/* 離開方式 */}
                     <div className="field-group" id="field-departure_transport">
-                      <div className="field-group-title"><span className="num">03</span>離開日月潭會館方式 <span className="required">*</span></div>
+                      <div className="field-group-title"><span className="num">04</span>離開日月潭會館方式 <span className="required">*</span></div>
                       <div className="opt-group">
                         {radio('departure_transport', 'self', '自行離開')}
                         {radio('departure_transport', 'bus', '乘坐主辦單位安排專車')}
@@ -584,10 +603,12 @@ function LodgingContent() {
                     </div>
 
                     <div className="field-group">
-                      <div className="field-group-title"><span className="num">02</span>過午不食 <span className="required">*</span></div>
-                      <div id="field-noon_fasting" className="opt-group inline">
-                        {radio('noon_fasting', 'before_noon', '需要 12 點前吃')}
-                        {radio('noon_fasting', 'after_noon', '可以 12 點後吃')}
+                      <div className="field-group-title"><span className="num">02</span>課程期間是否過午不食 <span className="required">*</span></div>
+                      <div id="field-noon_fasting" className="opt-group">
+                        {radio('noon_fasting', 'fasting_yes', '是，過午不食')}
+                        {radio('noon_fasting', 'fasting_no', '否，不是過午不食')}
+                        {radio('noon_fasting', 'before_noon', '需於中午12點前用餐')}
+                        {radio('noon_fasting', 'after_noon', '可於中午12點後用餐')}
                       </div>
                     </div>
 
@@ -814,6 +835,7 @@ function LodgingContent() {
                       <div className="review-grid">
                         <div className="review-group">
                           <h4>行程安排 <span className="edit-link" onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
+                          <ReviewRow k="入住日期" v={form.checkin_date || ''} />
                           <ReviewRow k="緊急聯絡人" v={`${form.emergency_name}（${form.emergency_relation}）${form.emergency_phone}`} />
                           <ReviewRow k="前往日月潭" v={TRANSPORT_LABEL[form.arrival_transport] || ''} />
                           <ReviewRow k="離開日月潭會館" v={form.departure_transport === 'self' ? '自行離開' : form.departure_transport === 'bus' ? `主辦專車（${BUS_DEST_LABEL[form.bus_destination] || '未選擇'}）` : ''} />
