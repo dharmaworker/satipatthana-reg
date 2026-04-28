@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs'
 import { supabaseAdmin } from './supabase'
-import { PREVIEW_EMAIL, getPreviewRegistrationId } from './preview-test-student'
+import { getPreviewRegistrationId } from './preview-test-student'
 
 const STATUS_LABEL: Record<string, string> = { pending: '審核中', approved: '已錄取', rejected: '未錄取' }
 const PAYMENT_LABEL: Record<string, string> = { unpaid: '未繳費', paid: '待確認', verified: '已確認' }
@@ -287,7 +287,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   // 排除後台預覽測試學員
   const previewId = await getPreviewRegistrationId()
 
-  let query = supabaseAdmin.from('registrations').select('*').neq('email', PREVIEW_EMAIL).order('created_at', { ascending: true })
+  let query = supabaseAdmin.from('registrations').select('*').order('created_at', { ascending: true })
+  if (previewId) query = query.neq('id', previewId)
   if (cutoff) query = query.lte('created_at', cutoff.toISOString())
   const { data, error } = await query
   if (error) throw new Error(`DB query failed: ${error.message}`)

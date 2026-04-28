@@ -75,13 +75,27 @@ export default function InteractiveAdminPage() {
     setPreviewing(true)
     setMessage('')
     try {
-      const res = await fetch('/api/admin/preview-test-student', { method: 'POST' })
+      // 先讀目前的測試學員 email（給 prompt 預設值用）
+      const cur = await fetch('/api/admin/preview-test-student').then(r => r.ok ? r.json() : null)
+      const defaultEmail = cur?.email && cur.email !== 'preview@test.invalid' ? cur.email : ''
+      const promptMsg = cur?.exists
+        ? `測試學員 email（自動寄送的測試信會寄到這裡，留空保持不變）：`
+        : `請輸入測試學員的 email（自動寄送的測試信會寄到這裡，留空使用預設 preview@test.invalid 不收信）：`
+      const input = window.prompt(promptMsg, defaultEmail)
+      if (input === null) { setPreviewing(false); return } // 使用者取消
+
+      const res = await fetch('/api/admin/preview-test-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: input.trim() }),
+      })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || `${res.status}`)
       const url = `/member/interactive?id=${d.id}&code=${encodeURIComponent(d.code)}`
       window.open(url, '_blank', 'noopener')
-      if (d.created) setMessage(`已建立測試學員「[預覽] 測試學員」，已開新分頁進入互動報名表單`)
-      else setMessage('已開新分頁進入互動報名表單（測試學員）')
+      const emailLabel = d.email === 'preview@test.invalid' ? '（預設 invalid email，不會收到測試信）' : `（email: ${d.email}）`
+      if (d.created) setMessage(`已建立測試學員「[預覽] 測試學員」${emailLabel}，已開新分頁進入互動報名表單`)
+      else setMessage(`已開新分頁進入互動報名表單${emailLabel}`)
     } catch (e: any) {
       setMessage(`預覽失敗：${e.message}`)
     } finally {
