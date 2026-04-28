@@ -158,7 +158,7 @@ export default function HomePage() {
             </div>
             <div className="intro-content">
               <p className="section-kicker">About the Retreat</p>
-              <h2>一段走進日月潭山水的覺醒之旅</h2>
+              <h2>唯一路</h2>
               <p>承蒙隆波帕默尊者慈悲指定，由助教老師團隊親自指導。本次禪修將於 2026 年 8 月 20 日至 24 日於南投日月潭湖畔會館展開，為期五日四夜。</p>
               <p>誠摯邀請您，走入日月潭的山水之間，在助教老師們的引導下，親自踏上四念處的覺醒之路。修行，就從此時此刻的「看見」開始。</p>
               <div className="quote-box">
