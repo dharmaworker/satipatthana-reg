@@ -113,6 +113,7 @@ function MemberDashboardContent() {
             </span>
           </a>
           <div className="nav-actions">
+            <a href={withAuth('/info/schedule')} className="nav-back">📋 課程時間表</a>
             <a href="/" className="nav-back">← 主站</a>
             <button className="nav-logout" onClick={() => router.push('/member')}>登出</button>
           </div>
