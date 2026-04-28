@@ -8,4 +8,5 @@ export const SITE_ASSETS = {
   poster: asset('poster.jpg'),
   sunsetBg: asset('sunset-bg.jpg'),
   teacher: (file: string) => asset(`teachers/${file}`),
+  pledge: asset('pledge.docx'),
 }

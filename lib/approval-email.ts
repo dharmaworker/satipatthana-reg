@@ -1,5 +1,6 @@
 import { sendMail } from './mailer'
 import { C, FONT, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailAlert, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
+import { SITE_ASSETS } from './site-assets'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -21,10 +22,10 @@ export async function sendApprovalEmail(reg: {
     <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
 
     ${emailH3('一、請詳讀以下內容')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、互動報名、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、互動報名、承諾書、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
 
-    ${emailH3('二、繳費 / 食宿登記 / 快篩上傳 / 互動報名')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下四個流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>，請依各自截止時間完成：</p>
+    ${emailH3('二、繳費 / 食宿登記 / 快篩 / 互動報名 / 承諾書')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>。前四項為線上完成，第五項為下載列印後<strong style="color:${C.ink};">現場繳交</strong>：</p>
 
     <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>6 月 15 日台北時間晚上 8 時前</strong></p>
     ${emailButton(`${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}`, '前往繳費', 'green')}
@@ -48,6 +49,10 @@ export async function sendApprovalEmail(reg: {
       登記想參加的集體互動場次與分組互動意願順序。集體互動以隨機抽籤決定名單；分組互動以意願順序分配。<br>
       抽籤結果由學會於截止後另行寄信通知；中簽者再填寫互動作業。
     </p>
+
+    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.goldDeep};">⑤ 承諾書</strong>　現場繳交（不需線上送出）</p>
+    ${emailButton(SITE_ASSETS.pledge, '下載承諾書 (Word)', 'gold')}
+    ${emailWarning('請下載列印並<strong>親筆簽名</strong>，於 8/19 報到當日交給現場法工。本文件不需線上送出，但<strong>未繳交承諾書恕無法入營</strong>。')}
 
     ${emailH4('費用方案')}
     <table style="border-collapse:collapse;width:100%;font-size:13.5px;background:${C.bgPure};border-radius:10px;overflow:hidden;">

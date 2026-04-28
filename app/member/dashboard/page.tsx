@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { SITE_ASSETS } from '@/lib/site-assets'
 
 type MemberData = {
   id: string
@@ -246,6 +247,22 @@ function MemberDashboardContent() {
                   actionText={member.interactive_task_submitted ? '查看／修改' : '前往填寫 →'}
                 />
               )}
+
+              {/* 承諾書（不算進度，需下載列印現場繳交） */}
+              <TaskCard
+                idLabel="諾" label="Pledge" title="承諾書"
+                state="todo"
+                statusBadge="需下載"
+                badgeKind="todo"
+                deadline="現場簽署繳交（不需線上送出）"
+                rows={[
+                  ['格式', 'Word 檔（.docx）'],
+                  ['繳交方式', '列印簽名後現場交給法工'],
+                ]}
+                actionHref={SITE_ASSETS.pledge}
+                actionText="下載承諾書 ↓"
+                actionDownload
+              />
             </div>
 
             {/* 重要時程 */}
@@ -322,7 +339,7 @@ function MemberDashboardContent() {
 }
 
 function TaskCard({
-  idLabel, label, title, state, statusBadge, badgeKind, deadline, urgent, rows, actionHref, actionText,
+  idLabel, label, title, state, statusBadge, badgeKind, deadline, urgent, rows, actionHref, actionText, actionDownload,
 }: {
   idLabel: string
   label: string
@@ -335,6 +352,7 @@ function TaskCard({
   rows: [string, string][]
   actionHref: string
   actionText: string
+  actionDownload?: boolean
 }) {
   return (
     <div className={`task-card ${state}`}>
@@ -360,7 +378,9 @@ function TaskCard({
         截止：<span className="due">{deadline}</span>
       </div>
       <div className="task-action">
-        <a href={actionHref} className="btn btn-primary" style={{ flex: 1, fontSize: 13, padding: '10px 16px' }}>{actionText}</a>
+        <a href={actionHref} className="btn btn-primary"
+          {...(actionDownload ? { download: '承諾書.docx' } : {})}
+          style={{ flex: 1, fontSize: 13, padding: '10px 16px' }}>{actionText}</a>
       </div>
     </div>
   )
