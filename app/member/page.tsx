@@ -1,12 +1,26 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+const STORAGE_KEY = 'member_remember'
 
 export default function MemberLoginPage() {
   const router = useRouter()
   const [form, setForm] = useState({ email: '', random_code: '' })
+  const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const { email, code } = JSON.parse(saved)
+        setForm({ email: email || '', random_code: code || '' })
+        setRemember(true)
+      }
+    } catch {}
+  }, [])
 
   const handleLogin = async () => {
     setLoading(true)
@@ -19,6 +33,11 @@ export default function MemberLoginPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      if (remember) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: form.email, code: form.random_code }))
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
       router.push(`/member/dashboard?id=${data.id}&code=${encodeURIComponent(data.code)}`)
     } catch (err: any) {
       setError(err.message)
@@ -73,6 +92,11 @@ export default function MemberLoginPage() {
                   onChange={e => setForm(prev => ({ ...prev, random_code: e.target.value.toUpperCase() }))} />
                 <span className="form-hint">請參考錄取通知信中的專屬代碼，不分大小寫。</span>
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 4px' }}>
+              <input type="checkbox" id="remember" checked={remember} onChange={e => setRemember(e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--gold)' }} />
+              <label htmlFor="remember" style={{ fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>記住我（下次自動填入）</label>
             </div>
             <div className="login-actions">
               <button type="submit" className="btn btn-primary btn-block" disabled={loading}>

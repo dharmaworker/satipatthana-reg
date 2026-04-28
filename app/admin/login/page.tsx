@@ -1,12 +1,26 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+const STORAGE_KEY = 'admin_remember'
 
 export default function AdminLoginPage() {
   const router = useRouter()
   const [form, setForm] = useState({ username: '', password: '' })
+  const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const { username, password } = JSON.parse(saved)
+        setForm({ username: username || '', password: password || '' })
+        setRemember(true)
+      }
+    } catch {}
+  }, [])
 
   const handleLogin = async () => {
     setLoading(true)
@@ -19,6 +33,11 @@ export default function AdminLoginPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      if (remember) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ username: form.username, password: form.password }))
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
       router.push('/admin/dashboard')
     } catch (err: any) {
       setError(err.message)
@@ -67,6 +86,11 @@ export default function AdminLoginPage() {
                   value={form.password}
                   onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))} />
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 4px' }}>
+              <input type="checkbox" id="remember" checked={remember} onChange={e => setRemember(e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--gold)' }} />
+              <label htmlFor="remember" style={{ fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>記住我（下次自動填入）</label>
             </div>
             <div className="login-actions">
               <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
