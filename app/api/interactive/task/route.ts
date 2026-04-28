@@ -19,14 +19,14 @@ async function authMember(request: NextRequest) {
   if (error || !reg) return { error: '無效的存取連結', status: 401 }
   if (reg.status !== 'approved') return { error: '本頁僅限錄取學員', status: 403 }
 
-  // 必須有互動報名記錄且至少有一邊中簽
+  // 必須先送出互動報名，才能填互動作業
   const { data: it } = await supabaseAdmin
     .from('interactive_registrations')
     .select('*')
     .eq('registration_id', reg.id)
     .maybeSingle()
-  if (!it || (it.group_status !== 'won' && it.small_status !== 'won')) {
-    return { error: '本頁僅限互動中簽者', status: 403, notWon: true }
+  if (!it) {
+    return { error: '請先完成互動報名', status: 403, noRegistration: true }
   }
 
   return { reg, it }
@@ -34,7 +34,7 @@ async function authMember(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const a = await authMember(request)
-  if ('error' in a) return NextResponse.json({ error: a.error, notWon: (a as any).notWon || false }, { status: a.status })
+  if ('error' in a) return NextResponse.json({ error: a.error, noRegistration: (a as any).noRegistration || false }, { status: a.status })
 
   const { data: task } = await supabaseAdmin
     .from('interactive_tasks')
@@ -64,14 +64,16 @@ export async function POST(request: NextRequest) {
   if (!fields.learning_duration || !fields.formal_practice || !fields.daily_practice) {
     return NextResponse.json({ error: '基本資料 Q5 / Q6 / Q7 為必填' }, { status: 400 })
   }
-  // 集體中簽 → 集體欄位必填
-  if (a.it.group_status === 'won') {
+  // 有報名集體（且未沒中簽）→ 集體欄位必填
+  const wantsGroup = (a.it.wanted_sessions || []).length > 0 && a.it.group_status !== 'lost'
+  if (wantsGroup) {
     if (!fields.group_prior_interaction || !fields.group_question) {
       return NextResponse.json({ error: '集體互動 Q9 / Q10 為必填' }, { status: 400 })
     }
   }
-  // 分組中簽 → 分組欄位必填
-  if (a.it.small_status === 'won') {
+  // 有報名分組（且未沒中簽）→ 分組欄位必填
+  const wantsSmall = (a.it.wanted_ranking || []).length > 0 && a.it.small_status !== 'lost'
+  if (wantsSmall) {
     if (!fields.small_prior_interaction || !fields.small_question) {
       return NextResponse.json({ error: '分組互動 Q13 / Q15 為必填' }, { status: 400 })
     }

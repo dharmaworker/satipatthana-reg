@@ -15,7 +15,11 @@ const SESSION_LABEL: Record<string, string> = {
 }
 
 type Reg = { id: string; chinese_name: string; member_id: string | null; gender: string | null; identity: string | null; email: string }
-type Interactive = { group_status: string; small_status: string; assigned_session: string | null; assigned_group: string | null; assigned_date: string | null }
+type Interactive = {
+  group_status: string; small_status: string
+  assigned_session: string | null; assigned_group: string | null; assigned_date: string | null
+  wanted_sessions: string[]; wanted_ranking: string[]
+}
 type Task = {
   learning_duration: string | null; formal_practice: string | null; daily_practice: string | null
   group_prior_interaction: string | null; group_question: string | null
@@ -35,16 +39,18 @@ function TaskContent() {
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
-  const [notWon, setNotWon] = useState(false)
+  const [noRegistration, setNoRegistration] = useState(false)
 
-  // 計算動態 step 列表（依中簽結果決定有沒有集體 / 分組）
+  // 計算動態 step 列表（依「報名意願 + 未沒中簽」決定有沒有集體 / 分組）
+  const wantsGroup = (interactive?.wanted_sessions?.length ?? 0) > 0 && interactive?.group_status !== 'lost'
+  const wantsSmall = (interactive?.wanted_ranking?.length ?? 0) > 0 && interactive?.small_status !== 'lost'
   const wonGroup = interactive?.group_status === 'won'
   const wonSmall = interactive?.small_status === 'won'
 
   const STEPS_DYN: { num: number; label: string }[] = [
     { num: 1, label: '基本資料' },
-    ...(wonGroup ? [{ num: 2, label: '集體互動' }] : []),
-    ...(wonSmall ? [{ num: wonGroup ? 3 : 2, label: '分組互動' }] : []),
+    ...(wantsGroup ? [{ num: 2, label: '集體互動' }] : []),
+    ...(wantsSmall ? [{ num: wantsGroup ? 3 : 2, label: '分組互動' }] : []),
   ]
   const totalSteps = STEPS_DYN.length
 
@@ -66,7 +72,7 @@ function TaskContent() {
       .then(async r => {
         const d = await r.json()
         if (!r.ok) {
-          if (d.notWon) setNotWon(true)
+          if (d.noRegistration) setNoRegistration(true)
           else setAuthError(d.error || '載入失敗')
           return
         }
@@ -115,9 +121,9 @@ function TaskContent() {
 
   const validateUpToStep = (n: number): boolean => {
     if (n >= 1 && !validateStep1()) return false
-    if (wonGroup && n >= 2 && !validateGroupStep()) return false
-    if (wonSmall) {
-      const smallStepNum = wonGroup ? 3 : 2
+    if (wantsGroup && n >= 2 && !validateGroupStep()) return false
+    if (wantsSmall) {
+      const smallStepNum = wantsGroup ? 3 : 2
       if (n >= smallStepNum && !validateSmallStep()) return false
     }
     return true
@@ -128,7 +134,7 @@ function TaskContent() {
     if (target < step) { setStep(target); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
     // forward: validate current
     if (step === 1 && !validateStep1()) return
-    if (step === 2 && wonGroup && !validateGroupStep()) return
+    if (step === 2 && wantsGroup && !validateGroupStep()) return
     setStep(target)
     setMaxReached(prev => Math.max(prev, target))
     setError('')
@@ -169,14 +175,14 @@ function TaskContent() {
       </main>
     )
   }
-  if (notWon) {
+  if (noRegistration) {
     return (
       <main className="login-wrap">
         <div className="login-card" style={{ textAlign: 'center' }}>
           <div className="login-icon">⏳</div>
-          <h1 className="login-title">本頁僅限互動中簽者</h1>
-          <p className="login-subtitle">您目前的互動報名結果尚未中簽，互動作業僅限中簽者填寫。<br />如有疑問請聯絡學會。</p>
-          <a href={`/member/dashboard?id=${id}&code=${encodeURIComponent(code)}`} className="btn btn-primary btn-block">返回學員專區</a>
+          <h1 className="login-title">請先完成互動報名</h1>
+          <p className="login-subtitle">填寫互動作業前，請先完成互動報名。<br />如有疑問請聯絡學會。</p>
+          <a href={`/member/interactive?id=${id}&code=${encodeURIComponent(code)}`} className="btn btn-primary btn-block">前往互動報名</a>
         </div>
       </main>
     )
@@ -188,7 +194,7 @@ function TaskContent() {
 
   // 計算實際的 step number（內部記）
   const groupStepNum = 2
-  const smallStepNum = wonGroup ? 3 : 2
+  const smallStepNum = wantsGroup ? 3 : 2
 
   return (
     <>
@@ -317,16 +323,16 @@ function TaskContent() {
                 </div>
               )}
 
-              {step === groupStepNum && wonGroup && (
+              {step === groupStepNum && wantsGroup && (
                 <div className="step-content active">
                   <div className="step-header">
                     <p className="step-header-kicker">Step 0{groupStepNum} · Group Interactive</p>
                     <h2 className="step-header-title">集體互動作業</h2>
-                    <p className="step-header-desc">請就您中簽的集體場次填寫問題。</p>
+                    <p className="step-header-desc">請就您報名的集體互動填寫問題。{!wonGroup && '抽籤後若中簽，老師將依您填寫的內容準備指導。'}</p>
                   </div>
 
-                  <ReadonlyField num="08." label="您中簽的集體互動場次"
-                    value={interactive?.assigned_session ? SESSION_LABEL[interactive.assigned_session] || interactive.assigned_session : '（待學會指定）'} />
+                  <ReadonlyField num="08." label="集體互動場次"
+                    value={interactive?.assigned_session ? SESSION_LABEL[interactive.assigned_session] || interactive.assigned_session : '（待抽籤後由學會指定）'} />
 
                   <div style={{ marginTop: 16 }}>
                     <label className="form-label">09. 您是否曾與這位指導老師互動過？ <span className="required">*</span></label>
@@ -359,19 +365,19 @@ function TaskContent() {
                 </div>
               )}
 
-              {step === smallStepNum && wonSmall && (
+              {step === smallStepNum && wantsSmall && (
                 <div className="step-content active">
                   <div className="step-header">
                     <p className="step-header-kicker">Step 0{smallStepNum} · Small Group Interactive</p>
                     <h2 className="step-header-title">分組互動作業</h2>
-                    <p className="step-header-desc">請就您中簽的分組填寫問題。</p>
+                    <p className="step-header-desc">請就您報名的分組互動填寫問題。{!wonSmall && '抽籤後若中簽，老師將依您填寫的內容準備指導。'}</p>
                   </div>
 
                   <div className="field-row">
-                    <ReadonlyField num="12." label="您中簽的分組"
-                      value={interactive?.assigned_group ? `${TEACHER_LABEL[interactive.assigned_group] || interactive.assigned_group} 組` : '（待學會指定）'} />
+                    <ReadonlyField num="12." label="分組"
+                      value={interactive?.assigned_group ? `${TEACHER_LABEL[interactive.assigned_group] || interactive.assigned_group} 組` : '（待抽籤後由學會指定）'} />
                     <ReadonlyField num="14." label="互動日期"
-                      value={interactive?.assigned_date || '（待學會指定）'} />
+                      value={interactive?.assigned_date || '（待抽籤後由學會指定）'} />
                   </div>
 
                   <div style={{ marginTop: 16 }}>

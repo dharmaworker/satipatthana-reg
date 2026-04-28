@@ -17,7 +17,7 @@ export async function sendInteractiveInviteEmail(reg: {
     <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
     <p style="margin:0 0 16px;color:${C.inkSoft};">本屆禪修課程的「互動報名」已開放填寫，請於截止前完成登記。</p>
 
-    ${emailH3('關於互動報名')}
+    ${emailH3('① 互動報名')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 10px;line-height:1.85;">
       互動報名分為兩部分：<strong style="color:${C.ink};">集體互動</strong>與<strong style="color:${C.ink};">分組互動</strong>，請在同一表單內一併登記。
     </p>
@@ -25,12 +25,24 @@ export async function sendInteractiveInviteEmail(reg: {
       <li><strong style="color:${C.green};">集體互動：</strong>勾選想參加的場次（可複選）。學會將以隨機抽籤決定中簽名單。</li>
       <li><strong style="color:${C.green};">分組互動：</strong>將四位老師依意願順序排序（1～4）。學會將依意願順序與容量分配。</li>
       <li>兩部分皆<strong>非必填</strong>，可只報其一或皆不報；若皆不報亦請送出空表單以結束流程。</li>
-      <li>抽籤結果由學會於截止後另行寄信通知；中簽者再依信內連結填寫互動作業。</li>
+      <li>抽籤結果由學會於截止後另行寄信通知。</li>
     </ul>
 
     ${emailButton(`${baseUrl}/member/interactive?id=${reg.id}&code=${reg.random_code}`, '前往填寫互動報名', 'green')}
 
-    ${emailWarning('請於截止時間前完成填寫；逾時系統將不再收件。表單可重複修改、以最後一次送出為準。')}
+    ${emailH3('② 互動作業')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 10px;line-height:1.85;">
+      互動作業填寫您近期的實修狀況以及希望老師指導的問題，老師會依此準備指導。
+      <strong style="color:${C.ink};">不需等抽籤結果即可開始填寫</strong>，請於課程開始前送出，可重複修改。
+    </p>
+    <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0 0 12px;">
+      <li>基本資料：學習實踐時間、固定形式練習、日常生活練習。</li>
+      <li>互動問題：每題限 75 字內，請聚焦於當前實修狀態與具體疑問。</li>
+    </ul>
+
+    ${emailButton(`${baseUrl}/member/interactive/task?id=${reg.id}&code=${reg.random_code}`, '前往填寫互動作業', 'gold')}
+
+    ${emailWarning('互動報名請於截止時間前完成；逾時系統將不再收件。兩份表單皆可重複修改，以最後一次送出為準。')}
 
     ${emailHighlight(`
       <p style="margin:0;font-weight:700;color:${C.greenDeep};font-size:14px;">📋 學員專區</p>

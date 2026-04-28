@@ -20,6 +20,7 @@ type MemberData = {
   interactive_group_status: 'pending' | 'won' | 'lost'
   interactive_small_status: 'pending' | 'won' | 'lost'
   interactive_task_submitted: boolean
+  interactive_task_visible: boolean
 }
 
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
@@ -232,18 +233,18 @@ function MemberDashboardContent() {
                 />
               )}
 
-              {/* 互動作業（中簽才顯示） */}
-              {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+              {/* 互動作業（已報名互動且未沒中簽即可填寫，不必等抽籤結果） */}
+              {member.interactive_task_visible && (
                 <TaskCard
                   idLabel="作" label="Interactive Task" title="互動作業"
                   state={member.interactive_task_submitted ? 'done' : 'todo'}
                   statusBadge={member.interactive_task_submitted ? '已送出' : '待填寫'}
-                  badgeKind={member.interactive_task_submitted ? 'done' : 'urgent'}
+                  badgeKind={member.interactive_task_submitted ? 'done' : 'todo'}
                   deadline="課程開始前完成"
-                  urgent={!member.interactive_task_submitted}
+                  urgent={false}
                   rows={[
-                    ['集體', member.interactive_group_status === 'won' ? '✓ 已中簽' : '—'],
-                    ['分組', member.interactive_small_status === 'won' ? '✓ 已中簽' : '—'],
+                    ['集體', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定（可先填）'],
+                    ['分組', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定（可先填）'],
                   ]}
                   actionHref={withAuth('/member/interactive/task')}
                   actionText={member.interactive_task_submitted ? '查看／修改' : '前往填寫 →'}
