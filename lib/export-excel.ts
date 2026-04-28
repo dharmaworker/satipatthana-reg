@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs'
 import { supabaseAdmin } from './supabase'
+import { PREVIEW_EMAIL, getPreviewRegistrationId } from './preview-test-student'
 
 const STATUS_LABEL: Record<string, string> = { pending: '審核中', approved: '已錄取', rejected: '未錄取' }
 const PAYMENT_LABEL: Record<string, string> = { unpaid: '未繳費', paid: '待確認', verified: '已確認' }
@@ -283,7 +284,10 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   filename: string
   counts: Record<string, number>
 }> {
-  let query = supabaseAdmin.from('registrations').select('*').order('created_at', { ascending: true })
+  // 排除後台預覽測試學員
+  const previewId = await getPreviewRegistrationId()
+
+  let query = supabaseAdmin.from('registrations').select('*').neq('email', PREVIEW_EMAIL).order('created_at', { ascending: true })
   if (cutoff) query = query.lte('created_at', cutoff.toISOString())
   const { data, error } = await query
   if (error) throw new Error(`DB query failed: ${error.message}`)
@@ -295,6 +299,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at, line_id, wechat_id, line_qr_url, wechat_qr_url)')
     .order('updated_at', { ascending: true })
   if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
+  if (previewId) lodgingQuery = lodgingQuery.neq('registration_id', previewId)
   const { data: lodgingData } = await lodgingQuery
 
   // 互動報名 + 互動作業
@@ -303,6 +308,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     .select('*, registration:registrations (chinese_name, member_id, student_id, random_code)')
     .order('updated_at', { ascending: true })
   if (cutoff) interactiveQuery = interactiveQuery.lte('updated_at', cutoff.toISOString())
+  if (previewId) interactiveQuery = interactiveQuery.neq('registration_id', previewId)
   const { data: interactiveData } = await interactiveQuery
 
   let taskQuery = supabaseAdmin
@@ -310,6 +316,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     .select('*, registration:registrations (chinese_name, member_id, student_id, email)')
     .order('updated_at', { ascending: true })
   if (cutoff) taskQuery = taskQuery.lte('updated_at', cutoff.toISOString())
+  if (previewId) taskQuery = taskQuery.neq('registration_id', previewId)
   const { data: taskData } = await taskQuery
 
   // Task 需要 assigned_* 從 interactive_registrations 帶入；建 map

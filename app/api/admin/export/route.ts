@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { PREVIEW_EMAIL } from '@/lib/preview-test-student'
 
 export async function GET(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -10,6 +11,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from('registrations')
     .select('*')
+    .neq('email', PREVIEW_EMAIL)
     .order('created_at', { ascending: true })
 
   if (error) {

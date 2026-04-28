@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-
-// 後台預覽用的測試學員（idempotent：第一次建、之後 reuse）
-const PREVIEW_EMAIL = 'preview@test.invalid'
-const PREVIEW_CODE = 'PREVIEW0'
-const PREVIEW_NAME = '[預覽] 測試學員'
+import { PREVIEW_EMAIL, PREVIEW_CODE, PREVIEW_NAME } from '@/lib/preview-test-student'
 
 export async function POST(request: NextRequest) {
   if (request.cookies.get('admin_role')?.value !== 'admin') {
