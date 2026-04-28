@@ -403,15 +403,25 @@ export default function RegisterPage() {
               </div>
 
               <div className="info-section">
-                <h3>傳承與指導</h3>
-                <p>承蒙隆波帕默尊者慈悲指定，由助教老師團隊親自指導。</p>
-                <h4>指導老師陣容</h4>
+                <h3>唯一路</h3>
+                <p>離苦的唯一路，<br />即是毗缽舍那（Vipassanā）的修行。<br />修習四念處，<br />本身就是通往覺醒之道。</p>
+                <p>承蒙 隆波帕默尊者 體系助教老師指導，<br />於水月之間，共修四念處覺醒之道。<br />本次禪修將於 2026 年 8 月 20 日至 8 月 24 日，<br />於南投日月潭湖畔會館展開，為期五日四夜。</p>
+                <p>誠摯邀請您，走入日月潭的山水之間，<br />在助教老師引領下，親自踏上四念處的覺醒之路。<br />修行，從此時此刻的「看見」開始。</p>
+                <h4>【師資團隊】</h4>
+                <p>隆波帕默尊者體系助教老師 親臨授課指導</p>
+                <h4>【泰國連線授課】</h4>
                 <ul>
-                  <li>阿姜納 Ajahn Nat Sriwachirawat</li>
-                  <li>阿姜巴山 Ajahn Prasan Bhuddhakulsomsiri</li>
-                  <li>阿姜妮 Ajahn Nitiya Petchpaiboon</li>
-                  <li>阿姜松 Ajahn Napatpol Kunatanasate</li>
+                  <li>隆波帕默尊者 Luangpu Pramote Pamojjo</li>
+                  <li>阿姜宋彩尊者 Phra Ajahn Somchai Kittiyano</li>
+                  <li>麥琪媽媽 Ajahn Oranuch Santayakorn</li>
                 </ul>
+                <h4>【親臨授課】</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginTop: 8 }}>
+                  <div>阿姜納<br /><small>Ajahn Nat Sriwachirawat</small></div>
+                  <div>阿姜巴山<br /><small>Ajahn Prasan Bhuddhakulsomsiri</small></div>
+                  <div>阿姜妮<br /><small>Ajahn Nitiya Petchpaiboon</small></div>
+                  <div>阿姜松<br /><small>Ajahn Napatpol Kunatanasate</small></div>
+                </div>
               </div>
             </div>
           )}
