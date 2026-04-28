@@ -25,10 +25,15 @@ export async function POST(request: NextRequest) {
     .select('id, email, chinese_name, random_code')
     .in('id', ids)
 
-  let ok = 0, failed = 0
+  let ok = 0, failed = 0, skipped = 0
   for (const r of regs || []) {
     const i = intMap.get(r.id)
     if (!i) { failed++; continue }
+    // 都沒中（任一邊都不是 won）→ 不寄信
+    if (i.group_status !== 'won' && i.small_status !== 'won') {
+      skipped++
+      continue
+    }
     try {
       await sendInteractiveNotificationEmail({
         registration_id: r.id,
@@ -54,5 +59,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ message: `寄送完成：成功 ${ok} 封，失敗 ${failed} 封`, ok, failed })
+  const parts = [`成功 ${ok} 封`]
+  if (failed > 0) parts.push(`失敗 ${failed} 封`)
+  if (skipped > 0) parts.push(`跳過 ${skipped} 封（都沒中不寄）`)
+  return NextResponse.json({ message: `寄送完成：${parts.join('，')}`, ok, failed, skipped })
 }
