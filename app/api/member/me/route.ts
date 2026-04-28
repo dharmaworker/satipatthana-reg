@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
   let interactiveGroupStatus: 'pending' | 'won' | 'lost' = 'pending'
   let interactiveSmallStatus: 'pending' | 'won' | 'lost' = 'pending'
   let interactiveTaskSubmitted = false
-  let interactiveTaskVisible = false
 
   if (reg.status === 'approved') {
     const { data: lodging } = await supabaseAdmin
@@ -46,16 +45,13 @@ export async function GET(request: NextRequest) {
 
     const { data: it } = await supabaseAdmin
       .from('interactive_registrations')
-      .select('group_status, small_status, wanted_sessions, wanted_ranking')
+      .select('group_status, small_status')
       .eq('registration_id', reg.id)
       .maybeSingle()
     if (it) {
       interactiveSubmitted = true
       interactiveGroupStatus = it.group_status
       interactiveSmallStatus = it.small_status
-      const wantsGroup = (it.wanted_sessions || []).length > 0 && it.group_status !== 'lost'
-      const wantsSmall = (it.wanted_ranking || []).length > 0 && it.small_status !== 'lost'
-      interactiveTaskVisible = wantsGroup || wantsSmall
     }
 
     const { data: task } = await supabaseAdmin
@@ -78,6 +74,5 @@ export async function GET(request: NextRequest) {
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,
     interactive_task_submitted: interactiveTaskSubmitted,
-    interactive_task_visible: interactiveTaskVisible,
   })
 }
