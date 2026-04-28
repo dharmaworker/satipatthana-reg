@@ -159,10 +159,7 @@ export default function HomePage() {
             <div className="intro-content">
               <p className="section-kicker">About the Retreat</p>
               <h2>唯一路</h2>
-              <div className="quote-box">
-                <span className="quote-mark">「</span>
-                <p>離苦的唯一路，<br />即是毗缽舍那（Vipassanā）的修行。<br />修習四念處，<br />本身就是通往覺醒之道。</p>
-              </div>
+              <p>離苦的唯一路，<br />即是毗缽舍那（Vipassanā）的修行。<br />修習四念處，<br />本身就是通往覺醒之道。</p>
               <p>承蒙 隆波帕默尊者 體系助教老師指導，<br />於水月之間，共修四念處覺醒之道。<br />本次禪修將於 2026 年 8 月 20 日至 8 月 24 日，<br />於南投日月潭湖畔會館展開，為期五日四夜。</p>
               <p>誠摯邀請您，走入日月潭的山水之間，<br />在助教老師引領下，親自踏上四念處的覺醒之路。<br />修行，從此時此刻的「看見」開始。</p>
             </div>
