@@ -28,6 +28,11 @@ export async function GET(request: NextRequest) {
   let interactiveSubmitted = false
   let interactiveGroupStatus: 'pending' | 'won' | 'lost' = 'pending'
   let interactiveSmallStatus: 'pending' | 'won' | 'lost' = 'pending'
+  let interactiveAssignedSession: string | null = null
+  let interactiveAssignedGroup: string | null = null
+  let interactiveAssignedDate: string | null = null
+  let interactiveGroupSerial: number | null = null
+  let interactiveSmallSerial: number | null = null
   let interactiveTaskSubmitted = false
 
   if (reg.status === 'approved') {
@@ -45,13 +50,18 @@ export async function GET(request: NextRequest) {
 
     const { data: it } = await supabaseAdmin
       .from('interactive_registrations')
-      .select('group_status, small_status')
+      .select('group_status, small_status, assigned_session, assigned_group, assigned_date, group_serial, small_serial')
       .eq('registration_id', reg.id)
       .maybeSingle()
     if (it) {
       interactiveSubmitted = true
       interactiveGroupStatus = it.group_status
       interactiveSmallStatus = it.small_status
+      interactiveAssignedSession = it.assigned_session
+      interactiveAssignedGroup = it.assigned_group
+      interactiveAssignedDate = it.assigned_date
+      interactiveGroupSerial = it.group_serial
+      interactiveSmallSerial = it.small_serial
     }
 
     const { data: task } = await supabaseAdmin
@@ -75,6 +85,11 @@ export async function GET(request: NextRequest) {
     interactive_submitted: interactiveSubmitted,
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,
+    interactive_assigned_session: interactiveAssignedSession,
+    interactive_assigned_group: interactiveAssignedGroup,
+    interactive_assigned_date: interactiveAssignedDate,
+    interactive_group_serial: interactiveGroupSerial,
+    interactive_small_serial: interactiveSmallSerial,
     interactive_task_submitted: interactiveTaskSubmitted,
   })
 }

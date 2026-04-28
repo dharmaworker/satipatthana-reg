@@ -20,7 +20,21 @@ type MemberData = {
   interactive_submitted: boolean
   interactive_group_status: 'pending' | 'won' | 'lost'
   interactive_small_status: 'pending' | 'won' | 'lost'
+  interactive_assigned_session: string | null
+  interactive_assigned_group: string | null
+  interactive_assigned_date: string | null
+  interactive_group_serial: number | null
+  interactive_small_serial: number | null
   interactive_task_submitted: boolean
+}
+
+const SESSION_LABEL: Record<string, string> = {
+  s1: '8/21（五）阿姜巴山', s2: '8/21（五）阿姜納',
+  s3: '8/22（六）阿姜妮',   s4: '8/22（六）阿姜松',
+  s5: '8/23（日）阿姜巴山', s6: '8/23（日）阿姜妮',
+}
+const TEACHER_LABEL: Record<string, string> = {
+  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
 }
 
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
@@ -135,6 +149,32 @@ function MemberDashboardContent() {
             <span className={`status-badge ${sInfo.cls}`} style={{ marginTop: 8 }}>
               <span className="dot" />{sInfo.label}
             </span>
+            {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+              <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(216,194,154,0.15)', borderRadius: 8, border: '1px solid var(--gold)', fontSize: 13 }}>
+                <div style={{ color: 'var(--gold-deep)', fontWeight: 700, marginBottom: 6, letterSpacing: '0.05em' }}>✦ 互動報名 中簽</div>
+                {member.interactive_group_status === 'won' && (
+                  <div style={{ marginBottom: 4 }}>
+                    <span style={{ color: 'var(--ink-soft)' }}>集體場次：</span>
+                    <strong>{member.interactive_assigned_session ? SESSION_LABEL[member.interactive_assigned_session] ?? member.interactive_assigned_session : '（待指定）'}</strong>
+                    {member.interactive_group_serial !== null && (
+                      <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>序號 {member.interactive_group_serial}</span>
+                    )}
+                  </div>
+                )}
+                {member.interactive_small_status === 'won' && (
+                  <div>
+                    <span style={{ color: 'var(--ink-soft)' }}>分組：</span>
+                    <strong>{member.interactive_assigned_group ? TEACHER_LABEL[member.interactive_assigned_group] ?? member.interactive_assigned_group : '（待指定）'}</strong>
+                    {member.interactive_assigned_date && (
+                      <span style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>{member.interactive_assigned_date}</span>
+                    )}
+                    {member.interactive_small_serial !== null && (
+                      <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>序號 {member.interactive_small_serial}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
