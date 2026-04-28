@@ -66,8 +66,8 @@ module.exports = {
         ['首頁 > 活動資訊', 'home.at_glance.capacity_value', '段落', '250', ''],
         ['首頁 > 活動資訊', 'home.at_glance.capacity_note', '段落', '名額有限，額滿為止', ''],
         // Teachers
-        ['首頁 > 師資', 'home.teachers.title', '標題', '指導老師團隊', ''],
-        ['首頁 > 師資', 'home.teachers.desc', '段落', '承蒙隆波帕默尊者慈悲教導，由弟子助教老師團隊親臨授課。', ''],
+        ['首頁 > 師資', 'home.teachers.title', '標題', '【師資團隊】', ''],
+        ['首頁 > 師資', 'home.teachers.desc', '段落', '隆波帕默尊者體系助教老師 親臨授課指導', ''],
         ['首頁 > 師資', 'home.teachers.online_title', '小標', '泰國連線授課', ''],
         ['首頁 > 師資', 'home.teachers.inperson_title', '小標', '親臨授課', ''],
         // Timeline

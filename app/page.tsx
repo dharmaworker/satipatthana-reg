@@ -208,8 +208,8 @@ export default function HomePage() {
           <div className="container">
             <div className="section-head">
               <p className="section-kicker">Teachers &amp; Mentors</p>
-              <h2>指導老師團隊</h2>
-              <p>承蒙隆波帕默尊者慈悲教導，由弟子助教老師團隊親臨授課。</p>
+              <h2>【師資團隊】</h2>
+              <p>隆波帕默尊者體系助教老師 親臨授課指導</p>
             </div>
 
             <div className="teacher-group">
