@@ -123,7 +123,7 @@ export default function HomePage() {
             <div className="hero-copy">
               <p className="eyebrow">第二屆・台灣四念處禪修之旅 · 2026</p>
               <h1>唯一路</h1>
-              <p className="hero-subtitle"><span className="quote">「</span>解脫<span className="quote">」</span>從如實知開始</p>
+              <p className="hero-subtitle">邁向 · 離苦之道</p>
 
               <div className="hero-meta">
                 <span><span className="icon">📅</span>日期：8/20 — 24（五天）</span>
@@ -131,14 +131,17 @@ export default function HomePage() {
                 <span className="reg-period"><span className="icon">📝</span>報名期間：2026/05/11 — 05/25</span>
               </div>
 
-              <p className="hero-lead">
-                大夢醒時，「看見」，正是解脫的起點。<br />
-                在念頭的夢境中迷失已久，是時候回過頭來，<br />
-                如實觀照生命的真相。
-              </p>
-
               <div className="hero-quote">
-                <p>今日就啟程，趕在時間的流沙覆蓋佛陀的足跡之前。勿要蹉跎，直至那天，再次淪落於遙遙無期的流離失所與茫然無依。</p>
+                <p>人類渴望自由。而事實卻是，人類淪為了慾望的奴隸。</p>
+                <p>人類及所有眾生趨樂避苦的方法有三種：</p>
+                <ol>
+                  <li>尋找快樂的境界或所緣，同時躲避痛苦的境界或所緣</li>
+                  <li>在任何情形下呵護心，令其寧靜與舒適</li>
+                  <li>躲避與境界或所緣接觸</li>
+                </ol>
+                <p>人類以及所有眾生，以各式各樣的方式來趨樂避苦，卻始終未能如願。那是因為，苦與蘊是如影隨形的。惟有佛陀才能找到真正導向離苦的唯一路。</p>
+                <p>這條離苦的唯一路，就是毗缽舍那（Vipassanā）的修行。</p>
+                <p>依照佛陀的教導步入毗缽舍那的修行——如實照見名色（身心），直至最終體證道、果、涅槃，徹底抵達苦的止息。</p>
                 <span className="author">隆波帕默尊者</span>
               </div>
 

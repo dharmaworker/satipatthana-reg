@@ -319,6 +319,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-size: 14.5px; color: var(--ink-soft);
   line-height: 1.95; padding-left: 18px; margin: 0;
 }
+.hero-quote p + p { margin-top: 10px; }
+.hero-quote ol {
+  font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
+  font-size: 14.5px; color: var(--ink-soft);
+  line-height: 1.95; margin: 6px 0 6px; padding-left: 42px;
+}
+.hero-quote ol + p { margin-top: 10px; }
 .hero-quote .author {
   display: block; margin-top: 10px; padding-left: 18px;
   color: var(--gold-deep); font-size: 12.5px;
