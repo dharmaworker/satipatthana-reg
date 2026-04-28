@@ -1,6 +1,5 @@
 import { sendMail } from './mailer'
-import { C, FONT, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailAlert, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
-import { SITE_ASSETS } from './site-assets'
+import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -51,7 +50,7 @@ export async function sendApprovalEmail(reg: {
     </p>
 
     <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.goldDeep};">⑤ 承諾書</strong>　現場繳交（不需線上送出）</p>
-    ${emailButton(SITE_ASSETS.pledge, '下載承諾書 (Word)', 'gold')}
+    ${emailButton(`${baseUrl}/api/pledge?id=${reg.id}&code=${reg.random_code}`, '下載承諾書 (Word)', 'gold')}
     ${emailWarning('請下載列印並<strong>親筆簽名</strong>，於 8/19 報到當日交給現場法工。本文件不需線上送出，但<strong>未繳交承諾書恕無法入營</strong>。')}
 
     ${emailH4('費用方案')}

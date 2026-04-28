@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SITE_ASSETS } from '@/lib/site-assets'
 
 type MemberData = {
   id: string
@@ -248,7 +247,7 @@ function MemberDashboardContent() {
                 />
               )}
 
-              {/* 承諾書（不算進度，需下載列印現場繳交） */}
+              {/* 承諾書（不算進度，需下載列印現場繳交；僅錄取學員可下載） */}
               <TaskCard
                 idLabel="諾" label="Pledge" title="承諾書"
                 state="todo"
@@ -259,7 +258,7 @@ function MemberDashboardContent() {
                   ['格式', 'Word 檔（.docx）'],
                   ['繳交方式', '列印簽名後現場交給法工'],
                 ]}
-                actionHref={SITE_ASSETS.pledge}
+                actionHref={withAuth('/api/pledge')}
                 actionText="下載承諾書 ↓"
                 actionDownload
               />
