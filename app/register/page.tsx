@@ -497,7 +497,7 @@ export default function RegisterPage() {
 
               {/* Q2 */}
               <div className="question-block" id="field-attended_formal">
-                <label className="form-label">2. 是否以正式學員身份參加過隆波帕默尊者體系的實體或線上課程？ <span className="required">*</span></label>
+                <label className="form-label">2. 您是否以正式學員身份參加過隆波帕默尊者體系所舉辦的實體或線上課程？ <span className="required">*</span></label>
                 <select className={`form-select ${errCls('attended_formal')}`} value={form.attended_formal}
                   onChange={e => update('attended_formal', e.target.value)}>
                   <option value="">請選擇</option>
