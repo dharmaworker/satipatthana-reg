@@ -69,8 +69,8 @@ const PRACTICE_FREQ_LABEL: Record<string, string> = {
   commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時',
 }
 
-// 報名期間（台北時間）：2026/05/11 10:00 — 2026/05/25 24:00
-const REG_OPEN_MS  = Date.UTC(2026, 4, 11, 2, 0, 0)
+// 報名期間（台北時間）：2026/04/29 起 — 2026/05/25 24:00
+const REG_OPEN_MS  = Date.UTC(2026, 3, 29, 0, 0, 0)
 const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
 
 export default function RegisterPage() {

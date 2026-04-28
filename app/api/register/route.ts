@@ -6,9 +6,9 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox,
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-// 報名期間：2026/05/11 上午 10:00 — 2026/05/25 晚上 24:00（台北時間）
-// Taipei UTC+8：5/11 10:00 = 5/11 02:00 UTC；5/26 00:00 = 5/25 16:00 UTC
-const REG_OPEN_MS  = Date.UTC(2026, 4, 11, 2, 0, 0)
+// 報名期間：2026/04/29 起 — 2026/05/25 晚上 24:00（台北時間）
+// Taipei UTC+8：5/26 00:00 = 5/25 16:00 UTC
+const REG_OPEN_MS  = Date.UTC(2026, 3, 29, 0, 0, 0)
 const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
 
 function yn(v: boolean | null | undefined) {
