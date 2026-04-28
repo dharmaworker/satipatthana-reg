@@ -103,7 +103,7 @@ export default function HomePage() {
           <nav className={`menu ${menuOpen ? 'open' : ''}`}>
             <a href="#about" onClick={() => setMenuOpen(false)}>活動緣起</a>
             <a href="#teachers" onClick={() => setMenuOpen(false)}>師資</a>
-            <a href="#faq" onClick={() => setMenuOpen(false)}>常見問題</a>
+            <a href="#faq" onClick={() => setMenuOpen(false)}>報名須知</a>
             <a href="/register" onClick={() => setMenuOpen(false)}>立即報名</a>
             <a href="/member" onClick={() => setMenuOpen(false)}>查詢報名狀態｜學員專區</a>
           </nav>
@@ -260,7 +260,7 @@ export default function HomePage() {
           <div className="container">
             <div className="section-head">
               <p className="section-kicker">FAQ</p>
-              <h2>常見問題</h2>
+              <h2>報名須知</h2>
             </div>
             <div className="faq-list">
               <details open>
@@ -338,7 +338,7 @@ export default function HomePage() {
               <ul>
                 <li><a href="#about">活動緣起</a></li>
                 <li><a href="#teachers">指導老師</a></li>
-                <li><a href="#faq">常見問題</a></li>
+                <li><a href="#faq">報名須知</a></li>
               </ul>
             </div>
             <div>

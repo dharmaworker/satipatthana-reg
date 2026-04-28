@@ -31,7 +31,7 @@ module.exports = {
         // Header / Nav
         ['首頁 > 導覽', 'home.nav.about', '連結', '活動緣起', ''],
         ['首頁 > 導覽', 'home.nav.teachers', '連結', '師資', ''],
-        ['首頁 > 導覽', 'home.nav.faq', '連結', '常見問題', ''],
+        ['首頁 > 導覽', 'home.nav.faq', '連結', '報名須知', ''],
         ['首頁 > 導覽', 'home.nav.register', '連結', '立即報名', ''],
         ['首頁 > 導覽', 'home.nav.member', '連結', '查詢報名狀態｜學員專區', ''],
         // Hero
@@ -86,7 +86,7 @@ module.exports = {
         ['首頁 > 重要時程 > 4', 'home.timeline.item4.title', '小標', '禪修正式開始', ''],
         ['首頁 > 重要時程 > 4', 'home.timeline.item4.desc', '段落', '報到、安單、開始為期五日四夜的四念處禪修。', ''],
         // FAQ
-        ['首頁 > FAQ', 'home.faq.title', '標題', '常見問題', ''],
+        ['首頁 > FAQ', 'home.faq.title', '標題', '報名須知', ''],
         ['首頁 > FAQ > Q1', 'home.faq.q1.title', '題目', '需要具備什麼條件才能報名？', ''],
         ['首頁 > FAQ > Q1', 'home.faq.q1.cond1.label', '說明', '聞法條件（任一即可）', ''],
         ['首頁 > FAQ > Q1', 'home.faq.q1.cond1.opt1', '說明', '曾參加過任意一屆隆波帕默尊者體系的線下實體或線上網路課程', ''],
