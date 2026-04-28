@@ -399,7 +399,7 @@ export default function RegisterPage() {
                 <div className="meta-row"><span className="k">課程方式</span><span className="v">實體禪修</span></div>
                 <div className="meta-row"><span className="k">課程地點</span><span className="v">南投・日月潭湖畔會館</span></div>
                 <div className="meta-row"><span className="k">課程名額</span><span className="v">250 名（額滿為止）</span></div>
-                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理（NT$18,600）</span></div>
+                <div className="meta-row"><span className="k">課程費用</span><span className="v">課程免費，食宿、場地及交通等費用自理</span></div>
               </div>
 
               <div className="info-section">
