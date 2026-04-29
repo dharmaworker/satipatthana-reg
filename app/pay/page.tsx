@@ -111,9 +111,14 @@ function PayContent() {
         throw new Error(data.error)
       }
       const html = await res.text()
-      const blob = new Blob([html], { type: 'text/html' })
-      const url = URL.createObjectURL(blob)
-      window.location.href = url
+      // 直接注入 DOM 並 submit，避免 blob: URL 被瀏覽器安全設定攔截
+      const div = document.createElement('div')
+      div.style.display = 'none'
+      div.innerHTML = html
+      document.body.appendChild(div)
+      const form = div.querySelector<HTMLFormElement>('form')
+      if (!form) throw new Error('無法建立付款表單')
+      form.submit()
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
