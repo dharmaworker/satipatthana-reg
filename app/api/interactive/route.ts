@@ -3,21 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { SESSIONS, TEACHERS, INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
 import { fetchInteractiveConfig } from '@/lib/interactive-config'
 
-// 驗證 id+code 並確認 status=approved，回 registration row
-async function authMember(request: NextRequest) {
-  const url = new URL(request.url)
-  const id = url.searchParams.get('id')
-  const code = url.searchParams.get('code')
-  const body = (request.method !== 'GET') ? await request.clone().json().catch(() => null) : null
-  const finalId = id || body?.id
-  const finalCode = code || body?.code
-  if (!finalId || !finalCode) return { error: '缺少必要參數', status: 400 }
+// id + code 可來自 query string 或 body（呼叫方傳入已解析的值）
+async function authMember(id: string | null, code: string | null) {
+  if (!id || !code) return { error: '缺少必要參數', status: 400 }
 
   const { data: reg, error } = await supabaseAdmin
     .from('registrations')
     .select('id, status, chinese_name, member_id, gender, identity, email')
-    .eq('id', finalId)
-    .eq('random_code', finalCode.toUpperCase().trim())
+    .eq('id', id)
+    .eq('random_code', code.toUpperCase().trim())
     .single()
   if (error || !reg) return { error: '無效的存取連結', status: 401 }
   if (reg.status !== 'approved') return { error: '本頁僅限錄取學員', status: 403 }
@@ -25,7 +19,8 @@ async function authMember(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const a = await authMember(request)
+  const { searchParams } = new URL(request.url)
+  const a = await authMember(searchParams.get('id'), searchParams.get('code'))
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
   const { data: row } = await supabaseAdmin
@@ -46,7 +41,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const a = await authMember(request)
+  // body 只讀一次
+  const body = await request.json().catch(() => ({}))
+
+  const a = await authMember(body.id ?? null, body.code ?? null)
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
   const config = await fetchInteractiveConfig()
@@ -58,11 +56,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '互動報名已截止' }, { status: 400 })
   }
 
-  const body = await request.json().catch(() => ({}))
   const wanted_sessions: string[] = Array.isArray(body.wanted_sessions) ? body.wanted_sessions : []
   const wanted_ranking: string[] = Array.isArray(body.wanted_ranking) ? body.wanted_ranking : []
 
-  // 驗證 sessions / ranking 內容合法
   const validSessions = new Set(SESSIONS.map(s => s.id))
   if (!wanted_sessions.every(s => validSessions.has(s as any))) {
     return NextResponse.json({ error: '集體場次選擇不合法' }, { status: 400 })
