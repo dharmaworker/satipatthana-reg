@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         pay_confirm: body.pay_confirm,
         health_confirm: body.health_confirm,
         mental_health_note: body.mental_health_note || null,
+        retreat_format: body.retreat_format || null,
         attended_courses: body.attended_courses || [],
         status: 'pending',
         payment_status: 'unpaid',
@@ -183,6 +184,7 @@ export async function POST(request: NextRequest) {
           tableRow('同意繳費', yn(data.pay_confirm)),
           tableRow('身體健康', yn(data.health_confirm)),
           tableRow('心理健康備註', nullable(data.mental_health_note)),
+          tableRow('禪修形式', data.retreat_format === 'in_person' ? '實體禪修' : data.retreat_format === 'online' ? '線上禪修（Zoom）' : '—'),
           tableRow('過往參加課程', courses),
         ].join(''))}
 

@@ -98,6 +98,7 @@ export default function RegisterPage() {
     pay_confirm: '',
     health_confirm: '',
     mental_health_note: 'no',
+    retreat_format: '',
     chinese_name: '',
     passport_name: '',
     identity: '',
@@ -201,6 +202,7 @@ export default function RegisterPage() {
 
     if (!form.health_confirm) return fail('health_confirm', '請回答 Q16：是否身體健康能全程參與')
     if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q16 須選「是」）')
+    if (!form.retreat_format) return fail('retreat_format', '請選擇 Q18：禪修形式（實體或線上）')
     return true
   }
 
@@ -597,6 +599,25 @@ export default function RegisterPage() {
                       onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
                   </div>
                 )}
+              </div>
+
+              <div className="question-block" id="field-retreat_format">
+                <label className="form-label">18. 請選擇參加的禪修形式 <span className="required">*</span></label>
+                <div className="opt-group">
+                  <label className={`opt ${form.retreat_format === 'in_person' ? 'selected' : ''}`}>
+                    <input type="radio" name="retreat_format" value="in_person"
+                      checked={form.retreat_format === 'in_person'}
+                      onChange={() => update('retreat_format', 'in_person')} />
+                    <span className="opt-text">參加實體禪修課程</span>
+                  </label>
+                  <label className={`opt ${form.retreat_format === 'online' ? 'selected' : ''}`}>
+                    <input type="radio" name="retreat_format" value="online"
+                      checked={form.retreat_format === 'online'}
+                      onChange={() => update('retreat_format', 'online')} />
+                    <span className="opt-text">參加線上禪修課程（Zoom）</span>
+                  </label>
+                </div>
+                {errorField === 'retreat_format' && <p className="field-error">請選擇禪修形式</p>}
               </div>
             </div>
           )}

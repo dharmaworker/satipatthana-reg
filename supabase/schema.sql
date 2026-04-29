@@ -35,6 +35,7 @@ create table if not exists registrations (
   practice_years text,
   practice_frequency text,
   mental_health_note text,
+  retreat_format text,           -- in_person | online
   attended_courses jsonb default '[]'::jsonb,
 
   status text not null default 'pending',           -- pending | approved | rejected
