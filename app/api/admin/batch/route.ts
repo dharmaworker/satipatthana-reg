@@ -27,11 +27,16 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === 'delete') {
-    // 先撈 QR URL，清 Storage
+    // 先撈 QR URL + 食宿上傳檔 URL，清 Storage
     const { data: regs } = await supabaseAdmin
       .from('registrations')
       .select('id, line_qr_url, wechat_qr_url')
       .in('id', ids)
+
+    const { data: lodgings } = await supabaseAdmin
+      .from('lodging_registrations')
+      .select('id_front_url, id_back_url, passport_url, arc_url, photo_url, arrival_ticket_url, departure_ticket_url, test_0817_url, test_0819_url')
+      .in('registration_id', ids)
 
     const { error: delErr } = await supabaseAdmin
       .from('registrations')
@@ -41,21 +46,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: delErr.message }, { status: 500 })
     }
 
+    const extractPath = (url: string | null | undefined, marker: string) => {
+      if (!url) return null
+      const idx = url.indexOf(marker)
+      return idx >= 0 ? url.slice(idx + marker.length) : null
+    }
+
     try {
-      const paths: string[] = []
-      for (const r of regs || []) {
-        for (const url of [r.line_qr_url, r.wechat_qr_url]) {
-          if (!url) continue
-          const marker = '/qr-codes/'
-          const idx = url.indexOf(marker)
-          if (idx >= 0) paths.push(url.slice(idx + marker.length))
-        }
-      }
-      if (paths.length) {
-        await supabaseAdmin.storage.from('qr-codes').remove(paths)
-      }
-    } catch (storageErr) {
-      console.error('[batch delete] storage cleanup failed:', storageErr)
+      const qrPaths = (regs || []).flatMap(r =>
+        [r.line_qr_url, r.wechat_qr_url].map(u => extractPath(u, '/qr-codes/')).filter(Boolean)
+      ) as string[]
+      if (qrPaths.length) await supabaseAdmin.storage.from('qr-codes').remove(qrPaths)
+    } catch (e) {
+      console.error('[batch delete] qr-codes cleanup failed:', e)
+    }
+
+    try {
+      const lodgingPaths = (lodgings || []).flatMap(l =>
+        [l.id_front_url, l.id_back_url, l.passport_url, l.arc_url, l.photo_url,
+         l.arrival_ticket_url, l.departure_ticket_url, l.test_0817_url, l.test_0819_url]
+          .map(u => extractPath(u, '/lodging-docs/')).filter(Boolean)
+      ) as string[]
+      if (lodgingPaths.length) await supabaseAdmin.storage.from('lodging-docs').remove(lodgingPaths)
+    } catch (e) {
+      console.error('[batch delete] lodging-docs cleanup failed:', e)
     }
 
     return NextResponse.json({ success: true, count: regs?.length ?? ids.length })
