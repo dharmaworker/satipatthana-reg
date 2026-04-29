@@ -38,6 +38,7 @@ export default function LodgingsPage() {
   const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const nextStudentId = () => {
     let maxN = 0
@@ -189,6 +190,24 @@ export default function LodgingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleDelete = async (reg: any) => {
+    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，食宿登記、所有上傳檔案都會一併刪除。`)) return
+    setDeleting(reg.id)
+    const res = await fetch('/api/admin/registrations', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: reg.id }),
+    })
+    setDeleting(null)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setBulkMessage(`刪除失敗：${d.error || res.status}`)
+      return
+    }
+    setBulkMessage(`已刪除 ${reg.chinese_name}`)
+    fetchData()
   }
 
   const fetchData = async () => {
@@ -355,9 +374,14 @@ export default function LodgingsPage() {
                       </> : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button onClick={() => setDetail(r)} disabled={!r.id} className="admin-btn-sm">詳細</button>
                         <button onClick={() => { setEdit({ ...r }); setEditError('') }} disabled={!r.id} className="admin-btn-sm gold">編輯</button>
+                        <button onClick={() => handleDelete(reg)} disabled={deleting === reg.id}
+                          className="admin-btn-sm"
+                          style={{ color: 'var(--error)', borderColor: 'rgba(184,82,58,0.4)' }}>
+                          {deleting === reg.id ? '刪除中⋯' : '🗑 刪除'}
+                        </button>
                       </div>
                     </td>
                   </tr>
