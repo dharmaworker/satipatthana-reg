@@ -8,9 +8,9 @@
 
 | 項目 | 說明 |
 |---|---|
-| 網址 | https://satipatthana-reg-eihf.vercel.app |
+| 網址 | https://satipatthana-reg.vercel.app |
 | 建議瀏覽器 | Chrome 或 Safari（最新版） |
-| 後台網址 | https://satipatthana-reg-eihf.vercel.app/admin |
+| 後台網址 | https://satipatthana-reg.vercel.app/admin |
 | 後台帳號 | 由工程師提供 |
 
 > **重要**：測試完請告知工程師，由工程師清除測試資料，勿自行刪除。
