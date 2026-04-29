@@ -25,6 +25,25 @@ const BUS_DEST_LABEL: Record<string, string> = {
   taoyuan_825_am: '8/25 上午 9:00 專車到桃園機場第一航廈',
 }
 
+const PLAN_INFO: Record<string, { label: string; date: string; checkin: string; amount: number; method: string }> = {
+  A1: { label: 'A 方案', date: '8/20 — 8/24', checkin: '8/20', amount: 18600, method: '匯款' },
+  A2: { label: 'A 方案', date: '8/20 — 8/24', checkin: '8/20', amount: 19300, method: '刷卡' },
+  B1: { label: 'B 方案', date: '8/19 — 8/24', checkin: '8/19', amount: 20350, method: '匯款' },
+  B2: { label: 'B 方案', date: '8/19 — 8/24', checkin: '8/19', amount: 21050, method: '刷卡' },
+  C1: { label: 'C 方案', date: '8/19 — 8/25', checkin: '8/19', amount: 22590, method: '匯款' },
+  C2: { label: 'C 方案', date: '8/19 — 8/25', checkin: '8/19', amount: 23290, method: '刷卡' },
+  D1: { label: 'D 方案', date: '8/20 — 8/25', checkin: '8/20', amount: 20840, method: '匯款' },
+  D2: { label: 'D 方案', date: '8/20 — 8/25', checkin: '8/20', amount: 21540, method: '刷卡' },
+}
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  unpaid: '待繳費',
+  paid: '已匯款（待確認）',
+  verified: '✓ 已確認繳費',
+}
+const FULL_DATE_TO_CHECKIN: Record<string, string> = {
+  '2026-08-18': '8/18', '2026-08-19': '8/19', '2026-08-20': '8/20',
+}
+
 const DIET_LABEL: Record<string, string> = { meat: '葷食', vegetarian: '素食' }
 const NOON_LABEL: Record<string, string> = {
   fasting_yes: '是，過午不食',
@@ -129,10 +148,13 @@ function LodgingContent() {
         const data = await r.json()
         if (!r.ok) throw new Error(data.error || '載入失敗')
         setReg(data.registration)
+        const planCode = data.registration?.payment_plan || ''
+        const planCheckin = PLAN_INFO[planCode]?.checkin || ''
         if (data.lodging) {
           setExistingLodging(data.lodging)
+          const rawCheckin = data.lodging.arrival_date || ''
           setForm({
-            checkin_date: data.lodging.arrival_date || '',
+            checkin_date: FULL_DATE_TO_CHECKIN[rawCheckin] || rawCheckin || planCheckin,
             emergency_name: data.lodging.emergency_name || '',
             emergency_relation: data.lodging.emergency_relation || '',
             emergency_phone: data.lodging.emergency_phone || '',
@@ -168,6 +190,7 @@ function LodgingContent() {
           else setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
         } else {
           setIdentityType(data.registration?.residence === '台灣' ? 'id' : 'passport')
+          if (planCheckin) setForm(prev => ({ ...prev, checkin_date: planCheckin }))
         }
       })
       .catch(e => setError(e.message))
@@ -972,6 +995,37 @@ function LodgingContent() {
                 以上資料由報名表自動帶入，如需修改請聯絡學會。
               </p>
             </div>
+
+            {reg.payment_plan && PLAN_INFO[reg.payment_plan] && (() => {
+              const p = PLAN_INFO[reg.payment_plan]
+              const statusLabel = PAYMENT_STATUS_LABEL[reg.payment_status] || reg.payment_status || '—'
+              const isVerified = reg.payment_status === 'verified'
+              return (
+                <div className="sidebar-card" style={{ borderColor: isVerified ? 'rgba(45,106,79,0.35)' : 'rgba(180,147,88,0.3)', background: isVerified ? 'rgba(73,85,52,0.06)' : 'rgba(216,194,154,0.14)' }}>
+                  <h4 style={{ color: isVerified ? 'var(--green-deep, #2d6a4f)' : 'var(--gold-deep)' }}>繳費方案 <small>Payment Plan</small></h4>
+                  <div className="info-row">
+                    <span className="k">方案</span>
+                    <span className="v" style={{ fontWeight: 700 }}>{p.label}（{reg.payment_plan}）</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="k">日期</span>
+                    <span className="v">{p.date}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="k">繳費方式</span>
+                    <span className="v">{p.method}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="k">金額</span>
+                    <span className="v" style={{ fontWeight: 600 }}>NT${p.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="k">繳費狀態</span>
+                    <span className="v" style={{ color: isVerified ? 'var(--green-deep, #2d6a4f)' : 'var(--ink-soft)', fontWeight: isVerified ? 700 : 400 }}>{statusLabel}</span>
+                  </div>
+                </div>
+              )
+            })()}
 
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
