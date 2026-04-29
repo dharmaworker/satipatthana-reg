@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       registration_id: reg.id,
-      arrival_date: fields.checkin_date || planDefaults?.arrival_date ?? null,
+      arrival_date: fields.checkin_date || (planDefaults?.arrival_date ?? null),
       departure_date: planDefaults?.departure_date ?? null,
       payment_method: planDefaults?.payment_method ?? null,
       emergency_name: fields.emergency_name,
