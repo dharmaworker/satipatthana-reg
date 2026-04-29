@@ -130,9 +130,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const CHECKIN_TO_ISO: Record<string, string> = {
+      '8/18': '2026-08-18', '8/19': '2026-08-19', '8/20': '2026-08-20',
+    }
+    const arrivalDate = CHECKIN_TO_ISO[fields.checkin_date] || fields.checkin_date || (planDefaults?.arrival_date ?? null)
+
     const payload = {
       registration_id: reg.id,
-      arrival_date: fields.checkin_date || (planDefaults?.arrival_date ?? null),
+      arrival_date: arrivalDate,
       departure_date: planDefaults?.departure_date ?? null,
       payment_method: planDefaults?.payment_method ?? null,
       emergency_name: fields.emergency_name,
