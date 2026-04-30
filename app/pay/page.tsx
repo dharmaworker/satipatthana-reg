@@ -249,7 +249,7 @@ function PayContent() {
                         onChange={() => { setPlan(p.id); setShowBank(false) }} />
                       <span className="opt-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                         <span>
-                          <strong>{p.label}</strong>　<span style={{ color: 'var(--ink-mute)', fontWeight: 500, fontSize: 13 }}>{p.date}</span>
+                          <strong>{p.label}</strong>　<span style={{ color: 'var(--ink-soft)', fontWeight: 600, fontSize: 15 }}>{p.date}</span>
                           <small>{p.method === 'transfer' ? '匯款' : '信用卡刷卡'}{p.test ? '（測試專用）' : ''}</small>
                         </span>
                         <span style={{
