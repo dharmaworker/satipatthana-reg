@@ -47,6 +47,30 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState('')
   const [missingOnly, setMissingOnly] = useState(false)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
+  const [edit, setEdit] = useState<any | null>(null)
+  const [editError, setEditError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const saveEdit = async () => {
+    if (!edit) return
+    setSaving(true)
+    setEditError('')
+    try {
+      const res = await fetch('/api/admin/lodgings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(edit),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '儲存失敗')
+      setEdit(null)
+      fetchData()
+    } catch (e: any) {
+      setEditError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -92,7 +116,7 @@ export default function DocumentsPage() {
     return true
   })
 
-  const colSpan = 13 + DOC_COLS.length
+  const colSpan = 15 + DOC_COLS.length
 
   return (
     <div className="admin-page">
@@ -131,6 +155,7 @@ export default function DocumentsPage() {
                 <th>8/24晚餐</th>
                 <th>打鼾</th>
                 <th style={{ whiteSpace: 'nowrap' }}>緊急聯絡人</th>
+                <th>操作</th>
                 {DOC_COLS.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.label}</th>)}
               </tr>
             </thead>
@@ -174,6 +199,14 @@ export default function DocumentsPage() {
                     </> : (
                       <td colSpan={11} style={{ color: 'var(--ink-mute)', fontSize: 12, textAlign: 'center' }}>未填食宿登記</td>
                     )}
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <button
+                        onClick={() => { setEdit({ ...r }); setEditError('') }}
+                        disabled={!hasLodging}
+                        className="admin-btn-sm gold">
+                        編輯
+                      </button>
+                    </td>
                     {DOC_COLS.map(c => {
                       const url: string = r[c.key] || ''
                       return (
@@ -195,6 +228,84 @@ export default function DocumentsPage() {
         </div>
       </div>
 
+      {edit && (
+        <div onClick={() => !saving && setEdit(null)} className="admin-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
+            <h3>
+              <span>編輯食宿登記：{edit.registration?.chinese_name}</span>
+              <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">✕</button>
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+              <DocSelectField label="入住日" value={edit.arrival_date} onChange={v => setEdit({ ...edit, arrival_date: v })}
+                options={[['2026-08-19', '2026-08-19'], ['2026-08-20', '2026-08-20']]} />
+              <DocSelectField label="離開日" value={edit.departure_date} onChange={v => setEdit({ ...edit, departure_date: v })}
+                options={[['2026-08-24', '2026-08-24'], ['2026-08-25', '2026-08-25']]} />
+              <DocSelectField label="前往方式" value={edit.arrival_transport} onChange={v => setEdit({ ...edit, arrival_transport: v })}
+                options={[['self', '8/19 自行'], ['taipei_bus', '台北專車'], ['wuri_bus', '烏日專車'], ['airport_bus_0819', '桃園機場專車'], ['self_0820', '8/20 自行']]} />
+              <DocSelectField label="離開方式" value={edit.departure_transport} onChange={v => setEdit({ ...edit, departure_transport: v })}
+                options={[['self', '自行'], ['bus', '專車']]} />
+              {edit.departure_transport === 'bus' && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label">專車目的地</label>
+                  <select className="form-select" value={edit.bus_destination || ''}
+                    onChange={e => setEdit({ ...edit, bus_destination: e.target.value })}>
+                    <option value="">—</option>
+                    <option value="taipei_824_pm">8/24 下午台北</option>
+                    <option value="taipei_825_am">8/25 上午台北</option>
+                    <option value="wuri_825_am">8/25 上午烏日</option>
+                    <option value="taoyuan_824_pm">8/24 下午桃園機場</option>
+                    <option value="taoyuan_825_am">8/25 上午桃園機場</option>
+                  </select>
+                </div>
+              )}
+              <DocSelectField label="飲食" value={edit.diet} onChange={v => setEdit({ ...edit, diet: v })}
+                options={[['meat', '葷食'], ['vegetarian', '素食']]} />
+              <DocSelectField label="過午不食" value={edit.noon_fasting} onChange={v => setEdit({ ...edit, noon_fasting: v })}
+                options={[['fasting_yes', '過午不食'], ['fasting_no', '不過午'], ['before_noon', '12前吃'], ['after_noon', '12後吃']]} />
+              <DocSelectField label="茶點" value={edit.snacks} onChange={v => setEdit({ ...edit, snacks: v })}
+                options={[['snacks_and_drink', '茶點+飲'], ['drink_only', '只飲']]} />
+              <DocInputField label="緊急聯絡人姓名" value={edit.emergency_name} onChange={v => setEdit({ ...edit, emergency_name: v })} />
+              <DocInputField label="關係" value={edit.emergency_relation} onChange={v => setEdit({ ...edit, emergency_relation: v })} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <DocInputField label="緊急聯絡電話" value={edit.emergency_phone} onChange={v => setEdit({ ...edit, emergency_phone: v })} />
+              </div>
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
+                <input type="checkbox" checked={!!edit.dinner_0819}
+                  onChange={e => setEdit({ ...edit, dinner_0819: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
+                8/19 晚餐
+              </label>
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
+                <input type="checkbox" checked={!!edit.dinner_0824}
+                  onChange={e => setEdit({ ...edit, dinner_0824: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
+                8/24 晚餐
+              </label>
+              <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
+                <input type="checkbox" checked={!!edit.snoring}
+                  onChange={e => setEdit({ ...edit, snoring: e.target.checked })}
+                  style={{ width: 16, height: 16, accentColor: 'var(--green)' }} />
+                打鼾
+              </label>
+            </div>
+
+            {editError && (
+              <div style={{ marginTop: 12, background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 8, padding: 10, color: 'var(--error)', fontSize: 13 }}>
+                {editError}
+              </div>
+            )}
+
+            <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">取消</button>
+              <button onClick={saveEdit} disabled={saving} className="admin-btn-sm primary">
+                {saving ? '儲存中⋯' : '儲存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {preview && (
         <div onClick={() => setPreview(null)} className="admin-modal-overlay">
           <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
@@ -215,6 +326,28 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function DocInputField({ label, value, onChange }: { label: string; value: any; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="form-label">{label}</label>
+      <input className="form-input" value={value || ''} onChange={e => onChange(e.target.value)} />
+    </div>
+  )
+}
+
+function DocSelectField({ label, value, onChange, options }: {
+  label: string; value: any; onChange: (v: string) => void; options: [string, string][]
+}) {
+  return (
+    <div>
+      <label className="form-label">{label}</label>
+      <select className="form-select" value={value || ''} onChange={e => onChange(e.target.value)}>
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
     </div>
   )
 }
