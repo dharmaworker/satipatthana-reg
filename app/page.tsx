@@ -384,10 +384,12 @@ function TeacherCard({ id, onClick }: { id: TeacherId; onClick: () => void }) {
   return (
     <article className="teacher-card" onClick={onClick}>
       <div className="teacher-photo"><img src={t.photo} alt={t.name} /></div>
-      <h4 className="teacher-name">{t.name}</h4>
-      <p className="teacher-name-en">{t.nameEn}</p>
-      <p className="teacher-tagline">{t.tagline}</p>
-      <span className="teacher-more">View Profile →</span>
+      <div className="teacher-card-body">
+        <h4 className="teacher-name">{t.name}</h4>
+        <p className="teacher-name-en">{t.nameEn}</p>
+        <p className="teacher-tagline">{t.tagline}</p>
+        <span className="teacher-more">View Profile →</span>
+      </div>
     </article>
   )
 }
