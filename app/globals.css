@@ -316,13 +316,13 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .hero-quote p {
   font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
-  font-size: 14.5px; color: var(--ink-soft);
+  font-size: 14.5px; color: var(--ink);
   line-height: 1.95; padding-left: 18px; margin: 0;
 }
 .hero-quote p + p { margin-top: 10px; }
 .hero-quote ol {
   font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
-  font-size: 14.5px; color: var(--ink-soft);
+  font-size: 14.5px; color: var(--ink);
   line-height: 1.95; margin: 6px 0 6px; padding-left: 42px;
   list-style: decimal;
 }
