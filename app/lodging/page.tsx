@@ -845,11 +845,19 @@ function LodgingContent() {
                     {/* 其他 */}
                     <div className="field-group">
                       <div className="field-group-title"><span className="num">02</span>其他</div>
-                      <label className={`opt ${form.snoring ? 'selected' : ''}`}>
-                        <input type="checkbox" checked={form.snoring}
-                          onChange={e => update('snoring', e.target.checked)} disabled={locked} />
-                        <span className="opt-text">睡覺會打鼾（提供同寢室友參考）</span>
-                      </label>
+                      <div className="form-label" style={{ marginBottom: 8 }}>睡覺打鼾（提供同寢室友參考）</div>
+                      <div className="opt-group">
+                        <label className={`opt ${!form.snoring ? 'selected' : ''}`}>
+                          <input type="radio" name="snoring" checked={!form.snoring}
+                            onChange={() => update('snoring', false)} disabled={locked} />
+                          <span className="opt-text">睡覺不打鼾</span>
+                        </label>
+                        <label className={`opt ${form.snoring ? 'selected' : ''}`}>
+                          <input type="radio" name="snoring" checked={!!form.snoring}
+                            onChange={() => update('snoring', true)} disabled={locked} />
+                          <span className="opt-text">睡覺會打鼾</span>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Review */}
