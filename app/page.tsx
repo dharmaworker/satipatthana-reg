@@ -271,7 +271,7 @@ export default function HomePage() {
               <details open>
                 <summary>需要具備什麼條件才能報名？</summary>
                 <p>需<strong>同時滿足以下三項條件</strong>：<br />
-                一、<strong>聞法條件</strong>（任一即可）：曾參加過任意一屆隆波帕默尊者體系的線下實體或線上網路課程／參加過每月 ZOOM 指導老師線上互動／完整觀看 3 屆泰國禪修之旅課程錄影／聆聽隆波帕默尊者法談開示 30 篇以上。<br />
+                一、<strong>聞法條件</strong>（任一即可）：曾參加過任一屆隆波帕默尊者體系的線下實體或線上網路課程／參加過每月 ZOOM 指導老師線上互動／完整觀看 3 屆泰國禪修之旅課程錄影／聆聽隆波帕默尊者法談開示 30 篇以上。<br />
                 二、<strong>持守五戒</strong>。<br />
                 三、<strong>堅持做固定形式的練習</strong>（如經行、靜坐）。</p>
               </details>
