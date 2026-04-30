@@ -340,7 +340,7 @@ export default function HomePage() {
             <div>
               <div className="footer-brand-txt">台灣四念處學會</div>
               <div className="footer-brand-en">Satipaṭṭhāna Society Taiwan</div>
-              <p className="footer-about">護持佛法四念處，推廣隆波帕默尊者教導的禪修法門，邀請大眾一起踏上覺醒之路。</p>
+              <p className="footer-about">護持佛陀四念處正法，推廣隆波帕默尊者的禪修法門，邀請大眾共同走向覺醒之路。</p>
             </div>
             <div>
               <h5>快速連結</h5>
