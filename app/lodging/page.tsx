@@ -46,11 +46,10 @@ const FULL_DATE_TO_CHECKIN: Record<string, string> = {
 
 const DIET_LABEL: Record<string, string> = { meat: '葷食', vegetarian: '素食' }
 const NOON_LABEL: Record<string, string> = {
-  fasting_yes: '是，過午不食',
-  fasting_no: '否，不是過午不食',
-  before_noon: '需於中午12點前用餐',
-  after_noon: '可於中午12點後用餐',
+  before_noon: '是（中午12點前用餐）',
+  fasting_no: '否',
 }
+const DINNER_LABEL: Record<string, string> = { yes: '需要', no: '不需要' }
 const SNACKS_LABEL: Record<string, string> = { snacks_and_drink: '需要茶點、咖啡 OR 茶', drink_only: '只需要咖啡 OR 茶' }
 const IDENTITY_LABEL: Record<string, string> = { id: '台灣人（身分證正反面）', passport: '外籍短期旅客（護照 + 航班）', arc: '在台外籍居民（ARC／居留證）' }
 
@@ -79,6 +78,7 @@ function LodgingContent() {
     bus_destination: '',
     diet: 'vegetarian',
     noon_fasting: '',
+    dinner_need: '',
     snacks: 'drink_only',
     dinner_0819: false,
     dinner_0824: false,
@@ -163,6 +163,7 @@ function LodgingContent() {
             bus_destination: data.lodging.bus_destination || '',
             diet: data.lodging.diet || '',
             noon_fasting: data.lodging.noon_fasting || '',
+            dinner_need: (data.lodging.dinner_0819 || data.lodging.dinner_0824) ? 'yes' : 'no',
             snacks: data.lodging.snacks || '',
             dinner_0819: !!data.lodging.dinner_0819,
             dinner_0824: !!data.lodging.dinner_0824,
@@ -211,6 +212,7 @@ function LodgingContent() {
   const validateStep2 = (): boolean => {
     if (!form.diet) return fail('diet', '請選擇「飲食」')
     if (!form.noon_fasting) return fail('noon_fasting', '請選擇「過午不食」')
+    if (!form.dinner_need) return fail('dinner_need', '請選擇「是否需要安排晚餐」')
     if (!form.snacks) return fail('snacks', '請選擇「茶點需求」')
     return true
   }
@@ -274,7 +276,13 @@ function LodgingContent() {
     if (!validateStep3()) { setStep(3); return }
     if (!validateStep4()) { setStep(4); return }
 
-    const payload: any = { ...form, identity_type: identityType }
+    const dinnerYes = form.dinner_need === 'yes'
+    const payload: any = {
+      ...form,
+      dinner_0819: dinnerYes,
+      dinner_0824: dinnerYes,
+      identity_type: identityType,
+    }
     if (identityType === 'id') {
       payload.passport_url = ''
       payload.arc_url = ''
@@ -626,36 +634,26 @@ function LodgingContent() {
                     </div>
 
                     <div className="field-group">
-                      <div className="field-group-title"><span className="num">02</span>課程期間是否過午不食 <span className="required">*</span></div>
-                      <div id="field-noon_fasting" className="opt-group">
-                        {radio('noon_fasting', 'fasting_yes', '是，過午不食')}
-                        {radio('noon_fasting', 'fasting_no', '否，不是過午不食')}
-                        {radio('noon_fasting', 'before_noon', '需於中午12點前用餐')}
-                        {radio('noon_fasting', 'after_noon', '可於中午12點後用餐')}
+                      <div className="field-group-title"><span className="num">02</span>是否過午不食 <span className="required">*</span></div>
+                      <div id="field-noon_fasting" className="opt-group inline">
+                        {radio('noon_fasting', 'before_noon', '是（中午12點前用餐）')}
+                        {radio('noon_fasting', 'fasting_no', '否')}
                       </div>
                     </div>
 
                     <div className="field-group">
-                      <div className="field-group-title"><span className="num">03</span>茶點需求 <span className="required">*</span></div>
+                      <div className="field-group-title"><span className="num">03</span>是否需要安排晚餐 <span className="required">*</span></div>
+                      <div id="field-dinner_need" className="opt-group inline">
+                        {radio('dinner_need', 'yes', '需要')}
+                        {radio('dinner_need', 'no', '不需要')}
+                      </div>
+                    </div>
+
+                    <div className="field-group">
+                      <div className="field-group-title"><span className="num">04</span>茶點需求 <span className="required">*</span></div>
                       <div id="field-snacks" className="opt-group inline">
                         {radio('snacks', 'snacks_and_drink', '需要茶點、咖啡 OR 茶')}
                         {radio('snacks', 'drink_only', '只需要咖啡 OR 茶')}
-                      </div>
-                    </div>
-
-                    <div className="field-group">
-                      <div className="field-group-title"><span className="num">04</span>晚餐安排（依需求勾選）</div>
-                      <div className="opt-group">
-                        <label className={`opt ${form.dinner_0819 ? 'selected' : ''}`}>
-                          <input type="checkbox" checked={form.dinner_0819}
-                            onChange={e => update('dinner_0819', e.target.checked)} disabled={locked} />
-                          <span className="opt-text">8/19 需要在日月潭湖畔會館用晚餐</span>
-                        </label>
-                        <label className={`opt ${form.dinner_0824 ? 'selected' : ''}`}>
-                          <input type="checkbox" checked={form.dinner_0824}
-                            onChange={e => update('dinner_0824', e.target.checked)} disabled={locked} />
-                          <span className="opt-text">8/24 晚上 5–6 點需要在日月潭湖畔會館用晚餐</span>
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -876,9 +874,8 @@ function LodgingContent() {
                           <h4>飲食偏好 <span className="edit-link" onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                           <ReviewRow k="飲食" v={DIET_LABEL[form.diet] || ''} />
                           <ReviewRow k="過午不食" v={NOON_LABEL[form.noon_fasting] || ''} />
+                          <ReviewRow k="安排晚餐" v={DINNER_LABEL[form.dinner_need] || ''} />
                           <ReviewRow k="茶點" v={SNACKS_LABEL[form.snacks] || ''} />
-                          <ReviewRow k="8/19 晚餐" v={form.dinner_0819 ? '需要' : '不需要'} />
-                          <ReviewRow k="8/24 晚餐" v={form.dinner_0824 ? '需要' : '不需要'} />
                         </div>
 
                         <div className="review-group">
