@@ -1526,22 +1526,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .step.done .step-num::after { content: "✓"; }
 .step-label {
   font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
-  font-size: 13px; font-weight: 600;
+  font-size: 15px; font-weight: 600;
   color: var(--ink-mute); letter-spacing: 0.06em;
-  transition: color 0.25s;
+  transition: color 0.25s, font-weight 0.15s;
 }
 .step-label small {
   display: block;
   font-family: var(--font-cormorant), "Cormorant Garamond", serif;
-  font-style: italic; font-size: 10px;
+  font-style: italic; font-size: 11px;
   letter-spacing: 0.2em; color: var(--ink-mute); font-weight: 500;
   margin-bottom: 2px; text-transform: uppercase;
 }
 .step.active .step-label, .step.done .step-label { color: var(--ink); }
+.step.active .step-label { font-weight: 800; }
 .step.active .step-label small, .step.done .step-label small { color: var(--gold); }
 @media (max-width: 720px) {
-  .step-label { font-size: 10.5px; }
-  .step-label small { font-size: 9px; letter-spacing: 0.08em; }
+  .step-label { font-size: 12px; }
+  .step-label small { font-size: 9.5px; letter-spacing: 0.08em; }
   .step-num { width: 32px; height: 32px; font-size: 14px; }
   .stepper-line, .stepper-line-active { top: 15px; }
 }
