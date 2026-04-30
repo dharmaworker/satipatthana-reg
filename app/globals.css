@@ -701,8 +701,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .teacher-name-en {
   font-family: var(--font-cormorant), "Cormorant Garamond", serif;
-  font-style: italic; font-size: 12.5px; letter-spacing: 0.12em;
-  color: var(--gold-deep); margin-bottom: 10px;
+  font-style: italic; font-size: 15px; letter-spacing: 0.12em;
+  color: var(--ink-soft); margin-bottom: 10px;
 }
 .teacher-tagline {
   font-size: 13.5px; color: var(--ink-soft);
