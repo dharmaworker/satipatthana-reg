@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHERS = {
@@ -90,32 +90,6 @@ const IN_PERSON_TEACHERS: TeacherId[] = ['nat', 'prasan', 'nitiya', 'napatpol']
 
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [modal, setModal] = useState<TeacherId | null>(null)
-  const t = modal ? TEACHERS[modal] : null
-
-  useEffect(() => {
-    if (modal) {
-      const scrollY = window.scrollY
-      const sw = window.innerWidth - document.documentElement.clientWidth
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = '100%'
-      document.body.style.paddingRight = sw > 0 ? `${sw}px` : ''
-    } else {
-      const top = document.body.style.top
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.paddingRight = ''
-      if (top) window.scrollTo(0, -parseInt(top, 10))
-    }
-    return () => {
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.width = ''
-      document.body.style.paddingRight = ''
-    }
-  }, [modal])
 
   return (
     <>
@@ -243,7 +217,7 @@ export default function HomePage() {
               </div>
               <div className="teachers-grid three-col">
                 {ONLINE_TEACHERS.map(id => (
-                  <TeacherCard key={id} id={id} onClick={() => setModal(id)} />
+                  <TeacherCard key={id} id={id} />
                 ))}
               </div>
             </div>
@@ -255,7 +229,7 @@ export default function HomePage() {
               </div>
               <div className="teachers-grid">
                 {IN_PERSON_TEACHERS.map(id => (
-                  <TeacherCard key={id} id={id} onClick={() => setModal(id)} />
+                  <TeacherCard key={id} id={id} />
                 ))}
               </div>
             </div>
@@ -333,25 +307,6 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Teacher modal */}
-      {modal && t && (
-        <div className="teacher-modal open" onClick={() => setModal(null)}>
-          <div className="teacher-modal-card" onClick={e => e.stopPropagation()}>
-            <button className="teacher-modal-close" onClick={() => setModal(null)} aria-label="關閉">✕</button>
-            <div className="teacher-modal-photo">
-              <img src={t.photo} alt={t.name}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
-            </div>
-            <div className="teacher-modal-body">
-              <h2 className="teacher-modal-name">{t.name}</h2>
-              <p className="teacher-modal-name-en">{t.nameEn}</p>
-              <div className="teacher-modal-bio">
-                {t.bio.map((p, i) => <p key={i}>{p}</p>)}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <footer className="footer">
         <div className="container">
@@ -403,16 +358,15 @@ export default function HomePage() {
   )
 }
 
-function TeacherCard({ id, onClick }: { id: TeacherId; onClick: () => void }) {
+function TeacherCard({ id }: { id: TeacherId }) {
   const t = TEACHERS[id]
   return (
-    <article className="teacher-card" onClick={onClick}>
+    <article className="teacher-card">
       <div className="teacher-photo"><img src={t.photo} alt={t.name} /></div>
       <div className="teacher-card-body">
         <h4 className="teacher-name">{t.name}</h4>
         <p className="teacher-name-en">{t.nameEn}</p>
         <p className="teacher-tagline">{t.tagline}</p>
-        <span className="teacher-more">View Profile →</span>
       </div>
     </article>
   )
