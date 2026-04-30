@@ -8,7 +8,7 @@ export const SITE_ASSETS = {
   poster: asset('poster.jpg'),
   sunsetBg: asset('sunset-bg.jpg'),
   teacher: (file: string) => asset(`teachers/${file}`),
-  lineOfficial: asset('line-official.jpg'),
+  lineOfficial: asset('qr-code.webp'),
   // 承諾書改放 private bucket，下載走 /api/pledge gate（要 id+code+approved）
   // 本欄位刻意不放 public URL，避免外洩
 }
