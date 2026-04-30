@@ -15,6 +15,31 @@ const DOC_COLS: { key: string; label: string }[] = [
   { key: 'test_0819_url', label: '8/19 快篩' },
 ]
 
+const ARRIVAL_LABEL: Record<string, string> = {
+  self: '8/19 自行',
+  taipei_bus: '台北專車',
+  wuri_bus: '烏日專車',
+  airport_bus_0819: '機場專車',
+  self_0820: '8/20 自行',
+}
+const DEPART_LABEL: Record<string, string> = {
+  self: '自行',
+  bus: '專車',
+}
+const BUS_DEST_LABEL: Record<string, string> = {
+  taipei_824_pm: '8/24 台北',
+  taipei_825_am: '8/25 台北',
+  wuri_825_am: '8/25 烏日',
+  taoyuan_824_pm: '8/24 桃園',
+  taoyuan_825_am: '8/25 桃園',
+}
+const NOON_LABEL: Record<string, string> = {
+  fasting_yes: '過午不食',
+  fasting_no: '不過午',
+  before_noon: '12前吃',
+  after_noon: '12後吃',
+}
+
 export default function DocumentsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>([])
@@ -67,6 +92,8 @@ export default function DocumentsPage() {
     return true
   })
 
+  const colSpan = 13 + DOC_COLS.length
+
   return (
     <div className="admin-page">
       <AdminHeader />
@@ -80,7 +107,7 @@ export default function DocumentsPage() {
           <label>
             <input type="checkbox" checked={missingOnly}
               onChange={e => setMissingOnly(e.target.checked)} />
-            只顯示未繳齊
+            只顯示證件未繳齊
           </label>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
           <span className="count">共 {filtered.length} 筆</span>
@@ -93,28 +120,60 @@ export default function DocumentsPage() {
                 <th>姓名</th>
                 <th>報名序號</th>
                 <th>學號</th>
-                <th>居住地</th>
+                <th>入住</th>
+                <th>離開</th>
+                <th>前往方式</th>
+                <th>離開方式</th>
+                <th>飲食</th>
+                <th>過午</th>
+                <th>茶點</th>
+                <th>8/19晚餐</th>
+                <th>8/24晚餐</th>
+                <th>打鼾</th>
+                <th style={{ whiteSpace: 'nowrap' }}>緊急聯絡人</th>
                 {DOC_COLS.map(c => <th key={c.key} style={{ textAlign: 'center' }}>{c.label}</th>)}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4 + DOC_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={colSpan} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={4 + DOC_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={colSpan} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : filtered.map(r => {
                 const reg = r.registration || {}
+                const hasLodging = !!r.arrival_date
+                const departLabel = r.departure_transport === 'bus' && r.bus_destination
+                  ? `專車（${BUS_DEST_LABEL[r.bus_destination] || r.bus_destination}）`
+                  : DEPART_LABEL[r.departure_transport] || r.departure_transport || '—'
                 return (
-                  <tr key={r.id}>
+                  <tr key={r.id || reg.id}>
                     <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
                       {reg.chinese_name}
-                      {reg.passport_name && (
-                        <div className="muted">{reg.passport_name}</div>
-                      )}
+                      {reg.passport_name && <div className="muted">{reg.passport_name}</div>}
                     </td>
                     <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.member_id || '—'}</td>
                     <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.student_id || '—'}</td>
-                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.residence || '—'}</td>
+                    {hasLodging ? <>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{r.arrival_date}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{r.departure_date || '—'}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{ARRIVAL_LABEL[r.arrival_transport] || r.arrival_transport || '—'}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{departLabel}</td>
+                      <td className="muted" style={{ fontSize: 12 }}>{r.diet === 'meat' ? '葷' : r.diet === 'vegetarian' ? '素' : '—'}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{NOON_LABEL[r.noon_fasting] || r.noon_fasting || '—'}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{r.snacks === 'snacks_and_drink' ? '茶點+飲' : r.snacks === 'drink_only' ? '只飲' : '—'}</td>
+                      <td style={{ textAlign: 'center', fontSize: 12 }}>{r.dinner_0819 ? '✓' : '—'}</td>
+                      <td style={{ textAlign: 'center', fontSize: 12 }}>{r.dinner_0824 ? '✓' : '—'}</td>
+                      <td style={{ textAlign: 'center', fontSize: 12 }}>{r.snoring ? '會' : '否'}</td>
+                      <td style={{ fontSize: 12 }}>
+                        {r.emergency_name ? <>
+                          {r.emergency_name}<br />
+                          <span className="muted">{r.emergency_relation}</span><br />
+                          <span className="muted">{r.emergency_phone}</span>
+                        </> : '—'}
+                      </td>
+                    </> : (
+                      <td colSpan={11} style={{ color: 'var(--ink-mute)', fontSize: 12, textAlign: 'center' }}>未填食宿登記</td>
+                    )}
                     {DOC_COLS.map(c => {
                       const url: string = r[c.key] || ''
                       return (
