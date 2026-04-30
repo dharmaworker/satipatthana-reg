@@ -188,7 +188,7 @@ function buildContentSheet(wb, sheet) {
 
 async function main() {
   const wb = new ExcelJS.Workbook()
-  wb.creator = '台灣四念處禪修學會 satipatthana-reg'
+  wb.creator = '台灣四念處學會 satipatthana-reg'
   wb.created = new Date()
 
   buildIntroSheet(wb, data.intro)

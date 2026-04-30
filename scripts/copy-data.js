@@ -790,10 +790,10 @@ module.exports = {
       rows: [
         ['Email 簽尾', 'common.email.signoff.line1', '段落', '如有任何問題，請聯繫台灣四念處學會。', '所有 email 共用'],
         ['Email 簽尾', 'common.email.signoff.line2', '段落', '台灣四念處學會 合十', '所有 email 共用'],
-        ['Email 頁尾', 'common.email.copyright', '段落', '© 2026 台灣四念處禪修學會　All rights reserved.', '所有 email 共用'],
-        ['網站頁尾', 'common.web.copyright', '段落', '© 2026 台灣四念處禪修學會　All rights reserved.', '所有頁面共用'],
+        ['Email 頁尾', 'common.email.copyright', '段落', '© 2026 台灣四念處學會　All rights reserved.', '所有 email 共用'],
+        ['網站頁尾', 'common.web.copyright', '段落', '© 2026 台灣四念處學會　All rights reserved.', '所有頁面共用'],
         ['網站頁尾', 'common.web.email', '連結', 'satipatthana.tw@gmail.com', '所有頁面共用'],
-        ['網站頁尾', 'common.web.org_full', '段落', '台灣四念處禪修學會', ''],
+        ['網站頁尾', 'common.web.org_full', '段落', '台灣四念處學會', ''],
       ],
     },
   ],

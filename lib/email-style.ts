@@ -29,7 +29,7 @@ export function emailWrap(innerHtml: string, opts?: { maxWidth?: number }) {
     <div style="height:4px;background:linear-gradient(to right,${C.goldSoft},${C.green},${C.goldSoft});"></div>
     <div style="padding:36px 30px;">${innerHtml}</div>
   </div>
-  <p style="text-align:center;font-size:11px;color:${C.inkMute};margin:18px 0 0;letter-spacing:0.04em;">© 2026 台灣四念處禪修學會　All rights reserved.</p>
+  <p style="text-align:center;font-size:11px;color:${C.inkMute};margin:18px 0 0;letter-spacing:0.04em;">© 2026 台灣四念處學會　All rights reserved.</p>
 </div>`
 }
 

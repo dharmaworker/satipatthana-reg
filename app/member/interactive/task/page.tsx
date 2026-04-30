@@ -445,7 +445,7 @@ function TaskContent() {
 
       <footer className="footer">
         <div className="container footer-inner">
-          <div>© 2026 台灣四念處禪修學會　All rights reserved.</div>
+          <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
         </div>
       </footer>
