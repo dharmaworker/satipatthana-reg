@@ -17,7 +17,7 @@ const TEACHERS = {
     ],
   },
   'somchai': {
-    photo: SITE_ASSETS.teacher('somchai.webp'),
+    photo: SITE_ASSETS.teacher('somchai.jpg'),
     name: '阿姜宋彩尊者',
     nameEn: 'Phra Ajahn Somchai Kittiyano',
     tagline: '解脫園寺代理住持，多年擔任隆波帕默尊者的侍者。',
@@ -28,7 +28,7 @@ const TEACHERS = {
     ],
   },
   'oranuch': {
-    photo: SITE_ASSETS.teacher('oranuch.webp'),
+    photo: SITE_ASSETS.teacher('oranuch.jpg'),
     name: '麥琪奧蘭努',
     nameEn: 'Ajahn Khun Mae Oranuch Santayakorn',
     tagline: '資深女性傳法者，由尊者親自指定為資深助理禪師。',
@@ -39,7 +39,7 @@ const TEACHERS = {
     ],
   },
   'nat': {
-    photo: SITE_ASSETS.teacher('nat.jpeg'),
+    photo: SITE_ASSETS.teacher('nat.jpg'),
     name: '阿姜納',
     nameEn: 'Ajahn Nat Sriwachirawat',
     tagline: '退休前曾為牙科醫生，以深厚的禪定修證而聞名。',
@@ -50,7 +50,7 @@ const TEACHERS = {
     ],
   },
   'prasan': {
-    photo: SITE_ASSETS.teacher('prasan.webp'),
+    photo: SITE_ASSETS.teacher('prasan.jpg'),
     name: '阿姜巴山',
     nameEn: 'Ajahn Prasan Bhuddhakulsomsiri',
     tagline: '教學風格直率而活潑，足跡遍及華語禪修群體。',
@@ -63,7 +63,7 @@ const TEACHERS = {
     ],
   },
   'nitiya': {
-    photo: SITE_ASSETS.teacher('nitiya.webp'),
+    photo: SITE_ASSETS.teacher('nitiya.jpg'),
     name: '阿姜妮',
     nameEn: 'Ajahn Nitiya Petchpaiboon',
     tagline: '化工碩士，2017 年獲尊者指派為助理老師。',
@@ -75,7 +75,7 @@ const TEACHERS = {
     ],
   },
   'napatpol': {
-    photo: SITE_ASSETS.teacher('napatpol.webp'),
+    photo: SITE_ASSETS.teacher('napatpol.jpg'),
     name: '阿姜松',
     nameEn: 'Ajahn Napatpol Kunatanasate',
     tagline: '「心要想能夠明白法，一定要靠自己去領悟。」',
@@ -357,6 +357,16 @@ export default function HomePage() {
               <ul>
                 <li><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></li>
               </ul>
+              <div style={{ marginTop: 16 }}>
+                <img
+                  src={SITE_ASSETS.lineOfficial}
+                  alt="LINE 官方帳號"
+                  style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 10, display: 'block', border: '1px solid rgba(255,255,255,0.2)' }}
+                />
+                <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                  請加入學會LINE官方帳號洽詢
+                </p>
+              </div>
             </div>
           </div>
           <div className="footer-bottom">
