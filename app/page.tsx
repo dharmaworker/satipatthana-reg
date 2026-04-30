@@ -95,15 +95,24 @@ export default function HomePage() {
 
   useEffect(() => {
     if (modal) {
+      const scrollY = window.scrollY
       const sw = window.innerWidth - document.documentElement.clientWidth
-      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
       document.body.style.paddingRight = sw > 0 ? `${sw}px` : ''
     } else {
-      document.body.style.overflow = ''
+      const top = document.body.style.top
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
       document.body.style.paddingRight = ''
+      if (top) window.scrollTo(0, -parseInt(top, 10))
     }
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
       document.body.style.paddingRight = ''
     }
   }, [modal])
@@ -332,7 +341,6 @@ export default function HomePage() {
             <div className="teacher-modal-photo">
               <img src={t.photo} alt={t.name}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
-              <div className="photo-name">{t.name}<small>{t.nameEn}</small></div>
             </div>
             <div className="teacher-modal-body">
               <h2 className="teacher-modal-name">{t.name}</h2>
