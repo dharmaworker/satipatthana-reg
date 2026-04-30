@@ -324,6 +324,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
   font-size: 14.5px; color: var(--ink-soft);
   line-height: 1.95; margin: 6px 0 6px; padding-left: 42px;
+  list-style: decimal;
 }
 .hero-quote ol + p { margin-top: 10px; }
 .hero-quote .author {
