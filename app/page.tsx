@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHERS = {
@@ -92,6 +92,11 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [modal, setModal] = useState<TeacherId | null>(null)
   const t = modal ? TEACHERS[modal] : null
+
+  useEffect(() => {
+    document.body.style.overflow = modal ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [modal])
 
   return (
     <>
