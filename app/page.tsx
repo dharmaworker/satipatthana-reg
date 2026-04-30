@@ -254,7 +254,7 @@ export default function HomePage() {
             <div className="timeline">
               <TimelineItem side="left" date="05.11 — 05.25" title="報名期間" desc="線上填寫報名表，提交個人資料與修學背景。" />
               <TimelineItem side="right" date="06.06　錄取通知" title="錄取通知發送" desc="錄取者將於 6 月 6 日收到 E-mail 通知。提交報名表單不代表已錄取。" />
-              <TimelineItem side="left" date="06.15　繳費截止" title="完成繳費以正式錄取" desc="錄取者須於 6 月 15 日台北時間晚上 8 時前完成繳費，才算正式錄取。" />
+              <TimelineItem side="left" date="06.15　繳費截止" title="完成繳費以正式錄取" desc="錄取者須於 6月15日（台北時間）晚上 8 時前完成繳費，才算正式錄取。" />
               <TimelineItem side="right" date="08.20 — 08.24" title="報到、入住後" desc="展開為期五日四夜的四念處禪修" />
             </div>
           </div>
@@ -278,7 +278,7 @@ export default function HomePage() {
               <details>
                 <summary>錄取流程是怎樣的？</summary>
                 <p>提交報名表單<strong>不代表已錄取</strong>。錄取通知將於 <strong>6 月 6 日</strong>以 Email 發送，請留意收件匣與垃圾信箱。<br />
-                收到錄取通知後，須於 <strong>6 月 15 日台北時間晚上 8 時前</strong>匯款／刷卡繳交食宿、場地及交通等費用，並至學員專區填寫繳費資料，才算完成正式錄取。<br />
+                收到錄取通知後，須於 <strong>6月15日（台北時間）晚上 8 時前</strong>匯款／刷卡繳交食宿、場地及交通等費用，並至學員專區填寫繳費資料，才算完成正式錄取。<br />
                 正式錄取者將建立 LINE 及微信群組聯繫。<strong style={{ color: 'var(--gold-deep)' }}>請勿在錄取確認前購買機票或安排行程。</strong></p>
               </details>
               <details>
