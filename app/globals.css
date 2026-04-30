@@ -185,7 +185,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   margin: 0 0 12px;
   color: var(--gold);
   letter-spacing: 0.22em;
-  font-size: 12px;
+  font-size: 15px;
   text-transform: uppercase;
   font-family: var(--font-cormorant), "Cormorant Garamond", serif;
   font-style: italic;
