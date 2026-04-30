@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       emergency_relation: '緊急聯絡人關係',
       emergency_phone: '緊急聯絡人電話',
       arrival_transport: '前往日月潭方式',
-      departure_transport: '離開日月潭會館方式',
+      departure_transport: '離開日月潭湖畔會館方式',
       diet: '飲食選擇',
       noon_fasting: '過午不食',
       snacks: '茶點需求',
