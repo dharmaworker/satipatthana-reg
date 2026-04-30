@@ -94,8 +94,18 @@ export default function HomePage() {
   const t = modal ? TEACHERS[modal] : null
 
   useEffect(() => {
-    document.body.style.overflow = modal ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (modal) {
+      const sw = window.innerWidth - document.documentElement.clientWidth
+      document.body.style.overflow = 'hidden'
+      document.body.style.paddingRight = sw > 0 ? `${sw}px` : ''
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
+    }
   }, [modal])
 
   return (
@@ -320,7 +330,8 @@ export default function HomePage() {
           <div className="teacher-modal-card" onClick={e => e.stopPropagation()}>
             <button className="teacher-modal-close" onClick={() => setModal(null)} aria-label="關閉">✕</button>
             <div className="teacher-modal-photo">
-              <img src={t.photo} alt={t.name} />
+              <img src={t.photo} alt={t.name}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
               <div className="photo-name">{t.name}<small>{t.nameEn}</small></div>
             </div>
             <div className="teacher-modal-body">

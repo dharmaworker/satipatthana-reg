@@ -749,10 +749,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: linear-gradient(135deg, var(--gold-soft), var(--bg-deep));
   overflow: hidden;
   display: flex; align-items: flex-end;
+  contain: strict;
 }
 .teacher-modal-photo img {
   position: absolute; inset: 0;
-  width: 100%; height: 100%; object-fit: cover; object-position: top;
+  width: 100%; height: 100%; object-fit: cover; object-position: top center;
+  display: block;
 }
 .teacher-modal-photo .photo-name {
   position: relative; z-index: 1;
