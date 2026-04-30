@@ -65,7 +65,6 @@ export default function MemberLoginPage() {
 
       <main className="login-wrap">
         <div className="login-card">
-          <div className="login-icon">心</div>
           <div className="login-kicker">Member Portal · 學員專區</div>
           <h1 className="login-title">學員專區登入</h1>
           <p className="login-subtitle">

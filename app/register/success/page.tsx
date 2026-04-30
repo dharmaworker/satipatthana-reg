@@ -19,7 +19,6 @@ export default function SuccessPage() {
 
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="success-card">
-          <div className="success-icon">心</div>
           <h1 className="success-title">報名成功</h1>
           <p className="success-desc">
             感謝您報名「第二屆台灣四念處禪修」。<br />
