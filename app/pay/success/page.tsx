@@ -1,8 +1,9 @@
 'use client'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
-export default function PaySuccessPage() {
+function PaySuccessContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
@@ -65,5 +66,13 @@ export default function PaySuccessPage() {
         </div>
       </footer>
     </>
+  )
+}
+
+export default function PaySuccessPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><div className="spinner-large" /></div>}>
+      <PaySuccessContent />
+    </Suspense>
   )
 }

@@ -1,8 +1,9 @@
 'use client'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
-export default function QuickTestsSuccessPage() {
+function QuickTestsSuccessContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
@@ -65,5 +66,13 @@ export default function QuickTestsSuccessPage() {
         </div>
       </footer>
     </>
+  )
+}
+
+export default function QuickTestsSuccessPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><div className="spinner-large" /></div>}>
+      <QuickTestsSuccessContent />
+    </Suspense>
   )
 }
