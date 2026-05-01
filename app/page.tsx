@@ -4,7 +4,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHERS = {
   'luangpu-pramote': {
-    photo: SITE_ASSETS.teacher('luangpu-pramote.webp'),
+    photo: SITE_ASSETS.teacher('luangpu-pramote.jpg'),
     name: '隆波帕默尊者',
     nameEn: 'Luangpu Pramote Pamojjo',
     tagline: '廣受尊崇的禪修導師，其教法尤其契合現代都市人。',
