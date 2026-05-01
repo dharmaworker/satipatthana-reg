@@ -705,19 +705,19 @@ function StudentIdCell({
             onChange={e => setVal(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel() }}
             placeholder="R-001"
-            style={{ width: 80, border: '1px solid var(--line)', borderRadius: 6, padding: '3px 6px', fontFamily: 'var(--font-cormorant), monospace', fontSize: 12, color: 'var(--ink)' }} />
-          <button onClick={save} style={{ fontSize: 11, color: 'var(--green-deep)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>儲存</button>
-          <button onClick={cancel} style={{ fontSize: 11, color: 'var(--ink-mute)', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
+            style={{ width: 90, border: '1px solid var(--line)', borderRadius: 6, padding: '4px 8px', fontFamily: 'var(--font-cormorant), monospace', fontSize: 14, color: 'var(--ink)' }} />
+          <button onClick={save} style={{ fontSize: 13, color: 'var(--green-deep)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>儲存</button>
+          <button onClick={cancel} style={{ fontSize: 13, color: 'var(--ink-mute)', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
         </div>
       ) : (
         <>
           <div className="mono">{reg.student_id || '—'}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
             <button onClick={() => setEditing(true)}
-              style={{ fontSize: 10, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>✏ 手動</button>
+              style={{ fontSize: 12, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>✏ 手動</button>
             {reg.student_id && (
               <button onClick={onClear}
-                style={{ fontSize: 10, color: 'var(--warning)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>註銷</button>
+                style={{ fontSize: 12, color: 'var(--warning)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>註銷</button>
             )}
           </div>
         </>
