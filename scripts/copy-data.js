@@ -62,7 +62,7 @@ module.exports = {
         ['首頁 > 活動資訊', 'home.at_glance.date_value', '段落', '08.20—24', ''],
         ['首頁 > 活動資訊', 'home.at_glance.date_detail', '段落', '2026 · 共五日', ''],
         ['首頁 > 活動資訊', 'home.at_glance.venue_value', '段落', '南投・日月潭', ''],
-        ['首頁 > 活動資訊', 'home.at_glance.host_value', '段落', '四念處禪修學會', ''],
+        ['首頁 > 活動資訊', 'home.at_glance.host_value', '段落', '台灣四念處學會', ''],
         ['首頁 > 活動資訊', 'home.at_glance.capacity_value', '段落', '250', ''],
         ['首頁 > 活動資訊', 'home.at_glance.capacity_note', '段落', '名額有限，額滿為止', ''],
         // Teachers
@@ -140,7 +140,7 @@ module.exports = {
         ['報名表 > Step1 > 師資', 'register.step1.group_desc', '段落', '隆波帕默尊者體系助教老師 親臨授課指導', ''],
         ['報名表 > Step1 > 師資 > 泰國連線', 'register.step1.teacher_online1', '段落', '隆波帕默尊者 Luangpu Pramote Pamojjo', ''],
         ['報名表 > Step1 > 師資 > 泰國連線', 'register.step1.teacher_online2', '段落', '阿姜宋彩尊者 Phra Ajahn Somchai Kittiyano', ''],
-        ['報名表 > Step1 > 師資 > 泰國連線', 'register.step1.teacher_online3', '段落', '麥琪媽媽 Ajahn Oranuch Santayakorn', ''],
+        ['報名表 > Step1 > 師資 > 泰國連線', 'register.step1.teacher_online3', '段落', '麥琪媽媽 Ajahn Khun Mae Oranuch Santayakorn', ''],
         ['報名表 > Step1 > 師資 > 親臨', 'register.step1.teacher1', '段落', '阿姜納 Ajahn Nat Sriwachirawat', ''],
         ['報名表 > Step1 > 師資 > 親臨', 'register.step1.teacher2', '段落', '阿姜巴山 Ajahn Prasan Bhuddhakulsomsiri', ''],
         ['報名表 > Step1 > 師資 > 親臨', 'register.step1.teacher3', '段落', '阿姜妮 Ajahn Nitiya Petchpaiboon', ''],

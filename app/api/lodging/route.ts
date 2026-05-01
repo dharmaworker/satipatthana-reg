@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
             <h3 style="color:#2d6a4f;font-size:15px;">下一步：快篩檢測上傳</h3>
             <p>請於下列時段於規定時間前上傳快篩檢測結果：</p>
             ${quickTestsButtonHtml({ id: reg.id, random_code: reg.random_code })}
-            <p style="color:#666;font-size:13px;margin-top:16px;">台灣四念處學會 合十</p>
+            <p style="color:#666;font-size:13px;margin-top:16px;">台灣四念處學會 🙏</p>
           </div>
         `,
       })

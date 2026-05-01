@@ -77,7 +77,7 @@ export function emailCodeBox(label: string, code: string, hint?: string) {
 export function emailSignoff() {
   return `<hr style="border:none;border-top:1px dotted ${C.lineStrong};margin:28px 0 16px;">
     <p style="color:${C.inkSoft};font-size:13px;margin:0 0 4px;">如有任何問題，請聯繫台灣四念處學會。</p>
-    <p style="color:${C.greenDeep};font-size:13px;margin:4px 0 0;font-weight:600;">台灣四念處學會 合十</p>`
+    <p style="color:${C.greenDeep};font-size:13px;margin:4px 0 0;font-weight:600;">台灣四念處學會 🙏</p>`
 }
 
 // 表格 (key/value rows)
