@@ -436,8 +436,8 @@ function LodgingContent() {
               <div className="info">
                 <div className="name">{reg.chinese_name} 法友</div>
                 <div className="meta">
-                  <span><strong>報名序號</strong>{reg.member_id || '待編號'}</span>
-                  {reg.student_id && <span><strong>學號</strong>{reg.student_id}</span>}
+                  <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
+                  <span><strong>學號</strong>{reg.student_id || '—'}</span>
                   <span><strong>性別</strong>{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</span>
                 </div>
               </div>

@@ -15,7 +15,7 @@ const SESSION_LABEL: Record<string, string> = {
   s6: '8/23（週日）14:00 — 15:30　阿姜妮',
 }
 
-type Reg = { id: string; chinese_name: string; member_id: string | null; gender: string | null; identity: string | null; email: string }
+type Reg = { id: string; chinese_name: string; member_id: string | null; student_id: string | null; gender: string | null; identity: string | null; email: string }
 type Interactive = { group_status: string; small_status: string; assigned_session: string | null; assigned_group: string | null; assigned_date: string | null }
 type Task = {
   learning_duration: string | null; formal_practice: string | null; daily_practice: string | null
@@ -246,7 +246,8 @@ function TaskContent() {
                 <div className="info">
                   <div className="name">{reg.chinese_name} 法友</div>
                   <div className="meta">
-                    <span><strong>報名序號</strong>{reg.member_id || '待編號'}</span>
+                    <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
+                    <span><strong>學號</strong>{reg.student_id || '—'}</span>
                     {wonGroup && <span className="status-badge accepted" style={{ fontSize: 11, padding: '2px 8px' }}><span className="dot" />集體中簽</span>}
                     {wonSmall && <span className="status-badge accepted" style={{ fontSize: 11, padding: '2px 8px' }}><span className="dot" />分組中簽</span>}
                   </div>
@@ -284,6 +285,7 @@ function TaskContent() {
 
                   <div className="field-row">
                     <ReadonlyField num="01." label="報名序號" value={reg?.member_id || '—'} />
+                    <ReadonlyField num="01b." label="學號" value={reg?.student_id || '—'} />
                     <ReadonlyField num="02." label="中文姓名" value={reg?.chinese_name || ''} />
                   </div>
                   <div className="field-row" style={{ marginTop: 12 }}>

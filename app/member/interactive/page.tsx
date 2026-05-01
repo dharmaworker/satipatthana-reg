@@ -5,7 +5,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 
 type SessionId = string
 type TeacherId = string
-type Reg = { id: string; chinese_name: string; member_id: string | null; status: string }
+type Reg = { id: string; chinese_name: string; member_id: string | null; student_id: string | null; status: string }
 type Interactive = { wanted_sessions: SessionId[]; wanted_ranking: TeacherId[]; group_status: string; small_status: string }
 
 const TEACHERS: { id: TeacherId; name: string; nameEn: string }[] = [
@@ -210,7 +210,8 @@ function InteractiveContent() {
                 <div className="info">
                   <div className="name">{reg.chinese_name} 法友</div>
                   <div className="meta">
-                    <span><strong>報名序號</strong>{reg.member_id || '待編號'}</span>
+                    <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
+                    <span><strong>學號</strong>{reg.student_id || '—'}</span>
                     <span className="status-badge accepted" style={{ fontSize: 11, padding: '2px 8px' }}>
                       <span className="dot" />已錄取
                     </span>

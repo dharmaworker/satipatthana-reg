@@ -12,7 +12,7 @@ async function authMember(request: NextRequest) {
 
   const { data: reg, error } = await supabaseAdmin
     .from('registrations')
-    .select('id, status, chinese_name, member_id, gender, identity, email')
+    .select('id, status, chinese_name, member_id, student_id, gender, identity, email')
     .eq('id', finalId)
     .eq('random_code', finalCode.toUpperCase().trim())
     .single()
