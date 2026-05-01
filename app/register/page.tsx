@@ -408,7 +408,7 @@ export default function RegisterPage() {
                 <ul>
                   <li>隆波帕默尊者 Luangpu Pramote Pamojjo</li>
                   <li>阿姜宋彩尊者 Phra Ajahn Somchai Kittiyano</li>
-                  <li>麥琪媽媽 Ajahn Oranuch Santayakorn</li>
+                  <li>麥琪媽媽 Ajahn Khun Mae Oranuch Santayakorn</li>
                 </ul>
                 <h4>【親臨授課】</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginTop: 8 }}>
