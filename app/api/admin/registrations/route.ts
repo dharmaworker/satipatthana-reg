@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
-import { nextAvailableMemberId } from '@/lib/member-id'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -112,13 +111,17 @@ export async function PATCH(request: NextRequest) {
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
 
-  // 狀態首次轉為 approved → 自動編報名序號（若尚未編過）
-  if (status === 'approved' && currentReg?.status !== 'approved' && !currentReg?.member_id && member_id === undefined) {
-    updateData.member_id = await nextAvailableMemberId()
-  }
-  // 狀態從 approved 轉走 → 註銷報名序號
-  if (status && status !== 'approved' && currentReg?.status === 'approved' && member_id === undefined) {
-    updateData.member_id = null
+  // 學號手動填入時防止重複
+  if (student_id) {
+    const { data: dup } = await supabaseAdmin
+      .from('registrations')
+      .select('id')
+      .eq('student_id', student_id)
+      .neq('id', id)
+      .maybeSingle()
+    if (dup) {
+      return NextResponse.json({ error: `學號 ${student_id} 已被使用` }, { status: 400 })
+    }
   }
 
   const { data, error } = await supabaseAdmin

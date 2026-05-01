@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
+import { nextAvailableMemberId } from '@/lib/member-id'
 import { sendMail } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
 
@@ -66,11 +67,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 產生報名序號（每筆報名皆自動編，與錄取無關）
+    const memberId = await nextAvailableMemberId()
+
     // 寫入資料庫
     const { data, error } = await supabaseAdmin
       .from('registrations')
       .insert({
         random_code: randomCode,
+        member_id: memberId,
         chinese_name: body.chinese_name,
         passport_name: body.passport_name,
         identity: body.identity,
