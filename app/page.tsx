@@ -17,6 +17,20 @@ const TEACHERS = {
       '隆波帕默尊者的中文著作包括：《解苦心鑰》《禪修入門》《唯一路》《當疾病來臨時》《當死亡降臨時》《最好的心，是平常心》《微法談》等。',
     ],
   },
+  'krit': {
+    photo: SITE_ASSETS.teacher('krit.jpg'),
+    photoPosition: 'center 20%',
+    name: '阿姜給尊者',
+    nameEn: 'Phra Ajahn Krit',
+    tagline: '精通三藏，出家27年有實證的法師。 ——隆波帕默尊者推薦語',
+    bio: [
+      '1963年出生於泰國北柳府，家中兄弟姐妹四人，排行老四。畢業於泰國政法大學新聞系，獲學士學位。畢業後，參加工作三年。',
+      '1988年7月13日，他在著名的儂塔不日府的三卡譚寺剃度出家，拜師於著名禪修大師隆波薩隆。',
+      '1988年佛學學士畢業；1989年佛學碩士畢業；1998年佛學博士畢業。',
+      '2003年到2010年，他把病重的父親接到寺廟照顧，直至2010年2月14日，老人家平靜地離開人世。',
+      '2004年，他受邀而積極的開始投身於弘法的工作，目前已是泰國非常知名的法師，同時也是隆波帕默尊者體系裡，最為知名的出家弟子。',
+    ],
+  },
   'somchai': {
     photo: SITE_ASSETS.teacher('somchai.jpg'),
     name: '阿姜宋彩尊者',
@@ -86,7 +100,7 @@ const TEACHERS = {
 
 type TeacherId = keyof typeof TEACHERS
 
-const ONLINE_TEACHERS: TeacherId[] = ['luangpu-pramote', 'somchai', 'oranuch']
+const ONLINE_TEACHERS: TeacherId[] = ['luangpu-pramote', 'krit', 'somchai', 'oranuch']
 const IN_PERSON_TEACHERS: TeacherId[] = ['nat', 'prasan', 'nitiya', 'napatpol']
 
 export default function HomePage() {
