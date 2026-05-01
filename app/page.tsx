@@ -5,6 +5,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 const TEACHERS = {
   'luangpu-pramote': {
     photo: SITE_ASSETS.teacher('luangpu-pramote.jpg'),
+    photoPosition: 'center 30%',
     name: '隆波帕默尊者',
     nameEn: 'Luangpu Pramote Pamojjo',
     tagline: '廣受尊崇的禪修導師，其教法尤其契合現代都市人。',
@@ -404,7 +405,7 @@ function TeacherCard({ id, onClick }: { id: TeacherId; onClick: () => void }) {
   const t = TEACHERS[id]
   return (
     <article className="teacher-card" onClick={onClick}>
-      <div className="teacher-photo"><img src={t.photo} alt={t.name} /></div>
+      <div className="teacher-photo"><img src={t.photo} alt={t.name} style={'photoPosition' in t ? { objectPosition: (t as any).photoPosition } : undefined} /></div>
       <div className="teacher-card-body">
         <h4 className="teacher-name">{t.name}</h4>
         <p className="teacher-name-en">{t.nameEn}</p>
