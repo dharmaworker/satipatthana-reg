@@ -48,6 +48,7 @@ function InteractiveContent() {
   const [step, setStep] = useState(1)
   const [maxReached, setMaxReached] = useState(1)
   const [error, setError] = useState('')
+  const [errorField, setErrorField] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done] = useState(false)
 
@@ -97,27 +98,38 @@ function InteractiveContent() {
     setRanking(next)
   }
 
+  const fail = (field: string, msg: string) => {
+    setError(msg)
+    setErrorField(field)
+    setTimeout(() => {
+      const el = document.getElementById(`field-${field}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
+
   const goToStep = (target: number) => {
     if (target === step) return
-    if (target < step) { setStep(target); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    if (target < step) { setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
     if (target <= maxReached) {
-      setStep(target); window.scrollTo({ top: 0, behavior: 'smooth' }); return
+      setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return
     }
     if (target === step + 1) {
       setStep(target)
       setMaxReached(prev => Math.max(prev, target))
+      setErrorField(null)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   const handleSubmit = async () => {
     setError('')
+    setErrorField(null)
     if (!open) { setError('互動報名尚未開放'); return }
     if (pastDeadline) { setError('互動報名已截止'); return }
 
     const filled = ranking.filter(Boolean) as TeacherId[]
     if (filled.length > 0 && filled.length !== 4) {
-      setError('分組互動需要排序 4 位老師完整')
+      fail('ranking', '分組互動需要排序 4 位老師完整')
       return
     }
 
@@ -341,7 +353,7 @@ function InteractiveContent() {
                     <p>點擊右側老師加入下一個空欄；已填入的老師可點 <strong style={{ color: 'var(--error)' }}>✕</strong> 移回右側。要報名分組互動請排滿 4 位（必須完整排序），不報名則保持空白。</p>
                   </div>
 
-                  <div className="ranking-board">
+                  <div className="ranking-board" id="field-ranking">
                     <div>
                       <div className="board-title">您的意願順序 <small>Your Priority</small></div>
                       <div className="slot-list">

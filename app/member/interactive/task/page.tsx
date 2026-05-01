@@ -52,6 +52,7 @@ function TaskContent() {
   const [step, setStep] = useState(1)
   const [maxReached, setMaxReached] = useState(1)
   const [error, setError] = useState('')
+  const [errorField, setErrorField] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -94,23 +95,35 @@ function TaskContent() {
 
   const update = (k: keyof Task, v: string) => {
     setForm(prev => ({ ...prev, [k]: v }))
+    if (errorField === k) setErrorField(null)
     if (error) setError('')
   }
 
+  const fail = (field: string, msg: string): false => {
+    setError(msg)
+    setErrorField(field)
+    setTimeout(() => {
+      const el = document.getElementById(`field-${field}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+    return false
+  }
+  const errCls = (f: string) => errorField === f ? 'error' : ''
+
   const validateStep1 = () => {
-    if (!form.learning_duration?.trim()) { setError('請填寫 Q5 學習實踐多長時間'); return false }
-    if (!form.formal_practice?.trim()) { setError('請填寫 Q6 固定形式練習'); return false }
-    if (!form.daily_practice?.trim()) { setError('請填寫 Q7 日常生活練習'); return false }
+    if (!form.learning_duration?.trim()) return fail('learning_duration', '請填寫 Q5 學習實踐多長時間')
+    if (!form.formal_practice?.trim()) return fail('formal_practice', '請填寫 Q6 固定形式練習')
+    if (!form.daily_practice?.trim()) return fail('daily_practice', '請填寫 Q7 日常生活練習')
     return true
   }
   const validateGroupStep = () => {
-    if (!form.group_prior_interaction) { setError('請填寫 Q9 是否曾與該老師互動'); return false }
-    if (!form.group_question?.trim()) { setError('請填寫 Q10 集體互動問題'); return false }
+    if (!form.group_prior_interaction) return fail('group_prior_interaction', '請填寫 Q9 是否曾與該老師互動')
+    if (!form.group_question?.trim()) return fail('group_question', '請填寫 Q10 集體互動問題')
     return true
   }
   const validateSmallStep = () => {
-    if (!form.small_prior_interaction) { setError('請填寫 Q13 是否曾與該老師互動'); return false }
-    if (!form.small_question?.trim()) { setError('請填寫 Q15 分組互動問題'); return false }
+    if (!form.small_prior_interaction) return fail('small_prior_interaction', '請填寫 Q13 是否曾與該老師互動')
+    if (!form.small_question?.trim()) return fail('small_question', '請填寫 Q15 分組互動問題')
     return true
   }
 
@@ -126,18 +139,20 @@ function TaskContent() {
 
   const goToStep = (target: number) => {
     if (target === step) return
-    if (target < step) { setStep(target); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    if (target < step) { setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
     // forward: validate current
     if (step === 1 && !validateStep1()) return
     if (step === 2 && wonGroup && !validateGroupStep()) return
     setStep(target)
     setMaxReached(prev => Math.max(prev, target))
     setError('')
+    setErrorField(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSubmit = async () => {
     setError('')
+    setErrorField(null)
     if (!validateUpToStep(totalSteps)) return
     setSubmitting(true)
     try {
@@ -293,26 +308,26 @@ function TaskContent() {
                     <ReadonlyField num="04." label="身份" value={identityLabel(reg?.identity || null)} />
                   </div>
 
-                  <div style={{ marginTop: 16 }}>
+                  <div style={{ marginTop: 16 }} id="field-learning_duration">
                     <label className="form-label">05. 您學習並實踐隆波帕默尊者的教導多長時間了？ <span className="required">*</span></label>
-                    <input className="form-input" placeholder="例：3 年、半年、剛開始等"
+                    <input className={`form-input ${errCls('learning_duration')}`} placeholder="例：3 年、半年、剛開始等"
                       value={form.learning_duration || ''}
                       onChange={e => update('learning_duration', e.target.value)} />
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14 }} id="field-formal_practice">
                     <label className="form-label">06. 請填寫您固定形式的練習方法、頻率和時長 <span className="required">*</span></label>
                     <p className="form-hint">如果是念誦請註明內容；如同時採用兩種以上練習也請註明（例如：每日經行 1 小時 + 念誦半小時）</p>
-                    <textarea className="form-textarea" rows={4}
+                    <textarea className={`form-textarea ${errCls('formal_practice')}`} rows={4}
                       placeholder="例：每日經行三小時、靜坐一小時，每週至少 5 天"
                       value={form.formal_practice || ''}
                       onChange={e => update('formal_practice', e.target.value)} />
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14 }} id="field-daily_practice">
                     <label className="form-label">07. 請填寫您在日常生活中的練習方法 <span className="required">*</span></label>
                     <p className="form-hint">例如：觀身體的動停、念誦（請註明念誦的內容）等</p>
-                    <textarea className="form-textarea" rows={4}
+                    <textarea className={`form-textarea ${errCls('daily_practice')}`} rows={4}
                       placeholder="例：在通勤、用餐、工作中保持覺察身體的動作"
                       value={form.daily_practice || ''}
                       onChange={e => update('daily_practice', e.target.value)} />
@@ -331,9 +346,9 @@ function TaskContent() {
                   <ReadonlyField num="08." label="您中簽的集體互動場次"
                     value={interactive?.assigned_session ? SESSION_LABEL[interactive.assigned_session] || interactive.assigned_session : '（待學會指定）'} />
 
-                  <div style={{ marginTop: 16 }}>
+                  <div style={{ marginTop: 16 }} id="field-group_prior_interaction">
                     <label className="form-label">09. 您是否曾與這位指導老師互動過？ <span className="required">*</span></label>
-                    <div className="opt-group inline">
+                    <div className={`opt-group inline ${errCls('group_prior_interaction')}`}>
                       {[['yes', '是'], ['no', '否']].map(([v, l]) => {
                         const checked = form.group_prior_interaction === v
                         return (
@@ -347,13 +362,13 @@ function TaskContent() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14 }} id="field-group_question">
                     <label className="form-label">10. 請填寫您近期的實修情況以及希望這位老師指導的實修中出現的問題 <span className="required">*</span></label>
                     <p className="form-hint">
                       <strong style={{ color: 'var(--gold-deep)' }}>限 75 字內</strong>。互動是由老師針對您當前實修狀態給予指導的機會。
                       請不要提交：①和實修無關的內容；②已過去很久的境界；③純理論。
                     </p>
-                    <textarea className="form-textarea" rows={4} maxLength={75}
+                    <textarea className={`form-textarea ${errCls('group_question')}`} rows={4} maxLength={75}
                       placeholder="例：最近固定模式經常昏昏沉沉，覺性也慢，心重苦比較多，心力弱。請老師指點突破。"
                       value={form.group_question || ''}
                       onChange={e => update('group_question', e.target.value)} />
@@ -377,9 +392,9 @@ function TaskContent() {
                       value={interactive?.assigned_date || '（待學會指定）'} />
                   </div>
 
-                  <div style={{ marginTop: 16 }}>
+                  <div style={{ marginTop: 16 }} id="field-small_prior_interaction">
                     <label className="form-label">13. 您是否曾與這位指導老師互動過？ <span className="required">*</span></label>
-                    <div className="opt-group inline">
+                    <div className={`opt-group inline ${errCls('small_prior_interaction')}`}>
                       {[['yes', '是'], ['no', '否']].map(([v, l]) => {
                         const checked = form.small_prior_interaction === v
                         return (
@@ -393,12 +408,12 @@ function TaskContent() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 14 }} id="field-small_question">
                     <label className="form-label">15. 請填寫您近期的實修情況以及希望這位老師指導的實修中出現的問題 <span className="required">*</span></label>
                     <p className="form-hint">
                       <strong style={{ color: 'var(--gold-deep)' }}>限 75 字內</strong>。同上互動規範。
                     </p>
-                    <textarea className="form-textarea" rows={4} maxLength={75}
+                    <textarea className={`form-textarea ${errCls('small_question')}`} rows={4} maxLength={75}
                       placeholder="例：最近固定模式經常昏昏沉沉，覺性也慢，心重苦比較多，心力弱。請老師指點突破。"
                       value={form.small_question || ''}
                       onChange={e => update('small_question', e.target.value)} />

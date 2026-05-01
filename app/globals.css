@@ -452,6 +452,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-color: var(--error);
   background: rgba(184, 82, 58, 0.05);
 }
+.opt-group.error {
+  outline: 1.5px solid var(--error);
+  border-radius: 10px;
+  background: rgba(184, 82, 58, 0.04);
+}
 .form-input::placeholder, .form-textarea::placeholder { color: var(--ink-mute); font-weight: 400; }
 .form-input.uppercase { text-transform: uppercase; letter-spacing: 0.12em; font-family: var(--font-cormorant), "Cormorant Garamond", "Noto Sans TC", serif; font-weight: 600; }
 .form-select {
