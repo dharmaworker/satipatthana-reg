@@ -141,10 +141,10 @@ function MemberDashboardContent() {
               <span className="k">報名序號</span>
               <strong>{member.member_id || '待編號'}</strong>
             </div>
-            {member.student_id && (
+            {(member.student_id || member.status === 'approved') && (
               <div className="ref" style={{ marginTop: 4 }}>
                 <span className="k">學號</span>
-                <strong>{member.student_id}</strong>
+                <strong>{member.student_id || '—'}</strong>
               </div>
             )}
             <span className={`status-badge ${sInfo.cls}`} style={{ marginTop: 8 }}>
