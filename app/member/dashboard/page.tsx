@@ -113,7 +113,6 @@ function MemberDashboardContent() {
             </span>
           </a>
           <div className="nav-actions">
-            <a href={withAuth('/info/schedule')} className="nav-back">📋 課程時間表</a>
             <a href="/" className="nav-back">← 主站</a>
             <button className="nav-logout" onClick={() => router.push('/member')}>登出</button>
           </div>
@@ -378,6 +377,11 @@ function MemberDashboardContent() {
           <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
         </div>
       </footer>
+
+      {/* 課程時間表浮動按鈕 */}
+      <a href={withAuth('/info/schedule')} className="fab-schedule">
+        📋<span>課程時間表</span>
+      </a>
     </>
   )
 }
