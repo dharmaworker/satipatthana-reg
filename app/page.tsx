@@ -214,7 +214,7 @@ export default function HomePage() {
               </div>
               <div className="key-item">
                 <div className="key-label">Host <span className="cn">主辦</span></div>
-                <div className="key-value">台灣四念處學會<span className="sub">Satipaṭṭhāna Society</span></div>
+                <div className="key-value">台灣四念處學會<span className="sub">Taiwan Satipaṭṭhāna Society</span></div>
               </div>
               <div className="key-item">
                 <div className="key-label">Capacity <span className="cn">名額</span></div>
