@@ -1,3 +1,4 @@
+import { SITE_ASSETS } from '@/lib/site-assets'
 export default function PaymentPage() {
   return (
     <>
@@ -119,6 +120,10 @@ export default function PaymentPage() {
         <div className="container footer-inner">
           <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', display: 'block' }} />
+            <span style={{ fontSize: 11, color: 'rgba(251,248,242,0.65)', lineHeight: '1.4' }}>請加入學會<br/>LINE官方帳號洽詢</span>
+          </div>
         </div>
       </footer>
     </>

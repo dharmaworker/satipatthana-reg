@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TESTS: { key: 'test_0817_url' | 'test_0819_url'; label: string; date: string; deadline: string }[] = [
   { key: 'test_0817_url', label: '8/17 快篩上傳', date: '08.17', deadline: '8/17 上午 8 點 ～ 晚上 8 點前' },
@@ -332,6 +333,10 @@ function QuickTestsContent() {
         <div className="container footer-inner">
           <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', display: 'block' }} />
+            <span style={{ fontSize: 11, color: 'rgba(251,248,242,0.65)', lineHeight: '1.4' }}>請加入學會<br/>LINE官方帳號洽詢</span>
+          </div>
         </div>
       </footer>
     </>

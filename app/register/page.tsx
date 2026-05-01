@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { SITE_ASSETS } from '@/lib/site-assets'
 
 const THAILAND_COURSES = [
   '第一屆泰國四念處課程（2014年）',
@@ -974,7 +975,7 @@ export default function RegisterPage() {
         {!outOfPeriod && (
           <div style={{ textAlign: 'center', padding: '40px 0 20px' }}>
             <p style={{ fontFamily: 'var(--font-noto-serif-tc), serif', color: 'var(--green-deep)', fontWeight: 700 }}>
-              台灣四念處學會 合十
+              台灣四念處學會 🙏
             </p>
             <p style={{ color: 'var(--ink-mute)', fontSize: 14, marginTop: 4 }}>隨喜功德</p>
           </div>
@@ -985,6 +986,10 @@ export default function RegisterPage() {
         <div className="container footer-inner">
           <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div><a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)', display: 'block' }} />
+            <span style={{ fontSize: 11, color: 'rgba(251,248,242,0.65)', lineHeight: '1.4' }}>請加入學會<br/>LINE官方帳號洽詢</span>
+          </div>
         </div>
       </footer>
     </>
