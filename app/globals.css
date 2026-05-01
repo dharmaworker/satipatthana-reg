@@ -2455,7 +2455,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .admin-table tbody tr { border-bottom: 1px dotted var(--line); transition: background 0.15s; }
 .admin-table tbody tr:hover { background: rgba(216, 194, 154, 0.08); }
 .admin-table tbody td { padding: 11px 14px; color: var(--ink); }
-.admin-table .mono { font-family: var(--font-cormorant), 'Courier New', monospace; letter-spacing: 0.03em; }
+.admin-table .mono { font-family: var(--font-cormorant), 'Courier New', monospace; letter-spacing: 0.03em; font-size: 14px; }
 .admin-table .muted { color: var(--ink-mute); font-size: 12.5px; }
 
 .admin-btn-sm {
