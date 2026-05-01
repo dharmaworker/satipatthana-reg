@@ -157,21 +157,21 @@ function MemberDashboardContent() {
                   <div style={{ marginBottom: 4 }}>
                     <span style={{ color: 'var(--ink-soft)' }}>集體場次：</span>
                     <strong>{member.interactive_assigned_session ? SESSION_LABEL[member.interactive_assigned_session] ?? member.interactive_assigned_session : '（待指定）'}</strong>
-                    {member.interactive_group_serial !== null && (
-                      <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>序號 {member.interactive_group_serial}</span>
-                    )}
+                    <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>
+                      序號 {member.interactive_group_serial !== null ? member.interactive_group_serial : '—'}
+                    </span>
                   </div>
                 )}
                 {member.interactive_small_status === 'won' && (
                   <div>
                     <span style={{ color: 'var(--ink-soft)' }}>分組：</span>
                     <strong>{member.interactive_assigned_group ? TEACHER_LABEL[member.interactive_assigned_group] ?? member.interactive_assigned_group : '（待指定）'}</strong>
-                    {member.interactive_assigned_date && (
-                      <span style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>{member.interactive_assigned_date}</span>
-                    )}
-                    {member.interactive_small_serial !== null && (
-                      <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>序號 {member.interactive_small_serial}</span>
-                    )}
+                    <span style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>
+                      {member.interactive_assigned_date || '—'}
+                    </span>
+                    <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>
+                      序號 {member.interactive_small_serial !== null ? member.interactive_small_serial : '—'}
+                    </span>
                   </div>
                 )}
               </div>
