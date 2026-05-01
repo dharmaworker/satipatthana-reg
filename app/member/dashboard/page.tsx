@@ -380,7 +380,8 @@ function MemberDashboardContent() {
 
       {/* 課程時間表浮動按鈕 */}
       <a href={withAuth('/info/schedule')} className="fab-schedule">
-        📋<span>課程時間表</span>
+        <span className="fab-icon">📅</span>
+        <span className="fab-text">課程時間表</span>
       </a>
     </>
   )
