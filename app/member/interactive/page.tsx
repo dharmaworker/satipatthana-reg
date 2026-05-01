@@ -49,7 +49,7 @@ function InteractiveContent() {
   const [maxReached, setMaxReached] = useState(1)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
+  const [done] = useState(false)
 
   const [sessions, setSessions] = useState<SessionId[]>([])
   const [ranking, setRanking] = useState<(TeacherId | null)[]>([null, null, null, null])
@@ -130,8 +130,7 @@ function InteractiveContent() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || '送出失敗')
-      setDone(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      router.push(`/member/interactive/success?id=${id}&code=${encodeURIComponent(code)}`)
     } catch (e: any) {
       setError(e.message)
     } finally {

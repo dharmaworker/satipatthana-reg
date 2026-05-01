@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 type PlanRow = { id: string; label: string; date: string; amount: number; method: 'transfer' | 'card'; test?: boolean }
@@ -20,6 +20,7 @@ const PLAN_INFO: Record<string, PlanRow> = Object.fromEntries(PLANS.map(p => [p.
 
 function PayContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const registration_id = searchParams.get('id') || ''
   const random_code = searchParams.get('code') || ''
 
@@ -57,7 +58,7 @@ function PayContent() {
   })
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferError, setTransferError] = useState('')
-  const [transferDone, setTransferDone] = useState(false)
+  const [transferDone] = useState(false)
 
   const handleTransferSubmit = async () => {
     setTransferLoading(true)
@@ -76,7 +77,7 @@ function PayContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setTransferDone(true)
+      router.push(`/pay/success?id=${registration_id}&code=${encodeURIComponent(random_code)}`)
     } catch (err: any) {
       setTransferError(err.message)
     } finally {

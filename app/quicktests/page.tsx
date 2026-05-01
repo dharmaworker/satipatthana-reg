@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TESTS: { key: 'test_0817_url' | 'test_0819_url'; label: string; date: string; deadline: string }[] = [
@@ -10,6 +10,7 @@ const TESTS: { key: 'test_0817_url' | 'test_0819_url'; label: string; date: stri
 
 function QuickTestsContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
@@ -17,7 +18,7 @@ function QuickTestsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
+  const [done] = useState(false)
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -78,7 +79,7 @@ function QuickTestsContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '送出失敗')
-      setDone(true)
+      router.push(`/quicktests/success?id=${id}&code=${encodeURIComponent(code)}`)
     } catch (e: any) {
       setError(e.message)
     } finally {

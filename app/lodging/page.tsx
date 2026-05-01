@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const STEPS = [
@@ -56,6 +56,7 @@ const IDENTITY_LABEL: Record<string, string> = { id: '台灣人（身分證正�
 
 function LodgingContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
@@ -64,7 +65,7 @@ function LodgingContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
+  const [done] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [step, setStep] = useState(1)
   const [maxReached, setMaxReached] = useState(1)
@@ -314,9 +315,9 @@ function LodgingContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '送出失敗')
+      const wasEdited = !!existingLodging
       if (data.lodging) setExistingLodging(data.lodging)
-      setDone(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      router.push(`/lodging/success?id=${id}&code=${encodeURIComponent(code)}${wasEdited ? '&edited=1' : ''}`)
     } catch (e: any) {
       setError(e.message)
     } finally {
