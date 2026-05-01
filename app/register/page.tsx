@@ -407,6 +407,7 @@ export default function RegisterPage() {
                 <h4>【泰國連線授課】</h4>
                 <ul>
                   <li>隆波帕默尊者 Luangpu Pramote Pamojjo</li>
+                  <li>阿姜給尊者 Phra Ajahn Krit</li>
                   <li>阿姜宋彩尊者 Phra Ajahn Somchai Kittiyano</li>
                   <li>麥琪媽媽 Ajahn Khun Mae Oranuch Santayakorn</li>
                 </ul>
