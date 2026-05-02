@@ -47,9 +47,9 @@ export async function sendApprovalEmail(reg: {
 
   const body = `
     ${emailKicker('Approval Notice')}
-    ${emailH1('第二屆台灣四念處禪修課程－錄取通知')}
+    ${emailH1('第二屆台灣四念處禪修課程－實體課程錄取通知')}
     <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
-    <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修課程」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
+    <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修<strong style="color:${C.ink};">實體課程</strong>」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
 
     ${emailH3('一、請詳讀以下內容')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">本信包含：繳費資訊、費用方案、食宿登記、快篩檢測、承諾書、住宿安排、報到時間、課程時間、結束時間、禪修課程群組、承諾事宜、海外入境須知、航班建議等。請務必逐項閱讀。</p>
@@ -191,7 +191,7 @@ export async function sendApprovalEmail(reg: {
   return sendMail({
     to: reg.email,
     bcc: archiveEmail,
-    subject: '【第二屆台灣四念處禪修】錄取通知',
+    subject: '【第二屆台灣四念處禪修】實體課程錄取通知',
     html: emailWrap(body, { maxWidth: 680 }),
   })
 }

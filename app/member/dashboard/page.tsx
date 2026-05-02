@@ -150,6 +150,10 @@ function MemberDashboardContent() {
                 <strong>{member.student_id || '—'}</strong>
               </div>
             )}
+            <div className="ref" style={{ marginTop: 4 }}>
+              <span className="k">課程形式</span>
+              <strong>{isOnline ? '線上 Zoom' : '實體課程'}</strong>
+            </div>
             <span className={`status-badge ${sInfo.cls}`} style={{ marginTop: 8 }}>
               <span className="dot" />{sInfo.label}
             </span>
@@ -367,7 +371,7 @@ function MemberDashboardContent() {
           <div className="pending-card">
             <div className="icon">⏳</div>
             <h3>報名審核中</h3>
-            <p>您的報名資料已收到，學會正在審核。<br />錄取通知將於 <strong>06/06</strong> 以 Email 發送，請留意收件匣與垃圾信箱。</p>
+            <p>您已報名{isOnline ? '線上課程（Zoom）' : '實體課程'}，資料已收到，學會正在審核。<br />錄取通知將於 <strong>06/06</strong> 以 Email 發送，請留意收件匣與垃圾信箱。</p>
             <p>在錄取確認前，請勿購買機票或安排行程。</p>
             <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>
