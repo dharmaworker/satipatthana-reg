@@ -288,16 +288,16 @@ export default function DashboardPage() {
                 <th>禪修形式</th>
                 <th>審核狀態</th>
                 <th>報名序號</th>
-                <th>方案</th>
+                {formatFilter !== 'online' && <th>方案</th>}
                 <th>QR</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 11 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : registrations.length === 0 ? (
-                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 11 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : registrations.map((reg) => (
                 <tr key={reg.id}>
                   <td>
@@ -330,9 +330,11 @@ export default function DashboardPage() {
                     </select>
                   </td>
                   <td className="mono">{reg.member_id || '—'}</td>
-                  <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}
-                  </td>
+                  {formatFilter !== 'online' && (
+                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}
+                    </td>
+                  )}
                   <td>
                     {(() => {
                       const qrUrl = reg.line_qr_url || reg.wechat_qr_url
@@ -417,14 +419,16 @@ export default function DashboardPage() {
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>
-              <div>
-                <label className="form-label">食宿方案</label>
-                <select className="form-select" value={editReg.payment_plan || ''}
-                  onChange={e => setEditReg({ ...editReg, payment_plan: e.target.value })}>
-                  <option value="">（未選擇）</option>
-                  {PLAN_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              </div>
+              {editReg.retreat_format !== 'online' && (
+                <div>
+                  <label className="form-label">食宿方案</label>
+                  <select className="form-select" value={editReg.payment_plan || ''}
+                    onChange={e => setEditReg({ ...editReg, payment_plan: e.target.value })}>
+                    <option value="">（未選擇）</option>
+                    {PLAN_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              )}
 
               <QrEditField label="LINE QR" kind="line"
                 url={editReg.line_qr_url} uploading={editUploading === 'line'}

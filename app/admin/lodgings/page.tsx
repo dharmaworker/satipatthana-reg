@@ -394,7 +394,7 @@ export default function LodgingsPage() {
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button onClick={() => setDetail(r)} disabled={!r.id} className="admin-btn-sm">詳細</button>
-                        <button onClick={() => { setEdit({ ...r }); setEditError('') }} disabled={!r.id} className="admin-btn-sm gold">編輯</button>
+                        <button onClick={() => { setEdit({ ...r }); setEditError('') }} className="admin-btn-sm gold">編輯</button>
                         <button onClick={() => handleDelete(reg)} disabled={deleting === reg.id}
                           className="admin-btn-sm"
                           style={{ color: 'var(--error)', borderColor: 'rgba(184,82,58,0.4)' }}>
@@ -495,7 +495,7 @@ export default function LodgingsPage() {
         <div onClick={() => !saving && setEdit(null)} className="admin-modal-overlay">
           <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
             <h3>
-              <span>編輯食宿登記：{edit.registration?.chinese_name}</span>
+              <span>編輯{edit.id ? '食宿登記' : '學員資料（線上）'}：{edit.registration?.chinese_name}</span>
               <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">✕</button>
             </h3>
 
@@ -507,14 +507,21 @@ export default function LodgingsPage() {
                 </div>
               </div>
               <div>
-                <label className="form-label">學號（手動）</label>
-                <input className="form-input uppercase" placeholder="例：R-001"
+                <label className="form-label">學號（{edit.registration?.retreat_format === 'online' ? '自動' : '手動'}）</label>
+                <input className="form-input uppercase"
+                  placeholder={edit.registration?.retreat_format === 'online' ? '例：STD_L-001' : '例：R-001'}
                   value={edit.registration?.student_id || ''}
                   onChange={e => setEdit({ ...edit, registration: { ...edit.registration, student_id: e.target.value } })} />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            {!edit.id && (
+              <p style={{ color: 'var(--ink-mute)', fontSize: 13, marginBottom: 14, padding: '8px 12px', background: 'rgba(73,85,52,0.05)', borderRadius: 8 }}>
+                線上課程學員，無食宿登記資料。僅可編輯學號。
+              </p>
+            )}
+
+            {edit.id && <><div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
               <SelectField label="入住日" value={edit.arrival_date} onChange={v => setEdit({ ...edit, arrival_date: v })}
                 options={[['2026-08-19', '2026-08-19'], ['2026-08-20', '2026-08-20']]} />
               <SelectField label="離開日" value={edit.departure_date} onChange={v => setEdit({ ...edit, departure_date: v })}
@@ -612,6 +619,7 @@ export default function LodgingsPage() {
                 )
               })}
             </div>
+            </>}
 
             {editError && (
               <div style={{ marginTop: 12, background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 8, padding: 10, color: 'var(--error)', fontSize: 13 }}>
