@@ -99,11 +99,12 @@ export default function DashboardPage() {
     }
   }
 
-  const fetchData = async () => {
+  const fetchData = async (fmt?: string) => {
+    const f = fmt ?? formatFilter
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
-    if (formatFilter !== 'all') params.set('format', formatFilter)
+    if (f !== 'all') params.set('format', f)
     if (search) params.set('search', search)
     const res = await fetch(`/api/admin/registrations?${params}`)
     const data = await res.json()
@@ -114,13 +115,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem('admin_format')
-    if (saved === 'in_person' || saved === 'online') setFormatFilter(saved)
-    const handler = (e: Event) => setFormatFilter((e as CustomEvent<string>).detail)
+    const initial = (saved === 'in_person' || saved === 'online') ? saved : 'in_person'
+    setFormatFilter(initial)
+    fetchData(initial)
+    const handler = (e: Event) => {
+      const f = (e as CustomEvent<string>).detail
+      setFormatFilter(f)
+      fetchData(f)
+    }
     window.addEventListener('admin-format-change', handler)
     return () => window.removeEventListener('admin-format-change', handler)
   }, [])
 
-  useEffect(() => { fetchData() }, [statusFilter, formatFilter])
+  useEffect(() => { fetchData() }, [statusFilter])
 
   const handleSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') fetchData()
@@ -257,7 +264,7 @@ export default function DashboardPage() {
             <option value="approved">已錄取</option>
             <option value="rejected">未錄取</option>
           </select>
-          <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button>
           <button onClick={() => batchAction('approve')} disabled={sending || selected.length === 0}
             className="admin-btn-sm primary">批次錄取（{selected.length}）</button>
