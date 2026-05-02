@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { data: reg, error: regErr } = await supabaseAdmin
     .from('registrations')
-    .select('id, random_code, chinese_name, passport_name, dharma_name, identity, gender, age, email, phone, member_id, status, payment_plan, payment_status')
+    .select('id, random_code, chinese_name, passport_name, dharma_name, identity, gender, age, email, phone, member_id, student_id, status, payment_plan, payment_status')
     .eq('id', id)
     .eq('random_code', code.toUpperCase())
     .single()

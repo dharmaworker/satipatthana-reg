@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
   const { data: reg, error: regErr } = await supabaseAdmin
     .from('registrations')
-    .select('id, random_code, chinese_name, email, member_id, status, payment_plan')
+    .select('id, random_code, chinese_name, email, member_id, student_id, status, payment_plan')
     .eq('id', id)
     .eq('random_code', code.toUpperCase())
     .single()
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const { data: reg, error: regErr } = await supabaseAdmin
       .from('registrations')
-      .select('id, random_code, chinese_name, email, member_id, status, payment_plan')
+      .select('id, random_code, chinese_name, email, member_id, student_id, status, payment_plan')
       .eq('id', id)
       .eq('random_code', code.toUpperCase())
       .single()
