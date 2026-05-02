@@ -36,7 +36,7 @@ export async function sendInteractiveInviteEmail(reg: {
       <p style="margin:0;font-weight:700;color:${C.greenDeep};font-size:14px;">📋 學員專區</p>
       <p style="margin:8px 0 10px;font-size:13.5px;color:${C.inkSoft};">您也可從學員專區進入互動報名，並查看其他項目進度（繳費、食宿、快篩）：</p>
       ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'green')}
-      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
+      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
     `)}
 
     ${emailSignoff()}

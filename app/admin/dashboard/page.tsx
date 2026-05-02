@@ -181,7 +181,7 @@ export default function DashboardPage() {
   }
 
   const deleteRegistration = async (reg: any) => {
-    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`)) return
+    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n專屬碼：${reg.random_code}\n\n此操作無法復原，包含 QR 圖檔也會一併刪除。`)) return
     const res = await fetch('/api/admin/registrations', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -253,7 +253,7 @@ export default function DashboardPage() {
         {/* 操作列 */}
         <div className="admin-toolbar">
           <input type="text"
-            placeholder="搜尋姓名、Email、繳費碼⋯"
+            placeholder="搜尋姓名、Email、專屬碼⋯"
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={handleSearch}
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                 <th>姓名</th>
                 <th>Email</th>
                 <th>居住地</th>
-                <th>繳費碼</th>
+                <th>專屬碼</th>
                 <th>審核狀態</th>
                 <th>報名序號</th>
                 {formatFilter !== 'online' && <th>方案</th>}
@@ -465,7 +465,7 @@ export default function DashboardPage() {
             <DetailSection title="基本資料">
               <DetailField label="中文姓名" value={detailReg.chinese_name} />
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
-              <DetailField label="繳費碼" value={detailReg.random_code} mono />
+              <DetailField label="專屬碼" value={detailReg.random_code} mono />
               <DetailField label="報名序號" value={detailReg.member_id} />
               <DetailField label="身分" value={detailReg.identity === 'lay' ? '在家人' : detailReg.identity === 'monastic' ? '僧眾' : detailReg.identity} />
               <DetailField label="法名" value={detailReg.dharma_name} />

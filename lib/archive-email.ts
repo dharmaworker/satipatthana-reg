@@ -94,7 +94,7 @@ export async function sendLodgingArchiveEmail(reg: {
 
     ${emailH3('繳費資訊')}
     ${tableWrap([
-      tableRow('繳費碼', reg.random_code),
+      tableRow('專屬碼', reg.random_code),
       tableRow('中文姓名', reg.chinese_name),
       tableRow('報名序號', reg.member_id),
       tableRow('選擇方案', planLabel),

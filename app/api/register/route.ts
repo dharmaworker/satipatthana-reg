@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
         <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修線上課程（Zoom）」。我們已收到您的報名資料，以下是您的資訊：</p>
 
-        ${emailCodeBox('您的專屬繳費碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
+        ${emailCodeBox('您的專屬專屬碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
 
         ${emailH3('接下來')}
         <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         ${emailH3('查詢報名狀態 / 學員專區')}
         <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">您可隨時透過下方連結進入學員專區查詢審核狀態：</p>
         ${emailButton(`${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}`, '前往學員專區', 'green')}
-        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
+        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼。</p>
 
         ${emailSignoff()}
         <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
         <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修實體課程」。我們已收到您的報名資料，以下是您的資訊：</p>
 
-        ${emailCodeBox('您的專屬繳費碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
+        ${emailCodeBox('您的專屬專屬碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
 
         ${emailH3('接下來')}
         <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         ${emailH3('查詢報名狀態 / 學員專區')}
         <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">您可隨時透過下方連結進入學員專區查詢審核狀態，錄取後在同一頁面完成繳費、食宿登記、快篩上傳：</p>
         ${emailButton(`${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}`, '前往學員專區', 'green')}
-        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
+        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼。</p>
 
         ${emailSignoff()}
         <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
         ${emailH3('基本資料')}
         ${tableWrap([
           tableRow('禪修形式', formatLabel),
-          tableRow('繳費碼', data.random_code),
+          tableRow('專屬碼', data.random_code),
           tableRow('報名時間', new Date(data.created_at).toLocaleString('zh-TW')),
           tableRow('中文姓名', data.chinese_name),
           tableRow('護照英文名', data.passport_name),
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
         ${emailH3('基本資料')}
         ${tableWrap([
           tableRow('禪修形式', formatLabel),
-          tableRow('繳費碼', data.random_code),
+          tableRow('專屬碼', data.random_code),
           tableRow('報名時間', new Date(data.created_at).toLocaleString('zh-TW')),
           tableRow('中文姓名', data.chinese_name),
           tableRow('護照英文名', data.passport_name),

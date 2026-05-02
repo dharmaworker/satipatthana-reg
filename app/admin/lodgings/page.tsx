@@ -194,7 +194,7 @@ export default function LodgingsPage() {
   }
 
   const handleDelete = async (reg: any) => {
-    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n繳費碼：${reg.random_code}\n\n此操作無法復原，食宿登記、所有上傳檔案都會一併刪除。`)) return
+    if (!confirm(`確定要刪除這筆報名嗎？\n\n姓名：${reg.chinese_name}\nEmail：${reg.email}\n專屬碼：${reg.random_code}\n\n此操作無法復原，食宿登記、所有上傳檔案都會一併刪除。`)) return
     setDeleting(reg.id)
     const res = await fetch('/api/admin/registrations', {
       method: 'DELETE',
@@ -269,7 +269,7 @@ export default function LodgingsPage() {
 
         <div className="admin-toolbar">
           <input type="text"
-            placeholder="搜尋姓名 / Email / 繳費碼 / 報名序號 / 學號"
+            placeholder="搜尋姓名 / Email / 專屬碼 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 280 }} />
           <label style={{ background: 'rgba(216, 194, 154, 0.18)', border: '1px solid rgba(180, 147, 88, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
@@ -324,7 +324,7 @@ export default function LodgingsPage() {
                 <th>姓名</th>
                 <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'L-xxx 自動' : 'T-xxx 自動'}</span></th>
                 <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'STD_L-xxx 自動' : 'R-xxx 手動'}</span></th>
-                <th>繳費碼</th>
+                <th>專屬碼</th>
                 {formatFilter !== 'online' && <th>方案</th>}
                 {formatFilter !== 'online' && <th>繳費</th>}
                 {formatFilter !== 'online' && <th>入住—離開</th>}

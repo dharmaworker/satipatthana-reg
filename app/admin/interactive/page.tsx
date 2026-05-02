@@ -481,7 +481,7 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                       <option value="">（未指定）</option>
                       {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
-                    <p className="form-hint">範圍 -1 ~ 15</p>
+                    <p className="form-hint">範圍 -1 ~ 70</p>
                   </div>
                 </>
               )}
@@ -529,7 +529,7 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                       <option value="">（未指定）</option>
                       {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
-                    <p className="form-hint">範圍 -1 ~ 15</p>
+                    <p className="form-hint">範圍 -1 ~ 70</p>
                   </div>
                 </>
               )}

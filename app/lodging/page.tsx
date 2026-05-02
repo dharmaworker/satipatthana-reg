@@ -438,7 +438,7 @@ function LodgingContent() {
                 <div className="meta">
                   <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
                   <span><strong>學號</strong>{reg.student_id || '—'}</span>
-                  <span><strong>繳費碼</strong>{code}</span>
+                  <span><strong>專屬碼</strong>{code}</span>
                   <span><strong>繳費方案</strong>{reg.payment_plan ? `${PLAN_INFO[reg.payment_plan]?.label || reg.payment_plan}（${PLAN_INFO[reg.payment_plan]?.method || ''}）` : '—'}</span>
                 </div>
               </div>
@@ -1066,7 +1066,7 @@ function LodgingContent() {
                 <a href="mailto:satipatthana.tw@gmail.com">satipatthana.tw@gmail.com</a>
               </p>
               <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, display: 'block', marginTop: 10 }} />
-              <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginTop: 6, marginBottom: 0 }}>請加入學會LINE官方帳號洽詢</p>
+              <p style={{ fontSize: 13, color: 'var(--ink-mute)', marginTop: 6, marginBottom: 0 }}>請加入學會LINE官方帳號洽詢</p>
             </div>
           </aside>
         </div>
@@ -1083,10 +1083,10 @@ function LodgingContent() {
         <div className="container footer-inner">
           <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div>
-            <h5 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: 'rgba(251,248,242,0.9)', letterSpacing: '0.1em' }}>聯絡我們</h5>
-            <div style={{ marginBottom: 12 }}><a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'rgba(251,248,242,0.75)', fontSize: 13 }}>satipatthana.tw@gmail.com</a></div>
+            <h5 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700, color: 'rgba(251,248,242,0.9)', letterSpacing: '0.1em' }}>聯絡我們</h5>
+            <div style={{ marginBottom: 12 }}><a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'rgba(251,248,242,0.75)', fontSize: 14 }}>satipatthana.tw@gmail.com</a></div>
             <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 10, display: 'block', border: '1px solid rgba(255,255,255,0.2)' }} />
-            <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>請加入學會LINE官方帳號洽詢</p>
+            <p style={{ marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>請加入學會LINE官方帳號洽詢</p>
           </div>
         </div>
       </footer>

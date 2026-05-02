@@ -29,7 +29,7 @@ export async function sendApprovalEmail(reg: {
       ${emailH3('二、學員專區')}
       <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">您可透過學員專區查看課程時間表及審核狀態：</p>
       ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'green')}
-      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
+      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
 
       <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
       ${emailSignoff()}
@@ -117,7 +117,7 @@ export async function sendApprovalEmail(reg: {
         </td>
       </tr>
     </table>
-    ${emailWarning(`匯款時請備註姓名與繳費碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。`)}
+    ${emailWarning(`匯款時請備註姓名與專屬碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。`)}
 
     ${emailH3('三、住宿安排')}
     <ol style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
@@ -176,13 +176,13 @@ export async function sendApprovalEmail(reg: {
     ${emailH3('十二、主辦單位保有課程變更、異動之權利')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">如有任何爭議，台灣四念處學會將保留最終決定權。</p>
 
-    ${emailCodeBox('您的專屬繳費碼', reg.random_code, '查詢報名狀態時需使用此碼')}
+    ${emailCodeBox('您的專屬專屬碼', reg.random_code, '查詢報名狀態時需使用此碼')}
 
     ${emailHighlight(`
       <p style="margin:0;font-weight:700;color:${C.greenDeep};font-size:14px;">📋 學員專區</p>
       <p style="margin:8px 0 10px;font-size:13.5px;color:${C.inkSoft};">點擊下方連結直接進入您的學員專區，查看繳費、食宿登記與快篩上傳進度：</p>
       ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'green')}
-      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
+      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
     `)}
 
     ${emailSignoff()}

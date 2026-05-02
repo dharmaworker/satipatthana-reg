@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const { email, random_code } = await request.json()
 
     if (!email || !random_code) {
-      return NextResponse.json({ error: '請輸入 Email 和繳費碼' }, { status: 400 })
+      return NextResponse.json({ error: '請輸入 Email 和專屬碼' }, { status: 400 })
     }
 
     const { data, error } = await supabaseAdmin
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !data) {
-      return NextResponse.json({ error: '帳號或繳費碼錯誤' }, { status: 401 })
+      return NextResponse.json({ error: '帳號或專屬碼錯誤' }, { status: 401 })
     }
 
     return NextResponse.json({

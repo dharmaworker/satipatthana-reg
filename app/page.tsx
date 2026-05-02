@@ -399,7 +399,7 @@ export default function HomePage() {
                   alt="LINE 官方帳號"
                   style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 10, display: 'block', border: '1px solid rgba(255,255,255,0.2)' }}
                 />
-                <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                <p style={{ marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
                   請加入學會LINE官方帳號洽詢
                 </p>
               </div>

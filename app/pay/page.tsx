@@ -196,7 +196,7 @@ function PayContent() {
                   <div className="meta">
                     <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
                     <span><strong>學號</strong>{reg.student_id || '—'}</span>
-                    <span><strong>繳費碼</strong>{random_code}</span>
+                    <span><strong>專屬碼</strong>{random_code}</span>
                   </div>
                 </div>
               </div>
@@ -310,7 +310,7 @@ function PayContent() {
                 <div className="step-header">
                   <p className="step-header-kicker">Step 02</p>
                   <h2 className="step-header-title">匯款帳號資訊</h2>
-                  <p className="step-header-desc">請依下列帳號完成匯款，匯款備註填寫您的姓名及繳費碼。</p>
+                  <p className="step-header-desc">請依下列帳號完成匯款，匯款備註填寫您的姓名及專屬碼。</p>
                 </div>
 
                 <div className="field-group">
@@ -342,7 +342,7 @@ function PayContent() {
                 <div className="alert-card" style={{ marginTop: 8 }}>
                   <div className="alert-card-title">匯款注意事項</div>
                   <ul>
-                    <li>匯款時請備注您的姓名及繳費碼：<strong style={{ letterSpacing: '0.12em' }}>{random_code}</strong></li>
+                    <li>匯款時請備注您的姓名及專屬碼：<strong style={{ letterSpacing: '0.12em' }}>{random_code}</strong></li>
                     <li>匯款完成後請填寫下方匯款資訊回報，並截圖上傳至學會 LINE 官方帳號。</li>
                     <li>請於 <strong>2026/06/15 晚上 8 點前</strong>完成匯款。</li>
                   </ul>
@@ -444,7 +444,7 @@ function PayContent() {
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
               <p>
-                <strong>匯款</strong>方案：請務必於匯款備註中填寫您的姓名與繳費碼，並於下方回填匯款後 5 碼。
+                <strong>匯款</strong>方案：請務必於匯款備註中填寫您的姓名與專屬碼，並於下方回填匯款後 5 碼。
               </p>
               <p style={{ marginTop: 10 }}>
                 <strong>刷卡</strong>方案：將跳轉到綠界第三方加密頁面，學會不會接觸您的卡號。
@@ -470,10 +470,10 @@ function PayContent() {
         <div className="container footer-inner">
           <div>© 2026 台灣四念處學會　All rights reserved.</div>
           <div>
-            <h5 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: 'rgba(251,248,242,0.9)', letterSpacing: '0.1em' }}>聯絡我們</h5>
-            <div style={{ marginBottom: 12 }}><a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'rgba(251,248,242,0.75)', fontSize: 13 }}>satipatthana.tw@gmail.com</a></div>
+            <h5 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700, color: 'rgba(251,248,242,0.9)', letterSpacing: '0.1em' }}>聯絡我們</h5>
+            <div style={{ marginBottom: 12 }}><a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'rgba(251,248,242,0.75)', fontSize: 14 }}>satipatthana.tw@gmail.com</a></div>
             <img src={SITE_ASSETS.lineOfficial} alt="LINE 官方帳號" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 10, display: 'block', border: '1px solid rgba(255,255,255,0.2)' }} />
-            <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>請加入學會LINE官方帳號洽詢</p>
+            <p style={{ marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>請加入學會LINE官方帳號洽詢</p>
           </div>
         </div>
       </footer>
