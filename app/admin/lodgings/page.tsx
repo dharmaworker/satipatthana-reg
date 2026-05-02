@@ -275,11 +275,13 @@ export default function LodgingsPage() {
             className="admin-btn-sm primary">
             {bulkSending === 'approval' ? '寄送中⋯' : `批次寄錄取通知（${bulkSelected.length}）`}
           </button>
+          {/* 正式學員通知暫時隱藏
           <button onClick={sendFormalNotifications}
             disabled={bulkSending !== null}
             className="admin-btn-sm gold">
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
+          */}
           <button onClick={sendInteractiveInvite}
             disabled={bulkSending !== null}
             className="admin-btn-sm">
@@ -333,7 +335,7 @@ export default function LodgingsPage() {
                         )} />
                     </td>
                     <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{reg.chinese_name}</td>
-                    <td className="mono">{reg.member_id || '—'}</td>
+                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.member_id || '—'}</td>
                     <td>
                       <StudentIdCell reg={reg}
                         onSave={val => patchStudentId(reg.id, val)}
@@ -710,17 +712,15 @@ function StudentIdCell({
           <button onClick={cancel} style={{ fontSize: 13, color: 'var(--ink-mute)', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
         </div>
       ) : (
-        <>
-          <div className="mono">{reg.student_id || '—'}</div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
-            <button onClick={() => setEditing(true)}
-              style={{ fontSize: 12, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>✏ 手動</button>
-            {reg.student_id && (
-              <button onClick={onClear}
-                style={{ fontSize: 12, color: 'var(--warning)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>註銷</button>
-            )}
-          </div>
-        </>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+          <span className="muted">{reg.student_id || '—'}</span>
+          <button onClick={() => setEditing(true)}
+            style={{ fontSize: 12, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>✏ 手動</button>
+          {reg.student_id && (
+            <button onClick={onClear}
+              style={{ fontSize: 12, color: 'var(--warning)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>註銷</button>
+          )}
+        </div>
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHERS = {
@@ -106,23 +106,23 @@ const IN_PERSON_TEACHERS: TeacherId[] = ['nat', 'prasan', 'nitiya', 'napatpol']
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [modal, setModal] = useState<TeacherId | null>(null)
+  const savedScrollY = useRef(0)
   const t = modal ? TEACHERS[modal] : null
 
   useEffect(() => {
     if (modal) {
-      const scrollY = window.scrollY
+      savedScrollY.current = window.scrollY
       const sw = window.innerWidth - document.documentElement.clientWidth
       document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
+      document.body.style.top = `-${savedScrollY.current}px`
       document.body.style.width = '100%'
       document.body.style.paddingRight = sw > 0 ? `${sw}px` : ''
     } else {
-      const top = document.body.style.top
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
       document.body.style.paddingRight = ''
-      if (top) window.scrollTo(0, -parseInt(top, 10))
+      window.scrollTo(0, savedScrollY.current)
     }
     return () => {
       document.body.style.position = ''

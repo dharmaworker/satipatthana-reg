@@ -63,14 +63,14 @@ export async function PATCH(request: NextRequest) {
   }
   if (assigned_date !== undefined) update.assigned_date = assigned_date || null
   if (group_serial !== undefined) {
-    if (group_serial !== null && (typeof group_serial !== 'number' || group_serial < -1 || group_serial > 15)) {
-      return NextResponse.json({ error: 'group_serial 不合法（-1 ~ 15）' }, { status: 400 })
+    if (group_serial !== null && (typeof group_serial !== 'number' || group_serial < -1 || group_serial > 70)) {
+      return NextResponse.json({ error: 'group_serial 不合法（-1 ~ 70）' }, { status: 400 })
     }
     update.group_serial = group_serial
   }
   if (small_serial !== undefined) {
-    if (small_serial !== null && (typeof small_serial !== 'number' || small_serial < -1 || small_serial > 15)) {
-      return NextResponse.json({ error: 'small_serial 不合法（-1 ~ 15）' }, { status: 400 })
+    if (small_serial !== null && (typeof small_serial !== 'number' || small_serial < -1 || small_serial > 70)) {
+      return NextResponse.json({ error: 'small_serial 不合法（-1 ~ 70）' }, { status: 400 })
     }
     update.small_serial = small_serial
   }

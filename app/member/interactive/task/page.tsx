@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
 const TEACHER_LABEL: Record<string, string> = {
@@ -28,6 +28,7 @@ function identityLabel(i: string | null) { return i === 'lay' ? '在家居士' :
 
 function TaskContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
@@ -54,7 +55,6 @@ function TaskContent() {
   const [error, setError] = useState('')
   const [errorField, setErrorField] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
 
   const [form, setForm] = useState<Task>({
     learning_duration: '', formal_practice: '', daily_practice: '',
@@ -163,8 +163,7 @@ function TaskContent() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || '送出失敗')
-      setDone(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      router.push(`/member/interactive/task/success?id=${id}&code=${encodeURIComponent(code)}`)
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -270,16 +269,7 @@ function TaskContent() {
               </div>
             )}
 
-            {done && (
-              <div className="submit-status">
-                <div className="submit-status-icon">✓</div>
-                <div className="submit-status-text">
-                  <h4>互動作業已送出</h4>
-                  <p>送出時間：{new Date().toLocaleString('zh-TW')}　·　如需修改請於課程開始前重新送出。</p>
-                </div>
-              </div>
-            )}
-            {!done && task && (
+            {task && (
               <div className="submit-status">
                 <div className="submit-status-icon">✓</div>
                 <div className="submit-status-text">
