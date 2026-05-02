@@ -703,13 +703,17 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .teachers-grid, .teachers-grid.three-col { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 540px) {
-  .teachers-grid, .teachers-grid.three-col { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .teacher-photo { width: 90px; height: 90px; }
-  .teacher-card { padding: 16px 10px 14px; border-radius: 16px; }
-  .teacher-name { font-size: 14px; }
-  .teacher-name-en { font-size: 11px; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .teacher-tagline { font-size: 12px; line-height: 1.6; margin-bottom: 8px; }
-  .teacher-more { font-size: 11px; }
+  .teachers-grid, .teachers-grid.three-col { grid-template-columns: 1fr; gap: 10px; }
+  .teacher-card {
+    flex-direction: row; align-items: flex-start;
+    text-align: left; padding: 14px 16px; border-radius: 16px; gap: 14px;
+  }
+  .teacher-photo { width: 72px; height: 72px; margin: 0; flex-shrink: 0; }
+  .teacher-card-body { text-align: left; }
+  .teacher-name { font-size: 15px; }
+  .teacher-name-en { font-size: 12px; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .teacher-tagline { font-size: 12.5px; line-height: 1.65; margin-bottom: 6px; }
+  .teacher-more { font-size: 12px; }
 }
 
 .teacher-card {
