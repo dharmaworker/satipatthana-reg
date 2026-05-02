@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '此學員尚未送出互動報名，無法編輯' }, { status: 404 })
   }
 
-  // 允許「先中簽、後排場次／組別／序號」；notify 端會跳過尚未指定者，不會寄出含「待補」的信。
+  // 允許「先中簽、後排場次／組別／序號」；notify 端只要任一中簽即寄，場次/組別未填寫則顯示「待補」。
 
   const { error } = await supabaseAdmin
     .from('interactive_registrations')

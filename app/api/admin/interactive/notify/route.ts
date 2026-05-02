@@ -25,20 +25,13 @@ export async function POST(request: NextRequest) {
     .select('id, email, chinese_name, random_code')
     .in('id', ids)
 
-  let ok = 0, failed = 0, skippedNoWin = 0, skippedIncomplete = 0
+  let ok = 0, failed = 0, skippedNoWin = 0
   for (const r of regs || []) {
     const i = intMap.get(r.id)
     if (!i) { failed++; continue }
     // 都沒中（任一邊都不是 won）→ 不寄信
     if (i.group_status !== 'won' && i.small_status !== 'won') {
       skippedNoWin++
-      continue
-    }
-    // 中簽但場次／組別還沒指定 → 跳過，避免寄出「待補」信
-    const groupIncomplete = i.group_status === 'won' && !i.assigned_session
-    const smallIncomplete = i.small_status === 'won' && (!i.assigned_group || !i.assigned_date)
-    if (groupIncomplete || smallIncomplete) {
-      skippedIncomplete++
       continue
     }
     try {
@@ -69,6 +62,5 @@ export async function POST(request: NextRequest) {
   const parts = [`成功 ${ok} 封`]
   if (failed > 0) parts.push(`失敗 ${failed} 封`)
   if (skippedNoWin > 0) parts.push(`跳過 ${skippedNoWin} 封（都沒中不寄）`)
-  if (skippedIncomplete > 0) parts.push(`跳過 ${skippedIncomplete} 封（中簽但場次／組別未指定，請補後再寄）`)
-  return NextResponse.json({ message: `寄送完成：${parts.join('，')}`, ok, failed, skippedNoWin, skippedIncomplete })
+  return NextResponse.json({ message: `寄送完成：${parts.join('，')}`, ok, failed, skippedNoWin })
 }
