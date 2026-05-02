@@ -46,12 +46,12 @@ const ONLINE_COURSES = [
 const CHENGDU_COURSES = ['《解苦心鑰》讀者交流會（2024年）']
 
 const COURSE_GROUPS = [
-  { no: 3, title: '泰國四念處禪修課程', loc: '泰國・線下實體', courses: THAILAND_COURSES },
-  { no: 4, title: '馬來西亞四念處禪修課程', loc: '馬來西亞・線下實體', courses: MALAYSIA_COURSES },
-  { no: 5, title: '《解苦心鑰》讀者交流會', loc: '中國成都・線下實體', courses: CHENGDU_COURSES },
-  { no: 6, title: '台灣四念處禪修課程', loc: '台灣・線下實體', courses: TAIWAN_COURSES },
-  { no: 7, title: '新加坡四念處禪修課程', loc: '新加坡・線下實體', courses: SINGAPORE_COURSES },
-  { no: 8, title: '遠程（線上）四念處禪修課程', loc: 'Zoom・線上網路', courses: ONLINE_COURSES },
+  { no: 4, title: '泰國四念處禪修課程', loc: '泰國・線下實體', courses: THAILAND_COURSES },
+  { no: 5, title: '馬來西亞四念處禪修課程', loc: '馬來西亞・線下實體', courses: MALAYSIA_COURSES },
+  { no: 6, title: '《解苦心鑰》讀者交流會', loc: '中國成都・線下實體', courses: CHENGDU_COURSES },
+  { no: 7, title: '台灣四念處禪修課程', loc: '台灣・線下實體', courses: TAIWAN_COURSES },
+  { no: 8, title: '新加坡四念處禪修課程', loc: '新加坡・線下實體', courses: SINGAPORE_COURSES },
+  { no: 9, title: '遠程（線上）四念處禪修課程', loc: 'Zoom・線上網路', courses: ONLINE_COURSES },
 ]
 
 const STEPS = [
@@ -179,31 +179,31 @@ export default function RegisterPage() {
 
   // 各步驟的驗證；回 true 表示通過
   const validateStep3 = (): boolean => {
-    if (form.honest_confirm !== 'yes') return fail('honest_confirm', 'Q1：請承諾如實填寫本次報名表單')
+    if (form.honest_confirm !== 'yes') return fail('honest_confirm', 'Q2：請承諾如實填寫本次報名表單')
 
     const heardDharma =
       form.attended_formal === 'yes' ||
       form.watched_recordings === 'yes' ||
       form.zoom_guidance === 'yes' ||
       form.watched_30_talks === 'yes'
-    if (!form.attended_formal) return fail('attended_formal', '請回答 Q2：是否以正式學員身份參加過課程')
-    if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q9：是否完整觀看／聆聽過 3 屆錄影')
-    if (!form.zoom_guidance) return fail('zoom_guidance', '請回答 Q10：是否透過 ZOOM 做過一對一指導')
-    if (!form.watched_30_talks) return fail('watched_30_talks', '請回答 Q11：是否聽過法談 30 篇以上')
-    if (!heardDharma) return fail('attended_formal', '聞法條件未達成：Q2、Q9、Q10、Q11 需至少一項選「是」')
+    if (!form.attended_formal) return fail('attended_formal', '請回答 Q3：是否以正式學員身份參加過課程')
+    if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q10：是否完整觀看／聆聽過 3 屆錄影')
+    if (!form.zoom_guidance) return fail('zoom_guidance', '請回答 Q11：是否透過 ZOOM 做過一對一指導')
+    if (!form.watched_30_talks) return fail('watched_30_talks', '請回答 Q12：是否聽過法談 30 篇以上')
+    if (!heardDharma) return fail('attended_formal', '聞法條件未達成：Q3、Q10、Q11、Q12 需至少一項選「是」')
 
-    if (!form.keep_precepts) return fail('keep_precepts', '請回答 Q12：是否持守五戒')
-    if (form.keep_precepts !== 'yes') return fail('keep_precepts', '報名條件：需持守五戒（Q12 須選「是」）')
+    if (!form.keep_precepts) return fail('keep_precepts', '請回答 Q13：是否持守五戒')
+    if (form.keep_precepts !== 'yes') return fail('keep_precepts', '報名條件：需持守五戒（Q13 須選「是」）')
 
-    if (!form.practice_years) return fail('practice_years', '請回答 Q13：學習實踐多久')
-    if (!form.practice_frequency) return fail('practice_frequency', '請回答 Q14：固定練習頻率')
+    if (!form.practice_years) return fail('practice_years', '請回答 Q14：學習實踐多久')
+    if (!form.practice_frequency) return fail('practice_frequency', '請回答 Q15：固定練習頻率')
 
-    if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q15：是否願意按時繳費')
-    if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q15 須選「是」）')
+    if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q16：是否願意按時繳費')
+    if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q16 須選「是」）')
 
-    if (!form.health_confirm) return fail('health_confirm', '請回答 Q16：是否身體健康能全程參與')
-    if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q16 須選「是」）')
-    if (!form.retreat_format) return fail('retreat_format', '請選擇 Q18：禪修形式（實體或線上）')
+    if (!form.health_confirm) return fail('health_confirm', '請回答 Q17：是否身體健康能全程參與')
+    if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q17 須選「是」）')
+    if (!form.retreat_format) return fail('retreat_format', '請選擇 Q1：禪修形式（實體或線上）')
     return true
   }
 
@@ -484,9 +484,29 @@ export default function RegisterPage() {
               </div>
 
               {/* Q1 */}
+              <div className="question-block" id="field-retreat_format">
+                <label className="form-label">1. 請選擇參加的禪修形式 <span className="required">*</span></label>
+                <div className="opt-group">
+                  <label className={`opt ${form.retreat_format === 'in_person' ? 'selected' : ''}`}>
+                    <input type="radio" name="retreat_format" value="in_person"
+                      checked={form.retreat_format === 'in_person'}
+                      onChange={() => update('retreat_format', 'in_person')} />
+                    <span className="opt-text">參加實體禪修課程</span>
+                  </label>
+                  <label className={`opt ${form.retreat_format === 'online' ? 'selected' : ''}`}>
+                    <input type="radio" name="retreat_format" value="online"
+                      checked={form.retreat_format === 'online'}
+                      onChange={() => update('retreat_format', 'online')} />
+                    <span className="opt-text">參加線上禪修課程（Zoom）</span>
+                  </label>
+                </div>
+                {errorField === 'retreat_format' && <p className="field-error">請選擇禪修形式</p>}
+              </div>
+
+              {/* Q2 */}
               <div className="question-block" id="field-honest_confirm">
                 <label className="form-label">
-                  1. 您是否願意承諾如實填寫本次的報名表單？ <span className="required">*</span>
+                  2. 您是否願意承諾如實填寫本次的報名表單？ <span className="required">*</span>
                 </label>
                 <select className={`form-select ${errCls('honest_confirm')}`} value={form.honest_confirm}
                   onChange={e => update('honest_confirm', e.target.value)}>
@@ -499,9 +519,9 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* Q2 */}
+              {/* Q3 */}
               <div className="question-block" id="field-attended_formal">
-                <label className="form-label">2. 您是否以正式學員身份參加過隆波帕默尊者體系所舉辦的實體或線上課程？ <span className="required">*</span></label>
+                <label className="form-label">3. 您是否以正式學員身份參加過隆波帕默尊者體系所舉辦的實體或線上課程？ <span className="required">*</span></label>
                 <select className={`form-select ${errCls('attended_formal')}`} value={form.attended_formal}
                   onChange={e => update('attended_formal', e.target.value)}>
                   <option value="">請選擇</option>
@@ -510,7 +530,7 @@ export default function RegisterPage() {
                 </select>
               </div>
 
-              {/* Q3-Q8 */}
+              {/* Q4-Q9 */}
               {COURSE_GROUPS.map(({ no, title, loc, courses }) => {
                 const open = !!expandedGroups[no]
                 const selectedCount = courses.filter(c => form.attended_courses.includes(c)).length
@@ -541,13 +561,13 @@ export default function RegisterPage() {
                 )
               })}
 
-              {yesNoSelect('watched_recordings', '9. 您是否完整地觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
-              {yesNoSelect('zoom_guidance', '10. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
-              {yesNoSelect('watched_30_talks', '11. 您是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
-              {yesNoSelect('keep_precepts', '12. 您是否持守五戒？')}
+              {yesNoSelect('watched_recordings', '10. 您是否完整地觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
+              {yesNoSelect('zoom_guidance', '11. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
+              {yesNoSelect('watched_30_talks', '12. 您是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
+              {yesNoSelect('keep_precepts', '13. 您是否持守五戒？')}
 
               <div className="question-block" id="field-practice_years">
-                <label className="form-label">13. 您學習並實踐隆波帕默尊者的教導多久了？ <span className="required">*</span></label>
+                <label className="form-label">14. 您學習並實踐隆波帕默尊者的教導多久了？ <span className="required">*</span></label>
                 <select className={`form-select ${errCls('practice_years')}`} value={form.practice_years}
                   onChange={e => update('practice_years', e.target.value)}>
                   <option value="">請選擇</option>
@@ -556,7 +576,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="question-block" id="field-practice_frequency">
-                <label className="form-label">14. 在過去的三個月內，您做固定式練習的頻率是： <span className="required">*</span></label>
+                <label className="form-label">15. 在過去的三個月內，您做固定式練習的頻率是： <span className="required">*</span></label>
                 <select className={`form-select ${errCls('practice_frequency')}`} value={form.practice_frequency}
                   onChange={e => update('practice_frequency', e.target.value)}>
                   <option value="">請選擇</option>
@@ -567,7 +587,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="question-block" id="field-pay_confirm">
-                <label className="form-label">15. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
+                <label className="form-label">16. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
                 <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
                   onChange={e => update('pay_confirm', e.target.value)}>
                   <option value="">請選擇</option>
@@ -576,10 +596,10 @@ export default function RegisterPage() {
                 </select>
               </div>
 
-              {yesNoSelect('health_confirm', '16. 您是否身體健康，能夠全程獨立參與實體禪修課程？')}
+              {yesNoSelect('health_confirm', '17. 您是否身體健康，能夠全程獨立參與實體禪修課程？')}
 
               <div className="question-block">
-                <label className="form-label">17. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
+                <label className="form-label">18. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
                 <div className="opt-group">
                   <label className={`opt ${form.mental_health_note === 'no' ? 'selected' : ''}`}>
                     <input type="radio" name="mental_health" value="no"
@@ -601,25 +621,6 @@ export default function RegisterPage() {
                       onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
                   </div>
                 )}
-              </div>
-
-              <div className="question-block" id="field-retreat_format">
-                <label className="form-label">18. 請選擇參加的禪修形式 <span className="required">*</span></label>
-                <div className="opt-group">
-                  <label className={`opt ${form.retreat_format === 'in_person' ? 'selected' : ''}`}>
-                    <input type="radio" name="retreat_format" value="in_person"
-                      checked={form.retreat_format === 'in_person'}
-                      onChange={() => update('retreat_format', 'in_person')} />
-                    <span className="opt-text">參加實體禪修課程</span>
-                  </label>
-                  <label className={`opt ${form.retreat_format === 'online' ? 'selected' : ''}`}>
-                    <input type="radio" name="retreat_format" value="online"
-                      checked={form.retreat_format === 'online'}
-                      onChange={() => update('retreat_format', 'online')} />
-                    <span className="opt-text">參加線上禪修課程（Zoom）</span>
-                  </label>
-                </div>
-                {errorField === 'retreat_format' && <p className="field-error">請選擇禪修形式</p>}
               </div>
             </div>
           )}
