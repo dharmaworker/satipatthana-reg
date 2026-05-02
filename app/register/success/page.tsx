@@ -27,12 +27,12 @@ function SuccessContent() {
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="success-card">
           <h1 className="success-title">
-            {isOnline ? '線上課程報名成功' : '報名成功'}
+            {isOnline ? '線上課程報名成功' : '實體課程報名成功'}
           </h1>
           <p className="success-desc">
             {isOnline
               ? <>感謝您報名「第二屆台灣四念處禪修線上課程（Zoom）」。<br />系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。</>
-              : <>感謝您報名「第二屆台灣四念處禪修」。<br />系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。</>
+              : <>感謝您報名「第二屆台灣四念處禪修實體課程」。<br />系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。</>
             }
           </p>
 

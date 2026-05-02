@@ -140,9 +140,9 @@ export async function POST(request: NextRequest) {
         <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
       ` : `
         ${emailKicker('Registration Received')}
-        ${emailH1('已收到您的報名 🙏')}
+        ${emailH1('已收到您的實體課程報名 🙏')}
         <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
-        <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修課程」。我們已收到您的報名資料，以下是您的資訊：</p>
+        <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修實體課程」。我們已收到您的報名資料，以下是您的資訊：</p>
 
         ${emailCodeBox('您的專屬繳費碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
 
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         to: data.email,
         subject: isOnline
           ? '【第二屆台灣四念處禪修】線上課程報名確認'
-          : '【第二屆台灣四念處禪修】報名確認',
+          : '【第二屆台灣四念處禪修】實體課程報名確認',
         html: emailWrap(confirmBody),
       })
     } catch (mailErr) {
