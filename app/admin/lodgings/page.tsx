@@ -322,27 +322,27 @@ export default function LodgingsPage() {
                     }} />
                 </th>
                 <th>姓名</th>
-                <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>T-xxx 自動</span></th>
-                <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>R-xxx 手動</span></th>
+                <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'L-xxx 自動' : 'T-xxx 自動'}</span></th>
+                <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'STD_L-xxx 自動' : 'R-xxx 手動'}</span></th>
                 <th>繳費碼</th>
-                <th>方案</th>
-                <th>繳費</th>
-                <th>入住—離開</th>
-                <th>飲食</th>
-                <th>打鼾</th>
-                <th>緊急聯絡人</th>
+                {formatFilter !== 'online' && <th>方案</th>}
+                {formatFilter !== 'online' && <th>繳費</th>}
+                {formatFilter !== 'online' && <th>入住—離開</th>}
+                {formatFilter !== 'online' && <th>飲食</th>}
+                {formatFilter !== 'online' && <th>打鼾</th>}
+                {formatFilter !== 'online' && <th>緊急聯絡人</th>}
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無食宿登記</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
               ) : filtered.map(r => {
                 const reg = r.registration || {}
                 return (
-                  <tr key={r.id}>
+                  <tr key={r.id || reg.id}>
                     <td>
                       <input type="checkbox"
                         checked={bulkSelected.includes(reg.id)}
@@ -358,8 +358,8 @@ export default function LodgingsPage() {
                         onClear={() => clearStudentId(reg)} />
                     </td>
                     <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
-                    <td className="muted" style={{ whiteSpace: 'nowrap' }}>{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>
-                    <td>
+                    {formatFilter !== 'online' && <td className="muted" style={{ whiteSpace: 'nowrap' }}>{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>}
+                    {formatFilter !== 'online' && <td>
                       <select value={reg.payment_status || 'unpaid'}
                         onChange={e => updatePaymentStatus(reg.id, e.target.value)}
                         className={`admin-status-badge ${reg.payment_status === 'unpaid' ? 'muted' : reg.payment_status === 'paid' ? 'warn' : 'ok'}`}
@@ -376,21 +376,21 @@ export default function LodgingsPage() {
                           {shortNote(reg.payment_note)}
                         </div>
                       )}
-                    </td>
-                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    </td>}
+                    {formatFilter !== 'online' && <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                       {r.arrival_date ? <>{r.arrival_date}<br />{r.departure_date}</> : <span style={{ color: 'var(--ink-mute)' }}>未填食宿</span>}
-                    </td>
-                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    </td>}
+                    {formatFilter !== 'online' && <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                       {r.diet ? <>{r.diet === 'meat' ? '葷' : '素'}<br />{r.noon_fasting === 'before_noon' ? '12 前' : '12 後'}</> : '—'}
-                    </td>
-                    <td className="muted" style={{ fontSize: 12 }}>{r.id ? (r.snoring ? '會' : '否') : '—'}</td>
-                    <td style={{ fontSize: 12 }}>
+                    </td>}
+                    {formatFilter !== 'online' && <td className="muted" style={{ fontSize: 12 }}>{r.id ? (r.snoring ? '會' : '否') : '—'}</td>}
+                    {formatFilter !== 'online' && <td style={{ fontSize: 12 }}>
                       {r.emergency_name ? <>
                         {r.emergency_name}<br />
                         <span className="muted">{r.emergency_relation}</span><br />
                         <span className="muted">{r.emergency_phone}</span>
                       </> : '—'}
-                    </td>
+                    </td>}
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button onClick={() => setDetail(r)} disabled={!r.id} className="admin-btn-sm">詳細</button>
