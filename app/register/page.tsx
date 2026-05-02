@@ -282,7 +282,7 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      router.push('/register/success')
+      router.push(`/register/success?format=${form.retreat_format || 'in_person'}`)
     } catch (err: any) {
       setError(err.message)
     } finally {

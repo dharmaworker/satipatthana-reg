@@ -111,9 +111,10 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    const isOnline = data.retreat_format === 'online'
+
     // 寄報名確認信（失敗不影響報名結果）
     try {
-      const isOnline = data.retreat_format === 'online'
       const confirmBody = isOnline ? `
         ${emailKicker('Registration Received')}
         ${emailH1('已收到您的線上課程報名 🙏')}
@@ -176,14 +177,64 @@ export async function POST(request: NextRequest) {
       const courses = Array.isArray(data.attended_courses) && data.attended_courses.length
         ? data.attended_courses.join('、')
         : '—'
+      const formatLabel = isOnline ? '線上禪修（Zoom）' : '實體禪修'
 
-      const archiveBody = `
-        ${emailKicker('Registration Archive')}
-        ${emailH1('新報名備存')}
+      const archiveBody = isOnline ? `
+        ${emailKicker('Registration Archive · Online')}
+        ${emailH1('新報名備存（線上課程）')}
         <p style="color:${C.inkMute};font-size:13px;margin:0 0 16px;">本信由系統自動寄出，供學會信箱備份資料之用。最新資料請以後台為準。</p>
 
         ${emailH3('基本資料')}
         ${tableWrap([
+          tableRow('禪修形式', formatLabel),
+          tableRow('繳費碼', data.random_code),
+          tableRow('報名時間', new Date(data.created_at).toLocaleString('zh-TW')),
+          tableRow('中文姓名', data.chinese_name),
+          tableRow('護照英文名', data.passport_name),
+          tableRow('身分', data.identity === 'lay' ? '在家人' : '僧眾'),
+          tableRow('法名', nullable(data.dharma_name)),
+          tableRow('性別', data.gender === 'male' ? '男' : '女'),
+          tableRow('年齡', data.age),
+          tableRow('護照頒發地', nullable(data.passport_country)),
+          tableRow('居住地', data.residence),
+          tableRow('手機', data.phone),
+          tableRow('Email', data.email),
+          tableRow('LINE ID', nullable(data.line_id)),
+          tableRow('WeChat ID', nullable(data.wechat_id)),
+          tableRow('LINE QR', data.line_qr_url ? `<a href="${data.line_qr_url}" style="color:${C.green};">查看</a>` : '—'),
+          tableRow('WeChat QR', data.wechat_qr_url ? `<a href="${data.wechat_qr_url}" style="color:${C.green};">查看</a>` : '—'),
+        ].join(''))}
+
+        ${emailH3('報名條件')}
+        ${tableWrap([
+          tableRow('承諾如實填寫', yn(data.honest_confirm)),
+          tableRow('正式學員經驗', yn(data.attended_formal)),
+          tableRow('觀看錄影 3 屆以上', yn(data.watched_recordings)),
+          tableRow('Zoom 一對一指導', yn(data.zoom_guidance)),
+          tableRow('法談 30 篇以上', yn(data.watched_30_talks)),
+          tableRow('持守五戒', yn(data.keep_precepts)),
+          tableRow('修習年資', nullable(data.practice_years)),
+          tableRow('練習頻率', nullable(data.practice_frequency)),
+          tableRow('心理健康備註', nullable(data.mental_health_note)),
+          tableRow('過往參加課程', courses),
+        ].join(''))}
+
+        ${emailH3('狀態')}
+        ${tableWrap([
+          tableRow('審核狀態', data.status),
+        ].join(''))}
+
+        <p style="margin-top:24px;color:${C.inkMute};font-size:12px;">
+          後台連結：<a href="${baseUrl}/admin/dashboard" style="color:${C.green};">${baseUrl}/admin/dashboard</a>
+        </p>
+      ` : `
+        ${emailKicker('Registration Archive')}
+        ${emailH1('新報名備存（實體課程）')}
+        <p style="color:${C.inkMute};font-size:13px;margin:0 0 16px;">本信由系統自動寄出，供學會信箱備份資料之用。最新資料請以後台為準。</p>
+
+        ${emailH3('基本資料')}
+        ${tableWrap([
+          tableRow('禪修形式', formatLabel),
           tableRow('繳費碼', data.random_code),
           tableRow('報名時間', new Date(data.created_at).toLocaleString('zh-TW')),
           tableRow('中文姓名', data.chinese_name),
@@ -213,9 +264,8 @@ export async function POST(request: NextRequest) {
           tableRow('修習年資', nullable(data.practice_years)),
           tableRow('練習頻率', nullable(data.practice_frequency)),
           tableRow('同意繳費', yn(data.pay_confirm)),
-          tableRow('身體健康', yn(data.health_confirm)),
+          tableRow('身體健康能全程參與', yn(data.health_confirm)),
           tableRow('心理健康備註', nullable(data.mental_health_note)),
-          tableRow('禪修形式', data.retreat_format === 'in_person' ? '實體禪修' : data.retreat_format === 'online' ? '線上禪修（Zoom）' : '—'),
           tableRow('過往參加課程', courses),
         ].join(''))}
 
@@ -232,7 +282,7 @@ export async function POST(request: NextRequest) {
 
       await sendMail({
         to: archiveEmail,
-        subject: `【報名備存】${data.retreat_format === 'online' ? '線上' : '實體'} ${data.chinese_name} / ${data.random_code}`,
+        subject: `【報名備存】${isOnline ? '線上' : '實體'} ${data.chinese_name} / ${data.random_code}`,
         html: emailWrap(archiveBody, { maxWidth: 720 }),
       })
     } catch (archiveErr) {

@@ -1,6 +1,12 @@
 'use client'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-export default function SuccessPage() {
+
+function SuccessContent() {
+  const searchParams = useSearchParams()
+  const isOnline = searchParams.get('format') === 'online'
+
   return (
     <>
       <div className="page-bg">
@@ -20,20 +26,34 @@ export default function SuccessPage() {
 
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="success-card">
-          <h1 className="success-title">報名成功</h1>
+          <h1 className="success-title">
+            {isOnline ? '線上課程報名成功' : '報名成功'}
+          </h1>
           <p className="success-desc">
-            感謝您報名「第二屆台灣四念處禪修」。<br />
-            系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。
+            {isOnline
+              ? <>感謝您報名「第二屆台灣四念處禪修線上課程（Zoom）」。<br />系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。</>
+              : <>感謝您報名「第二屆台灣四念處禪修」。<br />系統已將報名資訊發送至您的電子信箱，請注意查收（包括垃圾郵件）。</>
+            }
           </p>
 
           <div className="success-next">
             <h5>接下來</h5>
-            <ol>
-              <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
-              <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
-              <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
-              <li>可隨時至 <a href="/member" style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
-            </ol>
+            {isOnline ? (
+              <ol>
+                <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
+                <li>課程方式：<strong>線上 Zoom 視訊</strong></li>
+                <li>課程日期：<strong>2026/08/20 ～ 08/24</strong></li>
+                <li>Zoom 連結及課程時程將於錄取後另行寄信通知</li>
+                <li>可隨時至 <a href="/member" style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
+              </ol>
+            ) : (
+              <ol>
+                <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
+                <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
+                <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
+                <li>可隨時至 <a href="/member" style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
+              </ol>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -59,5 +79,17 @@ export default function SuccessPage() {
         </div>
       </footer>
     </>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <div className="spinner-large" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   )
 }
