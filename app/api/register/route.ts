@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 產生報名序號（每筆報名皆自動編，與錄取無關）
-    const memberId = await nextAvailableMemberId()
+    // 產生報名序號（線上用 L-xxx，實體用 T-xxx）
+    const memberId = await nextAvailableMemberId(body.retreat_format === 'online')
 
     // 寫入資料庫
     const { data, error } = await supabaseAdmin

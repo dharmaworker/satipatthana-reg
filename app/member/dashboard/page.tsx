@@ -13,6 +13,7 @@ type MemberData = {
   payment_status: string
   payment_plan: string | null
   residence: string | null
+  retreat_format: string | null
   lodging_status: 'none' | 'submitted_editable' | 'locked'
   tests_uploaded: number
   tests_total: number
@@ -76,6 +77,8 @@ function MemberDashboardContent() {
   if (!member) return null
 
   const withAuth = (path: string) => `${path}?id=${member.id}&code=${member.random_code}`
+
+  const isOnline = member.retreat_format === 'online'
 
   // 任務狀態
   const paymentDone = member.payment_status === 'verified'
@@ -182,132 +185,143 @@ function MemberDashboardContent() {
         {member.status === 'approved' && (
           <>
             {/* 公告 */}
-            <div className="announce-card">
-              <div className="announce-card-title">最新公告</div>
-              <p>
-                錄取通知已發送，請於 <strong>6/15 晚上 8 時前</strong>完成{' '}
-                <a href={withAuth('/pay')}>繳費</a>，並於 <strong>6/20 晚上 8 時前</strong>完成{' '}
-                <a href={withAuth('/lodging')}>食宿登記</a>，才算正式錄取。
-              </p>
-            </div>
-
-            {/* 完成度進度 */}
-            <div className="progress-section">
-              <div className="progress-head">
-                <h3>完成度進度 <small>Completion</small></h3>
-                <div className="progress-percent">{progressPct}<span className="pct">%</span></div>
+            {isOnline ? (
+              <div className="announce-card">
+                <div className="announce-card-title">最新公告</div>
+                <p>恭喜您通過線上禪修課程資格審核！課程時間表請點下方連結查看。如有任何疑問請聯絡學會。</p>
               </div>
-              <div className="progress-bar-wrap">
-                <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+            ) : (
+              <div className="announce-card">
+                <div className="announce-card-title">最新公告</div>
+                <p>
+                  錄取通知已發送，請於 <strong>6/15 晚上 8 時前</strong>完成{' '}
+                  <a href={withAuth('/pay')}>繳費</a>，並於 <strong>6/20 晚上 8 時前</strong>完成{' '}
+                  <a href={withAuth('/lodging')}>食宿登記</a>，才算正式錄取。
+                </p>
               </div>
-              <div className="progress-checklist">
-                {checks.map(c => (
-                  <div key={c.label} className={`progress-item ${c.done ? 'done' : ''}`}>
-                    <div className="icon" />
-                    <span>{c.label}</span>
-                  </div>
-                ))}
+            )}
+
+            {/* 完成度進度（實體才顯示） */}
+            {!isOnline && (
+              <div className="progress-section">
+                <div className="progress-head">
+                  <h3>完成度進度 <small>Completion</small></h3>
+                  <div className="progress-percent">{progressPct}<span className="pct">%</span></div>
+                </div>
+                <div className="progress-bar-wrap">
+                  <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+                <div className="progress-checklist">
+                  {checks.map(c => (
+                    <div key={c.label} className={`progress-item ${c.done ? 'done' : ''}`}>
+                      <div className="icon" />
+                      <span>{c.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* 任務卡 */}
-            <div className="task-grid">
-              {/* 繳費 */}
-              <TaskCard
-                idLabel="$" label="Payment" title="繳費"
-                state={paymentDone ? 'done' : paymentPending ? 'todo' : 'todo'}
-                statusBadge={paymentDone ? '已完成' : paymentPending ? '待確認' : '待繳費'}
-                badgeKind={paymentDone ? 'done' : paymentPending ? 'todo' : 'urgent'}
-                deadline="06/15 晚上 8 時前" urgent={!paymentDone}
-                rows={[
-                  ['方案', member.payment_plan || '尚未選擇'],
-                  ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
-                ]}
-                actionHref={withAuth('/pay')}
-                actionText={paymentDone ? '查看' : '前往繳費 →'}
-              />
-
-              {/* 食宿登記 */}
-              <TaskCard
-                idLabel="食" label="Lodging" title="食宿登記"
-                state={lodgingDone ? (lodgingLocked ? 'done' : 'done') : 'todo'}
-                statusBadge={lodgingLocked ? '已鎖定' : lodgingDone ? '可改 1 次' : '待填寫'}
-                badgeKind={lodgingDone ? 'done' : 'todo'}
-                deadline="06/20 晚上 8 時前" urgent={!lodgingDone}
-                rows={[
-                  ['狀態', lodgingLocked ? '已修改過 1 次（鎖定）' : lodgingDone ? '已送出（還能修改 1 次）' : '尚未送出'],
-                ]}
-                actionHref={withAuth('/lodging')}
-                actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : '前往登記 →'}
-              />
-
-              {/* 快篩 */}
-              <TaskCard
-                idLabel="篩" label="Quick Test" title="快篩上傳"
-                state={testsDone ? 'done' : 'todo'}
-                statusBadge={`${member.tests_uploaded}／${member.tests_total}`}
-                badgeKind={testsDone ? 'done' : 'todo'}
-                deadline="8/17 晚上 8 點 ／ 8/19 中午 12 點前" urgent={false}
-                rows={[
-                  ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
-                  ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
-                ]}
-                actionHref={withAuth('/quicktests')}
-                actionText={testsDone ? '查看' : '前往上傳 →'}
-              />
-
-              {/* 互動報名（admin 開啟才顯示；admin preview 模式也會看到，title 加 🔧 提示） */}
-              {member.interactive_open && (
+            {/* 任務卡（實體才顯示全部；線上只顯示課程時間表入口） */}
+            {!isOnline && (
+              <div className="task-grid">
+                {/* 繳費 */}
                 <TaskCard
-                  idLabel="互" label="Interactive" title={member.interactive_preview ? '互動報名 🔧 預覽' : '互動報名'}
-                  state={member.interactive_submitted ? 'done' : 'todo'}
-                  statusBadge={member.interactive_preview ? '預覽' : member.interactive_submitted ? '已送出' : '待填寫'}
-                  badgeKind={member.interactive_submitted ? 'done' : 'todo'}
-                  deadline={member.interactive_preview ? '對學員未開放（admin 預覽中）' : '07/15 晚上 8 點前'}
-                  urgent={!member.interactive_preview && !member.interactive_submitted}
+                  idLabel="$" label="Payment" title="繳費"
+                  state={paymentDone ? 'done' : paymentPending ? 'todo' : 'todo'}
+                  statusBadge={paymentDone ? '已完成' : paymentPending ? '待確認' : '待繳費'}
+                  badgeKind={paymentDone ? 'done' : paymentPending ? 'todo' : 'urgent'}
+                  deadline="06/15 晚上 8 時前" urgent={!paymentDone}
                   rows={[
-                    ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
-                    ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                    ['方案', member.payment_plan || '尚未選擇'],
+                    ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
                   ]}
-                  actionHref={withAuth('/member/interactive')}
-                  actionText={member.interactive_submitted ? '查看／修改' : '前往報名 →'}
+                  actionHref={withAuth('/pay')}
+                  actionText={paymentDone ? '查看' : '前往繳費 →'}
                 />
-              )}
 
-              {/* 互動作業（中簽才顯示） */}
-              {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+                {/* 食宿登記 */}
                 <TaskCard
-                  idLabel="作" label="Interactive Task" title="互動作業"
-                  state={member.interactive_task_submitted ? 'done' : 'todo'}
-                  statusBadge={member.interactive_task_submitted ? '已送出' : '待填寫'}
-                  badgeKind={member.interactive_task_submitted ? 'done' : 'urgent'}
-                  deadline="課程開始前完成"
-                  urgent={!member.interactive_task_submitted}
+                  idLabel="食" label="Lodging" title="食宿登記"
+                  state={lodgingDone ? (lodgingLocked ? 'done' : 'done') : 'todo'}
+                  statusBadge={lodgingLocked ? '已鎖定' : lodgingDone ? '可改 1 次' : '待填寫'}
+                  badgeKind={lodgingDone ? 'done' : 'todo'}
+                  deadline="06/20 晚上 8 時前" urgent={!lodgingDone}
                   rows={[
-                    ['集體', member.interactive_group_status === 'won' ? '✓ 已中簽' : '—'],
-                    ['分組', member.interactive_small_status === 'won' ? '✓ 已中簽' : '—'],
+                    ['狀態', lodgingLocked ? '已修改過 1 次（鎖定）' : lodgingDone ? '已送出（還能修改 1 次）' : '尚未送出'],
                   ]}
-                  actionHref={withAuth('/member/interactive/task')}
-                  actionText={member.interactive_task_submitted ? '查看／修改' : '前往填寫 →'}
+                  actionHref={withAuth('/lodging')}
+                  actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : '前往登記 →'}
                 />
-              )}
 
-              {/* 承諾書（不算進度，需下載列印現場繳交；僅錄取學員可下載） */}
-              <TaskCard
-                idLabel="諾" label="Pledge" title="承諾書"
-                state="todo"
-                statusBadge="需下載"
-                badgeKind="todo"
-                deadline="現場簽署繳交（不需線上送出）"
-                rows={[
-                  ['格式', 'Word 檔（.docx）'],
-                  ['繳交方式', '列印簽名後現場交給法工'],
-                ]}
-                actionHref={withAuth('/api/pledge')}
-                actionText="下載承諾書 ↓"
-                actionDownload
-              />
-            </div>
+                {/* 快篩 */}
+                <TaskCard
+                  idLabel="篩" label="Quick Test" title="快篩上傳"
+                  state={testsDone ? 'done' : 'todo'}
+                  statusBadge={`${member.tests_uploaded}／${member.tests_total}`}
+                  badgeKind={testsDone ? 'done' : 'todo'}
+                  deadline="8/17 晚上 8 點 ／ 8/19 中午 12 點前" urgent={false}
+                  rows={[
+                    ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
+                    ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
+                  ]}
+                  actionHref={withAuth('/quicktests')}
+                  actionText={testsDone ? '查看' : '前往上傳 →'}
+                />
+
+                {/* 互動報名（admin 開啟才顯示；admin preview 模式也會看到，title 加 🔧 提示） */}
+                {member.interactive_open && (
+                  <TaskCard
+                    idLabel="互" label="Interactive" title={member.interactive_preview ? '互動報名 🔧 預覽' : '互動報名'}
+                    state={member.interactive_submitted ? 'done' : 'todo'}
+                    statusBadge={member.interactive_preview ? '預覽' : member.interactive_submitted ? '已送出' : '待填寫'}
+                    badgeKind={member.interactive_submitted ? 'done' : 'todo'}
+                    deadline={member.interactive_preview ? '對學員未開放（admin 預覽中）' : '07/15 晚上 8 點前'}
+                    urgent={!member.interactive_preview && !member.interactive_submitted}
+                    rows={[
+                      ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                      ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                    ]}
+                    actionHref={withAuth('/member/interactive')}
+                    actionText={member.interactive_submitted ? '查看／修改' : '前往報名 →'}
+                  />
+                )}
+
+                {/* 互動作業（中簽才顯示） */}
+                {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+                  <TaskCard
+                    idLabel="作" label="Interactive Task" title="互動作業"
+                    state={member.interactive_task_submitted ? 'done' : 'todo'}
+                    statusBadge={member.interactive_task_submitted ? '已送出' : '待填寫'}
+                    badgeKind={member.interactive_task_submitted ? 'done' : 'urgent'}
+                    deadline="課程開始前完成"
+                    urgent={!member.interactive_task_submitted}
+                    rows={[
+                      ['集體', member.interactive_group_status === 'won' ? '✓ 已中簽' : '—'],
+                      ['分組', member.interactive_small_status === 'won' ? '✓ 已中簽' : '—'],
+                    ]}
+                    actionHref={withAuth('/member/interactive/task')}
+                    actionText={member.interactive_task_submitted ? '查看／修改' : '前往填寫 →'}
+                  />
+                )}
+
+                {/* 承諾書（不算進度，需下載列印現場繳交；僅錄取學員可下載） */}
+                <TaskCard
+                  idLabel="諾" label="Pledge" title="承諾書"
+                  state="todo"
+                  statusBadge="需下載"
+                  badgeKind="todo"
+                  deadline="現場簽署繳交（不需線上送出）"
+                  rows={[
+                    ['格式', 'Word 檔（.docx）'],
+                    ['繳交方式', '列印簽名後現場交給法工'],
+                  ]}
+                  actionHref={withAuth('/api/pledge')}
+                  actionText="下載承諾書 ↓"
+                  actionDownload
+                />
+              </div>
+            )}
 
             {/* 重要時程 */}
             <div className="schedule-strip">
@@ -315,8 +329,8 @@ function MemberDashboardContent() {
               <div className="schedule-grid">
                 <div className="schedule-cell done"><div className="date">05.11–05.25</div><div className="label">報名期間</div></div>
                 <div className="schedule-cell done"><div className="date">06.06</div><div className="label">錄取通知</div></div>
-                <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">06.15</div><div className="label">繳費截止</div></div>
-                <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>
+                {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">06.15</div><div className="label">繳費截止</div></div>}
+                {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>}
                 <div className="schedule-cell"><div className="date">08.20–08.24</div><div className="label">禪修課程</div></div>
               </div>
             </div>
@@ -328,11 +342,13 @@ function MemberDashboardContent() {
                 <div className="text"><h4>課程時間表</h4><p>五日完整課程安排</p></div>
                 <div className="arrow">→</div>
               </a>
-              <a href="/info/payment" className="resource-link">
-                <div className="icon">💰</div>
-                <div className="text"><h4>費用說明</h4><p>方案與支付方式</p></div>
-                <div className="arrow">→</div>
-              </a>
+              {!isOnline && (
+                <a href="/info/payment" className="resource-link">
+                  <div className="icon">💰</div>
+                  <div className="text"><h4>費用說明</h4><p>方案與支付方式</p></div>
+                  <div className="arrow">→</div>
+                </a>
+              )}
               <a href="/#teachers" className="resource-link">
                 <div className="icon">🌿</div>
                 <div className="text"><h4>指導老師</h4><p>師資介紹</p></div>

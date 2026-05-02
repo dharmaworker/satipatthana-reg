@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
+import { nextAvailableOnlineStudentId } from '@/lib/member-id'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
+  const format = searchParams.get('format')
   const search = searchParams.get('search')
 
   let query = supabaseAdmin
@@ -26,6 +28,10 @@ export async function GET(request: NextRequest) {
 
   if (status && status !== 'all') {
     query = query.eq('status', status)
+  }
+
+  if (format && format !== 'all') {
+    query = query.eq('retreat_format', format)
   }
 
   if (search) {
@@ -87,10 +93,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: '僅 admin 可修改基本資料與方案' }, { status: 403 })
   }
 
-  // 先撈目前狀態、payment_plan、payment_status、member_id，用於偵測轉變
+  // 先撈目前狀態、payment_plan、payment_status、member_id、retreat_format，用於偵測轉變
   const { data: currentReg } = await supabaseAdmin
     .from('registrations')
-    .select('status, payment_plan, payment_status, member_id')
+    .select('status, payment_plan, payment_status, member_id, student_id, retreat_format')
     .eq('id', id)
     .single()
 
@@ -98,6 +104,13 @@ export async function PATCH(request: NextRequest) {
   if (status) updateData.status = status
   if (member_id !== undefined) updateData.member_id = member_id || null
   if (student_id !== undefined) updateData.student_id = student_id || null
+
+  // 線上報名首次改為 approved → 自動補 STD_L-xxx 學號
+  const becomingApproved = status === 'approved' && currentReg?.status !== 'approved'
+  const isOnline = currentReg?.retreat_format === 'online'
+  if (becomingApproved && isOnline && !currentReg?.student_id && student_id === undefined) {
+    updateData.student_id = await nextAvailableOnlineStudentId()
+  }
   if (payment_status) {
     updateData.payment_status = payment_status
     if (payment_status === 'verified') {

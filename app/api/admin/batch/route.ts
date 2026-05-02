@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { nextAvailableMemberId, formatMemberId } from '@/lib/member-id'
+import { nextAvailableMemberId, formatMemberId, formatOnlineMemberId, nextAvailableOnlineStudentId, formatOnlineStudentId } from '@/lib/member-id'
 
 type Action = 'approve' | 'reject' | 'delete'
 
@@ -77,21 +77,23 @@ export async function POST(request: NextRequest) {
 
   const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
-  // 先撈目前狀態＋member_id
+  // 先撈目前狀態＋member_id＋retreat_format
   const { data: currentRegs } = await supabaseAdmin
     .from('registrations')
-    .select('id, status, member_id')
+    .select('id, status, member_id, student_id, retreat_format')
     .in('id', ids)
 
   let assignedCount = 0
   if (action === 'approve') {
-    // 批次錄取：對尚未編號者依序編 T-XXX（以當前最大號 +1 起跑，避免互相衝突）
-    const needAssign = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id)
-    if (needAssign.length > 0) {
-      const start = await nextAvailableMemberId()
+    // 批次錄取：對尚未編號者依序編（線上 L-XXX，實體 T-XXX）
+    const needAssignInPerson = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format !== 'online')
+    const needAssignOnline = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format === 'online')
+
+    if (needAssignInPerson.length > 0) {
+      const start = await nextAvailableMemberId(false)
       const m = start.match(/^T-(\d+)$/)
       let n = m ? parseInt(m[1], 10) : 1
-      for (const r of needAssign) {
+      for (const r of needAssignInPerson) {
         const mid = formatMemberId(n++)
         await supabaseAdmin
           .from('registrations')
@@ -100,6 +102,26 @@ export async function POST(request: NextRequest) {
         assignedCount++
       }
     }
+
+    if (needAssignOnline.length > 0) {
+      const startOnline = await nextAvailableMemberId(true)
+      const mo = startOnline.match(/^L-(\d+)$/)
+      let no = mo ? parseInt(mo[1], 10) : 1
+      // 線上學號起始號
+      const startStudentId = await nextAvailableOnlineStudentId()
+      const ms = startStudentId.match(/^STD_L-(\d+)$/)
+      let ns = ms ? parseInt(ms[1], 10) : 1
+      for (const r of needAssignOnline) {
+        const mid = formatOnlineMemberId(no++)
+        const sid = formatOnlineStudentId(ns++)
+        await supabaseAdmin
+          .from('registrations')
+          .update({ status: 'approved', member_id: mid, student_id: sid })
+          .eq('id', r.id)
+        assignedCount++
+      }
+    }
+
     // 剩下的（已 approved 或已有 member_id）只需改狀態（若有變動）
     const remaining = (currentRegs || [])
       .filter(r => !(r.status !== 'approved' && !r.member_id))

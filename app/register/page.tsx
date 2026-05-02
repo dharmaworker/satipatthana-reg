@@ -198,11 +198,13 @@ export default function RegisterPage() {
     if (!form.practice_years) return fail('practice_years', '請回答 Q14：學習實踐多久')
     if (!form.practice_frequency) return fail('practice_frequency', '請回答 Q15：固定練習頻率')
 
-    if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q16：是否願意按時繳費')
-    if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q16 須選「是」）')
+    if (form.retreat_format !== 'online') {
+      if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q16：是否願意按時繳費')
+      if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q16 須選「是」）')
 
-    if (!form.health_confirm) return fail('health_confirm', '請回答 Q17：是否身體健康能全程參與')
-    if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q17 須選「是」）')
+      if (!form.health_confirm) return fail('health_confirm', '請回答 Q17：是否身體健康能全程參與')
+      if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q17 須選「是」）')
+    }
     if (!form.retreat_format) return fail('retreat_format', '請選擇 Q1：禪修形式（實體或線上）')
     return true
   }
@@ -586,42 +588,46 @@ export default function RegisterPage() {
                 </select>
               </div>
 
-              <div className="question-block" id="field-pay_confirm">
-                <label className="form-label">16. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
-                <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
-                  onChange={e => update('pay_confirm', e.target.value)}>
-                  <option value="">請選擇</option>
-                  <option value="yes">是，我願意按時全額支付</option>
-                  <option value="no">否，我不願意支付</option>
-                </select>
-              </div>
-
-              {yesNoSelect('health_confirm', '17. 您是否身體健康，能夠全程獨立參與實體禪修課程？')}
-
-              <div className="question-block">
-                <label className="form-label">18. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
-                <div className="opt-group">
-                  <label className={`opt ${form.mental_health_note === 'no' ? 'selected' : ''}`}>
-                    <input type="radio" name="mental_health" value="no"
-                      checked={form.mental_health_note === 'no'}
-                      onChange={() => update('mental_health_note', 'no')} />
-                    <span className="opt-text">否，無心理或精神疾病史</span>
-                  </label>
-                  <label className={`opt ${form.mental_health_note.startsWith('yes') ? 'selected' : ''}`}>
-                    <input type="radio" name="mental_health" value="yes"
-                      checked={form.mental_health_note.startsWith('yes')}
-                      onChange={() => update('mental_health_note', 'yes:')} />
-                    <span className="opt-text">是，請詳細說明</span>
-                  </label>
-                </div>
-                {form.mental_health_note.startsWith('yes') && (
-                  <div className="branch-reveal active" style={{ marginTop: 10 }}>
-                    <textarea className="form-textarea" rows={3} placeholder="請詳細說明您的狀況"
-                      value={form.mental_health_note.replace('yes:', '')}
-                      onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
+              {form.retreat_format !== 'online' && (
+                <>
+                  <div className="question-block" id="field-pay_confirm">
+                    <label className="form-label">16. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
+                    <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
+                      onChange={e => update('pay_confirm', e.target.value)}>
+                      <option value="">請選擇</option>
+                      <option value="yes">是，我願意按時全額支付</option>
+                      <option value="no">否，我不願意支付</option>
+                    </select>
                   </div>
-                )}
-              </div>
+
+                  {yesNoSelect('health_confirm', '17. 您是否身體健康，能夠全程獨立參與實體禪修課程？')}
+
+                  <div className="question-block">
+                    <label className="form-label">18. 您是否有心理或精神疾病史？ <span className="required">*</span></label>
+                    <div className="opt-group">
+                      <label className={`opt ${form.mental_health_note === 'no' ? 'selected' : ''}`}>
+                        <input type="radio" name="mental_health" value="no"
+                          checked={form.mental_health_note === 'no'}
+                          onChange={() => update('mental_health_note', 'no')} />
+                        <span className="opt-text">否，無心理或精神疾病史</span>
+                      </label>
+                      <label className={`opt ${form.mental_health_note.startsWith('yes') ? 'selected' : ''}`}>
+                        <input type="radio" name="mental_health" value="yes"
+                          checked={form.mental_health_note.startsWith('yes')}
+                          onChange={() => update('mental_health_note', 'yes:')} />
+                        <span className="opt-text">是，請詳細說明</span>
+                      </label>
+                    </div>
+                    {form.mental_health_note.startsWith('yes') && (
+                      <div className="branch-reveal active" style={{ marginTop: 10 }}>
+                        <textarea className="form-textarea" rows={3} placeholder="請詳細說明您的狀況"
+                          value={form.mental_health_note.replace('yes:', '')}
+                          onChange={e => update('mental_health_note', 'yes:' + e.target.value)} />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -866,9 +872,11 @@ export default function RegisterPage() {
                   <ReviewRow k="持守五戒" v={form.keep_precepts === 'yes' ? '是' : form.keep_precepts === 'no' ? '否' : '—'} />
                   <ReviewRow k="學習實踐多久" v={form.practice_years || '—'} />
                   <ReviewRow k="固定練習頻率" v={PRACTICE_FREQ_LABEL[form.practice_frequency] || '—'} />
-                  <ReviewRow k="可按時繳費" v={form.pay_confirm === 'yes' ? '是' : form.pay_confirm === 'no' ? '否' : '—'} />
-                  <ReviewRow k="身體健康可全程參與" v={form.health_confirm === 'yes' ? '是' : form.health_confirm === 'no' ? '否' : '—'} />
-                  <ReviewRow k="心理／精神疾病史" v={form.mental_health_note === 'no' ? '無' : form.mental_health_note.startsWith('yes:') ? `是：${form.mental_health_note.replace('yes:', '') || '（未填寫說明）'}` : '—'} />
+                  {form.retreat_format !== 'online' && <>
+                    <ReviewRow k="可按時繳費" v={form.pay_confirm === 'yes' ? '是' : form.pay_confirm === 'no' ? '否' : '—'} />
+                    <ReviewRow k="身體健康可全程參與" v={form.health_confirm === 'yes' ? '是' : form.health_confirm === 'no' ? '否' : '—'} />
+                    <ReviewRow k="心理／精神疾病史" v={form.mental_health_note === 'no' ? '無' : form.mental_health_note.startsWith('yes:') ? `是：${form.mental_health_note.replace('yes:', '') || '（未填寫說明）'}` : '—'} />
+                  </>}
                 </div>
 
                 <div className="review-group">
@@ -890,11 +898,13 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="alert-card" style={{ marginTop: 18 }}>
-                <div className="alert-card-title">8/20–8/24 禪修期間之食宿、交通及場地費用</div>
-                <p>食宿、交通及場地費用：<strong>NT$18,600 元整</strong>（如需提前或延後住宿，將另計相關費用）</p>
-                <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
-              </div>
+              {form.retreat_format !== 'online' && (
+                <div className="alert-card" style={{ marginTop: 18 }}>
+                  <div className="alert-card-title">8/20–8/24 禪修期間之食宿、交通及場地費用</div>
+                  <p>食宿、交通及場地費用：<strong>NT$18,600 元整</strong>（如需提前或延後住宿，將另計相關費用）</p>
+                  <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+                </div>
+              )}
 
               <div className="alert-card" style={{ marginTop: 12 }}>
                 <div className="alert-card-title">送出前再次提醒</div>

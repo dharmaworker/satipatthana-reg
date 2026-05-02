@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [formatFilter, setFormatFilter] = useState('all')
   const [selected, setSelected] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
@@ -102,6 +103,7 @@ export default function DashboardPage() {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
+    if (formatFilter !== 'all') params.set('format', formatFilter)
     if (search) params.set('search', search)
     const res = await fetch(`/api/admin/registrations?${params}`)
     const data = await res.json()
@@ -110,7 +112,7 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [statusFilter])
+  useEffect(() => { fetchData() }, [statusFilter, formatFilter])
 
   const handleSearch = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') fetchData()
@@ -247,6 +249,15 @@ export default function DashboardPage() {
             <option value="approved">已錄取</option>
             <option value="rejected">未錄取</option>
           </select>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['all', 'in_person', 'online'] as const).map(f => (
+              <button key={f}
+                onClick={() => setFormatFilter(f)}
+                className={`admin-btn-sm${formatFilter === f ? ' primary' : ''}`}>
+                {f === 'all' ? '全部' : f === 'in_person' ? '實體' : '線上'}
+              </button>
+            ))}
+          </div>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
           <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button>
           <button onClick={() => batchAction('approve')} disabled={sending || selected.length === 0}
@@ -275,6 +286,7 @@ export default function DashboardPage() {
                 <th>Email</th>
                 <th>居住地</th>
                 <th>繳費碼</th>
+                <th>禪修形式</th>
                 <th>審核狀態</th>
                 <th>報名序號</th>
                 <th>方案</th>
@@ -284,9 +296,9 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : registrations.length === 0 ? (
-                <tr><td colSpan={11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : registrations.map((reg) => (
                 <tr key={reg.id}>
                   <td>
@@ -299,6 +311,15 @@ export default function DashboardPage() {
                   <td style={{ whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{reg.email}</td>
                   <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.residence}</td>
                   <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span style={{
+                      fontSize: 11.5, fontWeight: 600, padding: '2px 7px', borderRadius: 6,
+                      background: reg.retreat_format === 'online' ? 'rgba(73,85,52,0.12)' : 'rgba(216,194,154,0.25)',
+                      color: reg.retreat_format === 'online' ? 'var(--green-deep)' : 'var(--gold-deep)',
+                    }}>
+                      {reg.retreat_format === 'online' ? '線上' : reg.retreat_format === 'in_person' ? '實體' : '—'}
+                    </span>
+                  </td>
                   <td>
                     <select value={reg.status}
                       onChange={e => updateStatus(reg.id, e.target.value)}
