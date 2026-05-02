@@ -277,7 +277,7 @@ export default function LodgingsPage() {
               onChange={e => setOnlyWithStudentId(e.target.checked)} />
             只顯示已分配學號者
           </label>
-          <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           <label>
             <input type="checkbox" checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
               onChange={() => {
