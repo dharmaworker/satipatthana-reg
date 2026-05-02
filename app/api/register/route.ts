@@ -113,7 +113,31 @@ export async function POST(request: NextRequest) {
 
     // 寄報名確認信（失敗不影響報名結果）
     try {
-      const confirmBody = `
+      const isOnline = data.retreat_format === 'online'
+      const confirmBody = isOnline ? `
+        ${emailKicker('Registration Received')}
+        ${emailH1('已收到您的線上課程報名 🙏')}
+        <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
+        <p style="margin:0 0 16px;color:${C.inkSoft};">感謝您報名「第二屆台灣四念處禪修線上課程（Zoom）」。我們已收到您的報名資料，以下是您的資訊：</p>
+
+        ${emailCodeBox('您的專屬繳費碼', data.random_code, '⚠ 請妥善保管，查詢報名狀態與登入學員專區時皆需使用。')}
+
+        ${emailH3('接下來')}
+        <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
+          <li>錄取通知：將於 <strong style="color:${C.ink};">2026/06/06</strong> 由本信箱寄出</li>
+          <li>課程方式：<strong style="color:${C.ink};">線上 Zoom 視訊</strong></li>
+          <li>課程日期：<strong style="color:${C.ink};">2026/08/20 ～ 08/24</strong></li>
+          <li>Zoom 連結及課程時程將於錄取後另行通知</li>
+        </ul>
+
+        ${emailH3('查詢報名狀態 / 學員專區')}
+        <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">您可隨時透過下方連結進入學員專區查詢審核狀態：</p>
+        ${emailButton(`${baseUrl}/member/dashboard?id=${data.id}&code=${data.random_code}`, '前往學員專區', 'green')}
+        <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼。</p>
+
+        ${emailSignoff()}
+        <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
+      ` : `
         ${emailKicker('Registration Received')}
         ${emailH1('已收到您的報名 🙏')}
         <p style="margin:0 0 12px;color:${C.inkSoft};">${data.chinese_name} 法友您好，</p>
@@ -138,7 +162,9 @@ export async function POST(request: NextRequest) {
       `
       await sendMail({
         to: data.email,
-        subject: '【第二屆台灣四念處禪修】報名確認',
+        subject: isOnline
+          ? '【第二屆台灣四念處禪修】線上課程報名確認'
+          : '【第二屆台灣四念處禪修】報名確認',
         html: emailWrap(confirmBody),
       })
     } catch (mailErr) {
@@ -206,7 +232,7 @@ export async function POST(request: NextRequest) {
 
       await sendMail({
         to: archiveEmail,
-        subject: `【報名備存】${data.chinese_name} / ${data.random_code}`,
+        subject: `【報名備存】${data.retreat_format === 'online' ? '線上' : '實體'} ${data.chinese_name} / ${data.random_code}`,
         html: emailWrap(archiveBody, { maxWidth: 720 }),
       })
     } catch (archiveErr) {
