@@ -292,6 +292,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: '報名成功！請等待錄取通知',
+      id: data.id,
       random_code: randomCode,
     })
   } catch (error: any) {

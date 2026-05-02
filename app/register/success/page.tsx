@@ -6,6 +6,9 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 function SuccessContent() {
   const searchParams = useSearchParams()
   const isOnline = searchParams.get('format') === 'online'
+  const id = searchParams.get('id') || ''
+  const code = searchParams.get('code') || ''
+  const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
 
   return (
     <>
@@ -44,20 +47,20 @@ function SuccessContent() {
                 <li>課程方式：<strong>線上 Zoom 視訊</strong></li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong></li>
                 <li>Zoom 連結及課程時程將於錄取後另行寄信通知</li>
-                <li>可隨時至 <a href="/member" style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
+                <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
               </ol>
             ) : (
               <ol>
                 <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
                 <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
-                <li>可隨時至 <a href="/member" style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
+                <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
               </ol>
             )}
           </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/member" className="btn btn-primary">前往學員專區 <span className="arrow">→</span></a>
+            <a href={dashboardUrl} className="btn btn-primary">前往學員專區 <span className="arrow">→</span></a>
             <a href="/" className="btn btn-ghost">返回首頁</a>
           </div>
 

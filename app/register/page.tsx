@@ -282,7 +282,10 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      router.push(`/register/success?format=${form.retreat_format || 'in_person'}`)
+      const params = new URLSearchParams({ format: form.retreat_format || 'in_person' })
+      if (data.id) params.set('id', data.id)
+      if (data.random_code) params.set('code', data.random_code)
+      router.push(`/register/success?${params.toString()}`)
     } catch (err: any) {
       setError(err.message)
     } finally {
