@@ -82,6 +82,7 @@ export default function InteractiveTasksAdminPage() {
               <tr>
                 <th>姓名</th>
                 <th>報名序號</th>
+                <th>學號</th>
                 <th>集體場次</th>
                 <th>分組</th>
                 <th>修習年資</th>
@@ -91,15 +92,16 @@ export default function InteractiveTasksAdminPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無互動作業</td></tr>
+                <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無互動作業</td></tr>
               ) : filtered.map(r => {
                 const it = r.interactive
                 return (
                   <tr key={r.task.registration_id}>
                     <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{r.registration?.chinese_name}</td>
                     <td className="mono">{r.registration?.member_id || '—'}</td>
+                    <td className="mono">{r.registration?.student_id || '—'}</td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.group_status === 'won'
                         ? (it.assigned_session ? SESSION_LABEL[it.assigned_session] : '中簽')

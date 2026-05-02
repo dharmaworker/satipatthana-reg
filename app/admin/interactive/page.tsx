@@ -309,6 +309,7 @@ export default function InteractiveAdminPage() {
                 <th></th>
                 <th>姓名</th>
                 <th>報名序號</th>
+                <th>學號</th>
                 <th>想要的集體場次</th>
                 <th>集體狀態</th>
                 <th>指定場次</th>
@@ -323,9 +324,9 @@ export default function InteractiveAdminPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : filtered.map(r => {
                 const it = r.interactive
                 return (
@@ -337,6 +338,7 @@ export default function InteractiveAdminPage() {
                     </td>
                     <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{r.registration.chinese_name}</td>
                     <td className="mono">{r.registration.member_id || '—'}</td>
+                    <td className="mono">{r.registration.student_id || '—'}</td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_sessions?.length
                         ? it.wanted_sessions.map(s => SESSION_LABEL[s] || s).join('、')
