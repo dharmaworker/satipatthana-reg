@@ -1622,8 +1622,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-size: 15px; font-weight: 700; color: var(--ink);
   letter-spacing: 0.05em; margin-bottom: 2px;
 }
-.member-card .meta { font-size: 12px; color: var(--ink-mute); font-weight: 500; line-height: 1.5; }
-.member-card .meta span { margin-right: 10px; }
+.member-card .meta { font-size: 12px; color: var(--ink-mute); font-weight: 500; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.member-card .meta span { margin-right: 0; }
 .member-card .meta strong { color: var(--ink-soft); font-weight: 600; }
 
 /* ============================================================
