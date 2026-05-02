@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [formatFilter, setFormatFilter] = useState('all')
+  const [formatFilter, setFormatFilter] = useState('in_person')
   const [selected, setSelected] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
@@ -111,6 +111,14 @@ export default function DashboardPage() {
     setRegistrations(data.data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    const saved = localStorage.getItem('admin_format')
+    if (saved === 'in_person' || saved === 'online') setFormatFilter(saved)
+    const handler = (e: Event) => setFormatFilter((e as CustomEvent<string>).detail)
+    window.addEventListener('admin-format-change', handler)
+    return () => window.removeEventListener('admin-format-change', handler)
+  }, [])
 
   useEffect(() => { fetchData() }, [statusFilter, formatFilter])
 
@@ -249,15 +257,6 @@ export default function DashboardPage() {
             <option value="approved">已錄取</option>
             <option value="rejected">未錄取</option>
           </select>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {(['all', 'in_person', 'online'] as const).map(f => (
-              <button key={f}
-                onClick={() => setFormatFilter(f)}
-                className={`admin-btn-sm${formatFilter === f ? ' primary' : ''}`}>
-                {f === 'all' ? '全部' : f === 'in_person' ? '實體' : '線上'}
-              </button>
-            ))}
-          </div>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
           <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button>
           <button onClick={() => batchAction('approve')} disabled={sending || selected.length === 0}

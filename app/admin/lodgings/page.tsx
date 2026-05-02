@@ -39,6 +39,7 @@ export default function LodgingsPage() {
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [formatFilter, setFormatFilter] = useState<string>('in_person')
 
   const nextStudentId = () => {
     let maxN = 0
@@ -210,15 +211,30 @@ export default function LodgingsPage() {
     fetchData()
   }
 
-  const fetchData = async () => {
+  const fetchData = async (format?: string) => {
     setLoading(true)
-    const res = await fetch('/api/admin/lodgings')
+    const f = format ?? formatFilter
+    const res = await fetch(`/api/admin/lodgings?format=${f}`)
     if (res.status === 401 || res.status === 403) { router.push('/admin/login'); return }
     const data = await res.json()
     setRows(data.data || [])
     setLoading(false)
   }
-  useEffect(() => { fetchData() }, [])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('admin_format')
+    const initial = (saved === 'in_person' || saved === 'online') ? saved : 'in_person'
+    setFormatFilter(initial)
+    fetchData(initial)
+
+    const handler = (e: Event) => {
+      const f = (e as CustomEvent<string>).detail
+      setFormatFilter(f)
+      fetchData(f)
+    }
+    window.addEventListener('admin-format-change', handler)
+    return () => window.removeEventListener('admin-format-change', handler)
+  }, [])
 
   const filtered = rows.filter(r => {
     const reg = r.registration || {}

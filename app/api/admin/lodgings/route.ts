@@ -13,16 +13,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '請先登入' }, { status: 401 })
   }
 
+  const format = request.nextUrl.searchParams.get('format')
+
   // 取所有已錄取學員（含尚未填食宿者），LEFT JOIN 食宿登記
-  const { data: regs, error: regsErr } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('registrations')
     .select(`
       id, chinese_name, passport_name, member_id, student_id, email, phone, random_code,
       residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
-      created_at
+      retreat_format, created_at
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
+
+  if (format === 'in_person' || format === 'online') {
+    query = query.eq('retreat_format', format)
+  }
+
+  const { data: regs, error: regsErr } = await query
 
   if (regsErr) {
     return NextResponse.json({ error: regsErr.message }, { status: 500 })
