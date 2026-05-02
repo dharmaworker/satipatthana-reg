@@ -509,6 +509,18 @@ function LodgingContent() {
 
                     <div className="info-card">
                       <h4><span className="icon">🏨</span>日月潭湖畔會館入住說明</h4>
+                      <table style={{ fontSize: 13.5, marginBottom: 12, borderCollapse: 'collapse', width: '100%' }}>
+                        <tbody>
+                          <tr>
+                            <td style={{ color: 'var(--ink-mute)', paddingRight: 12, whiteSpace: 'nowrap', verticalAlign: 'top' }}>地點</td>
+                            <td>日月潭湖畔會館<br /><span style={{ color: 'var(--ink-mute)', fontSize: 12.5 }}>Sun Moon Lake Lakeside Resort</span></td>
+                          </tr>
+                          <tr>
+                            <td style={{ color: 'var(--ink-mute)', paddingRight: 12, whiteSpace: 'nowrap', verticalAlign: 'top', paddingTop: 6 }}>地址</td>
+                            <td style={{ paddingTop: 6 }}>南投縣魚池鄉日月中正路101號<br /><span style={{ color: 'var(--ink-mute)', fontSize: 12.5 }}>No. 101, Zhongzheng Rd., Yuchi Township, Nantou County 555, Taiwan</span></td>
+                          </tr>
+                        </tbody>
+                      </table>
                       <ul>
                         <li>日月潭湖畔會館辦理入住時間：每日下午 3 點後辦理入住。</li>
                         <li>辦理入住時請攜帶<strong>身分證 + 健保卡（國內）或護照正本（國外）</strong>。</li>
