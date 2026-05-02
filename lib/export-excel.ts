@@ -282,6 +282,8 @@ function addInteractiveTaskSheet(wb: ExcelJS.Workbook, name: string, rows: any[]
 export async function generateExportWorkbook(cutoff?: Date): Promise<{
   buffer: Buffer
   filename: string
+  bufferOnline: Buffer
+  filenameOnline: string
   counts: Record<string, number>
 }> {
   // 排除後台預覽測試學員
@@ -327,35 +329,60 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     interactive: intMap.get(t.registration_id) || null,
   }))
 
+  // 實體／線上分開
+  const inPerson = all.filter(r => r.retreat_format !== 'online')
+  const online = all.filter(r => r.retreat_format === 'online')
+
+  // ─── 實體 workbook ───
   const wb = new ExcelJS.Workbook()
   wb.created = new Date()
   wb.creator = 'satipatthana-reg'
 
-  addSheet(wb, '全部', all)
-  addSheet(wb, '待審核', all.filter(r => r.status === 'pending'))
-  addSheet(wb, '已錄取未繳費', all.filter(r => r.status === 'approved' && r.payment_status !== 'verified'))
-  addSheet(wb, '已繳費', all.filter(r => r.payment_status === 'verified'))
-  addSheet(wb, '未錄取', all.filter(r => r.status === 'rejected'))
+  addSheet(wb, '全部', inPerson)
+  addSheet(wb, '待審核', inPerson.filter(r => r.status === 'pending'))
+  addSheet(wb, '已錄取未繳費', inPerson.filter(r => r.status === 'approved' && r.payment_status !== 'verified'))
+  addSheet(wb, '已繳費', inPerson.filter(r => r.payment_status === 'verified'))
+  addSheet(wb, '未錄取', inPerson.filter(r => r.status === 'rejected'))
   addLodgingSheet(wb, '食宿登記', lodgingData || [])
   addInteractiveSheet(wb, '互動報名', interactiveData || [])
   addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
-  const filename = `registrations_${dateStr}.xlsx`
+  const filename = `registrations_inperson_${dateStr}.xlsx`
+
+  // ─── 線上 workbook ───
+  const wbOnline = new ExcelJS.Workbook()
+  wbOnline.created = new Date()
+  wbOnline.creator = 'satipatthana-reg'
+
+  addSheet(wbOnline, '全部（線上）', online)
+  addSheet(wbOnline, '待審核', online.filter(r => r.status === 'pending'))
+  addSheet(wbOnline, '已錄取', online.filter(r => r.status === 'approved'))
+  addSheet(wbOnline, '未錄取', online.filter(r => r.status === 'rejected'))
+
+  const bufferOnline = Buffer.from(await wbOnline.xlsx.writeBuffer())
+  const filenameOnline = `registrations_online_${dateStr}.xlsx`
 
   return {
     buffer,
     filename,
+    bufferOnline,
+    filenameOnline,
     counts: {
       total: all.length,
-      pending: all.filter(r => r.status === 'pending').length,
-      approved_unpaid: all.filter(r => r.status === 'approved' && r.payment_status !== 'verified').length,
-      verified: all.filter(r => r.payment_status === 'verified').length,
-      rejected: all.filter(r => r.status === 'rejected').length,
+      in_person: inPerson.length,
+      online: online.length,
+      pending: inPerson.filter(r => r.status === 'pending').length,
+      approved_unpaid: inPerson.filter(r => r.status === 'approved' && r.payment_status !== 'verified').length,
+      verified: inPerson.filter(r => r.payment_status === 'verified').length,
+      rejected: inPerson.filter(r => r.status === 'rejected').length,
       lodgings: (lodgingData || []).length,
       interactive_registrations: (interactiveData || []).length,
       interactive_tasks: (taskData || []).length,
+      online_pending: online.filter(r => r.status === 'pending').length,
+      online_approved: online.filter(r => r.status === 'approved').length,
+      online_rejected: online.filter(r => r.status === 'rejected').length,
     },
   }
 }

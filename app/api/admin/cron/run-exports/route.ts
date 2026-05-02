@@ -57,7 +57,7 @@ async function runExports(request: NextRequest) {
     try {
       // scheduled_at 即為「該日台北 00:00」= 前一日 24:00 的瞬間，直接用它做 cutoff
       const cutoff = scheduledAt
-      const { buffer, filename, counts } = await generateExportWorkbook(cutoff)
+      const { buffer, filename, bufferOnline, filenameOnline, counts } = await generateExportWorkbook(cutoff)
 
       // 標題要顯示「前一日」的日期（cutoff 的前一瞬間所屬日期）
       const prevDay = new Date(cutoff.getTime() - 1)
@@ -66,23 +66,38 @@ async function runExports(request: NextRequest) {
         to: sched.recipients,
         subject: `【第二屆台灣四念處禪修】自動彙整報表 (截止 ${dateLabel} 24:00)`,
         html: `
-          <p>附件為至 <strong>${dateLabel} 24:00</strong> 為止的報名統整報表（Excel）。</p>
-          <p>統計：</p>
+          <p>附件為至 <strong>${dateLabel} 24:00</strong> 為止的報名統整報表（Excel 共 2 份）。</p>
+          <p><strong>實體禪修</strong>（${filename}）：</p>
           <ul>
-            <li>總報名：${counts.total}</li>
+            <li>實體總報名：${counts.in_person}</li>
             <li>待審核：${counts.pending}</li>
             <li>已錄取待繳費：${counts.approved_unpaid}</li>
             <li>已繳費：${counts.verified}</li>
             <li>未錄取：${counts.rejected}</li>
             <li>食宿登記：${counts.lodgings ?? 0}</li>
           </ul>
+          <p><strong>線上禪修（Zoom）</strong>（${filenameOnline}）：</p>
+          <ul>
+            <li>線上總報名：${counts.online}</li>
+            <li>待審核：${counts.online_pending}</li>
+            <li>已錄取：${counts.online_approved}</li>
+            <li>未錄取：${counts.online_rejected}</li>
+          </ul>
+          <p>總報名（實體 + 線上）：<strong>${counts.total}</strong></p>
           <p style="color:#666;font-size:13px;">本信由系統自動寄出。</p>
         `,
-        attachments: [{
-          filename,
-          content: buffer,
-          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        }],
+        attachments: [
+          {
+            filename,
+            content: buffer,
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+          {
+            filename: filenameOnline,
+            content: bufferOnline,
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        ],
       })
 
       await supabaseAdmin
