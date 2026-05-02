@@ -109,7 +109,7 @@ function MemberDashboardContent() {
 
       <header className="site-header">
         <div className="container nav">
-          <a href="/member/dashboard" className="brand">
+          <a href={`/member/dashboard?id=${id}&code=${encodeURIComponent(code)}`} className="brand">
             <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
             <span className="brand-sublabel">
               <small>Member Portal</small>
