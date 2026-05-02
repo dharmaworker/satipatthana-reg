@@ -35,7 +35,7 @@ type Row = {
   } | null
 }
 
-const SERIAL_OPTIONS: number[] = Array.from({ length: 17 }, (_, i) => i - 1) // -1, 0, 1, ..., 15
+const SERIAL_OPTIONS: number[] = Array.from({ length: 72 }, (_, i) => i - 1) // -1, 0, 1, ..., 70
 const fmtSerial = (n: number | null | undefined) => (n === null || n === undefined ? '—' : String(n))
 
 export default function InteractiveAdminPage() {
