@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   let ok = 0, failed = 0
   const results: any[] = []
   for (const reg of regs) {
+    if (reg.retreat_format === 'online') continue  // 線上學員不寄正式學員通知信
     try {
       await sendFormalNotificationEmail({
         chinese_name: reg.chinese_name,
@@ -50,7 +51,6 @@ export async function POST(request: NextRequest) {
         dharma_name: reg.dharma_name || null,
         payment_plan: reg.payment_plan || null,
         payment_status: reg.payment_status || null,
-        retreat_format: reg.retreat_format || null,
         lodging: lodgingByReg.get(reg.id) || null,
       })
       ok++
