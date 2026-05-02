@@ -1,30 +1,27 @@
 // 互動報名／作業 共用 constants 與 types
 // 寫死在這裡，未來若要 admin 編輯再做
 
-export type SessionId = 's1' | 's2' | 's3' | 's4' | 's5' | 's6'
+export type SessionId = 's1' | 's2' | 's3'
 export type TeacherId = 'prasan' | 'nat' | 'nitiya' | 'napatpol'
 export type StatusValue = 'pending' | 'won' | 'lost'
 
-export const TEACHERS: { id: TeacherId; name: string; nameEn: string }[] = [
-  { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan' },
-  { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat' },
-  { id: 'nitiya',   name: '阿姜妮',   nameEn: 'Ajahn Nitiya' },
-  { id: 'napatpol', name: '阿姜松',   nameEn: 'Ajahn Napatpol' },
+export const TEACHERS: { id: TeacherId; name: string; nameEn: string; seats: number }[] = [
+  { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan',   seats: 38 },
+  { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat',      seats: 38 },
+  { id: 'nitiya',   name: '阿姜妮',   nameEn: 'Ajahn Nitiya',   seats: 38 },
+  { id: 'napatpol', name: '阿姜松',   nameEn: 'Ajahn Napatpol', seats: 38 },
 ]
 export const TEACHER_LABEL: Record<string, string> =
   Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
 
-// 集體互動場次（webpage 寫死的 6 場）
-export const SESSIONS: { id: SessionId; date: string; weekday: string; time: string; teacher: TeacherId; seats: number }[] = [
-  { id: 's1', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
-  { id: 's2', date: '8/21', weekday: '週五', time: '14:00 — 15:30', teacher: 'nat',      seats: 8 },
-  { id: 's3', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
-  { id: 's4', date: '8/22', weekday: '週六', time: '14:00 — 15:30', teacher: 'napatpol', seats: 8 },
-  { id: 's5', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'prasan',   seats: 8 },
-  { id: 's6', date: '8/23', weekday: '週日', time: '14:00 — 15:30', teacher: 'nitiya',   seats: 8 },
+// 集體互動場次（teacher 欄位儲存顯示名稱，非 TeacherId）
+export const SESSIONS: { id: SessionId; date: string; time: string; teacher: string; seats: number }[] = [
+  { id: 's1', date: '8/20（四）', time: '14:30 — 15:30', teacher: '阿姜宋猜尊者', seats: 5 },
+  { id: 's2', date: '8/21（五）', time: '14:00 — 15:30', teacher: '麥琪奧蘭努',   seats: 8 },
+  { id: 's3', date: '8/24（一）', time: '14:00 — 15:30', teacher: '阿姜給尊者',   seats: 5 },
 ]
 export const SESSION_LABEL: Record<string, string> = Object.fromEntries(
-  SESSIONS.map(s => [s.id, `${s.date}（${s.weekday}）${s.time}　${TEACHER_LABEL[s.teacher]}`])
+  SESSIONS.map(s => [s.id, `${s.date} ${s.time}　${s.teacher}`])
 )
 
 // 截止日期（互動報名）
@@ -45,8 +42,8 @@ export type InteractiveRegistration = {
   assigned_session: SessionId | null
   assigned_group: TeacherId | null
   assigned_date: string | null
-  group_serial: number | null   // -1 ~ 15
-  small_serial: number | null   // -1 ~ 15
+  group_serial: number | null   // -1 ~ 70
+  small_serial: number | null   // -1 ~ 70
   notification_sent_at: string | null
   submitted_at: string
   updated_at: string
@@ -54,7 +51,7 @@ export type InteractiveRegistration = {
 
 export const SERIAL_OPTIONS: number[] = (() => {
   const arr: number[] = []
-  for (let i = -1; i <= 15; i++) arr.push(i)
+  for (let i = -1; i <= 70; i++) arr.push(i)
   return arr
 })()
 

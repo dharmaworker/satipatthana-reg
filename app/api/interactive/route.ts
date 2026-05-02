@@ -64,16 +64,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '集體場次選擇不合法' }, { status: 400 })
   }
   const validTeachers = new Set(TEACHERS.map(t => t.id))
-  if (wanted_ranking.length > 0) {
-    if (wanted_ranking.length !== 4) {
-      return NextResponse.json({ error: '分組互動需排序 4 位老師' }, { status: 400 })
-    }
-    if (!wanted_ranking.every(t => validTeachers.has(t as any))) {
-      return NextResponse.json({ error: '分組老師選擇不合法' }, { status: 400 })
-    }
-    if (new Set(wanted_ranking).size !== 4) {
-      return NextResponse.json({ error: '分組老師不可重複' }, { status: 400 })
-    }
+  if (wanted_ranking.length > 4) {
+    return NextResponse.json({ error: '分組互動最多選 4 個' }, { status: 400 })
+  }
+  if (!wanted_ranking.every(t => validTeachers.has(t as any))) {
+    return NextResponse.json({ error: '分組老師選擇不合法' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin

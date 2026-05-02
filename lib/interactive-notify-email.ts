@@ -30,7 +30,7 @@ export async function sendInteractiveNotificationEmail(opts: {
   const groupLine = group_status === 'won'
     ? (() => {
         const s = SESSIONS.find(x => x.id === assigned_session)
-        const txt = s ? `${s.date}（${s.weekday}）${s.time}　${TEACHER_LABEL[s.teacher]}` : '（場次待補）'
+        const txt = s ? `${s.date} ${s.time}　${s.teacher}` : '（場次待補）'
         return `<strong style="color:${C.green};">✓ 集體互動：中簽</strong>${serialBadge(group_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">場次：${txt}</span>`
       })()
     : group_status === 'lost'

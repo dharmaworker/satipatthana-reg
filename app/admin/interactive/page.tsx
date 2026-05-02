@@ -12,14 +12,11 @@ const TEACHERS = [
 const TEACHER_LABEL: Record<string, string> = Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
 
 const SESSIONS = [
-  { id: 's1', label: '8/21（五）巴山', cap: 8 },
-  { id: 's2', label: '8/21（五）納', cap: 8 },
-  { id: 's3', label: '8/22（六）妮', cap: 8 },
-  { id: 's4', label: '8/22（六）松', cap: 8 },
-  { id: 's5', label: '8/23（日）巴山', cap: 8 },
-  { id: 's6', label: '8/23（日）妮', cap: 8 },
+  { id: 's1', label: '8/20（四）宋猜尊者', cap: 5 },
+  { id: 's2', label: '8/21（五）奧蘭努',   cap: 8 },
+  { id: 's3', label: '8/24（一）阿姜給',   cap: 5 },
 ]
-const SMALL_GROUP_CAP = 8 // 每個分組老師 × 每天的容量假設
+const SMALL_GROUP_CAP = 38 // 每位分組老師總名額
 const SESSION_LABEL: Record<string, string> = Object.fromEntries(SESSIONS.map(s => [s.id, s.label]))
 
 type Row = {
@@ -564,20 +561,21 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
   smallCounts: Map<string, number>
 }) {
   const [open, setOpen] = useState(false)
-  const dates = ["2026-08-21", "2026-08-22", "2026-08-23"]
-  const dateLabel: Record<string, string> = {
-    "2026-08-21": "8/21",
-    "2026-08-22": "8/22",
-    "2026-08-23": "8/23",
-  }
 
   const totalGroup = SESSIONS.reduce((s, x) => s + (sessionCounts.get(x.id) || 0), 0)
   const groupCap = SESSIONS.reduce((s, x) => s + x.cap, 0)
   const totalSmall = Array.from(smallCounts.values()).reduce((s, x) => s + x, 0)
-  const smallCap = TEACHERS.length * dates.length * SMALL_GROUP_CAP
+  const smallCap = TEACHERS.length * SMALL_GROUP_CAP
+
+  // Compute per-teacher totals for over-capacity check
+  const teacherTotals = new Map<string, number>()
+  for (const [key, count] of smallCounts.entries()) {
+    const teacher = key.split('|')[0]
+    teacherTotals.set(teacher, (teacherTotals.get(teacher) || 0) + count)
+  }
 
   const anyOver = SESSIONS.some(s => (sessionCounts.get(s.id) || 0) > s.cap)
-    || Array.from(smallCounts.entries()).some(([_, c]) => c > SMALL_GROUP_CAP)
+    || Array.from(teacherTotals.entries()).some(([_, c]) => c > SMALL_GROUP_CAP)
 
   return (
     <div className="admin-table-card" style={{ padding: 0, marginBottom: 14 }}>
@@ -629,37 +627,30 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
           </div>
           <div>
             <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--gold-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
-              分組互動（老師 × 日期，每格容量 {SMALL_GROUP_CAP}）
+              分組互動（每位老師名額 {SMALL_GROUP_CAP}）
             </h5>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ borderCollapse: "collapse", fontSize: 12.5, width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: 6, textAlign: "left", color: "var(--ink-mute)" }}>分組</th>
-                    {dates.map(d => <th key={d} style={{ padding: 6, textAlign: "center", color: "var(--ink-mute)" }}>{dateLabel[d]}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {TEACHERS.map(t => (
-                    <tr key={t.id}>
-                      <td style={{ padding: 6, color: "var(--ink)", fontWeight: 600 }}>{t.name}</td>
-                      {dates.map(d => {
-                        const c = smallCounts.get(`${t.id}|${d}`) || 0
-                        const over = c > SMALL_GROUP_CAP
-                        return (
-                          <td key={d} style={{
-                            padding: 6, textAlign: "center",
-                            color: over ? "var(--error)" : c >= SMALL_GROUP_CAP ? "var(--gold-deep)" : "var(--green-deep)",
-                            fontFamily: "var(--font-cormorant), serif", fontWeight: 700,
-                          }}>
-                            {c}／{SMALL_GROUP_CAP}{over && " ⚠"}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
+              {TEACHERS.map(t => {
+                const c = teacherTotals.get(t.id) || 0
+                const over = c > SMALL_GROUP_CAP
+                return (
+                  <div key={t.id} style={{
+                    padding: "8px 12px",
+                    background: over ? "rgba(184, 82, 58, 0.08)" : "var(--bg-pure)",
+                    border: `1px solid ${over ? "rgba(184, 82, 58, 0.3)" : "var(--line)"}`,
+                    borderRadius: 8, fontSize: 12.5,
+                  }}>
+                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{t.name}</div>
+                    <div style={{
+                      fontFamily: "var(--font-cormorant), serif", fontWeight: 700, fontSize: 16,
+                      color: over ? "var(--error)" : c >= SMALL_GROUP_CAP ? "var(--gold-deep)" : "var(--green-deep)",
+                      marginTop: 2,
+                    }}>
+                      {c} ／ {SMALL_GROUP_CAP}{over && " ⚠"}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

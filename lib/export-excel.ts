@@ -183,9 +183,9 @@ const INTERACTIVE_COLUMNS = [
 ]
 
 const SESSION_LABEL_EXPORT: Record<string, string> = {
-  s1: '8/21（五）巴山', s2: '8/21（五）納',
-  s3: '8/22（六）妮',  s4: '8/22（六）松',
-  s5: '8/23（日）巴山', s6: '8/23（日）妮',
+  s1: '8/20（四）宋猜尊者',
+  s2: '8/21（五）奧蘭努',
+  s3: '8/24（一）阿姜給',
 }
 const TEACHER_LABEL_EXPORT: Record<string, string> = {
   prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',

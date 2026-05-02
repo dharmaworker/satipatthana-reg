@@ -7,12 +7,9 @@ const TEACHER_LABEL: Record<string, string> = {
   prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
 }
 const SESSION_LABEL: Record<string, string> = {
-  s1: '8/21（週五）14:00 — 15:30　阿姜巴山',
-  s2: '8/21（週五）14:00 — 15:30　阿姜納',
-  s3: '8/22（週六）14:00 — 15:30　阿姜妮',
-  s4: '8/22（週六）14:00 — 15:30　阿姜松',
-  s5: '8/23（週日）14:00 — 15:30　阿姜巴山',
-  s6: '8/23（週日）14:00 — 15:30　阿姜妮',
+  s1: '8/20（四）14:30 — 15:30　阿姜宋猜尊者',
+  s2: '8/21（五）14:00 — 15:30　麥琪奧蘭努',
+  s3: '8/24（一）14:00 — 15:30　阿姜給尊者',
 }
 
 type Reg = { id: string; chinese_name: string; member_id: string | null; student_id: string | null; gender: string | null; identity: string | null; email: string }
