@@ -74,7 +74,7 @@ export default function DocumentsPage() {
 
   const fetchData = async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/lodgings')
+    const res = await fetch('/api/admin/lodgings?format=in_person')
     if (res.status === 401 || res.status === 403) { router.push('/admin/login'); return }
     const data = await res.json()
     setRows(data.data || [])

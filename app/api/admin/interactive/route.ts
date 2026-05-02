@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     .from('registrations')
     .select('id, chinese_name, member_id, student_id, random_code, email, residence, status')
     .eq('status', 'approved')
+    .neq('retreat_format', 'online')
     .order('member_id', { ascending: true, nullsFirst: false })
   if (e1) return NextResponse.json({ error: e1.message }, { status: 500 })
 

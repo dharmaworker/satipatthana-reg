@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     .from('registrations')
     .select('id, chinese_name, member_id, student_id, random_code, email, gender, identity')
     .in('id', ids)
+    .neq('retreat_format', 'online')
 
   const { data: ints } = await supabaseAdmin
     .from('interactive_registrations')
