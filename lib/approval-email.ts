@@ -10,7 +10,38 @@ export async function sendApprovalEmail(reg: {
   chinese_name: string
   random_code: string
   member_id: string | null
+  retreat_format?: string | null
 }) {
+  if (reg.retreat_format === 'online') {
+    const onlineBody = `
+      ${emailKicker('Approval Notice')}
+      ${emailH1('第二屆台灣四念處禪修課程－線上錄取通知')}
+      <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
+      <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您被錄取成為「第二屆台灣四念處禪修線上課程（Zoom）」學員，您的報名序號為 <strong style="color:${C.green};">${reg.member_id || '待編號'}</strong>。</p>
+
+      ${emailH3('一、課程資訊')}
+      <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
+        <li>課程方式：<strong style="color:${C.ink};">線上 Zoom 視訊</strong></li>
+        <li>課程日期：<strong style="color:${C.ink};">2026/08/20（四）— 08/24（一）</strong></li>
+        <li>Zoom 連結及課程時程將於開課前另行寄信通知。</li>
+      </ul>
+
+      ${emailH3('二、學員專區')}
+      <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">您可透過學員專區查看課程時間表及審核狀態：</p>
+      ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'green')}
+      <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 繳費碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
+
+      <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
+      ${emailSignoff()}
+    `
+    return sendMail({
+      to: reg.email,
+      bcc: archiveEmail,
+      subject: '【第二屆台灣四念處禪修】線上課程錄取通知',
+      html: emailWrap(onlineBody, { maxWidth: 680 }),
+    })
+  }
+
   const tableTd = `padding:8px 10px;border:1px solid ${C.line};font-size:13.5px;`
   const tableTdMute = `padding:8px 10px;border:1px solid ${C.line};font-size:13.5px;background:rgba(73,85,52,0.04);color:${C.inkMute};font-weight:600;`
 

@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         dharma_name: reg.dharma_name || null,
         payment_plan: reg.payment_plan || null,
         payment_status: reg.payment_status || null,
+        retreat_format: reg.retreat_format || null,
         lodging: lodgingByReg.get(reg.id) || null,
       })
       ok++

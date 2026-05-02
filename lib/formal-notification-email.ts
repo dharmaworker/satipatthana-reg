@@ -16,6 +16,7 @@ export interface FormalNotifData {
   dharma_name: string | null
   payment_plan: string | null
   payment_status: string | null
+  retreat_format: string | null
   lodging: any
 }
 
@@ -35,10 +36,54 @@ const BUS_DEST_ZH: Record<string, string> = {
 }
 
 export async function sendFormalNotificationEmail(reg: FormalNotifData) {
+  const isOnline = reg.retreat_format === 'online'
   const l = reg.lodging || {}
 
   const genderZh = reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : reg.gender
   const paymentStatusZh = reg.payment_status === 'verified' ? '已確認' : reg.payment_status === 'paid' ? '待確認' : '未繳費'
+
+  const genderZh2 = reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : reg.gender
+
+  if (isOnline) {
+    const onlineBody = `
+      ${emailKicker('Online Course Confirmation')}
+      ${emailH1('線上禪修課程錄取通知')}
+      <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
+      <p style="margin:0 0 16px;color:${C.inkSoft};">恭喜您通過資格審核，正式錄取「第二屆台灣四念處禪修線上課程（Zoom）」！以下為您的學員資料，請核對確認：</p>
+
+      ${emailH3('一、學員資料')}
+      ${tableWrap([
+        tableRow('學號', reg.student_id || '（未編號）'),
+        tableRow('中文姓名', reg.chinese_name),
+        tableRow('護照英文姓名', reg.passport_name),
+        tableRow('性別', genderZh2),
+        reg.dharma_name ? tableRow('法名', reg.dharma_name) : '',
+        tableRow('居住地', reg.residence),
+        tableRow('電話', reg.phone),
+        tableRow('Email', reg.email),
+      ].join(''))}
+
+      ${emailH3('二、課程注意事項')}
+      <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
+        <li>課程以 <strong style="color:${C.ink};">Zoom 視訊方式進行</strong>，請確保您的設備與網路連線穩定。</li>
+        <li>課程時間：<strong style="color:${C.ink};">2026/08/20（四）— 08/24（一）</strong>，詳細時程請參見課程時間表。</li>
+        <li>Zoom 會議連結及詳細課程安排將於開課前以 Email 另行通知。</li>
+        <li>課程期間請保持專注，配合授課老師指引，盡量在安靜、不受干擾的環境中參與。</li>
+        <li>若有任何問題請聯絡學會。</li>
+      </ul>
+
+      <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">若資料有誤請儘速聯絡學會。</p>
+      ${emailSignoff()}
+    `
+    return sendMail({
+      to: reg.email,
+      bcc: archiveEmail,
+      subject: '【第二屆台灣四念處禪修】線上課程錄取通知',
+      html: emailWrap(onlineBody, { maxWidth: 680 }),
+    })
+  }
+
+  // 實體
   const arrivalZh = TRANSPORT_ZH[l.arrival_transport] || l.arrival_transport || '—'
   const departureZh = (l.departure_transport === 'bus' ? '主辦專車' : '自行') +
     (l.bus_destination ? `（${BUS_DEST_ZH[l.bus_destination] || l.bus_destination}）` : '')
