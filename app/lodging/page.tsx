@@ -436,9 +436,10 @@ function LodgingContent() {
               <div className="info">
                 <div className="name">{reg.chinese_name} 法友</div>
                 <div className="meta">
-                  <span><strong>報名序號　</strong>{reg.member_id || '—'}</span>
-                  <span><strong>學號　</strong>{reg.student_id || '—'}</span>
-                  <span><strong>性別　</strong>{reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : '—'}</span>
+                  <span><strong>報名序號</strong>{reg.member_id || '—'}</span>
+                  <span><strong>學號</strong>{reg.student_id || '—'}</span>
+                  <span><strong>繳費碼</strong>{code}</span>
+                  <span><strong>繳費方案</strong>{reg.payment_plan ? `${PLAN_INFO[reg.payment_plan]?.label || reg.payment_plan}（${PLAN_INFO[reg.payment_plan]?.method || ''}）` : '—'}</span>
                 </div>
               </div>
             </div>
