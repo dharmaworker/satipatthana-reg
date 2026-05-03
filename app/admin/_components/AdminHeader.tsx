@@ -13,6 +13,7 @@ const ALL_TABS = [
   { path: '/admin/interactive-tasks', label: '互動作業', onlineOnly: false, inPersonOnly: true },
   { path: '/admin/timetable', label: '課程時間表', onlineOnly: false },
   { path: '/admin/practice', label: '課前共修', onlineOnly: false },
+  { path: '/admin/practice-records', label: '共修打卡', onlineOnly: false },
 ]
 
 export function AdminHeader() {
