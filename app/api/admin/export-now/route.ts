@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const now = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' }).replace(/\//g, '')
   const zipFilename = `報名彙整_${now}.zip`
 
-  return new NextResponse(zipBuffer, {
+  return new NextResponse(new Uint8Array(zipBuffer), {
     headers: {
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(zipFilename)}`,
