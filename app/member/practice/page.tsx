@@ -11,6 +11,7 @@ type PracticeItem = {
   subtitle: string | null
   is_live: boolean
   enabled: boolean
+  video_url: string | null
   checked: boolean
 }
 
@@ -205,7 +206,14 @@ function PracticeContent() {
                           </span>
                         ) : (
                           <>
-                            <div style={{ fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
+                            {item.video_url ? (
+                              <a href={item.video_url} target="_blank" rel="noreferrer"
+                                style={{ fontWeight: 600, color: 'var(--green)', lineHeight: 1.5, textDecoration: 'none' }}>
+                                {item.title} <span style={{ fontSize: 12, opacity: 0.7 }}>↗</span>
+                              </a>
+                            ) : (
+                              <div style={{ fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
+                            )}
                             {item.subtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 2 }}>{item.subtitle}</div>}
                           </>
                         )}

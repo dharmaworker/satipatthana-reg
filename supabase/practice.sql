@@ -31,8 +31,11 @@ CREATE TABLE IF NOT EXISTS public.practice_schedule (
   subtitle TEXT,                      -- e.g. "（中文字幕）"
   is_live BOOLEAN NOT NULL DEFAULT false,
   enabled BOOLEAN NOT NULL DEFAULT true,
+  video_url TEXT,                     -- 影片連結（選填）
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- 既有 DB 升級
+ALTER TABLE public.practice_schedule ADD COLUMN IF NOT EXISTS video_url TEXT;
 ALTER TABLE public.practice_schedule ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all" ON public.practice_schedule;
 CREATE POLICY "service_role_all" ON public.practice_schedule FOR ALL TO service_role USING (true) WITH CHECK (true);

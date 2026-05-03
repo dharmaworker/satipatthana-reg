@@ -340,7 +340,7 @@ function MemberDashboardContent() {
               </div>
               <a href={withAuth('/member/practice')}
                 style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
-                前往打卡 →
+                前往共修＆打卡 →
               </a>
             </div>
 

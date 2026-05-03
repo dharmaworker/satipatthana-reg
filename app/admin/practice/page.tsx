@@ -21,6 +21,7 @@ type PracticeItem = {
   subtitle: string | null
   is_live: boolean
   enabled: boolean
+  video_url: string | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -50,7 +51,7 @@ export default function AdminPracticePage() {
   const [editingItem, setEditingItem] = useState<PracticeItem | null>(null)
   const [addingItem, setAddingItem] = useState(false)
   const [newItem, setNewItem] = useState<Partial<PracticeItem>>({
-    sort_order: 9, session_date: '', time_label: '', title: '', subtitle: '', is_live: false, enabled: true,
+    sort_order: 9, session_date: '', time_label: '', title: '', subtitle: '', is_live: false, enabled: true, video_url: '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -270,6 +271,12 @@ export default function AdminPracticePage() {
                               <input style={inputStyle} value={editingItem.subtitle || ''}
                                 onChange={e => setEditingItem({ ...editingItem, subtitle: e.target.value || null })} />
                             </label>
+                            <label style={{ fontSize: 12.5, color: 'var(--ink-mute)', display: 'flex', flexDirection: 'column', gap: 3, gridColumn: '1 / -1' }}>
+                              影片連結（可選，有填則課程名稱變連結）
+                              <input style={inputStyle} value={editingItem.video_url || ''}
+                                onChange={e => setEditingItem({ ...editingItem, video_url: e.target.value || null })}
+                                placeholder="https://..." />
+                            </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, cursor: 'pointer' }}>
                               <input type="checkbox" checked={editingItem.is_live}
                                 onChange={e => setEditingItem({ ...editingItem, is_live: e.target.checked })} />
@@ -352,6 +359,11 @@ export default function AdminPracticePage() {
                       副標題
                       <input style={inputStyle} value={newItem.subtitle || ''}
                         onChange={e => setNewItem({ ...newItem, subtitle: e.target.value })} placeholder="（隆波帕默尊者開示 …）" />
+                    </label>
+                    <label style={{ fontSize: 12.5, color: 'var(--ink-mute)', display: 'flex', flexDirection: 'column', gap: 3, gridColumn: '1 / -1' }}>
+                      影片連結（可選）
+                      <input style={inputStyle} value={newItem.video_url || ''}
+                        onChange={e => setNewItem({ ...newItem, video_url: e.target.value || null })} placeholder="https://..." />
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, cursor: 'pointer' }}>
                       <input type="checkbox" checked={!!newItem.is_live}
