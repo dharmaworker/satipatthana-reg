@@ -1148,27 +1148,38 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .welcome-text p { font-size: 14px; color: var(--ink-soft); margin: 0; line-height: 1.7; }
 .welcome-status {
-  text-align: right;
-  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 8px;
+  row-gap: 4px;
+  justify-content: end;
+  align-items: baseline;
 }
 .welcome-status .ref {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-cormorant), "Cormorant Garamond", serif;
-  font-size: 14px; color: var(--ink-soft);
+  display: contents;
 }
 .welcome-status .ref .k {
+  font-family: var(--font-cormorant), "Cormorant Garamond", serif;
   font-style: italic; letter-spacing: 0.18em;
   color: var(--gold); font-weight: 600;
   text-transform: uppercase; font-size: 11px;
-  min-width: 5em; flex-shrink: 0;
+  min-width: 5em; justify-self: end;
 }
 .welcome-status .ref strong {
   font-weight: 700; color: var(--ink); letter-spacing: 0.06em;
   font-family: var(--font-noto-serif-tc), "Noto Serif TC", serif;
+  font-size: 14px;
+}
+.welcome-status .status-badge,
+.welcome-status > div:not(.ref) {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 @media (max-width: 720px) {
   .welcome-card { grid-template-columns: auto 1fr; padding: 24px 22px; }
-  .welcome-status { grid-column: 1 / -1; align-items: flex-start; padding-top: 8px; border-top: 1px dotted var(--line); text-align: left; }
+  .welcome-status { grid-column: 1 / -1; justify-content: start; padding-top: 8px; border-top: 1px dotted var(--line); text-align: left; }
+  .welcome-status .ref .k { justify-self: start; }
+  .welcome-status .status-badge, .welcome-status > div:not(.ref) { justify-self: start; }
 }
 
 /* ============================================================
