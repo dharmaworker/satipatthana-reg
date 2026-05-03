@@ -79,6 +79,10 @@ export function AdminHeader() {
             className="nav-back" style={{ background: 'rgba(216, 194, 154, 0.2)' }}>
             ⚙ 排程匯出
           </button>
+          <button onClick={() => window.open('/api/admin/export-now', '_blank')}
+            className="nav-back" style={{ background: 'rgba(216, 194, 154, 0.2)' }}>
+            ↓ 匯出
+          </button>
           <button onClick={() => router.push('/admin')} className="nav-logout">登出</button>
         </div>
       </div>
