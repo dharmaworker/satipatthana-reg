@@ -5,15 +5,15 @@ import { useRouter, usePathname } from 'next/navigation'
 const IN_PERSON_ONLY_PATHS = ['/admin/documents', '/admin/quicktests', '/admin/interactive', '/admin/interactive-tasks']
 
 const ALL_TABS = [
-  { path: '/admin/dashboard', label: '報名管理', onlineOnly: false },
-  { path: '/admin/lodgings', label: '錄取學員', onlineOnly: false },
-  { path: '/admin/documents', label: '食宿登記', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/quicktests', label: '快篩上傳', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/interactive', label: '互動報名', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/interactive-tasks', label: '互動作業', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/timetable', label: '課程時間表', onlineOnly: false },
-  { path: '/admin/practice', label: '課前共修', onlineOnly: false },
-  { path: '/admin/practice-records', label: '共修打卡', onlineOnly: false },
+  { path: '/admin/dashboard', label: '報名管理', hint: '所有報名資料、審核狀態與寄信', onlineOnly: false },
+  { path: '/admin/lodgings', label: '錄取學員', hint: '錄取名單、學號編排、繳費方案', onlineOnly: false },
+  { path: '/admin/documents', label: '食宿登記', hint: '學員食宿、交通、飲食登記內容', onlineOnly: false, inPersonOnly: true },
+  { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', onlineOnly: false, inPersonOnly: true },
+  { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', onlineOnly: false, inPersonOnly: true },
+  { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', onlineOnly: false, inPersonOnly: true },
+  { path: '/admin/timetable', label: '課程時間表', hint: '五日禪修課程時程安排', onlineOnly: false },
+  { path: '/admin/practice', label: '設課前共修表', hint: '設定課前共修課表與 Zoom 資訊', onlineOnly: false },
+  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', onlineOnly: false },
 ]
 
 export function AdminHeader() {
@@ -99,6 +99,7 @@ export function AdminHeader() {
             return (
               <button key={t.path}
                 onClick={() => router.push(t.path)}
+                title={t.hint}
                 style={{
                   padding: '7px 16px',
                   fontSize: 13.5, fontWeight: 600,
