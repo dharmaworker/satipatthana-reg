@@ -227,6 +227,49 @@ function addInteractiveSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
+// ========== 課前共修打卡 ==========
+function addPracticeSheet(
+  wb: ExcelJS.Workbook,
+  name: string,
+  approvedRegs: any[],
+  scheduleItems: { id: string; sort_order: number; session_date: string; time_label: string; title: string; is_live: boolean }[],
+  checkinsByRegId: Map<string, Set<string>>,
+) {
+  const sheet = wb.addWorksheet(name)
+  const cols: { key: string; header: string; width: number }[] = [
+    { key: 'member_id', header: '報名序號', width: 12 },
+    { key: 'student_id', header: '學號', width: 12 },
+    { key: 'chinese_name', header: '中文姓名', width: 12 },
+    ...scheduleItems.map(item => {
+      const d = new Date(item.session_date)
+      const dateStr = `${d.getMonth() + 1}/${d.getDate()}`
+      const titleShort = item.is_live ? '直播' : item.title.replace(/《|》/g, '').slice(0, 6)
+      return { key: `item_${item.id}`, header: `${dateStr} ${titleShort}`, width: 10 }
+    }),
+    { key: 'checked_count', header: '打卡數', width: 8 },
+    { key: 'total', header: '總項目', width: 8 },
+  ]
+  sheet.columns = cols
+  sheet.getRow(1).font = { bold: true }
+  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
+
+  for (const reg of approvedRegs) {
+    const checked = checkinsByRegId.get(reg.id) || new Set<string>()
+    const row: Record<string, any> = {
+      member_id: reg.member_id || '',
+      student_id: reg.student_id || '',
+      chinese_name: reg.chinese_name || '',
+      checked_count: checked.size,
+      total: scheduleItems.length,
+    }
+    for (const item of scheduleItems) {
+      row[`item_${item.id}`] = checked.has(item.id) ? '✓' : ''
+    }
+    sheet.addRow(row)
+  }
+  sheet.views = [{ state: 'frozen', ySplit: 1 }]
+}
+
 // ========== 互動作業 ==========
 const INTERACTIVE_TASK_COLUMNS = [
   { key: 'updated_at', header: '更新時間', width: 20 },
@@ -329,6 +372,28 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     interactive: intMap.get(t.registration_id) || null,
   }))
 
+  // 課前共修
+  const { data: practiceItems } = await supabaseAdmin
+    .from('practice_schedule')
+    .select('id, sort_order, session_date, time_label, title, is_live')
+    .eq('enabled', true)
+    .order('sort_order')
+
+  const approvedIds = all.filter(r => r.status === 'approved').map(r => r.id)
+  const { data: practiceCheckins } = approvedIds.length > 0
+    ? await supabaseAdmin
+        .from('practice_checkins')
+        .select('registration_id, schedule_item_id')
+        .in('registration_id', approvedIds)
+    : { data: [] as { registration_id: string; schedule_item_id: string }[] }
+
+  const checkinsByRegId = new Map<string, Set<string>>()
+  for (const c of practiceCheckins || []) {
+    if (!checkinsByRegId.has(c.registration_id)) checkinsByRegId.set(c.registration_id, new Set())
+    checkinsByRegId.get(c.registration_id)!.add(c.schedule_item_id)
+  }
+  const practiceSchedule = practiceItems || []
+
   // 實體／線上分開
   const inPerson = all.filter(r => r.retreat_format !== 'online')
   const online = all.filter(r => r.retreat_format === 'online')
@@ -346,6 +411,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addLodgingSheet(wb, '食宿登記', lodgingData || [])
   addInteractiveSheet(wb, '互動報名', interactiveData || [])
   addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
+  addPracticeSheet(wb, '課前共修打卡', inPerson.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
@@ -360,6 +426,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wbOnline, '待審核', online.filter(r => r.status === 'pending'))
   addSheet(wbOnline, '已錄取', online.filter(r => r.status === 'approved'))
   addSheet(wbOnline, '未錄取', online.filter(r => r.status === 'rejected'))
+  addPracticeSheet(wbOnline, '課前共修打卡', online.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
 
   const bufferOnline = Buffer.from(await wbOnline.xlsx.writeBuffer())
   const filenameOnline = `registrations_online_${dateStr}.xlsx`
