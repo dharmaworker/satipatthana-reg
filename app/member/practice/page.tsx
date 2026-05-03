@@ -208,8 +208,9 @@ function PracticeContent() {
                           <>
                             {item.video_url ? (
                               <a href={item.video_url} target="_blank" rel="noreferrer"
-                                style={{ fontWeight: 600, color: 'var(--green)', lineHeight: 1.5, textDecoration: 'none' }}>
-                                {item.title} <span style={{ fontSize: 12, opacity: 0.7 }}>↗</span>
+                                className="practice-video-link">
+                                {item.title}
+                                <span style={{ fontSize: 13, opacity: 0.6 }}>↗</span>
                               </a>
                             ) : (
                               <div style={{ fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>

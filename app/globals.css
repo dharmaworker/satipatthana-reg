@@ -1076,6 +1076,24 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* 課前共修頁：影片連結 */
+.practice-video-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(73, 85, 52, 0.35);
+  cursor: pointer;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.practice-video-link:hover {
+  color: var(--green-deep);
+  text-decoration-color: var(--green-deep);
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================================
