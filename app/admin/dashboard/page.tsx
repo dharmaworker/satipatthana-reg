@@ -265,7 +265,7 @@ export default function DashboardPage() {
             <option value="rejected">未錄取</option>
           </select>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
-          <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button>
+          {/* <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button> */}
           <button onClick={() => batchAction('approve')} disabled={sending || selected.length === 0}
             className="admin-btn-sm primary">批次錄取（{selected.length}）</button>
           <button onClick={() => batchAction('reject')} disabled={sending || selected.length === 0}

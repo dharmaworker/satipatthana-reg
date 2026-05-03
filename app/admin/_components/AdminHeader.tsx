@@ -77,7 +77,7 @@ export function AdminHeader() {
         <div className="nav-actions">
           <button onClick={() => router.push('/admin/schedules')}
             className="nav-back" style={{ background: 'rgba(216, 194, 154, 0.2)' }}>
-            ⚙ 自動匯出
+            ⚙ 排程匯出
           </button>
           <button onClick={() => router.push('/admin')} className="nav-logout">登出</button>
         </div>
