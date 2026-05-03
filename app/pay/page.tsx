@@ -23,6 +23,7 @@ function PayContent() {
   const router = useRouter()
   const registration_id = searchParams.get('id') || ''
   const random_code = searchParams.get('code') || ''
+  const dashboardUrl = registration_id && random_code ? `/member/dashboard?id=${registration_id}&code=${encodeURIComponent(random_code)}` : '/member'
 
   const [reg, setReg] = useState<any>(null)
   const [plan, setPlan] = useState('A1')
@@ -142,7 +143,7 @@ function PayContent() {
           <div className="login-icon" style={{ background: 'linear-gradient(135deg,#cf8f6c,#8b4f32)' }}>!</div>
           <h1 className="login-title">無法載入</h1>
           <p className="login-subtitle">{initError}</p>
-          <a href="/member" className="btn btn-primary btn-block">前往學員專區</a>
+          <a href={dashboardUrl} className="btn btn-primary btn-block">前往學員專區</a>
         </div>
       </main>
     )
@@ -161,7 +162,7 @@ function PayContent() {
 
       <header className="site-header">
         <div className="container nav">
-          <a href="/member/dashboard" className="brand">
+          <a href={dashboardUrl} className="brand">
             <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
             <span className="brand-sublabel">
               <small>Member Portal</small>
@@ -169,7 +170,7 @@ function PayContent() {
             </span>
           </a>
           <div className="nav-actions">
-            <a href="/member/dashboard" className="nav-back">← 學員首頁</a>
+            <a href={dashboardUrl} className="nav-back">← 學員首頁</a>
           </div>
         </div>
       </header>
@@ -296,7 +297,7 @@ function PayContent() {
               )}
 
               <div className="form-actions">
-                <a href="/member/dashboard" className="btn btn-ghost">← 返回</a>
+                <a href={dashboardUrl} className="btn btn-ghost">← 返回</a>
                 <button onClick={handlePay} disabled={loading}
                   className="btn btn-primary">
                   {loading ? '處理中⋯' : isTransfer ? '查看匯款帳號' : '前往綠界刷卡付款'} <span className="arrow">→</span>

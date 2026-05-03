@@ -59,6 +59,7 @@ function LodgingContent() {
   const router = useRouter()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
+  const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
 
   const [reg, setReg] = useState<any>(null)
   const [existingLodging, setExistingLodging] = useState<any | null>(null)
@@ -344,7 +345,7 @@ function LodgingContent() {
           <div className="login-icon" style={{ background: 'linear-gradient(135deg,#cf8f6c,#8b4f32)' }}>!</div>
           <h1 className="login-title">無法載入</h1>
           <p className="login-subtitle">{error}</p>
-          <a href="/member" className="btn btn-primary btn-block">前往學員專區</a>
+          <a href={dashboardUrl} className="btn btn-primary btn-block">前往學員專區</a>
         </div>
       </main>
     )
@@ -381,7 +382,7 @@ function LodgingContent() {
 
       <header className="site-header">
         <div className="container nav">
-          <a href="/member/dashboard" className="brand">
+          <a href={dashboardUrl} className="brand">
             <img src="/webpage/logo.webp" alt="台灣四念處學會" className="brand-logo" />
             <span className="brand-sublabel">
               <small>Member Portal</small>
@@ -389,7 +390,7 @@ function LodgingContent() {
             </span>
           </a>
           <div className="nav-actions">
-            <a href="/member/dashboard" className="nav-back">← 學員首頁</a>
+            <a href={dashboardUrl} className="nav-back">← 學員首頁</a>
           </div>
         </div>
       </header>
@@ -945,7 +946,7 @@ function LodgingContent() {
               {step > 1 ? (
                 <button onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
               ) : (
-                <a href="/member/dashboard" className="btn btn-ghost">← 返回</a>
+                <a href={dashboardUrl} className="btn btn-ghost">← 返回</a>
               )}
               {step < STEPS.length ? (
                 <button onClick={() => goToStep(step + 1)} className="btn btn-primary">
