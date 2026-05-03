@@ -327,6 +327,23 @@ function MemberDashboardContent() {
               </div>
             )}
 
+            {/* 課前共修入口 */}
+            <div style={{
+              background: 'rgba(73,85,52,0.06)', border: '1px solid rgba(73,85,52,0.18)',
+              borderRadius: 14, padding: '18px 22px', marginBottom: 24,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+            }}>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--green)', textTransform: 'uppercase', marginBottom: 4 }}>Pre-Retreat</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課前共修</h3>
+                <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>8/4 至 8/16・Zoom 線上共修・每次參與後請打卡</p>
+              </div>
+              <a href={withAuth('/member/practice')}
+                style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
+                前往打卡 →
+              </a>
+            </div>
+
             {/* 重要時程 */}
             <div className="schedule-strip">
               <h3>重要時程 <small>Schedule</small></h3>

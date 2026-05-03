@@ -4,6 +4,43 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emai
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
+function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: string) {
+  const td = `padding:8px 10px;border:1px solid ${C.line};font-size:13px;`
+  const tdH = `padding:8px 10px;border:1px solid ${C.line};font-size:13px;background:rgba(73,85,52,0.08);font-weight:700;color:${C.ink};`
+  const rows = [
+    ['第一週', '8/4（二）', '晚上 8 時', '《一心》（中文字幕）'],
+    ['', '8/6（四）', '晚上 8 時', '《不迷失，不緊盯，方能跨越煩惱之海》（隆波帕默尊者開示 2023年11月26日）'],
+    ['', '8/8（六）', '上午 10 時', '現場直播'],
+    ['', '8/9（日）', '上午 10 時', '《佛教三學的完整路線》（隆波帕默尊者開示 2024年6月16日）'],
+    ['第二週', '8/11（二）', '晚上 8 時', '《隆波帕默尊者開示》（2024年12月8日）'],
+    ['', '8/13（四）', '晚上 8 時', '《在日常生活之中開發覺性》（中文字幕）'],
+    ['', '8/15（六）', '上午 10 時', '現場直播'],
+    ['', '8/16（日）', '上午 10 時', '現場直播'],
+  ]
+  return `
+    ${emailH3(`${sectionLabel}課前共修`)}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">禪修開始前兩週（<strong style="color:${C.ink};">8/4 至 8/16</strong>）將安排課前共修，請透過 Zoom 準時參與並於學員專區打卡。</p>
+    <table style="border-collapse:collapse;width:100%;font-size:13px;background:${C.bgPure};border-radius:10px;overflow:hidden;margin-bottom:12px;">
+      <tr>
+        <th style="${tdH}">週次</th>
+        <th style="${tdH}">日期</th>
+        <th style="${tdH}">時間</th>
+        <th style="${tdH}">課程內容</th>
+      </tr>
+      ${rows.map(([week, date, time, title]) =>
+        `<tr><td style="${td}color:${C.inkMute};">${week}</td><td style="${td}white-space:nowrap;">${date}</td><td style="${td}white-space:nowrap;">${time}</td><td style="${td}">${title}</td></tr>`
+      ).join('')}
+    </table>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 6px;">Zoom 線上共修：</p>
+    <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0 0 12px;">
+      <li>會議號：<strong style="color:${C.ink};letter-spacing:0.06em;">833 7654 321</strong></li>
+      <li>密碼：<strong style="color:${C.ink};">123456</strong></li>
+    </ul>
+    ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '前往課前共修打卡', 'green')}
+    <p style="font-size:12.5px;color:${C.inkMute};margin:6px 0 0;">請於每次共修結束後至學員專區完成打卡。</p>
+  `
+}
+
 export async function sendApprovalEmail(reg: {
   id: string
   email: string
@@ -26,7 +63,9 @@ export async function sendApprovalEmail(reg: {
         <li>Zoom 連結及課程時程將於開課前另行寄信通知。</li>
       </ul>
 
-      ${emailH3('二、學員專區')}
+      ${practiceBlock(reg, '二、')}
+
+      ${emailH3('三、學員專區')}
       <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">您可透過學員專區查看課程時間表及審核狀態：</p>
       ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'green')}
       <p style="margin:10px 0 0;font-size:12.5px;color:${C.inkMute};">此連結為您的專屬連結，請妥善保管。如需重新登入請至 <a href="${baseUrl}/member" style="color:${C.green};">${baseUrl}/member</a> 並輸入 Email + 專屬碼：<strong style="color:${C.ink};">${reg.random_code}</strong></p>
@@ -175,6 +214,8 @@ export async function sendApprovalEmail(reg: {
 
     ${emailH3('十二、主辦單位保有課程變更、異動之權利')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">如有任何爭議，台灣四念處學會將保留最終決定權。</p>
+
+    ${practiceBlock(reg, '十三、')}
 
     ${emailCodeBox('您的專屬專屬碼', reg.random_code, '查詢報名狀態時需使用此碼')}
 
