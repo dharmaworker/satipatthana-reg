@@ -110,6 +110,7 @@ export default function RegisterPage() {
     residence: '',
     phone: '',
     email: '',
+    email_confirm: '',
     line_id: '',
     wechat_id: '',
     line_qr_url: '',
@@ -219,6 +220,8 @@ export default function RegisterPage() {
     if (form.residence === '其他地區') return fail('residence', 'Q26：選了「其他地區」請填寫實際居住地')
     if (!form.phone.trim()) return fail('phone', '請填寫 Q27：手機號碼')
     if (!form.email.trim()) return fail('email', '請填寫 Q28：電子信箱')
+    if (!form.email_confirm.trim()) return fail('email_confirm', '請再次輸入電子信箱以確認')
+    if (form.email.trim().toLowerCase() !== form.email_confirm.trim().toLowerCase()) return fail('email_confirm', '兩次填寫的電子信箱不一致，請重新確認')
     if (!form.contact_app) return fail('contact_app', '請選擇 Q29：通訊軟體（LINE 或 微信擇一）')
     if (form.contact_app === 'line') {
       if (!form.line_id.trim()) return fail('contact_app', '請填寫 LINE ID')
@@ -769,7 +772,21 @@ export default function RegisterPage() {
                 <div id="field-email">
                   <label className="form-label">28. 電子信箱 <span className="required">*</span></label>
                   <input type="email" className={`form-input ${errCls('email')}`} value={form.email}
-                    onChange={e => update('email', e.target.value)} />
+                    onChange={e => update('email', e.target.value)}
+                    autoComplete="email" />
+                </div>
+                <div id="field-email_confirm">
+                  <label className="form-label">28b. 再次輸入電子信箱（確認用）<span className="required">*</span></label>
+                  <input type="email" className={`form-input ${errCls('email_confirm')}`} value={form.email_confirm}
+                    onChange={e => update('email_confirm', e.target.value)}
+                    autoComplete="off"
+                    onPaste={e => e.preventDefault()} />
+                  {form.email_confirm && form.email.trim().toLowerCase() !== form.email_confirm.trim().toLowerCase() && (
+                    <p style={{ color: '#DC2626', fontSize: 13, marginTop: 4 }}>⚠ 兩次填寫的信箱不一致</p>
+                  )}
+                  {form.email_confirm && form.email.trim().toLowerCase() === form.email_confirm.trim().toLowerCase() && form.email_confirm.trim() !== '' && (
+                    <p style={{ color: '#059669', fontSize: 13, marginTop: 4 }}>✓ 信箱確認一致</p>
+                  )}
                 </div>
               </div>
 

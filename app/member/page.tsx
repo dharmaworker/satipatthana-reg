@@ -12,6 +12,31 @@ export default function MemberLoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [showResend, setShowResend] = useState(false)
+  const [resendEmail, setResendEmail] = useState('')
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendDone, setResendDone] = useState(false)
+  const [resendError, setResendError] = useState('')
+
+  const handleResend = async () => {
+    if (!resendEmail.trim()) { setResendError('請填寫您報名時的電子信箱'); return }
+    setResendLoading(true); setResendError('')
+    try {
+      const res = await fetch('/api/member/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resendEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setResendDone(true)
+    } catch (err: any) {
+      setResendError(err.message || '寄信失敗，請稍後再試')
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -106,8 +131,44 @@ export default function MemberLoginPage() {
           </form>
 
           <div className="help-link">
-            遺失專屬代碼？<a href="mailto:satipatthana.tw@gmail.com">寫信給我們</a>
+            遺失專屬代碼？
+            <button type="button" onClick={() => { setShowResend(v => !v); setResendDone(false); setResendError('') }}
+              style={{ background: 'none', border: 'none', color: 'var(--gold)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }}>
+              點此重新寄送
+            </button>
           </div>
+
+          {showResend && (
+            <div style={{ marginTop: 16, padding: '16px 20px', background: 'rgba(180,147,88,0.08)', borderRadius: 12, border: '1px solid rgba(180,147,88,0.25)' }}>
+              {resendDone ? (
+                <p style={{ margin: 0, fontSize: 14, color: '#495534', textAlign: 'center' }}>
+                  ✓ 若此信箱有報名紀錄，專屬代碼已寄出，請查收信件（含垃圾郵件）。
+                </p>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ink-soft)' }}>
+                    填寫您報名時所填的信箱，系統將把專屬代碼寄到該信箱。
+                  </p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="報名時填的 Email"
+                      value={resendEmail}
+                      onChange={e => { setResendEmail(e.target.value); setResendError('') }}
+                      onKeyDown={e => e.key === 'Enter' && handleResend()}
+                      style={{ flex: 1, fontSize: 14 }}
+                    />
+                    <button type="button" className="btn btn-primary" onClick={handleResend} disabled={resendLoading}
+                      style={{ whiteSpace: 'nowrap', fontSize: 14, padding: '0 16px' }}>
+                      {resendLoading ? '寄送中⋯' : '寄出'}
+                    </button>
+                  </div>
+                  {resendError && <p style={{ margin: '8px 0 0', fontSize: 13, color: '#DC2626' }}>⚠ {resendError}</p>}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </main>
 

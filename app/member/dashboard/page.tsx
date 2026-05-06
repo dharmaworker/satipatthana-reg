@@ -330,7 +330,7 @@ function MemberDashboardContent() {
             {/* 課前共修入口 */}
             <div style={{
               background: 'rgba(73,85,52,0.06)', border: '1px solid rgba(73,85,52,0.18)',
-              borderRadius: 14, padding: '18px 22px', marginBottom: 24,
+              borderRadius: 14, padding: '18px 22px', marginBottom: 12,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
             }}>
               <div>
@@ -341,6 +341,23 @@ function MemberDashboardContent() {
               <a href={withAuth('/member/practice')}
                 style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
                 前往共修＆打卡 →
+              </a>
+            </div>
+
+            {/* 課程時間表入口 */}
+            <div style={{
+              background: 'rgba(180,147,88,0.07)', border: '1px solid rgba(180,147,88,0.25)',
+              borderRadius: 14, padding: '18px 22px', marginBottom: 24,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+            }}>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--gold-deep)', textTransform: 'uppercase', marginBottom: 4 }}>Schedule</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課程時間表</h3>
+                <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>8/20 至 8/24・五日禪修完整課程安排</p>
+              </div>
+              <a href={withAuth('/info/schedule')}
+                style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--gold-deep)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
+                查看時間表 →
               </a>
             </div>
 
@@ -358,11 +375,6 @@ function MemberDashboardContent() {
 
             {/* 資源 */}
             <div className="resources-grid">
-              <a href={withAuth('/info/schedule')} className="resource-link">
-                <div className="icon">📋</div>
-                <div className="text"><h4>課程時間表</h4><p>五日完整課程安排</p></div>
-                <div className="arrow">→</div>
-              </a>
               {!isOnline && (
                 <a href="/info/payment" className="resource-link">
                   <div className="icon">💰</div>
@@ -421,11 +433,6 @@ function MemberDashboardContent() {
         </div>
       </footer>
 
-      {/* 課程時間表浮動按鈕 */}
-      <a href={withAuth('/info/schedule')} className="fab-schedule">
-        <span className="fab-icon">📅</span>
-        <span className="fab-text">課程時間表</span>
-      </a>
     </>
   )
 }

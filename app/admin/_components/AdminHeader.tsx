@@ -4,16 +4,19 @@ import { useRouter, usePathname } from 'next/navigation'
 
 const IN_PERSON_ONLY_PATHS = ['/admin/documents', '/admin/quicktests', '/admin/interactive', '/admin/interactive-tasks']
 
-const ALL_TABS = [
-  { path: '/admin/dashboard', label: '報名管理', hint: '所有報名資料、審核狀態與寄信', onlineOnly: false },
-  { path: '/admin/lodgings', label: '錄取學員', hint: '錄取名單、學號編排、繳費方案', onlineOnly: false },
-  { path: '/admin/documents', label: '食宿登記', hint: '學員食宿、交通、飲食登記內容', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', onlineOnly: false, inPersonOnly: true },
-  { path: '/admin/timetable', label: '課程時間表', hint: '五日禪修課程時程安排', onlineOnly: false },
-  { path: '/admin/practice', label: '設課前共修表', hint: '設定課前共修課表與 Zoom 資訊', onlineOnly: false },
-  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', onlineOnly: false },
+const DATA_TABS = [
+  { path: '/admin/dashboard', label: '報名管理', hint: '所有報名資料、審核狀態與寄信', inPersonOnly: false },
+  { path: '/admin/lodgings', label: '錄取學員', hint: '錄取名單、學號編排、繳費方案', inPersonOnly: false },
+  { path: '/admin/documents', label: '食宿登記', hint: '學員食宿、交通、飲食登記內容', inPersonOnly: true },
+  { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', inPersonOnly: true },
+  { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', inPersonOnly: true },
+  { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', inPersonOnly: true },
+  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', inPersonOnly: false },
+]
+
+const SETTING_TABS = [
+  { path: '/admin/timetable', label: '課程時間表', hint: '五日禪修課程時程安排' },
+  { path: '/admin/practice', label: '設課前共修表', hint: '設定課前共修課表與 Zoom 資訊' },
 ]
 
 export function AdminHeader() {
@@ -35,7 +38,7 @@ export function AdminHeader() {
     }
   }
 
-  const tabs = ALL_TABS.filter(t => !(t.inPersonOnly && formatFilter === 'online'))
+  const tabs = DATA_TABS.filter(t => !(t.inPersonOnly && formatFilter === 'online'))
 
   return (
     <header className="site-header" style={{ position: 'sticky', top: 0, zIndex: 50 }}>
@@ -91,7 +94,8 @@ export function AdminHeader() {
 
       {/* Row 2: tabs */}
       <div className="container" style={{ paddingTop: 8, paddingBottom: 10, borderTop: '1px solid var(--line)' }}>
-        <nav style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        <nav style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* 學員資料操作 */}
           {tabs.map(t => {
             const active = pathname === t.path || (pathname?.startsWith(t.path) && t.path !== '/admin/dashboard')
             const isDashboardActive = pathname === '/admin/dashboard' && t.path === '/admin/dashboard'
@@ -107,6 +111,32 @@ export function AdminHeader() {
                   borderRadius: 999,
                   border: '1px solid ' + (isActive ? 'var(--green)' : 'var(--line-strong)'),
                   background: isActive ? 'var(--green)' : 'rgba(255, 255, 255, 0.5)',
+                  color: isActive ? '#f8f2e8' : 'var(--ink-soft)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}>
+                {t.label}
+              </button>
+            )
+          })}
+
+          {/* 分隔線 */}
+          <div style={{ width: 1, height: 24, background: 'var(--line-strong)', margin: '0 6px', flexShrink: 0 }} />
+
+          {/* 課表設定 */}
+          {SETTING_TABS.map(t => {
+            const isActive = pathname === t.path
+            return (
+              <button key={t.path}
+                onClick={() => router.push(t.path)}
+                title={t.hint}
+                style={{
+                  padding: '7px 16px',
+                  fontSize: 13.5, fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  borderRadius: 999,
+                  border: '1px solid ' + (isActive ? 'var(--gold-deep)' : 'var(--line-strong)'),
+                  background: isActive ? 'var(--gold-deep)' : 'rgba(216, 194, 154, 0.15)',
                   color: isActive ? '#f8f2e8' : 'var(--ink-soft)',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
