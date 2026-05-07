@@ -209,7 +209,6 @@ export default function DashboardPage() {
     { label: '審核中', value: stats.pending, accent: 'var(--warning)' },
     { label: '已錄取', value: stats.approved, accent: 'var(--success)' },
     { label: '未錄取', value: stats.rejected, accent: 'var(--error)' },
-    { label: '已繳費', value: stats.paid, accent: 'var(--green)' },
   ]
 
   return (
@@ -218,7 +217,7 @@ export default function DashboardPage() {
 
       <div className="admin-main">
         {/* 統計卡片 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 18 }}>
           {STAT_CARDS.map(({ label, value, accent }) => (
             <div key={label} style={{
               background: 'rgba(251, 248, 242, 0.92)',

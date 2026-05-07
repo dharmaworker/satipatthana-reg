@@ -35,7 +35,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite'>(null)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -104,6 +104,43 @@ export default function LodgingsPage() {
     setBulkSending('invite')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-interactive-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendTimetableNotification = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    if (!confirm(`寄出課表發佈通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending('timetable')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-timetable-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendStudentIdNotification = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    const noId = rows.filter(r => bulkSelected.includes(r.registration?.id) && !r.registration?.student_id)
+    if (noId.length > 0) {
+      alert(`勾選中有 ${noId.length} 位尚未分配學號（${noId.map((r: any) => r.registration?.chinese_name).join('、')}），請先完成分配再寄信。`)
+      return
+    }
+    if (!confirm(`寄出學號分配通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending('student_id')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-student-id', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: bulkSelected }),
@@ -250,11 +287,49 @@ export default function LodgingsPage() {
     )
   })
 
+  const stats = {
+    total: rows.length,
+    withStudentId: rows.filter(r => r.registration?.student_id).length,
+    lodgingFilled: rows.filter(r => r.id).length,
+    payPending: rows.filter(r => r.registration?.payment_status === 'paid').length,
+    paid: rows.filter(r => r.registration?.payment_status === 'verified').length,
+  }
+
+  const STAT_CARDS = [
+    { label: '總錄取', value: stats.total, accent: 'var(--ink-mute)' },
+    { label: '已分配學號', value: stats.withStudentId, accent: 'var(--success)' },
+    { label: '食宿已填', value: stats.lodgingFilled, accent: 'var(--green)' },
+    { label: '繳費待確認', value: stats.payPending, accent: 'var(--warning)' },
+    { label: '已繳費', value: stats.paid, accent: 'var(--green)' },
+  ]
+
   return (
     <div className="admin-page">
       <AdminHeader />
 
       <div className="admin-main">
+        {/* 統計卡片 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 18 }}>
+          {STAT_CARDS.map(({ label, value, accent }) => (
+            <div key={label} style={{
+              background: 'rgba(251, 248, 242, 0.92)',
+              border: '1px solid var(--line)',
+              borderRadius: 14,
+              padding: '20px 18px',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow-sm)',
+              borderTop: `3px solid ${accent}`,
+            }}>
+              <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 36, fontWeight: 700, color: accent, lineHeight: 1, letterSpacing: '0.04em' }}>
+                {value}
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 8, fontWeight: 600, letterSpacing: '0.08em' }}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <details open className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
           <summary style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--green-deep)', fontSize: 13.5, userSelect: 'none' }}>💡 操作說明（點擊可折疊）</summary>
           <ol style={{ paddingLeft: 22, marginTop: 8, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85 }}>
@@ -290,6 +365,16 @@ export default function LodgingsPage() {
             disabled={bulkSending !== null}
             className="admin-btn-sm primary">
             {bulkSending === 'approval' ? '寄送中⋯' : `批次寄錄取通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendStudentIdNotification}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm primary">
+            {bulkSending === 'student_id' ? '寄送中⋯' : `批次寄學號分配通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendTimetableNotification}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm primary">
+            {bulkSending === 'timetable' ? '寄送中⋯' : `批次寄課表發佈通知（${bulkSelected.length}）`}
           </button>
           {/* 正式學員通知暫時隱藏
           <button onClick={sendFormalNotifications}
