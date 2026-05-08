@@ -335,6 +335,8 @@ export default function InteractiveAdminPage() {
                 <tr><td colSpan={14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : filtered.map(r => {
                 const it = r.interactive
+                const groupAbstained = !!it && (it.wanted_sessions || []).length === 0
+                const smallAbstained = !!it && (it.wanted_ranking || []).length === 0
                 return (
                   <tr key={r.registration.id}>
                     <td>
@@ -351,7 +353,7 @@ export default function InteractiveAdminPage() {
                         : it ? <span style={{ color: 'var(--ink-mute)' }}>（不報名）</span> : <span style={{ color: 'var(--ink-mute)' }}>未送出</span>}
                     </td>
                     <td>
-                      {it ? (
+                      {groupAbstained ? '—' : it ? (
                         <select value={it.group_status}
                           onChange={e => updateStatus(r.registration.id, { group_status: e.target.value })}
                           className={`admin-status-badge ${statusCls(it.group_status)}`}
@@ -364,14 +366,14 @@ export default function InteractiveAdminPage() {
                       ) : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
-                      {it?.assigned_session
+                      {groupAbstained ? '—' : it?.assigned_session
                         ? SESSION_LABEL[it.assigned_session]
                         : it?.group_status === 'won'
                           ? <span style={{ color: 'var(--error)' }}>需指定</span>
                           : '—'}
                     </td>
                     <td className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
-                      {fmtSerial(it?.group_serial)}
+                      {groupAbstained ? '—' : fmtSerial(it?.group_serial)}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_ranking?.length
@@ -379,7 +381,7 @@ export default function InteractiveAdminPage() {
                         : it ? <span style={{ color: 'var(--ink-mute)' }}>（不報名）</span> : '—'}
                     </td>
                     <td>
-                      {it ? (
+                      {smallAbstained ? '—' : it ? (
                         <select value={it.small_status}
                           onChange={e => updateStatus(r.registration.id, { small_status: e.target.value })}
                           className={`admin-status-badge ${statusCls(it.small_status)}`}
@@ -392,14 +394,14 @@ export default function InteractiveAdminPage() {
                       ) : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
-                      {it?.assigned_group
+                      {smallAbstained ? '—' : it?.assigned_group
                         ? <>{TEACHER_LABEL[it.assigned_group]}<br /><span style={{ fontSize: 11 }}>{it.assigned_date || (it.small_status === 'won' ? <span style={{ color: 'var(--error)' }}>需指定日期</span> : '')}</span></>
                         : it?.small_status === 'won'
                           ? <span style={{ color: 'var(--error)' }}>需指定</span>
                           : '—'}
                     </td>
                     <td className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
-                      {fmtSerial(it?.small_serial)}
+                      {smallAbstained ? '—' : fmtSerial(it?.small_serial)}
                     </td>
                     <td className="muted" style={{ fontSize: 11 }}>
                       {it?.notification_sent_at
