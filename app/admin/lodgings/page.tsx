@@ -399,15 +399,15 @@ export default function LodgingsPage() {
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
           */}
-          <button onClick={sendAttendanceNotification}
-            disabled={bulkSending !== null}
-            className="admin-btn-sm primary">
-            {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程簽到通知（${bulkSelected.length}）`}
-          </button>
           <button onClick={sendInteractiveInvite}
             disabled={bulkSending !== null}
             className="admin-btn-sm">
             {bulkSending === 'invite' ? '寄送中⋯' : `批次寄互動報名通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendAttendanceNotification}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm primary">
+            {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程簽到通知（${bulkSelected.length}）`}
           </button>
           {bulkMessage && (
             <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{bulkMessage}</span>
