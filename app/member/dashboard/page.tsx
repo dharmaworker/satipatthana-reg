@@ -20,8 +20,8 @@ type MemberData = {
   interactive_open: boolean
   interactive_preview?: boolean
   interactive_submitted: boolean
-  interactive_group_status: 'pending' | 'won' | 'lost'
-  interactive_small_status: 'pending' | 'won' | 'lost'
+  interactive_group_status: 'pending' | 'won' | 'waitlist' | 'lost'
+  interactive_small_status: 'pending' | 'won' | 'waitlist' | 'lost'
   interactive_assigned_session: string | null
   interactive_assigned_group: string | null
   interactive_assigned_date: string | null
@@ -157,21 +157,24 @@ function MemberDashboardContent() {
             <span className={`status-badge ${sInfo.cls}`} style={{ marginTop: 8 }}>
               <span className="dot" />{sInfo.label}
             </span>
-            {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') && (
+            {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won' ||
+              member.interactive_group_status === 'waitlist' || member.interactive_small_status === 'waitlist') && (
               <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(216,194,154,0.15)', borderRadius: 8, border: '1px solid var(--gold)', fontSize: 13 }}>
-                <div style={{ color: 'var(--gold-deep)', fontWeight: 700, marginBottom: 6, letterSpacing: '0.05em' }}>✦ 互動報名 中簽</div>
-                {member.interactive_group_status === 'won' && (
+                <div style={{ color: 'var(--gold-deep)', fontWeight: 700, marginBottom: 6, letterSpacing: '0.05em' }}>
+                  {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') ? '✦ 互動報名 中簽' : '✦ 互動報名 候補'}
+                </div>
+                {(member.interactive_group_status === 'won' || member.interactive_group_status === 'waitlist') && (
                   <div style={{ marginBottom: 4 }}>
-                    <span style={{ color: 'var(--ink-soft)' }}>集體場次：</span>
+                    <span style={{ color: 'var(--ink-soft)' }}>集體{member.interactive_group_status === 'waitlist' ? '（候補）' : ''}：</span>
                     <strong>{member.interactive_assigned_session ? SESSION_LABEL[member.interactive_assigned_session] ?? member.interactive_assigned_session : '（待指定）'}</strong>
                     <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>
                       序號 {member.interactive_group_serial !== null ? member.interactive_group_serial : '—'}
                     </span>
                   </div>
                 )}
-                {member.interactive_small_status === 'won' && (
+                {(member.interactive_small_status === 'won' || member.interactive_small_status === 'waitlist') && (
                   <div>
-                    <span style={{ color: 'var(--ink-soft)' }}>分組：</span>
+                    <span style={{ color: 'var(--ink-soft)' }}>分組{member.interactive_small_status === 'waitlist' ? '（候補）' : ''}：</span>
                     <strong>{member.interactive_assigned_group ? TEACHER_LABEL[member.interactive_assigned_group] ?? member.interactive_assigned_group : '（待指定）'}</strong>
                     <span style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>
                       {member.interactive_assigned_date || '—'}
@@ -283,8 +286,8 @@ function MemberDashboardContent() {
                     deadline={member.interactive_preview ? '對學員未開放（admin 預覽中）' : '07/15 晚上 8 點前'}
                     urgent={!member.interactive_preview && !member.interactive_submitted}
                     rows={[
-                      ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
-                      ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                      ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'waitlist' ? '✦ 候補' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
+                      ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'waitlist' ? '✦ 候補' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : '⏳ 未定'],
                     ]}
                     actionHref={withAuth('/member/interactive')}
                     actionText={member.interactive_submitted ? '查看／修改' : '前往報名 →'}

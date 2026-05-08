@@ -93,6 +93,24 @@ function InteractiveContent() {
     }
   }
 
+  const toggleRank = (teacherId: TeacherId, n: number) => {
+    setRanking(prev => {
+      const current = prev[teacherId]
+      if (current === String(n)) {
+        // 取消：移除此老師，並清掉所有排在更後面的（維持連號）
+        const newR: Record<string, string> = {}
+        for (const [tid, rank] of Object.entries(prev)) {
+          if (parseInt(rank) < n) newR[tid] = rank
+        }
+        return newR
+      }
+      // 只允許填入下一個連號
+      const count = Object.values(prev).filter(Boolean).length
+      if (!current && n === count + 1) return { ...prev, [teacherId]: String(n) }
+      return prev
+    })
+  }
+
   const fail = (field: string, msg: string) => {
     setError(msg)
     setErrorField(field)
@@ -105,6 +123,10 @@ function InteractiveContent() {
   const goToStep = (target: number) => {
     if (target === step) return
     if (target < step) { setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    if (step === 2 && target > 2 && !noSession && sessions.length === 0) {
+      fail('sessions', '若參加集體互動，請至少選擇一個場次（或勾選「不報名參與本次課程的集體互動」）')
+      return
+    }
     if (target <= maxReached) {
       setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return
     }
@@ -311,7 +333,7 @@ function InteractiveContent() {
                     <h2 className="step-header-title">集體互動</h2>
                     <p className="step-header-desc">請選擇您希望報名互動的場次（可多選）。最終以隨機抽籤產生名單。</p>
                   </div>
-                  <div className="session-grid">
+                  <div id="field-sessions" className="session-grid">
                     <label className={`session-cell ${noSession ? 'selected' : ''}`} style={{ gridColumn: '1 / -1' }}>
                       <input type="checkbox" checked={noSession} onChange={toggleNoSession} />
                       <div className="session-check" />
@@ -345,17 +367,18 @@ function InteractiveContent() {
                   <div className="step-header">
                     <p className="step-header-kicker">Step 03</p>
                     <h2 className="step-header-title">分組互動</h2>
-                    <p className="step-header-desc">點選每位老師的意願順序（1 = 最希望）。同一數字可給多位老師，不點選代表棄權。</p>
+                    <p className="step-header-desc">點選每位老師的意願順序（1 = 最希望）。每位老師給不同數字，需連號不可跳號，空白代表不選該老師。</p>
                   </div>
                   <div className="alert-card">
                     <div className="alert-card-title">填寫說明</div>
-                    <p>點選數字按鈕設定意願順序；再點同一按鈕可取消。同一數字可同時給多位老師（代表同等意願）。全部不選代表不報名分組互動。</p>
+                    <p>點選數字按鈕依序設定意願順序（1 = 最希望）；再點同一按鈕可取消，取消後後續順序一併清除。每位老師的數字不可重複，且需連號（例如 1、1、2、3 不行；1、2、3 可以）。全空白代表不報名分組互動。</p>
                   </div>
 
                   <div id="field-ranking" style={{ marginTop: 20 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {TEACHERS.map(t => {
                         const selected = ranking[t.id] || ''
+                        const nextRank = Object.values(ranking).filter(Boolean).length + 1
                         return (
                           <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: selected ? 'rgba(73,85,52,0.06)' : 'rgba(255,255,255,0.6)', borderRadius: 10, border: `1px solid ${selected ? 'rgba(73,85,52,0.35)' : 'var(--line)'}` }}>
                             <div style={{ flex: 1 }}>
@@ -365,15 +388,19 @@ function InteractiveContent() {
                             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                               {[1, 2, 3, 4].map(n => {
                                 const active = selected === String(n)
+                                const disabled = selected ? !active : n !== nextRank
                                 return (
                                   <button key={n} type="button"
-                                    onClick={() => setRanking(prev => ({ ...prev, [t.id]: active ? '' : String(n) }))}
+                                    onClick={() => toggleRank(t.id, n)}
+                                    disabled={disabled}
                                     style={{
-                                      width: 36, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer',
+                                      width: 36, height: 36, borderRadius: 8, border: 'none',
+                                      cursor: disabled ? 'not-allowed' : 'pointer',
                                       fontFamily: 'var(--font-cormorant), serif', fontWeight: 700, fontSize: 17,
                                       background: active ? 'var(--green-deep)' : 'rgba(0,0,0,0.06)',
                                       color: active ? '#fff' : 'var(--ink-soft)',
-                                      transition: 'background 0.15s, color 0.15s',
+                                      transition: 'background 0.15s, color 0.15s, opacity 0.15s',
+                                      opacity: disabled ? 0.28 : 1,
                                     }}>
                                     {n}
                                   </button>
@@ -433,7 +460,7 @@ function InteractiveContent() {
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
               <p>集體互動可全部不勾，代表不報名集體互動。</p>
-              <p style={{ marginTop: 10 }}>分組互動可棄權、可重複選、可只選一個，未填寫請保持空白。</p>
+              <p style={{ marginTop: 10 }}>分組互動可棄權；如要報名，請依 1、2、3、4 順序為老師排列意願，不可跳號，未填寫代表不報名。</p>
               <p style={{ marginTop: 10 }}>抽籤結果由學會於互動報名截止後寄信通知。</p>
             </div>
 

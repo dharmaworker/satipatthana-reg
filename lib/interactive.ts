@@ -3,7 +3,7 @@
 
 export type SessionId = 's1' | 's2' | 's3'
 export type TeacherId = 'prasan' | 'nat' | 'nitiya' | 'napatpol'
-export type StatusValue = 'pending' | 'won' | 'lost'
+export type StatusValue = 'pending' | 'won' | 'waitlist' | 'lost'
 
 export const TEACHERS: { id: TeacherId; name: string; nameEn: string; seats: number }[] = [
   { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan',   seats: 38 },
@@ -30,6 +30,7 @@ export const INTERACTIVE_DEADLINE_MS = Date.UTC(2026, 6, 15, 12, 0, 0) // 2026/0
 export const STATUS_LABEL: Record<StatusValue, string> = {
   pending: '未定',
   won: '中簽',
+  waitlist: '候補',
   lost: '沒中簽',
 }
 

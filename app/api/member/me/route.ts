@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
   let lodgingStatus: 'none' | 'submitted_editable' | 'locked' = 'none'
   let testsUploaded = 0
   let interactiveSubmitted = false
-  let interactiveGroupStatus: 'pending' | 'won' | 'lost' = 'pending'
-  let interactiveSmallStatus: 'pending' | 'won' | 'lost' = 'pending'
+  let interactiveGroupStatus: 'pending' | 'won' | 'waitlist' | 'lost' = 'pending'
+  let interactiveSmallStatus: 'pending' | 'won' | 'waitlist' | 'lost' = 'pending'
   let interactiveAssignedSession: string | null = null
   let interactiveAssignedGroup: string | null = null
   let interactiveAssignedDate: string | null = null

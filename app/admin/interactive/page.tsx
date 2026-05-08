@@ -24,8 +24,8 @@ type Row = {
   interactive: {
     wanted_sessions: string[]
     wanted_ranking: string[]
-    group_status: 'pending' | 'won' | 'lost'
-    small_status: 'pending' | 'won' | 'lost'
+    group_status: 'pending' | 'won' | 'waitlist' | 'lost'
+    small_status: 'pending' | 'won' | 'waitlist' | 'lost'
     assigned_session: string | null
     assigned_group: string | null
     assigned_date: string | null
@@ -358,6 +358,7 @@ export default function InteractiveAdminPage() {
                           style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
                           <option value="pending">未定</option>
                           <option value="won">中簽</option>
+                          <option value="waitlist">候補</option>
                           <option value="lost">沒中簽</option>
                         </select>
                       ) : '—'}
@@ -385,6 +386,7 @@ export default function InteractiveAdminPage() {
                           style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
                           <option value="pending">未定</option>
                           <option value="won">中簽</option>
+                          <option value="waitlist">候補</option>
                           <option value="lost">沒中簽</option>
                         </select>
                       ) : '—'}
@@ -436,7 +438,7 @@ export default function InteractiveAdminPage() {
 }
 
 function statusCls(s: string) {
-  return s === 'won' ? 'ok' : s === 'lost' ? 'error' : 'warn'
+  return s === 'won' ? 'ok' : s === 'lost' ? 'error' : s === 'waitlist' ? 'info' : 'warn'
 }
 
 function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; onSave: (patch: any) => void }) {
@@ -474,10 +476,11 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                 <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
                   <option value="pending">未定</option>
                   <option value="won">中簽</option>
+                  <option value="waitlist">候補</option>
                   <option value="lost">沒中簽</option>
                 </select>
               </div>
-              {groupStatus !== 'lost' && (
+              {(groupStatus === 'won' || groupStatus === 'waitlist') && (
                 <>
                   <div>
                     <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
@@ -513,10 +516,11 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                 <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
                   <option value="pending">未定</option>
                   <option value="won">中簽</option>
+                  <option value="waitlist">候補</option>
                   <option value="lost">沒中簽</option>
                 </select>
               </div>
-              {smallStatus !== 'lost' && (
+              {(smallStatus === 'won' || smallStatus === 'waitlist') && (
                 <>
                   <div>
                     <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
@@ -558,12 +562,12 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
             onClick={() => onSave({
               group_status: groupStatus,
               small_status: smallStatus,
-              // 'lost' 清空；其他狀態 (pending/won) 保留 admin 填的值
-              assigned_session: groupStatus === 'lost' ? null : (assignedSession || null),
-              group_serial: groupStatus === 'lost' ? null : (groupSerial === '' ? null : Number(groupSerial)),
-              assigned_group: smallStatus === 'lost' ? null : (assignedGroup || null),
-              assigned_date: smallStatus === 'lost' ? null : (assignedDate || null),
-              small_serial: smallStatus === 'lost' ? null : (smallSerial === '' ? null : Number(smallSerial)),
+              // 'pending'/'lost' 清空；'won'/'waitlist' 保留 admin 填的值
+              assigned_session: (groupStatus === 'won' || groupStatus === 'waitlist') ? (assignedSession || null) : null,
+              group_serial: (groupStatus === 'won' || groupStatus === 'waitlist') ? (groupSerial === '' ? null : Number(groupSerial)) : null,
+              assigned_group: (smallStatus === 'won' || smallStatus === 'waitlist') ? (assignedGroup || null) : null,
+              assigned_date: (smallStatus === 'won' || smallStatus === 'waitlist') ? (assignedDate || null) : null,
+              small_serial: (smallStatus === 'won' || smallStatus === 'waitlist') ? (smallSerial === '' ? null : Number(smallSerial)) : null,
             })}
             className="admin-btn-sm primary">儲存</button>
         </div>

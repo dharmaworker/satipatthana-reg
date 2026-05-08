@@ -2577,6 +2577,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .admin-status-badge.warn { background: rgba(184, 133, 44, 0.12); color: var(--warning); border: 1px solid rgba(184, 133, 44, 0.3); }
 .admin-status-badge.error { background: rgba(184, 82, 58, 0.12); color: var(--error); border: 1px solid rgba(184, 82, 58, 0.3); }
 .admin-status-badge.muted { background: rgba(133, 119, 107, 0.12); color: var(--ink-mute); border: 1px solid rgba(133, 119, 107, 0.3); }
+.admin-status-badge.info  { background: rgba(66, 133, 180, 0.12); color: #2a6fa8; border: 1px solid rgba(66, 133, 180, 0.3); }
 
 .admin-info-strip {
   background: rgba(216, 194, 154, 0.18);
