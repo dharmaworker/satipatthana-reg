@@ -3,15 +3,17 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 
 const IN_PERSON_ONLY_PATHS = ['/admin/documents', '/admin/quicktests', '/admin/interactive', '/admin/interactive-tasks']
+const ONLINE_ONLY_PATHS = ['/admin/attendance-records']
 
 const DATA_TABS = [
-  { path: '/admin/dashboard', label: '報名管理', hint: '所有報名資料、審核狀態與寄信', inPersonOnly: false },
-  { path: '/admin/lodgings', label: '錄取學員', hint: '錄取名單、學號編排、繳費方案', inPersonOnly: false },
-  { path: '/admin/documents', label: '食宿登記', hint: '學員食宿、交通、飲食登記內容', inPersonOnly: true },
-  { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', inPersonOnly: true },
-  { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', inPersonOnly: true },
-  { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', inPersonOnly: true },
-  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', inPersonOnly: false },
+  { path: '/admin/dashboard', label: '報名管理', hint: '所有報名資料、審核狀態與寄信', inPersonOnly: false, onlineOnly: false },
+  { path: '/admin/lodgings', label: '錄取學員', hint: '錄取名單、學號編排、繳費方案', inPersonOnly: false, onlineOnly: false },
+  { path: '/admin/documents', label: '食宿登記', hint: '學員食宿、交通、飲食登記內容', inPersonOnly: true, onlineOnly: false },
+  { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', inPersonOnly: true, onlineOnly: false },
+  { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', inPersonOnly: true, onlineOnly: false },
+  { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', inPersonOnly: true, onlineOnly: false },
+  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', inPersonOnly: false, onlineOnly: false },
+  { path: '/admin/attendance-records', label: '課程簽到', hint: '線上學員課程完成度簽到記錄', inPersonOnly: false, onlineOnly: true },
 ]
 
 const SETTING_TABS = [
@@ -36,9 +38,15 @@ export function AdminHeader() {
     if (f === 'online' && IN_PERSON_ONLY_PATHS.includes(pathname || '')) {
       router.push('/admin/dashboard')
     }
+    if (f === 'in_person' && ONLINE_ONLY_PATHS.includes(pathname || '')) {
+      router.push('/admin/dashboard')
+    }
   }
 
-  const tabs = DATA_TABS.filter(t => !(t.inPersonOnly && formatFilter === 'online'))
+  const tabs = DATA_TABS.filter(t =>
+    !(t.inPersonOnly && formatFilter === 'online') &&
+    !(t.onlineOnly && formatFilter === 'in_person')
+  )
 
   return (
     <header className="site-header" style={{ position: 'sticky', top: 0, zIndex: 50 }}>

@@ -481,8 +481,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addLodgingSheet(wb, '食宿登記', lodgingData || [])
   addInteractiveSheet(wb, '互動報名', interactiveData || [])
   addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
-  addAttendanceSheet(wb, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format !== 'online'))
   addPracticeSheet(wb, '課前共修打卡', inPerson.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
+  addAttendanceSheet(wb, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format !== 'online'))
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
@@ -497,8 +497,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wbOnline, '待審核', online.filter(r => r.status === 'pending'))
   addSheet(wbOnline, '已錄取', online.filter(r => r.status === 'approved'))
   addSheet(wbOnline, '未錄取', online.filter(r => r.status === 'rejected'))
-  addAttendanceSheet(wbOnline, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format === 'online'))
   addPracticeSheet(wbOnline, '課前共修打卡', online.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
+  addAttendanceSheet(wbOnline, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format === 'online'))
 
   const bufferOnline = Buffer.from(await wbOnline.xlsx.writeBuffer())
   const filenameOnline = `registrations_online_${dateStr}.xlsx`

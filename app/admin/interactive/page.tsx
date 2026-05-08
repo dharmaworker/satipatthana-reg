@@ -48,6 +48,7 @@ export default function InteractiveAdminPage() {
   const [bulkSending, setBulkSending] = useState(false)
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
+  const [autoDrawOpen, setAutoDrawOpen] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const [configSaving, setConfigSaving] = useState(false)
   const [previewing, setPreviewing] = useState(false)
@@ -296,6 +297,11 @@ export default function InteractiveAdminPage() {
             className="admin-btn-sm primary">
             {bulkSending ? '寄送中⋯' : `批次寄中簽通知信（${bulkSelected.length}）`}
           </button>
+          <button onClick={() => setAutoDrawOpen(true)}
+            className="admin-btn-sm"
+            style={{ background: 'rgba(180, 147, 88, 0.15)', borderColor: 'var(--gold-deep)', color: 'var(--gold-deep)', fontWeight: 700 }}>
+            🎲 自動抽簽
+          </button>
           {message && <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message}</span>}
           <span className="count">共 {filtered.length} 筆</span>
         </div>
@@ -416,6 +422,14 @@ export default function InteractiveAdminPage() {
             const ok = await updateStatus(editing.registration.id, patch)
             if (ok) setEditing(null)
           }} />
+      )}
+
+      {autoDrawOpen && (
+        <AutoDrawModal
+          rows={rows}
+          onClose={() => setAutoDrawOpen(false)}
+          onApplied={() => { setAutoDrawOpen(false); fetchData() }}
+        />
       )}
     </div>
   )
@@ -657,6 +671,376 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// 自動抽簽
+// ─────────────────────────────────────────────────────────────
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+type DrawMode = 'group' | 'small'
+type GroupScope = 'all' | string
+
+type DrawResult = {
+  registration_id: string
+  chinese_name: string
+  member_id: string | null
+  mode: DrawMode
+  won: boolean
+  label: string
+  serial: number | null
+  assigned_session?: string | null
+  assigned_group?: string | null
+}
+
+function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
+  const sessions = scope === 'all' ? SESSIONS : SESSIONS.filter(s => s.id === scope)
+
+  const alreadyWon = new Map<string, number>()
+  const maxSerial = new Map<string, number>()
+  for (const r of rows) {
+    const it = r.interactive
+    if (it?.group_status === 'won' && it.assigned_session) {
+      alreadyWon.set(it.assigned_session, (alreadyWon.get(it.assigned_session) || 0) + 1)
+      if (it.group_serial !== null && it.group_serial !== undefined) {
+        maxSerial.set(it.assigned_session, Math.max(maxSerial.get(it.assigned_session) || 0, it.group_serial))
+      }
+    }
+  }
+
+  const remaining = new Map(sessions.map(s => [s.id, Math.max(0, s.cap - (alreadyWon.get(s.id) || 0))]))
+  const nextSerial = new Map(sessions.map(s => [s.id, (maxSerial.get(s.id) || 0) + 1]))
+
+  const eligible = rows.filter(r => {
+    const it = r.interactive
+    if (!it || it.group_status !== 'pending') return false
+    const wanted = it.wanted_sessions || []
+    return scope === 'all'
+      ? wanted.length > 0
+      : wanted.some(s => s === scope)
+  })
+
+  const results: DrawResult[] = []
+  for (const row of shuffle(eligible)) {
+    const wanted = (row.interactive!.wanted_sessions || []).filter(s => sessions.find(x => x.id === s))
+    let assigned: { session: string; serial: number } | null = null
+    for (const sessionId of wanted) {
+      const rem = remaining.get(sessionId) ?? 0
+      if (rem > 0) {
+        const serial = nextSerial.get(sessionId)!
+        assigned = { session: sessionId, serial }
+        remaining.set(sessionId, rem - 1)
+        nextSerial.set(sessionId, serial + 1)
+        break
+      }
+    }
+    results.push({
+      registration_id: row.registration.id,
+      chinese_name: row.registration.chinese_name,
+      member_id: row.registration.member_id,
+      mode: 'group',
+      won: !!assigned,
+      label: assigned ? (SESSION_LABEL[assigned.session] || assigned.session) : '—',
+      serial: assigned?.serial ?? null,
+      assigned_session: assigned?.session ?? null,
+    })
+  }
+  return results
+}
+
+function runSmallGroupDraw(rows: Row[]): DrawResult[] {
+  const alreadyWon = new Map<string, number>()
+  const maxSerial = new Map<string, number>()
+  for (const r of rows) {
+    const it = r.interactive
+    if (it?.small_status === 'won' && it.assigned_group) {
+      alreadyWon.set(it.assigned_group, (alreadyWon.get(it.assigned_group) || 0) + 1)
+      if (it.small_serial !== null && it.small_serial !== undefined) {
+        maxSerial.set(it.assigned_group, Math.max(maxSerial.get(it.assigned_group) || 0, it.small_serial))
+      }
+    }
+  }
+
+  const remaining = new Map(TEACHERS.map(t => [t.id, Math.max(0, SMALL_GROUP_CAP - (alreadyWon.get(t.id) || 0))]))
+  const nextSerial = new Map(TEACHERS.map(t => [t.id, (maxSerial.get(t.id) || 0) + 1]))
+
+  const eligible = rows.filter(r => {
+    const it = r.interactive
+    return it && it.small_status === 'pending' && (it.wanted_ranking || []).length > 0
+  })
+
+  const results: DrawResult[] = []
+  for (const row of shuffle(eligible)) {
+    const ranking = row.interactive!.wanted_ranking || []
+    let assigned: { group: string; serial: number } | null = null
+    for (const teacherId of ranking) {
+      const rem = remaining.get(teacherId) ?? 0
+      if (rem > 0) {
+        const serial = nextSerial.get(teacherId)!
+        assigned = { group: teacherId, serial }
+        remaining.set(teacherId, rem - 1)
+        nextSerial.set(teacherId, serial + 1)
+        break
+      }
+    }
+    results.push({
+      registration_id: row.registration.id,
+      chinese_name: row.registration.chinese_name,
+      member_id: row.registration.member_id,
+      mode: 'small',
+      won: !!assigned,
+      label: assigned ? (TEACHER_LABEL[assigned.group] || assigned.group) : '—',
+      serial: assigned?.serial ?? null,
+      assigned_group: assigned?.group ?? null,
+    })
+  }
+  return results
+}
+
+function AutoDrawModal({ rows, onClose, onApplied }: {
+  rows: Row[]
+  onClose: () => void
+  onApplied: () => void
+}) {
+  const [step, setStep] = useState<'config' | 'drawing' | 'results' | 'applying' | 'done'>('config')
+  const [mode, setMode] = useState<DrawMode>('group')
+  const [scope, setScope] = useState<GroupScope>('all')
+  const [results, setResults] = useState<DrawResult[]>([])
+  const [applyProgress, setApplyProgress] = useState({ done: 0, total: 0 })
+  const [applyError, setApplyError] = useState('')
+
+  const groupEligible = rows.filter(r => {
+    const it = r.interactive
+    if (!it || it.group_status !== 'pending') return false
+    const wanted = it.wanted_sessions || []
+    return scope === 'all' ? wanted.length > 0 : wanted.some(s => s === scope)
+  }).length
+
+  const smallEligible = rows.filter(r => {
+    const it = r.interactive
+    return it && it.small_status === 'pending' && (it.wanted_ranking || []).length > 0
+  }).length
+
+  const eligible = mode === 'group' ? groupEligible : smallEligible
+
+  const runDraw = async () => {
+    setStep('drawing')
+    await new Promise(r => setTimeout(r, 1600))
+    const res = mode === 'group' ? runGroupDraw(rows, scope) : runSmallGroupDraw(rows)
+    setResults(res)
+    setStep('results')
+  }
+
+  const applyResults = async () => {
+    setStep('applying')
+    setApplyError('')
+    const patches = results.map(r =>
+      r.mode === 'group'
+        ? { registration_id: r.registration_id, group_status: r.won ? 'won' : 'lost', assigned_session: r.assigned_session ?? null, group_serial: r.serial }
+        : { registration_id: r.registration_id, small_status: r.won ? 'won' : 'lost', assigned_group: r.assigned_group ?? null, small_serial: r.serial }
+    )
+    setApplyProgress({ done: 0, total: patches.length })
+    try {
+      const res = await fetch('/api/admin/interactive/batch-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patches }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '套用失敗')
+      setApplyProgress({ done: data.applied, total: patches.length })
+      setStep('done')
+    } catch (e: any) {
+      setApplyError(e.message)
+      setStep('results')
+    }
+  }
+
+  const wonCount = results.filter(r => r.won).length
+  const lostCount = results.filter(r => !r.won).length
+  const byLabel = new Map<string, number>()
+  for (const r of results) {
+    if (r.won) byLabel.set(r.label, (byLabel.get(r.label) || 0) + 1)
+  }
+
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed', inset: 0, zIndex: 200,
+    background: 'rgba(30, 26, 20, 0.65)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    backdropFilter: 'blur(4px)',
+  }
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--bg-pure)', borderRadius: 18,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+    width: '90%', maxWidth: 820, maxHeight: '90vh',
+    display: 'flex', flexDirection: 'column', overflow: 'hidden',
+  }
+
+  return (
+    <div style={overlayStyle} onClick={step === 'config' ? onClose : undefined}>
+      <div style={cardStyle} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px 14px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 18, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.06em' }}>
+          <span>🎲 自動抽簽</span>
+          {(step === 'config' || step === 'results' || step === 'done') && (
+            <button onClick={onClose} className="admin-btn-sm">✕</button>
+          )}
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+
+          {step === 'config' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {([
+                  { v: 'group' as DrawMode, label: '集體互動', hint: '依學員「想要的集體場次」抽簽' },
+                  { v: 'small' as DrawMode, label: '分組互動', hint: '依學員「分組老師排序」抽簽' },
+                ]).map(opt => (
+                  <label key={opt.v} style={{ flex: 1, cursor: 'pointer', padding: '14px 18px', border: `2px solid ${mode === opt.v ? 'var(--green)' : 'var(--line)'}`, borderRadius: 12, background: mode === opt.v ? 'rgba(73,85,52,0.08)' : 'var(--bg-pure)', transition: 'all 0.15s' }}>
+                    <input type="radio" name="draw_mode" value={opt.v} checked={mode === opt.v} onChange={() => setMode(opt.v)} style={{ display: 'none' }} />
+                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{opt.label}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-mute)' }}>{opt.hint}</div>
+                  </label>
+                ))}
+              </div>
+
+              {mode === 'group' && (
+                <div>
+                  <label className="form-label">抽簽範圍（場次）</label>
+                  <select className="form-select" value={scope} onChange={e => setScope(e.target.value)} style={{ maxWidth: 360 }}>
+                    <option value="all">全部場次（同時抽）</option>
+                    {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}（名額 {s.cap}）</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ padding: '12px 16px', borderRadius: 10, background: eligible > 0 ? 'rgba(73,85,52,0.06)' : 'rgba(180,147,88,0.1)', border: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+                {eligible > 0
+                  ? <>將對 <strong style={{ color: 'var(--ink)', fontSize: 16 }}>{eligible}</strong> 位「已送出且狀態為未定」的學員進行抽簽。已中簽或沒中簽者不受影響。</>
+                  : '目前沒有符合條件的學員（已送出且狀態為未定）。'}
+              </div>
+            </div>
+          )}
+
+          {step === 'drawing' && (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: 52, marginBottom: 16, display: 'inline-block', animation: 'spin 0.5s linear infinite' }}>🎲</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.08em', marginBottom: 8 }}>抽簽中⋯</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-mute)' }}>正在依學員偏好隨機分配</div>
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
+
+          {step === 'results' && (
+            <div>
+              <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                <div style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(73,85,52,0.08)', border: '1px solid rgba(73,85,52,0.2)', fontSize: 13 }}>
+                  ✓ 中簽 <strong style={{ fontSize: 18, color: 'var(--green-deep)' }}>{wonCount}</strong> 人
+                </div>
+                <div style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(180,147,88,0.08)', border: '1px solid rgba(180,147,88,0.2)', fontSize: 13 }}>
+                  ✗ 沒中簽 <strong style={{ fontSize: 18, color: 'var(--gold-deep)' }}>{lostCount}</strong> 人
+                </div>
+                {Array.from(byLabel.entries()).map(([label, cnt]) => (
+                  <div key={label} style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(251,248,242,0.9)', border: '1px solid var(--line)', fontSize: 12.5, color: 'var(--ink-soft)' }}>
+                    {label}：{cnt} 人
+                  </div>
+                ))}
+              </div>
+
+              {applyError && (
+                <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 8, color: 'var(--error)', fontSize: 13 }}>
+                  {applyError}
+                </div>
+              )}
+
+              <div style={{ overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 10 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(73,85,52,0.07)' }}>
+                      {['姓名', '報名序號', '結果', mode === 'group' ? '指定場次' : '指定分組', '序號'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--ink)', textAlign: 'left', borderBottom: '1px solid var(--line-strong)', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map(r => (
+                      <tr key={r.registration_id} style={{ background: r.won ? 'rgba(73,85,52,0.03)' : 'transparent', borderBottom: '1px solid var(--line)' }}>
+                        <td style={{ padding: '7px 12px', fontWeight: 600 }}>{r.chinese_name}</td>
+                        <td style={{ padding: '7px 12px', fontFamily: 'monospace', color: 'var(--ink-mute)' }}>{r.member_id || '—'}</td>
+                        <td style={{ padding: '7px 12px' }}>
+                          <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: r.won ? 'rgba(73,85,52,0.12)' : 'rgba(180,147,88,0.1)', color: r.won ? 'var(--green-deep)' : 'var(--gold-deep)', border: `1px solid ${r.won ? 'rgba(73,85,52,0.25)' : 'rgba(180,147,88,0.25)'}` }}>
+                            {r.won ? '✓ 中簽' : '✗ 沒中簽'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '7px 12px', color: r.won ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>{r.won ? r.label : '—'}</td>
+                        <td style={{ padding: '7px 12px', fontFamily: 'monospace', fontWeight: r.won ? 700 : 400, color: r.won ? 'var(--ink)' : 'var(--ink-mute)' }}>{r.serial ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginTop: 10 }}>
+                套用後可透過「編輯指定」修改個別結果。分組互動的日期需手動補填。
+              </p>
+            </div>
+          )}
+
+          {step === 'applying' && (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', marginBottom: 8 }}>套用中⋯</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-mute)' }}>正在寫入 {results.length} 筆資料</div>
+            </div>
+          )}
+
+          {step === 'done' && (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--green-deep)', letterSpacing: '0.08em', marginBottom: 8 }}>套用完成！</div>
+              <div style={{ fontSize: 14, color: 'var(--ink-soft)' }}>已更新 {applyProgress.done} 筆學員資料</div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--line)', display: 'flex', gap: 10, justifyContent: 'flex-end', background: 'rgba(251,248,242,0.8)' }}>
+          {step === 'config' && (
+            <>
+              <button onClick={onClose} className="admin-btn-sm">取消</button>
+              <button onClick={runDraw} disabled={eligible === 0} className="admin-btn-sm primary" style={{ fontWeight: 700 }}>
+                🎲 開始抽簽
+              </button>
+            </>
+          )}
+          {step === 'results' && (
+            <>
+              <button onClick={onClose} className="admin-btn-sm">取消</button>
+              <button onClick={() => setStep('config')} className="admin-btn-sm">重新設定</button>
+              <button onClick={runDraw} className="admin-btn-sm" style={{ borderColor: 'var(--gold-deep)', color: 'var(--gold-deep)' }}>
+                🔄 重新抽簽
+              </button>
+              <button onClick={applyResults} className="admin-btn-sm primary" style={{ fontWeight: 700 }}>
+                ✓ 確定套用到資料庫
+              </button>
+            </>
+          )}
+          {step === 'done' && (
+            <button onClick={onApplied} className="admin-btn-sm primary">關閉並重新整理</button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
