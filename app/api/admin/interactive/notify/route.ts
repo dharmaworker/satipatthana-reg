@@ -29,10 +29,8 @@ export async function POST(request: NextRequest) {
   for (const r of regs || []) {
     const i = intMap.get(r.id)
     if (!i) { failed++; continue }
-    // 兩邊都沒中且沒候補 → 不寄信
-    const hasResult = i.group_status === 'won' || i.small_status === 'won' ||
-                      i.group_status === 'waitlist' || i.small_status === 'waitlist'
-    if (!hasResult) {
+    // 任一邊都沒中簽 → 不寄信（候補不寄）
+    if (i.group_status !== 'won' && i.small_status !== 'won') {
       skippedNoWin++
       continue
     }
