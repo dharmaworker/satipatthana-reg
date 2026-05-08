@@ -163,10 +163,12 @@ export default function InteractiveAdminPage() {
     if (filter === 'submitted' && !it) return false
     if (filter === 'group_won' && it?.group_status !== 'won') return false
     if (filter === 'small_won' && it?.small_status !== 'won') return false
-    // 「有未定」= 已送出但至少一邊還是 pending（admin 還沒處理完）
+    // 「有未定」= 已送出，且至少一邊非棄權但仍是 pending（admin 還沒處理完）
     if (filter === 'has_pending') {
       if (!it) return false
-      if (it.group_status !== 'pending' && it.small_status !== 'pending') return false
+      const groupPending = it.group_status === 'pending' && (it.wanted_sessions || []).length > 0
+      const smallPending = it.small_status === 'pending' && (it.wanted_ranking || []).length > 0
+      if (!groupPending && !smallPending) return false
     }
     // 「中簽未通知」= 任一邊中簽但還沒寄通知信
     if (filter === 'not_notified') {
@@ -409,7 +411,7 @@ export default function InteractiveAdminPage() {
                         : '—'}
                     </td>
                     <td>
-                      <button onClick={() => setEditing(r)} disabled={!it} className="admin-btn-sm gold">編輯指定</button>
+                      <button onClick={() => setEditing(r)} disabled={!it || (groupAbstained && smallAbstained)} className="admin-btn-sm gold">編輯指定</button>
                     </td>
                   </tr>
                 )
@@ -445,6 +447,8 @@ function statusCls(s: string) {
 
 function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; onSave: (patch: any) => void }) {
   const it = row.interactive!
+  const groupAbstained = (it.wanted_sessions || []).length === 0
+  const smallAbstained = (it.wanted_ranking || []).length === 0
   const [groupStatus, setGroupStatus] = useState(it.group_status)
   const [smallStatus, setSmallStatus] = useState(it.small_status)
   const [assignedSession, setAssignedSession] = useState(it.assigned_session || '')
@@ -472,39 +476,40 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
             <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--green-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
               集體互動
             </h4>
-            <div style={{ display: 'grid', gap: 10 }}>
-              <div>
-                <label className="form-label">狀態</label>
-                <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
-                  <option value="pending">未定</option>
-                  <option value="won">中簽</option>
-                  <option value="waitlist">候補</option>
-                  <option value="lost">沒中簽</option>
-                </select>
+            {groupAbstained ? (
+              <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>學員已棄權，無法設定狀態。</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div>
+                  <label className="form-label">狀態</label>
+                  <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
+                    <option value="pending">未定</option>
+                    <option value="won">中簽</option>
+                    <option value="waitlist">候補</option>
+                    <option value="lost">沒中簽</option>
+                  </select>
+                </div>
+                {(groupStatus === 'won' || groupStatus === 'waitlist') && (
+                  <>
+                    <div>
+                      <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
+                      <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
+                        <option value="">（未指定）</option>
+                        {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">互動序號</label>
+                      <select className="form-select" value={groupSerial} onChange={e => setGroupSerial(e.target.value)}>
+                        <option value="">（未指定）</option>
+                        {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                      <p className="form-hint">範圍 -1 ~ 70</p>
+                    </div>
+                  </>
+                )}
               </div>
-              {(groupStatus === 'won' || groupStatus === 'waitlist') && (
-                <>
-                  <div>
-                    <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
-                    <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
-                      <option value="">（未指定）</option>
-                      {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                    </select>
-                    {it.wanted_sessions?.length > 0 && (
-                      <p className="form-hint">學員想要：{it.wanted_sessions.map(s => SESSION_LABEL[s]).join('、')}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="form-label">互動序號</label>
-                    <select className="form-select" value={groupSerial} onChange={e => setGroupSerial(e.target.value)}>
-                      <option value="">（未指定）</option>
-                      {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                    <p className="form-hint">範圍 -1 ~ 70</p>
-                  </div>
-                </>
-              )}
-            </div>
+            )}
           </div>
 
           {/* 分組互動 */}
@@ -512,48 +517,52 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
             <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--gold-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
               分組互動
             </h4>
-            <div style={{ display: 'grid', gap: 10 }}>
-              <div>
-                <label className="form-label">狀態</label>
-                <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
-                  <option value="pending">未定</option>
-                  <option value="won">中簽</option>
-                  <option value="waitlist">候補</option>
-                  <option value="lost">沒中簽</option>
-                </select>
+            {smallAbstained ? (
+              <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>學員已棄權，無法設定狀態。</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div>
+                  <label className="form-label">狀態</label>
+                  <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
+                    <option value="pending">未定</option>
+                    <option value="won">中簽</option>
+                    <option value="waitlist">候補</option>
+                    <option value="lost">沒中簽</option>
+                  </select>
+                </div>
+                {(smallStatus === 'won' || smallStatus === 'waitlist') && (
+                  <>
+                    <div>
+                      <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
+                      <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
+                        <option value="">（未指定）</option>
+                        {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name} 組</option>)}
+                      </select>
+                      {it.wanted_ranking?.length > 0 && (
+                        <p className="form-hint">學員排序：{it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="form-label">指定日期{smallStatus === 'won' && <span className="required">*</span>}</label>
+                      <select className="form-select" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}>
+                        <option value="">（未指定）</option>
+                        <option value="2026-08-21">2026-08-21（週五）</option>
+                        <option value="2026-08-22">2026-08-22（週六）</option>
+                        <option value="2026-08-23">2026-08-23（週日）</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">互動序號</label>
+                      <select className="form-select" value={smallSerial} onChange={e => setSmallSerial(e.target.value)}>
+                        <option value="">（未指定）</option>
+                        {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                      <p className="form-hint">範圍 -1 ~ 70</p>
+                    </div>
+                  </>
+                )}
               </div>
-              {(smallStatus === 'won' || smallStatus === 'waitlist') && (
-                <>
-                  <div>
-                    <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
-                    <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
-                      <option value="">（未指定）</option>
-                      {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name} 組</option>)}
-                    </select>
-                    {it.wanted_ranking?.length > 0 && (
-                      <p className="form-hint">學員排序：{it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="form-label">指定日期{smallStatus === 'won' && <span className="required">*</span>}</label>
-                    <select className="form-select" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}>
-                      <option value="">（未指定）</option>
-                      <option value="2026-08-21">2026-08-21（週五）</option>
-                      <option value="2026-08-22">2026-08-22（週六）</option>
-                      <option value="2026-08-23">2026-08-23（週日）</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">互動序號</label>
-                    <select className="form-select" value={smallSerial} onChange={e => setSmallSerial(e.target.value)}>
-                      <option value="">（未指定）</option>
-                      {SERIAL_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                    <p className="form-hint">範圍 -1 ~ 70</p>
-                  </div>
-                </>
-              )}
-            </div>
+            )}
           </div>
 
         </div>
