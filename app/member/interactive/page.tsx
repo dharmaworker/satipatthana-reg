@@ -357,7 +357,9 @@ function InteractiveContent() {
                   <div className="selection-summary">
                     {noSession
                       ? <>已選擇：不報名集體互動</>
-                      : <>已選 <span className="count">{sessions.length}</span> 個場次　·　可繼續勾選或保持空白</>}
+                      : sessions.length > 0
+                        ? <>已選 <span className="count">{sessions.length}</span> 個場次　·　可繼續勾選多個場次</>
+                        : <span style={{ color: 'var(--error)' }}>請至少選一個場次，或勾選「不報名參與本次課程的集體互動」</span>}
                   </div>
                 </div>
               )}
@@ -459,7 +461,7 @@ function InteractiveContent() {
 
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
-              <p>集體互動可全部不勾，代表不報名集體互動。</p>
+              <p>集體互動請至少選一個場次；若不想參加，請勾選「不報名參與本次課程的集體互動」。</p>
               <p style={{ marginTop: 10 }}>分組互動可棄權；如要報名，請依 1、2、3、4 順序為老師排列意願，不可跳號，未填寫代表不報名。</p>
               <p style={{ marginTop: 10 }}>抽籤結果由學會於互動報名截止後寄信通知。</p>
             </div>

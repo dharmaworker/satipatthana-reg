@@ -495,7 +495,9 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                       <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
                         <option value="">（未指定）</option>
-                        {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                        {(it.wanted_sessions || []).map(sid => (
+                          <option key={sid} value={sid}>{SESSION_LABEL[sid] || `（已移除：${sid}）`}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -536,11 +538,10 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                       <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
                         <option value="">（未指定）</option>
-                        {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name} 組</option>)}
+                        {(it.wanted_ranking || []).map((tid, i) => (
+                          <option key={tid} value={tid}>第{i + 1}意願　{TEACHER_LABEL[tid] || tid} 組</option>
+                        ))}
                       </select>
-                      {it.wanted_ranking?.length > 0 && (
-                        <p className="form-hint">學員排序：{it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')}</p>
-                      )}
                     </div>
                     <div>
                       <label className="form-label">指定日期{smallStatus === 'won' && <span className="required">*</span>}</label>
