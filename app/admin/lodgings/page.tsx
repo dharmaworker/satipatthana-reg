@@ -35,7 +35,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable'>(null)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -141,6 +141,22 @@ export default function LodgingsPage() {
     setBulkSending('student_id')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-student-id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendAttendanceNotification = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    if (!confirm(`寄出課程簽到通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending('attendance')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-attendance-notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: bulkSelected }),
@@ -383,6 +399,11 @@ export default function LodgingsPage() {
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
           */}
+          <button onClick={sendAttendanceNotification}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm primary">
+            {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程簽到通知（${bulkSelected.length}）`}
+          </button>
           <button onClick={sendInteractiveInvite}
             disabled={bulkSending !== null}
             className="admin-btn-sm">
