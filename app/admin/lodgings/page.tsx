@@ -399,11 +399,13 @@ export default function LodgingsPage() {
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
           */}
-          <button onClick={sendInteractiveInvite}
-            disabled={bulkSending !== null}
-            className="admin-btn-sm">
-            {bulkSending === 'invite' ? '寄送中⋯' : `批次寄互動報名通知（${bulkSelected.length}）`}
-          </button>
+          {formatFilter !== 'online' && (
+            <button onClick={sendInteractiveInvite}
+              disabled={bulkSending !== null}
+              className="admin-btn-sm">
+              {bulkSending === 'invite' ? '寄送中⋯' : `批次寄互動報名通知（${bulkSelected.length}）`}
+            </button>
+          )}
           {formatFilter === 'online' && (
             <button onClick={sendAttendanceNotification}
               disabled={bulkSending !== null}
