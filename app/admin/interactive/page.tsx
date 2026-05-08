@@ -790,37 +790,76 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   const remaining = new Map(TEACHERS.map(t => [t.id, Math.max(0, SMALL_GROUP_CAP - (alreadyWon.get(t.id) || 0))]))
   const nextSerial = new Map(TEACHERS.map(t => [t.id, (maxSerial.get(t.id) || 0) + 1]))
 
-  const eligible = rows.filter(r => {
-    const it = r.interactive
-    return it && it.small_status === 'pending' && (it.wanted_ranking || []).length > 0
-  })
+  type PoolEntry = { row: Row; prefIndex: number }
+  const resultMap = new Map<string, DrawResult>()
 
-  const results: DrawResult[] = []
-  for (const row of shuffle(eligible)) {
-    const ranking = row.interactive!.wanted_ranking || []
-    let assigned: { group: string; serial: number } | null = null
-    for (const teacherId of ranking) {
-      const rem = remaining.get(teacherId) ?? 0
-      if (rem > 0) {
-        const serial = nextSerial.get(teacherId)!
-        assigned = { group: teacherId, serial }
-        remaining.set(teacherId, rem - 1)
-        nextSerial.set(teacherId, serial + 1)
-        break
+  let pool: PoolEntry[] = rows
+    .filter(r => r.interactive && r.interactive.small_status === 'pending' && (r.interactive.wanted_ranking || []).length > 0)
+    .map(row => ({ row, prefIndex: 0 }))
+
+  // 依意願輪次分配：第1意願 → 第2意願 → …
+  // 每輪：若某老師報名人數 ≤ 剩餘名額 → 全上；超出 → 抽籤，未中者進下一輪
+  while (pool.length > 0) {
+    const byTeacher = new Map<string, PoolEntry[]>()
+    for (const entry of pool) {
+      const ranking = entry.row.interactive!.wanted_ranking || []
+      if (entry.prefIndex >= ranking.length) {
+        // 意願已用盡 → 沒中簽
+        resultMap.set(entry.row.registration.id, {
+          registration_id: entry.row.registration.id,
+          chinese_name: entry.row.registration.chinese_name,
+          member_id: entry.row.registration.member_id,
+          mode: 'small', won: false, label: '—', serial: null, assigned_group: null,
+        })
+        continue
       }
+      const tid = ranking[entry.prefIndex]
+      if (!byTeacher.has(tid)) byTeacher.set(tid, [])
+      byTeacher.get(tid)!.push(entry)
     }
-    results.push({
-      registration_id: row.registration.id,
-      chinese_name: row.registration.chinese_name,
-      member_id: row.registration.member_id,
-      mode: 'small',
-      won: !!assigned,
-      label: assigned ? (TEACHER_LABEL[assigned.group] || assigned.group) : '—',
-      serial: assigned?.serial ?? null,
-      assigned_group: assigned?.group ?? null,
-    })
+
+    if (byTeacher.size === 0) break
+
+    const nextPool: PoolEntry[] = []
+    for (const [teacherId, candidates] of byTeacher) {
+      const rem = remaining.get(teacherId) ?? 0
+      const wonCount = Math.min(rem, candidates.length)
+      const shuffled = shuffle(candidates)
+      for (let i = 0; i < shuffled.length; i++) {
+        const e = shuffled[i]
+        if (i < wonCount) {
+          const serial = nextSerial.get(teacherId)!
+          resultMap.set(e.row.registration.id, {
+            registration_id: e.row.registration.id,
+            chinese_name: e.row.registration.chinese_name,
+            member_id: e.row.registration.member_id,
+            mode: 'small', won: true,
+            label: TEACHER_LABEL[teacherId] || teacherId,
+            serial, assigned_group: teacherId,
+          })
+          nextSerial.set(teacherId, serial + 1)
+        } else {
+          nextPool.push({ row: e.row, prefIndex: e.prefIndex + 1 })
+        }
+      }
+      remaining.set(teacherId, rem - wonCount)
+    }
+    pool = nextPool
   }
-  return results
+
+  // 剩餘（所有老師都滿額）→ 沒中簽
+  for (const entry of pool) {
+    if (!resultMap.has(entry.row.registration.id)) {
+      resultMap.set(entry.row.registration.id, {
+        registration_id: entry.row.registration.id,
+        chinese_name: entry.row.registration.chinese_name,
+        member_id: entry.row.registration.member_id,
+        mode: 'small', won: false, label: '—', serial: null, assigned_group: null,
+      })
+    }
+  }
+
+  return Array.from(resultMap.values())
 }
 
 function AutoDrawModal({ rows, onClose, onApplied }: {
