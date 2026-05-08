@@ -351,7 +351,7 @@ export default function InteractiveAdminPage() {
                     <td className="mono">{r.registration.student_id || '—'}</td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_sessions?.length
-                        ? it.wanted_sessions.map(s => SESSION_LABEL[s] || s).join('、')
+                        ? it.wanted_sessions.map(s => SESSION_LABEL[s] || `（已移除：${s}）`).join('、')
                         : it ? <span style={{ color: 'var(--ink-mute)' }}>（不報名）</span> : <span style={{ color: 'var(--ink-mute)' }}>未送出</span>}
                     </td>
                     <td>
