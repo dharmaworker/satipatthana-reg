@@ -5,7 +5,7 @@ const BUCKET = 'site-assets'
 const asset = (path: string) => `${baseUrl}/storage/v1/object/public/${BUCKET}/${path}`
 
 export const SITE_ASSETS = {
-  poster: '/webpage/poster.jpg',
+  poster: asset('poster.jpg'),
   sunsetBg: asset('sunset-bg.jpg'),
   teacher: (file: string) => asset(`teachers/${file}`),
   lineOfficial: asset('LINE_NOTE.jpg'),
