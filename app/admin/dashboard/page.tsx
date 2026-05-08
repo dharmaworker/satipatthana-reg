@@ -81,9 +81,9 @@ export default function DashboardPage() {
           id: editReg.id,
           chinese_name: editReg.chinese_name,
           email: editReg.email,
+          phone: editReg.phone,
           residence: editReg.residence,
           member_id: editReg.member_id || null,
-          payment_plan: editReg.payment_plan ?? null,
           line_qr_url: editReg.line_qr_url ?? null,
           wechat_qr_url: editReg.wechat_qr_url ?? null,
         }),
@@ -293,16 +293,16 @@ export default function DashboardPage() {
                 <th>專屬碼</th>
                 <th>審核狀態</th>
                 <th>報名序號</th>
-                {formatFilter !== 'online' && <th>方案</th>}
+                <th>身份</th>
                 <th>QR</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={formatFilter === 'online' ? 10 : 11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={10} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : registrations.length === 0 ? (
-                <tr><td colSpan={formatFilter === 'online' ? 10 : 11} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
+                <tr><td colSpan={10} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
               ) : registrations.map((reg) => (
                 <tr key={reg.id}>
                   <td>
@@ -326,11 +326,9 @@ export default function DashboardPage() {
                     </select>
                   </td>
                   <td className="mono">{reg.member_id || '—'}</td>
-                  {formatFilter !== 'online' && (
-                    <td className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}
-                    </td>
-                  )}
+                  <td className="muted" style={{ whiteSpace: 'nowrap' }}>
+                    {reg.identity === 'lay' ? '在家' : reg.identity === 'monastic' ? '出家' : '—'}
+                  </td>
                   <td>
                     {(() => {
                       const qrUrl = reg.line_qr_url || reg.wechat_qr_url
@@ -402,6 +400,11 @@ export default function DashboardPage() {
                   onChange={e => setEditReg({ ...editReg, email: e.target.value })} />
               </div>
               <div>
+                <label className="form-label">手機號碼</label>
+                <input className="form-input" value={editReg.phone || ''}
+                  onChange={e => setEditReg({ ...editReg, phone: e.target.value })} />
+              </div>
+              <div>
                 <label className="form-label">居住地</label>
                 <select className="form-select" value={editReg.residence || ''}
                   onChange={e => setEditReg({ ...editReg, residence: e.target.value })}>
@@ -415,16 +418,6 @@ export default function DashboardPage() {
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
               </div>
-              {editReg.retreat_format !== 'online' && (
-                <div>
-                  <label className="form-label">食宿方案</label>
-                  <select className="form-select" value={editReg.payment_plan || ''}
-                    onChange={e => setEditReg({ ...editReg, payment_plan: e.target.value })}>
-                    <option value="">（未選擇）</option>
-                    {PLAN_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-              )}
 
               <QrEditField label="LINE QR" kind="line"
                 url={editReg.line_qr_url} uploading={editUploading === 'line'}

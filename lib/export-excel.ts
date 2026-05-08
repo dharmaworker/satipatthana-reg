@@ -25,8 +25,10 @@ const COLUMNS = [
   { key: 'status', header: '審核狀態', width: 10 },
   { key: 'payment_status', header: '繳費狀態', width: 10 },
   { key: 'payment_plan', header: '繳費方案', width: 28 },
+  { key: 'retreat_format', header: '禪修形式', width: 10 },
   { key: 'chinese_name', header: '中文姓名', width: 12 },
   { key: 'passport_name', header: '護照英文姓名', width: 22 },
+  { key: 'passport_country', header: '護照頒發地', width: 14 },
   { key: 'identity', header: '身份', width: 8 },
   { key: 'dharma_name', header: '法名', width: 10 },
   { key: 'gender', header: '性別', width: 6 },
@@ -40,10 +42,21 @@ const COLUMNS = [
   { key: 'wechat_qr_url', header: 'WeChat QR', width: 40 },
   { key: 'practice_years', header: '修習年資', width: 12 },
   { key: 'practice_frequency', header: '練習頻率', width: 14 },
+  { key: 'attended_formal', header: '正式學員課程經驗', width: 14 },
+  { key: 'attended_courses', header: '過往課程', width: 40 },
+  { key: 'watched_recordings', header: '觀看3屆錄影', width: 12 },
+  { key: 'zoom_guidance', header: 'Zoom一對一指導', width: 14 },
+  { key: 'watched_30_talks', header: '法談30篇以上', width: 12 },
+  { key: 'keep_precepts', header: '持守五戒', width: 10 },
+  { key: 'honest_confirm', header: '承諾如實填寫', width: 12 },
+  { key: 'health_confirm', header: '身體健康全程參與', width: 14 },
+  { key: 'pay_confirm', header: '同意繳費', width: 10 },
   { key: 'mental_health_note', header: '心理健康備註', width: 20 },
   { key: 'payment_note', header: '繳費備註', width: 24 },
   { key: 'payment_confirmed_at', header: '繳費確認時間', width: 20 },
 ]
+
+function boolZh(v: any) { return v === true ? '是' : v === false ? '否' : '' }
 
 function transformRow(r: any) {
   return {
@@ -52,8 +65,18 @@ function transformRow(r: any) {
     status: STATUS_LABEL[r.status] || r.status,
     payment_status: PAYMENT_LABEL[r.payment_status] || r.payment_status,
     payment_plan: r.payment_plan ? (PLAN_LABEL[r.payment_plan] || r.payment_plan) : '',
+    retreat_format: r.retreat_format === 'online' ? '線上' : r.retreat_format === 'in_person' ? '實體' : (r.retreat_format || ''),
     identity: r.identity === 'lay' ? '在家人' : r.identity === 'monastic' ? '僧眾' : r.identity,
     gender: r.gender === 'male' ? '男' : r.gender === 'female' ? '女' : r.gender,
+    attended_formal: boolZh(r.attended_formal),
+    attended_courses: Array.isArray(r.attended_courses) ? r.attended_courses.join('、') : (r.attended_courses || ''),
+    watched_recordings: boolZh(r.watched_recordings),
+    zoom_guidance: boolZh(r.zoom_guidance),
+    watched_30_talks: boolZh(r.watched_30_talks),
+    keep_precepts: boolZh(r.keep_precepts),
+    honest_confirm: boolZh(r.honest_confirm),
+    health_confirm: boolZh(r.health_confirm),
+    pay_confirm: boolZh(r.pay_confirm),
     payment_confirmed_at: r.payment_confirmed_at ? new Date(r.payment_confirmed_at).toLocaleString('zh-TW') : '',
   }
 }
