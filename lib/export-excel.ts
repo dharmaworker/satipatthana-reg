@@ -486,7 +486,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
-  const filename = `registrations_inperson_${dateStr}.xlsx`
+  const filename = `registrations_實體_${dateStr}.xlsx`
 
   // ─── 線上 workbook ───
   const wbOnline = new ExcelJS.Workbook()
@@ -501,7 +501,7 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addAttendanceSheet(wbOnline, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format === 'online'))
 
   const bufferOnline = Buffer.from(await wbOnline.xlsx.writeBuffer())
-  const filenameOnline = `registrations_online_${dateStr}.xlsx`
+  const filenameOnline = `registrations_線上_${dateStr}.xlsx`
 
   return {
     buffer,
