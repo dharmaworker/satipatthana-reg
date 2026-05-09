@@ -73,10 +73,10 @@ export function AdminHeader() {
                 letterSpacing: '0.06em',
                 borderRadius: 999,
                 border: '1.5px solid ' + (formatFilter === f
-                  ? (f === 'online' ? 'var(--green)' : 'var(--gold)')
+                  ? (f === 'online' ? 'rgb(120,201,71)' : 'rgb(255,99,71)')
                   : 'var(--line-strong)'),
                 background: formatFilter === f
-                  ? (f === 'online' ? 'var(--green)' : 'var(--gold)')
+                  ? (f === 'online' ? 'rgb(120,201,71)' : 'rgb(255,99,71)')
                   : 'rgba(255,255,255,0.5)',
                 color: formatFilter === f ? '#f8f2e8' : 'var(--ink-soft)',
                 fontWeight: formatFilter === f ? 900 : 600,
