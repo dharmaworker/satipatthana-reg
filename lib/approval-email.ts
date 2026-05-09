@@ -7,7 +7,7 @@ const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com
 function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: string) {
   return `
     ${emailH3(`${sectionLabel}課前共修`)}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前兩週（<strong style="color:${C.ink};">8/4 至 8/16</strong>）將安排課前共修，請至課前共修頁查看課表，每次參與後請記得打卡。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前（<strong style="color:${C.ink};">7/2 至 8/18</strong>）將安排課前共修，請至課前共修頁查看課表，每次參與後請記得打卡。</p>
     ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '查看課前共修課表＆打卡', 'green')}
   `
 }
@@ -130,7 +130,7 @@ export async function sendApprovalEmail(reg: {
     ${emailWarning(`匯款時請備註姓名與專屬碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。`)}
 
     ${emailH3('三、課前共修')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前兩週（<strong style="color:${C.ink};">8/4 至 8/16</strong>）將安排課前共修，請至課前共修頁查看課表，每次參與後請記得打卡。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前（<strong style="color:${C.ink};">7/2 至 8/18</strong>）將安排課前共修，請至課前共修頁查看課表，每次參與後請記得打卡。</p>
     ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '查看課前共修課表＆打卡', 'green')}
 
     ${emailH3('四、住宿安排')}

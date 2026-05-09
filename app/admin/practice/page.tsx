@@ -36,7 +36,10 @@ const tdStyle: React.CSSProperties = {
 }
 
 function weekLabel(date: string) {
-  return new Date(date) >= new Date('2026-08-11') ? '第二週' : '第一週'
+  const start = new Date('2026-07-02')
+  const d = new Date(date)
+  const week = Math.floor((d.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
+  return `第 ${week} 週`
 }
 
 export default function AdminPracticePage() {

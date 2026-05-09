@@ -25,8 +25,10 @@ type PracticeConfig = {
 }
 
 function weekLabel(date: string) {
+  const start = new Date('2026-07-02')
   const d = new Date(date)
-  return d >= new Date('2026-08-11') ? '第二週' : '第一週'
+  const week = Math.floor((d.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
+  return `第 ${week} 週`
 }
 
 function formatDate(date: string) {
