@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       let no = mo ? parseInt(mo[1], 10) : 1
       // 線上學號起始號
       const startStudentId = await nextAvailableOnlineStudentId()
-      const ms = startStudentId.match(/^STD_L-(\d+)$/)
+      const ms = startStudentId.match(/^C-(\d+)$/)
       let ns = ms ? parseInt(ms[1], 10) : 1
       for (const r of needAssignOnline) {
         const mid = formatOnlineMemberId(no++)

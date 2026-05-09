@@ -26,11 +26,14 @@ type Row = {
   submitted_at: string | null
 }
 
+const PAGE_SIZE = 50
+
 export default function AttendanceRecordsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const fetchData = async () => {
     setLoading(true)
@@ -59,6 +62,10 @@ export default function AttendanceRecordsPage() {
       || (r.student_id || '').toLowerCase().includes(q)
       || (r.email || '').toLowerCase().includes(q)
   })
+
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const submitted = filtered.filter(r => r.attendance_status)
   const notSubmitted = filtered.filter(r => !r.attendance_status)
@@ -138,7 +145,7 @@ export default function AttendanceRecordsPage() {
                 <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
-              ) : filtered.map(r => (
+              ) : pagedRows.map(r => (
                 <tr key={r.registration_id}>
                   <td style={{ ...tdStyle, fontWeight: 600 }}>{r.chinese_name}</td>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--ink-mute)' }}>{r.member_id || '—'}</td>
@@ -168,6 +175,15 @@ export default function AttendanceRecordsPage() {
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
     </div>

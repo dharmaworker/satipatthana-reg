@@ -16,12 +16,15 @@ type Row = {
   interactive: any
 }
 
+const PAGE_SIZE = 50
+
 export default function InteractiveTasksAdminPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'group' | 'small' | 'both'>('all')
+  const [page, setPage] = useState(1)
   const [detail, setDetail] = useState<Row | null>(null)
 
   const fetchData = async () => {
@@ -53,6 +56,10 @@ export default function InteractiveTasksAdminPage() {
     return true
   })
 
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <div className="admin-page">
       <AdminHeader />
@@ -66,7 +73,7 @@ export default function InteractiveTasksAdminPage() {
         <div className="admin-toolbar">
           <input type="text" placeholder="搜尋姓名 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)} style={{ width: 240 }} />
-          <select value={filter} onChange={e => setFilter(e.target.value as any)}>
+          <select value={filter} onChange={e => { setFilter(e.target.value as any); setPage(1) }}>
             <option value="all">全部</option>
             <option value="group">集體中簽</option>
             <option value="small">分組中簽</option>
@@ -95,7 +102,7 @@ export default function InteractiveTasksAdminPage() {
                 <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無互動作業</td></tr>
-              ) : filtered.map(r => {
+              ) : pagedRows.map(r => {
                 const it = r.interactive
                 return (
                   <tr key={r.task.registration_id}>
@@ -126,6 +133,15 @@ export default function InteractiveTasksAdminPage() {
               })}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
 

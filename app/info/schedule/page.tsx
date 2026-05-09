@@ -5,7 +5,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { published: boolean; days: Day[] }
+type Timetable = { published: boolean; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
 
 type State =
   | { kind: 'loading' }
@@ -71,6 +71,35 @@ function ScheduleContent() {
         {state.kind === 'unpublished' && <UnpublishedCard />}
         {state.kind === 'ok' && (
           <div className="schedule-card">
+            {(state.data.zoom_link || state.data.zoom_meeting_id) && (
+              <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginRight: 4 }}>本次課程提供線上 Zoom 連線</span>
+                {state.data.zoom_meeting_id && (
+                  <span style={{ fontSize: 13, color: 'var(--ink)' }}>
+                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>會議號</span>
+                    <strong style={{ letterSpacing: '0.08em' }}>{state.data.zoom_meeting_id}</strong>
+                  </span>
+                )}
+                {state.data.zoom_password && (
+                  <span style={{ fontSize: 13, color: 'var(--ink)' }}>
+                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>密碼</span>
+                    <strong>{state.data.zoom_password}</strong>
+                  </span>
+                )}
+                {state.data.zoom_link && (
+                  <a href={state.data.zoom_link} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '5px 14px',
+                      background: 'rgba(35, 130, 244, 0.1)', border: '1px solid rgba(35, 130, 244, 0.3)',
+                      borderRadius: 6, color: '#1d6fcc', fontSize: 13, fontWeight: 600,
+                      textDecoration: 'none',
+                    }}>
+                    📹 加入 Zoom
+                  </a>
+                )}
+              </div>
+            )}
             <div className="schedule-tabs">
               {state.data.days.map((d, i) => (
                 <button key={i}

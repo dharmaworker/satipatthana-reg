@@ -37,9 +37,10 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (body.type === 'item') {
+    const { id: _id, ...itemData } = body.data
     const { error } = await supabaseAdmin
       .from('practice_schedule')
-      .update(body.data)
+      .update(itemData)
       .eq('id', body.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })

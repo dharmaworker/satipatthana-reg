@@ -5,7 +5,7 @@ import { AdminHeader } from '../_components/AdminHeader'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { published: boolean; days: Day[] }
+type Timetable = { published: boolean; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
 
 const EMPTY_ROW: Row = { time: '', title: '', desc: '', badge: '' }
 const EMPTY_DAY: Day = { tabLabel: 'Day X', tabDate: '', title: '', date: '', desc: '', rows: [{ ...EMPTY_ROW }] }
@@ -115,10 +115,34 @@ export default function TimetableAdminPage() {
         </div>
 
         <div className="admin-toolbar">
-          <label style={{ background: 'rgba(73, 85, 52, 0.06)', border: '1px solid rgba(73, 85, 52, 0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>
+          <label style={{ background: 'rgba(73, 85, 52, 0.06)', border: '1px solid rgba(73, 85, 52, 0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <input type="checkbox" checked={data?.published || false} onChange={togglePublished} disabled={loading} />
             公開顯示給學員
           </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 會議號</span>
+            <input className="form-input" style={{ width: 140, padding: '5px 10px', fontSize: 13 }}
+              placeholder="123 456 7890"
+              value={data?.zoom_meeting_id || ''}
+              disabled={loading}
+              onChange={e => data && setData({ ...data, zoom_meeting_id: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 密碼</span>
+            <input className="form-input" style={{ width: 120, padding: '5px 10px', fontSize: 13 }}
+              placeholder="密碼"
+              value={data?.zoom_password || ''}
+              disabled={loading}
+              onChange={e => data && setData({ ...data, zoom_password: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 連結</span>
+            <input className="form-input" style={{ width: 260, padding: '5px 10px', fontSize: 13 }}
+              placeholder="https://zoom.us/j/... （選填）"
+              value={data?.zoom_link || ''}
+              disabled={loading}
+              onChange={e => data && setData({ ...data, zoom_link: e.target.value })} />
+          </div>
           <button onClick={addDay} disabled={loading} className="admin-btn-sm">+ 新增日次</button>
           <button onClick={fetchData} disabled={loading || saving} className="admin-btn-sm">重新載入</button>
           <button onClick={save} disabled={loading || saving} className="admin-btn-sm primary">

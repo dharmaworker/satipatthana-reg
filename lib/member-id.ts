@@ -6,8 +6,8 @@ const SERIAL_REGEX = /^T-(\d+)$/
 const ONLINE_SERIAL_REGEX = /^L-(\d+)$/
 // 實體學號（student_id）：R-001 ... 手動編
 const STUDENT_REGEX = /^R-(\d+)$/
-// 線上學號（student_id）：STD_L-001 ... 錄取時自動編
-const ONLINE_STUDENT_REGEX = /^STD_L-(\d+)$/
+// 線上學號（student_id）：C-001 ... 錄取時自動編
+const ONLINE_STUDENT_REGEX = /^C-(\d+)$/
 
 export function isValidMemberId(v: string | null | undefined): boolean {
   return !!v && (SERIAL_REGEX.test(v) || ONLINE_SERIAL_REGEX.test(v))
@@ -26,7 +26,7 @@ export function formatStudentId(n: number): string {
   return `R-${String(n).padStart(3, '0')}`
 }
 export function formatOnlineStudentId(n: number): string {
-  return `STD_L-${String(n).padStart(3, '0')}`
+  return `C-${String(n).padStart(3, '0')}`
 }
 
 export async function nextAvailableMemberId(isOnline = false): Promise<string> {

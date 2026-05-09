@@ -26,6 +26,8 @@ function shortDate(date: string) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
+const PAGE_SIZE = 50
+
 export default function PracticeRecordsPage() {
   const router = useRouter()
   const [items, setItems] = useState<ScheduleItem[]>([])
@@ -33,6 +35,7 @@ export default function PracticeRecordsPage() {
   const [loading, setLoading] = useState(true)
   const [formatFilter, setFormatFilter] = useState('in_person')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   const fetchData = async (fmt?: string) => {
     setLoading(true)
@@ -42,6 +45,7 @@ export default function PracticeRecordsPage() {
     const data = await res.json()
     setItems(data.items || [])
     setRows(data.rows || [])
+    setPage(1)
     setLoading(false)
   }
 
@@ -66,6 +70,10 @@ export default function PracticeRecordsPage() {
       || (r.member_id || '').toLowerCase().includes(q)
       || (r.student_id || '').toLowerCase().includes(q)
   })
+
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const totalItems = items.length
   const fullCount = filtered.filter(r => r.checked_count === totalItems).length
@@ -133,12 +141,12 @@ export default function PracticeRecordsPage() {
                     {search ? '無符合結果' : '尚無資料'}
                   </td></tr>
                 )}
-                {filtered.map((row, idx) => {
+                {pagedRows.map((row, idx) => {
                   const allDone = row.checked_count === totalItems && totalItems > 0
                   return (
                     <tr key={row.registration_id}
                       style={{ background: allDone ? 'rgba(73,85,52,0.04)' : undefined }}>
-                      <td style={{ ...tdStyle, textAlign: 'left', paddingLeft: 16, color: 'var(--ink-mute)', fontSize: 12.5 }}>{idx + 1}</td>
+                      <td style={{ ...tdStyle, textAlign: 'left', paddingLeft: 16, color: 'var(--ink-mute)', fontSize: 12.5 }}>{(page - 1) * PAGE_SIZE + idx + 1}</td>
                       <td style={{ ...tdStyle, textAlign: 'left', fontFamily: 'var(--font-cormorant)', fontSize: 14, color: 'var(--ink-mute)' }}>
                         {row.member_id || '—'}
                       </td>
@@ -174,6 +182,15 @@ export default function PracticeRecordsPage() {
                 })}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="admin-btn-sm">← 上一頁</button>
+                <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="admin-btn-sm">下一頁 →</button>
+              </div>
+            )}
           </div>
         )}
       </main>

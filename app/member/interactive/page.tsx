@@ -425,7 +425,7 @@ function InteractiveContent() {
 
                   <div className="selection-summary" style={{ marginTop: 16 }}>
                     {Object.values(ranking).every(v => !v)
-                      ? <>尚未選擇　·　不選代表不報名分組互動</>
+                      ? <>尚未選擇　·　<strong style={{ fontSize: '1.05em' }}>不選代表不報名分組互動</strong></>
                       : <>已選：{TEACHERS.filter(t => ranking[t.id]).map(t => `${t.name} 第${ranking[t.id]}意願`).join('、')}</>}
                   </div>
                 </div>

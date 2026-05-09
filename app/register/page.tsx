@@ -58,7 +58,7 @@ const STEPS = [
   { num: 1, label: '師資團隊', en: 'Teachers' },
   { num: 2, label: '課程資訊', en: 'Course Info' },
   { num: 3, label: '報名資格', en: 'Eligibility' },
-  { num: 4, label: '修學背景', en: 'Background' },
+  { num: 4, label: '修學歷程', en: 'Background' },
   { num: 5, label: '個人資訊', en: 'Personal' },
   { num: 6, label: '確認送出', en: 'Review' },
 ]
@@ -482,12 +482,12 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* ============== Step 4：修學背景與承諾 ============== */}
+          {/* ============== Step 4：修學歷程與承諾 ============== */}
           {step === 4 && (
             <div className="step-content active">
               <div className="step-header">
                 <p className="step-header-kicker">Step 04</p>
-                <h2 className="step-header-title">修學背景與承諾</h2>
+                <h2 className="step-header-title">修學歷程與承諾</h2>
                 <p className="step-header-desc">請依實際情況回答下列題目。本步驟所有 *標示者為必填。</p>
               </div>
 
@@ -882,7 +882,7 @@ export default function RegisterPage() {
 
               <div className="review-grid">
                 <div className="review-group">
-                  <h4>修學背景與承諾 <span className="edit-link" onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
+                  <h4>修學歷程與承諾 <span className="edit-link" onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="如實填寫" v={form.honest_confirm === 'yes' ? '是' : '—'} />
                   <ReviewRow k="正式學員參加課程" v={form.attended_formal === 'yes' ? '是' : form.attended_formal === 'no' ? '否' : '—'} />
                   <ReviewRow k="3 屆錄影／錄音" v={form.watched_recordings === 'yes' ? '是' : form.watched_recordings === 'no' ? '否' : '—'} />

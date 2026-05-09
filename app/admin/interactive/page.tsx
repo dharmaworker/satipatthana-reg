@@ -38,12 +38,15 @@ type Row = {
 const SERIAL_OPTIONS: number[] = Array.from({ length: 72 }, (_, i) => i - 1) // -1, 0, 1, ..., 70
 const fmtSerial = (n: number | null | undefined) => (n === null || n === undefined ? '—' : String(n))
 
+const PAGE_SIZE = 50
+
 export default function InteractiveAdminPage() {
   const router = useRouter()
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'submitted' | 'group_won' | 'small_won' | 'has_pending' | 'not_notified'>('all')
+  const [page, setPage] = useState(1)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
   const [message, setMessage] = useState('')
@@ -59,6 +62,7 @@ export default function InteractiveAdminPage() {
     if (res.status === 401 || res.status === 403) { router.push('/admin'); return }
     const d = await res.json()
     setRows(d.data || [])
+    setPage(1)
     // 同步抓 config
     const cRes = await fetch('/api/admin/interactive-config')
     if (cRes.ok) {
@@ -180,6 +184,10 @@ export default function InteractiveAdminPage() {
     return true
   })
 
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   const updateStatus = async (regId: string, patch: any) => {
     const res = await fetch('/api/admin/interactive', {
       method: 'PATCH',
@@ -281,7 +289,7 @@ export default function InteractiveAdminPage() {
         <div className="admin-toolbar">
           <input type="text" placeholder="搜尋姓名 / 報名序號 / 學號 / Email"
             value={search} onChange={e => setSearch(e.target.value)} style={{ width: 280 }} />
-          <select value={filter} onChange={e => setFilter(e.target.value as any)}>
+          <select value={filter} onChange={e => { setFilter(e.target.value as any); setPage(1) }}>
             <option value="all">全部錄取者</option>
             <option value="submitted">已送出互動報名</option>
             <option value="has_pending">有未定（admin 還沒處理完）</option>
@@ -335,7 +343,7 @@ export default function InteractiveAdminPage() {
                 <tr><td colSpan={14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
-              ) : filtered.map(r => {
+              ) : pagedRows.map(r => {
                 const it = r.interactive
                 const groupAbstained = !!it && (it.wanted_sessions || []).length === 0
                 const smallAbstained = !!it && (it.wanted_ranking || []).length === 0
@@ -418,6 +426,15 @@ export default function InteractiveAdminPage() {
               })}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
 

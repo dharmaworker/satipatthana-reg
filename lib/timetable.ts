@@ -16,6 +16,9 @@ export type TimetableDay = {
 }
 export type Timetable = {
   published: boolean
+  zoom_link?: string
+  zoom_meeting_id?: string
+  zoom_password?: string
   days: TimetableDay[]
 }
 

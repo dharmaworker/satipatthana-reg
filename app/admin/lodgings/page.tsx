@@ -23,11 +23,14 @@ const DOC_LABEL: Record<string, string> = {
   test_0819_url: '8/19 快篩',
 }
 
+const PAGE_SIZE = 50
+
 export default function LodgingsPage() {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [detail, setDetail] = useState<any | null>(null)
   const [edit, setEdit] = useState<any | null>(null)
   const [editError, setEditError] = useState('')
@@ -271,6 +274,7 @@ export default function LodgingsPage() {
     if (res.status === 401 || res.status === 403) { router.push('/admin/login'); return }
     const data = await res.json()
     setRows(data.data || [])
+    setPage(1)
     setLoading(false)
   }
 
@@ -302,6 +306,10 @@ export default function LodgingsPage() {
       (reg.student_id || '').toLowerCase().includes(q)
     )
   })
+
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const stats = {
     total: rows.length,
@@ -365,7 +373,7 @@ export default function LodgingsPage() {
             style={{ width: 280 }} />
           <label style={{ background: 'rgba(216, 194, 154, 0.18)', border: '1px solid rgba(180, 147, 88, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
             <input type="checkbox" checked={onlyWithStudentId}
-              onChange={e => setOnlyWithStudentId(e.target.checked)} />
+              onChange={e => { setOnlyWithStudentId(e.target.checked); setPage(1) }} />
             只顯示已分配學號者
           </label>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
@@ -433,7 +441,7 @@ export default function LodgingsPage() {
                 </th>
                 <th>姓名</th>
                 <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'L-xxx 自動' : 'T-xxx 自動'}</span></th>
-                <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'STD_L-xxx 自動' : 'R-xxx 手動'}</span></th>
+                <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'C-xxx 自動' : 'R-xxx 手動'}</span></th>
                 <th>專屬碼</th>
                 {formatFilter !== 'online' && <th>方案</th>}
                 {formatFilter !== 'online' && <th>繳費</th>}
@@ -449,7 +457,7 @@ export default function LodgingsPage() {
                 <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
-              ) : filtered.map(r => {
+              ) : pagedRows.map(r => {
                 const reg = r.registration || {}
                 return (
                   <tr key={r.id || reg.id}>
@@ -517,6 +525,15 @@ export default function LodgingsPage() {
               })}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -619,7 +636,7 @@ export default function LodgingsPage() {
               <div>
                 <label className="form-label">學號（{edit.registration?.retreat_format === 'online' ? '自動' : '手動'}）</label>
                 <input className="form-input uppercase"
-                  placeholder={edit.registration?.retreat_format === 'online' ? '例：STD_L-001' : '例：R-001'}
+                  placeholder={edit.registration?.retreat_format === 'online' ? '例：C-001' : '例：R-001'}
                   value={edit.registration?.student_id || ''}
                   onChange={e => setEdit({ ...edit, registration: { ...edit.registration, student_id: e.target.value } })} />
               </div>

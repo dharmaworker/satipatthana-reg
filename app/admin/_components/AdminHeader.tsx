@@ -12,12 +12,12 @@ const DATA_TABS = [
   { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', inPersonOnly: true, onlineOnly: false },
   { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', inPersonOnly: true, onlineOnly: false },
   { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', inPersonOnly: true, onlineOnly: false },
-  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽', inPersonOnly: false, onlineOnly: false },
   { path: '/admin/attendance-records', label: '課程簽到', hint: '線上學員課程完成度簽到記錄', inPersonOnly: false, onlineOnly: true },
 ]
 
 const SETTING_TABS = [
-  { path: '/admin/timetable', label: '課程時間表', hint: '五日禪修課程時程安排' },
+  { path: '/admin/timetable', label: '設課程時間表', hint: '五日禪修課程時程安排' },
+  { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽' },
   { path: '/admin/practice', label: '設課前共修表', hint: '設定課前共修課表與 Zoom 資訊' },
 ]
 
@@ -76,9 +76,12 @@ export function AdminHeader() {
                   ? (f === 'online' ? 'var(--green)' : 'var(--gold)')
                   : 'var(--line-strong)'),
                 background: formatFilter === f
-                  ? (f === 'online' ? 'var(--green)' : 'var(--gold-deep)')
+                  ? (f === 'online' ? 'rgba(73,85,52,0.22)' : 'rgba(216,194,154,0.55)')
                   : 'rgba(255,255,255,0.5)',
-                color: formatFilter === f ? '#f8f2e8' : 'var(--ink-soft)',
+                color: formatFilter === f
+                  ? (f === 'online' ? 'var(--green-deep)' : 'var(--gold-deep)')
+                  : 'var(--ink-soft)',
+                fontWeight: formatFilter === f ? 800 : 700,
                 cursor: 'pointer',
                 transition: 'all 0.18s',
               }}>

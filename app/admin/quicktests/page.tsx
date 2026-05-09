@@ -8,12 +8,15 @@ const TEST_COLS: { key: string; label: string }[] = [
   { key: 'test_0819_url', label: '8/19 快篩' },
 ]
 
+const PAGE_SIZE = 50
+
 export default function QuickTestsAdminPage() {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [missingOnly, setMissingOnly] = useState(false)
+  const [page, setPage] = useState(1)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
 
   const fetchData = async () => {
@@ -42,6 +45,10 @@ export default function QuickTestsAdminPage() {
     return true
   })
 
+  const totalCount = filtered.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   const totalUploadedCount = rows.reduce((sum, r) => sum + countUploaded(r), 0)
   const totalSlots = rows.length * TEST_COLS.length
 
@@ -57,7 +64,7 @@ export default function QuickTestsAdminPage() {
             style={{ width: 240 }} />
           <label>
             <input type="checkbox" checked={missingOnly}
-              onChange={e => setMissingOnly(e.target.checked)} />
+              onChange={e => { setMissingOnly(e.target.checked); setPage(1) }} />
             只顯示未上傳齊全
           </label>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
@@ -82,7 +89,7 @@ export default function QuickTestsAdminPage() {
                 <tr><td colSpan={4 + TEST_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={4 + TEST_COLS.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
-              ) : filtered.map(r => {
+              ) : pagedRows.map(r => {
                 const reg = r.registration || {}
                 const uploaded = countUploaded(r)
                 const cls = uploaded === TEST_COLS.length ? 'ok' : uploaded === 0 ? 'error' : 'warn'
@@ -114,6 +121,15 @@ export default function QuickTestsAdminPage() {
               })}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
 

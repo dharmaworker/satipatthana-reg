@@ -105,7 +105,7 @@ export async function PATCH(request: NextRequest) {
   if (member_id !== undefined) updateData.member_id = member_id || null
   if (student_id !== undefined) updateData.student_id = student_id || null
 
-  // 線上報名首次改為 approved → 自動補 STD_L-xxx 學號
+  // 線上報名首次改為 approved → 自動補 C-xxx 學號
   const becomingApproved = status === 'approved' && currentReg?.status !== 'approved'
   const isOnline = currentReg?.retreat_format === 'online'
   if (becomingApproved && isOnline && !currentReg?.student_id && student_id === undefined) {

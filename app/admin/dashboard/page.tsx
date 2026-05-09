@@ -19,6 +19,8 @@ const PLAN_OPTIONS: [string, string][] = [
 
 const PLAN_LABEL: Record<string, string> = Object.fromEntries(PLAN_OPTIONS)
 
+const PAGE_SIZE = 50
+
 export default function DashboardPage() {
   const router = useRouter()
   const [registrations, setRegistrations] = useState<any[]>([])
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [formatFilter, setFormatFilter] = useState('in_person')
+  const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
@@ -110,6 +113,7 @@ export default function DashboardPage() {
     const data = await res.json()
     if (res.status === 401) { router.push('/admin'); return }
     setRegistrations(data.data || [])
+    setPage(1)
     setLoading(false)
   }
 
@@ -195,6 +199,10 @@ export default function DashboardPage() {
     setMessage(`已刪除 ${reg.chinese_name}`)
     fetchData()
   }
+
+  const totalCount = registrations.length
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+  const pagedRows = registrations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const stats = {
     total: registrations.length,
@@ -303,7 +311,7 @@ export default function DashboardPage() {
                 <tr><td colSpan={10} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : registrations.length === 0 ? (
                 <tr><td colSpan={10} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
-              ) : registrations.map((reg) => (
+              ) : pagedRows.map((reg) => (
                 <tr key={reg.id}>
                   <td>
                     <input type="checkbox"
@@ -376,6 +384,15 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 0', borderTop: '1px solid var(--line)', fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="admin-btn-sm">← 上一頁</button>
+              <span>第 <strong style={{ color: 'var(--ink)' }}>{page}</strong> / {totalPages} 頁　共 {totalCount} 筆</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="admin-btn-sm">下一頁 →</button>
+            </div>
+          )}
         </div>
       </div>
 

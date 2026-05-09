@@ -168,18 +168,6 @@ export default function AdminPracticePage() {
                       期間標籤
                       <input style={inputStyle} value={configDraft.period_label} onChange={e => setConfigDraft({ ...configDraft, period_label: e.target.value })} />
                     </label>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      Zoom 會議號
-                      <input style={inputStyle} value={configDraft.zoom_meeting_id} onChange={e => setConfigDraft({ ...configDraft, zoom_meeting_id: e.target.value })} />
-                    </label>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      Zoom 密碼
-                      <input style={inputStyle} value={configDraft.zoom_password} onChange={e => setConfigDraft({ ...configDraft, zoom_password: e.target.value })} />
-                    </label>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      Zoom 連結（可選）
-                      <input style={inputStyle} value={configDraft.zoom_url || ''} onChange={e => setConfigDraft({ ...configDraft, zoom_url: e.target.value || null })} placeholder="https://zoom.us/j/..." />
-                    </label>
                   </div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     備注說明（學員可見）
@@ -187,10 +175,7 @@ export default function AdminPracticePage() {
                       value={configDraft.notes || ''}
                       onChange={e => setConfigDraft({ ...configDraft, notes: e.target.value || null })} />
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={configDraft.enabled} onChange={e => setConfigDraft({ ...configDraft, enabled: e.target.checked })} />
-                    啟用課前共修（學員專區顯示）
-                  </label>
+
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={saveConfig} disabled={saving}
                       style={{ padding: '8px 22px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
@@ -206,10 +191,6 @@ export default function AdminPracticePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: 14 }}>
                   {[
                     ['期間標籤', config.period_label],
-                    ['Zoom 會議號', config.zoom_meeting_id],
-                    ['Zoom 密碼', config.zoom_password],
-                    ['Zoom 連結', config.zoom_url || '（未設）'],
-                    ['啟用狀態', config.enabled ? '✅ 啟用' : '⏸ 停用'],
                     ['備注', config.notes || '（無）'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', gap: 10 }}>

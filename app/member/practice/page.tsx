@@ -135,31 +135,18 @@ function PracticeContent() {
 
         {!error && config && (
           <>
-            {/* Zoom 資訊 */}
-            <div style={{
-              background: 'rgba(73,85,52,0.06)',
-              border: '1px solid rgba(73,85,52,0.18)',
-              borderRadius: 14,
-              padding: '20px 24px',
-              marginBottom: 28,
-            }}>
-              <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--green-deep)', textTransform: 'uppercase' }}>
-                Zoom 線上共修
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 28px', fontSize: 14 }}>
-                <span><span style={{ color: 'var(--ink-mute)', marginRight: 6 }}>會議號</span><strong style={{ letterSpacing: '0.08em' }}>{config.zoom_meeting_id}</strong></span>
-                <span><span style={{ color: 'var(--ink-mute)', marginRight: 6 }}>密碼</span><strong>{config.zoom_password}</strong></span>
-                {config.zoom_url && (
-                  <a href={config.zoom_url} target="_blank" rel="noreferrer"
-                    style={{ color: 'var(--green)', fontWeight: 600, fontSize: 13.5 }}>
-                    點此加入 Zoom →
-                  </a>
-                )}
+            {/* 備注說明 */}
+            {config.notes && (
+              <div style={{
+                background: 'rgba(73,85,52,0.06)',
+                border: '1px solid rgba(73,85,52,0.18)',
+                borderRadius: 14,
+                padding: '16px 24px',
+                marginBottom: 28,
+              }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.7 }}>{config.notes}</p>
               </div>
-              {config.notes && (
-                <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.7 }}>{config.notes}</p>
-              )}
-            </div>
+            )}
 
             {/* 打卡進度 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
