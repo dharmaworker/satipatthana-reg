@@ -167,7 +167,7 @@ function PracticeContent() {
                 <thead>
                   <tr style={{ background: 'rgba(73,85,52,0.07)' }}>
                     <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 68 }}>週次</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 130 }}>日期</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 130 }}>日期 / 時間</th>
                     <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em' }}>課程內容</th>
                     <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 72 }}>打卡</th>
                   </tr>
@@ -185,6 +185,7 @@ function PracticeContent() {
                       </td>
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 13.5 }}>{formatDate(item.session_date)}</div>
+                        <div style={{ color: 'var(--ink-mute)', fontSize: 12.5, marginTop: 2 }}>{item.time_label}</div>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
                         <>
