@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     .select(`
       id, chinese_name, passport_name, member_id, student_id, email, phone, random_code,
       residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
-      retreat_format, created_at
+      retreat_format, created_at, approval_email_sent_at
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
