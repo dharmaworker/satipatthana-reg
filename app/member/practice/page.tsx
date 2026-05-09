@@ -188,25 +188,22 @@ function PracticeContent() {
                         <div style={{ color: 'var(--ink-mute)', fontSize: 12.5, marginTop: 2 }}>{item.time_label}</div>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
-                        {item.is_live ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--green)' }}>
-                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
-                            現場直播
-                          </span>
-                        ) : (
-                          <>
-                            {item.video_url ? (
-                              <a href={item.video_url} target="_blank" rel="noreferrer"
-                                className="practice-video-link">
-                                {item.title}
-                                <span style={{ fontSize: 13, opacity: 0.6 }}>↗</span>
-                              </a>
-                            ) : (
-                              <div style={{ fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>{item.title}</div>
-                            )}
-                            {item.subtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 2 }}>{item.subtitle}</div>}
-                          </>
-                        )}
+                        <>
+                          {item.video_url ? (
+                            <a href={item.video_url} target="_blank" rel="noreferrer"
+                              className="practice-video-link">
+                              {item.is_live && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', animation: 'pulse 1.5s infinite', marginRight: 6, verticalAlign: 'middle' }} />}
+                              {item.title}
+                              <span style={{ fontSize: 13, opacity: 0.6 }}>↗</span>
+                            </a>
+                          ) : (
+                            <div style={{ fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>
+                              {item.is_live && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', animation: 'pulse 1.5s infinite', marginRight: 6, verticalAlign: 'middle' }} />}
+                              {item.title}
+                            </div>
+                          )}
+                          {item.subtitle && <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 2 }}>{item.subtitle}</div>}
+                        </>
                       </td>
                       <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <button
