@@ -69,7 +69,7 @@ export function AdminHeader() {
               onClick={() => handleFormat(f)}
               style={{
                 padding: '6px 20px',
-                fontSize: 13.5, fontWeight: 700,
+                fontSize: 13.5,
                 letterSpacing: '0.06em',
                 borderRadius: 999,
                 border: '1.5px solid ' + (formatFilter === f

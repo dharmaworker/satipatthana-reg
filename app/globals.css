@@ -867,7 +867,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .timeline-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .timeline-card .date {
   font-family: var(--font-cormorant), "Cormorant Garamond", serif;
-  font-style: italic; font-size: 16px; letter-spacing: 0.18em;
+  font-style: italic; font-size: 19px; letter-spacing: 0.18em;
   color: var(--ink); font-weight: 700; margin-bottom: 6px;
 }
 .timeline-card h3 {
@@ -1450,7 +1450,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .schedule-cell .date {
   font-family: var(--font-cormorant), "Cormorant Garamond", serif;
-  font-size: 17px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   color: var(--ink); letter-spacing: 0.04em;
   margin-bottom: 4px;
 }
