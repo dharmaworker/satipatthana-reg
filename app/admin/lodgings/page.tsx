@@ -99,7 +99,7 @@ export default function LodgingsPage() {
     const data = await res.json()
     setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
     setBulkSending(null)
-    if (res.ok) setBulkSelected([])
+    if (res.ok) { setBulkSelected([]); fetchData() }
   }
 
   const sendInteractiveInvite = async () => {
