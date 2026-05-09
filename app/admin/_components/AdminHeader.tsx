@@ -76,12 +76,10 @@ export function AdminHeader() {
                   ? (f === 'online' ? 'var(--green)' : 'var(--gold)')
                   : 'var(--line-strong)'),
                 background: formatFilter === f
-                  ? (f === 'online' ? 'rgba(73,85,52,0.22)' : 'rgba(216,194,154,0.55)')
+                  ? (f === 'online' ? 'var(--green)' : 'var(--gold)')
                   : 'rgba(255,255,255,0.5)',
-                color: formatFilter === f
-                  ? (f === 'online' ? 'var(--green-deep)' : 'var(--gold-deep)')
-                  : 'var(--ink-soft)',
-                fontWeight: formatFilter === f ? 800 : 700,
+                color: formatFilter === f ? '#f8f2e8' : 'var(--ink-soft)',
+                fontWeight: formatFilter === f ? 900 : 600,
                 cursor: 'pointer',
                 transition: 'all 0.18s',
               }}>
