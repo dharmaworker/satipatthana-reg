@@ -33,19 +33,8 @@ export default function DashboardPage() {
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [detailReg, setDetailReg] = useState<any | null>(null)
   const [editReg, setEditReg] = useState<any | null>(null)
-
-  useEffect(() => {
-    if (!openMenuId) return
-    const close = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (!target.closest('[data-row-menu]')) setOpenMenuId(null)
-    }
-    document.addEventListener('click', close)
-    return () => document.removeEventListener('click', close)
-  }, [openMenuId])
 
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
@@ -352,33 +341,16 @@ export default function DashboardPage() {
                       )
                     })()}
                   </td>
-                  <td style={{ position: 'relative' }} data-row-menu>
+                  <td>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button onClick={() => setDetailReg(reg)} className="admin-btn-sm">詳細</button>
                       <button onClick={() => { setEditReg({ ...reg }); setEditError('') }} className="admin-btn-sm gold">編輯</button>
-                      <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === reg.id ? null : reg.id) }}
-                        className="admin-btn-sm" title="更多操作">⋯</button>
+                      <button onClick={() => deleteRegistration(reg)}
+                        className="admin-btn-sm"
+                        style={{ color: 'var(--error)', borderColor: 'rgba(184,82,58,0.4)' }}>
+                        🗑
+                      </button>
                     </div>
-                    {openMenuId === reg.id && (
-                      <div style={{
-                        position: 'absolute', right: 8, top: '100%', marginTop: 4,
-                        background: 'var(--bg-pure)', border: '1px solid var(--line)',
-                        borderRadius: 10, boxShadow: 'var(--shadow)',
-                        zIndex: 10, minWidth: 140, padding: 4,
-                      }}>
-                        <button onClick={() => { setOpenMenuId(null); deleteRegistration(reg) }}
-                          style={{
-                            width: '100%', textAlign: 'left', padding: '8px 12px',
-                            fontSize: 12.5, color: 'var(--error)',
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            borderRadius: 6,
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(184,82,58,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                          🗑 刪除報名
-                        </button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
