@@ -55,7 +55,7 @@ export default function PaymentPage() {
                   <tr key={plan} style={{ borderBottom: '1px dotted var(--line)' }}>
                     <td style={{ ...cellStyle, fontWeight: 700, fontFamily: 'var(--font-cormorant), serif', color: 'var(--gold-deep)', letterSpacing: '0.05em' }}>{plan}</td>
                     <td style={cellStyle}>{desc}</td>
-                    <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-cormorant), serif', color: 'var(--green-deep)', letterSpacing: '0.04em' }}>{amount}</td>
+                    <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-cormorant), serif', color: 'var(--green-deep)', letterSpacing: '0.04em', fontSize: 20 }}>{amount}</td>
                   </tr>
                 ))}
               </tbody>
