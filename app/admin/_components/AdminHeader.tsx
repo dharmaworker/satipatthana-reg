@@ -12,7 +12,6 @@ const DATA_TABS = [
   { path: '/admin/quicktests', label: '快篩上傳', hint: '學員快篩照片上傳進度', inPersonOnly: true, onlineOnly: false },
   { path: '/admin/interactive', label: '互動報名', hint: '互動場次抽籤與序號分配', inPersonOnly: true, onlineOnly: false },
   { path: '/admin/interactive-tasks', label: '互動作業', hint: '中簽學員課前作業填寫內容', inPersonOnly: true, onlineOnly: false },
-  { path: '/admin/attendance-records', label: '課程簽到', hint: '線上學員課程完成度簽到記錄', inPersonOnly: false, onlineOnly: true },
 ]
 
 const SETTING_TABS = [
@@ -131,6 +130,23 @@ export function AdminHeader() {
 
           {/* 分隔線 */}
           <div style={{ width: 1, height: 24, background: 'var(--line-strong)', margin: '0 6px', flexShrink: 0 }} />
+
+          {/* 課程簽到（線上專用，排在設定 tabs 最前） */}
+          {formatFilter === 'online' && (() => {
+            const path = '/admin/attendance-records'
+            const isActive = pathname === path
+            return (
+              <button key={path} onClick={() => router.push(path)} title="線上學員課程完成度簽到記錄"
+                style={{
+                  padding: '7px 16px', fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', borderRadius: 999,
+                  border: '1px solid ' + (isActive ? 'var(--gold-deep)' : 'var(--line-strong)'),
+                  background: isActive ? 'var(--gold-deep)' : 'rgba(216, 194, 154, 0.15)',
+                  color: isActive ? '#f8f2e8' : 'var(--ink-soft)', cursor: 'pointer', transition: 'all 0.2s',
+                }}>
+                課程簽到
+              </button>
+            )
+          })()}
 
           {/* 課表設定 */}
           {SETTING_TABS.map(t => {
