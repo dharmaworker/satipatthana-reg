@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '../_components/AdminHeader'
 
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [formatFilter, setFormatFilter] = useState('in_person')
+  const formatRef = useRef('in_person')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<string[]>([])
   const [sending, setSending] = useState(false)
@@ -92,7 +93,7 @@ export default function DashboardPage() {
   }
 
   const fetchData = async (fmt?: string) => {
-    const f = fmt ?? formatFilter
+    const f = fmt ?? formatRef.current
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
@@ -109,10 +110,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const saved = localStorage.getItem('admin_format')
     const initial = (saved === 'in_person' || saved === 'online') ? saved : 'in_person'
+    formatRef.current = initial
     setFormatFilter(initial)
     fetchData(initial)
     const handler = (e: Event) => {
       const f = (e as CustomEvent<string>).detail
+      formatRef.current = f
       setFormatFilter(f)
       fetchData(f)
     }
