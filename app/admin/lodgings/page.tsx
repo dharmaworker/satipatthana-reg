@@ -41,6 +41,7 @@ export default function LodgingsPage() {
   const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
+  const [onlyNotNotified, setOnlyNotNotified] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [formatFilter, setFormatFilter] = useState<string>('in_person')
 
@@ -296,6 +297,7 @@ export default function LodgingsPage() {
   const filtered = rows.filter(r => {
     const reg = r.registration || {}
     if (onlyWithStudentId && !reg.student_id) return false
+    if (onlyNotNotified && reg.approval_email_sent_at) return false
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -317,10 +319,12 @@ export default function LodgingsPage() {
     lodgingFilled: rows.filter(r => r.id).length,
     payPending: rows.filter(r => r.registration?.payment_status === 'paid').length,
     paid: rows.filter(r => r.registration?.payment_status === 'verified').length,
+    approvalSent: rows.filter(r => r.registration?.approval_email_sent_at).length,
   }
 
   const STAT_CARDS = [
     { label: '總錄取', value: stats.total, accent: 'var(--ink-mute)' },
+    { label: '已寄錄取通知', value: stats.approvalSent, accent: 'var(--success)' },
     { label: '已分配學號', value: stats.withStudentId, accent: 'var(--success)' },
     { label: '食宿已填', value: stats.lodgingFilled, accent: 'var(--green)' },
     { label: '繳費待確認', value: stats.payPending, accent: 'var(--warning)' },
@@ -333,7 +337,7 @@ export default function LodgingsPage() {
 
       <div className="admin-main">
         {/* 統計卡片 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14, marginBottom: 18 }}>
           {STAT_CARDS.map(({ label, value, accent }) => (
             <div key={label} style={{
               background: 'rgba(251, 248, 242, 0.92)',
@@ -375,6 +379,11 @@ export default function LodgingsPage() {
             <input type="checkbox" checked={onlyWithStudentId}
               onChange={e => { setOnlyWithStudentId(e.target.checked); setPage(1) }} />
             只顯示已分配學號者
+          </label>
+          <label style={{ background: 'rgba(184, 82, 58, 0.07)', border: '1px solid rgba(184, 82, 58, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
+            <input type="checkbox" checked={onlyNotNotified}
+              onChange={e => { setOnlyNotNotified(e.target.checked); setPage(1) }} />
+            只顯示尚未寄錄取通知者
           </label>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           <label>
@@ -443,6 +452,7 @@ export default function LodgingsPage() {
                 <th>報名序號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'L-xxx 自動' : 'T-xxx 自動'}</span></th>
                 <th>學號<br /><span style={{ fontSize: 10, fontWeight: 400, color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? 'C-xxx 自動' : 'R-xxx 手動'}</span></th>
                 <th>專屬碼</th>
+                <th>錄取通知</th>
                 {formatFilter !== 'online' && <th>方案</th>}
                 {formatFilter !== 'online' && <th>繳費</th>}
                 {formatFilter !== 'online' && <th>入住—離開</th>}
@@ -454,9 +464,9 @@ export default function LodgingsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 7 : 13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={formatFilter === 'online' ? 6 : 12} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 7 : 13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
               ) : pagedRows.map(r => {
                 const reg = r.registration || {}
                 return (
@@ -476,6 +486,11 @@ export default function LodgingsPage() {
                         onClear={() => clearStudentId(reg)} />
                     </td>
                     <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
+                      {reg.approval_email_sent_at
+                        ? <span style={{ color: 'var(--success)' }}>✓ {new Date(reg.approval_email_sent_at).toLocaleDateString('zh-TW')}</span>
+                        : <span style={{ color: 'var(--error)' }}>未寄</span>}
+                    </td>
                     {formatFilter !== 'online' && <td className="muted" style={{ whiteSpace: 'nowrap' }}>{PLAN_LABEL[reg.payment_plan] || reg.payment_plan || '—'}</td>}
                     {formatFilter !== 'online' && <td>
                       <select value={reg.payment_status || 'unpaid'}

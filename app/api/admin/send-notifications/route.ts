@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
   for (const reg of registrations) {
     try {
       await sendApprovalEmail(reg)
+      await supabaseAdmin
+        .from('registrations')
+        .update({ approval_email_sent_at: new Date().toISOString() })
+        .eq('id', reg.id)
       results.push({ id: reg.id, email: reg.email, success: true })
     } catch (err) {
       results.push({ id: reg.id, email: reg.email, success: false })
