@@ -347,6 +347,25 @@ function MemberDashboardContent() {
               </a>
             </div>
 
+            {/* 課程打卡入口（線上限定） */}
+            {isOnline && (
+              <div style={{
+                background: 'rgba(73,85,52,0.06)', border: '1px solid rgba(73,85,52,0.18)',
+                borderRadius: 14, padding: '18px 22px', marginBottom: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+              }}>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--green)', textTransform: 'uppercase', marginBottom: 4 }}>Course Attendance</p>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課程打卡</h3>
+                  <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>8/20 至 8/24・每次課程結束後請打卡</p>
+                </div>
+                <a href={withAuth('/member/course-checkin')}
+                  style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
+                  前往課程打卡 →
+                </a>
+              </div>
+            )}
+
             {/* 課程時間表入口 */}
             <div style={{
               background: 'rgba(180,147,88,0.07)', border: '1px solid rgba(180,147,88,0.25)',
