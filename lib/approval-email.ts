@@ -129,30 +129,34 @@ export async function sendApprovalEmail(reg: {
     </table>
     ${emailWarning(`匯款時請備註姓名與專屬碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。`)}
 
-    ${emailH3('三、住宿安排')}
+    ${emailH3('三、課前共修')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前兩週（<strong style="color:${C.ink};">8/4 至 8/16</strong>）將安排課前共修，請至課前共修頁查看課表，每次參與後請記得打卡。</p>
+    ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '查看課前共修課表＆打卡', 'green')}
+
+    ${emailH3('四、住宿安排')}
     <ol style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
       <li>房間皆為四人房，採單獨床位配置，附兩套衛浴。</li>
       <li>如需安排兩人一間，請先私訊向主辦單位確認房間數量是否足夠；經確認後，每人需補差額新台幣 <strong style="color:${C.ink};">7,000 至 9,000 元</strong>。</li>
     </ol>
 
-    ${emailH3('四、報到時間及地點')}
+    ${emailH3('五、報到時間及地點')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;line-height:1.85;">時間：2026年8月19日上午10點（台北時間）<br>
     場地：日月潭湖畔會館<br>
     地址：南投縣魚池鄉日月村中正路101號</p>
 
-    ${emailH3('五、課程時間')}
+    ${emailH3('六、課程時間')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">2026年8月20日至8月24日，共5天</p>
 
-    ${emailH3('六、結束時間')}
+    ${emailH3('七、結束時間')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">2026年8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
 
-    ${emailH3('七、食宿登記')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請從本信第二段「② 前往食宿登記」連結進入填寫，截止時間為 6/20 晚上 8 點。<strong style="color:${C.ink};">本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
+    ${emailH3('八、食宿登記')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請從本信第二段「② 食宿登記」連結進入填寫，截止時間為 6/20 晚上 8 點。<strong style="color:${C.ink};">本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
 
-    ${emailH3('八、禪修課程群組')}
+    ${emailH3('九、禪修課程群組')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">資料經確認無誤後，學會將會以學員所提供之 LINE 或微信進入學會 <strong style="color:${C.ink};">8 月禪修課程群組</strong>。</p>
 
-    ${emailH3('九、承諾事項')}
+    ${emailH3('十、承諾事項')}
     <ol type="a" style="font-size:13px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">
       <li>請遵從指導老師的課程安排指導及主辦方的規定。課程期間將全程進行拍攝與錄音，作為法佈施；學員需接受出鏡，並在課後不要求刪減個人互動的相關影音視頻。</li>
       <li>用餐時間，禁語。</li>
@@ -167,10 +171,10 @@ export async function sendApprovalEmail(reg: {
       <li>除颱風、天災或不可抗拒之因素，禪修課程照常舉辦。</li>
     </ol>
 
-    ${emailH3('十、海外入境須知')}
+    ${emailH3('十一、海外入境須知')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請進入中華民國移民署中文網查詢相關資訊：<a href="https://www.immigration.gov.tw/" style="color:${C.green};">https://www.immigration.gov.tw/</a></p>
 
-    ${emailH3('十一、航班建議')}
+    ${emailH3('十二、航班建議')}
     <p style="font-size:13.5px;color:${C.ink};margin:0 0 4px;"><strong>a. 來台抵達時間</strong></p>
     <ul style="font-size:13px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0 0 12px;">
       <li>建議抵達：8 月 19 日下午 2:00 至 2:30 以前（台北時間）。</li>
@@ -183,10 +187,8 @@ export async function sendApprovalEmail(reg: {
       <li>預計抵達：預計於下午 2:00 至 3:00 抵達桃園國際機場第一航廈。</li>
     </ul>
 
-    ${emailH3('十二、主辦單位保有課程變更、異動之權利')}
+    ${emailH3('十三、主辦單位保有課程變更、異動之權利')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">如有任何爭議，台灣四念處學會將保留最終決定權。</p>
-
-    ${practiceBlock(reg, '十三、')}
 
     ${emailCodeBox('您的專屬專屬碼', reg.random_code, '查詢報名狀態時需使用此碼')}
 

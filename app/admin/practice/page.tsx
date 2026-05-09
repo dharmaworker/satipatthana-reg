@@ -150,8 +150,8 @@ export default function AdminPracticePage() {
           <div style={{ display: 'grid', placeItems: 'center', padding: 60 }}><div className="spinner-large" /></div>
         ) : (
           <>
-            {/* Zoom 設定 */}
-            <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
+            {/* Zoom 設定 — hidden */}
+            <section style={{ display: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>Zoom / 全域設定</h2>
                 {!editingConfig && (
@@ -223,7 +223,7 @@ export default function AdminPracticePage() {
                 </thead>
                 <tbody>
                   {items.map(item => (
-                    <tr key={item.id} style={{ opacity: item.enabled ? 1 : 0.45 }}>
+                    <tr key={item.id}>
                       {editingItem?.id === item.id ? (
                         <td colSpan={8} style={{ padding: '14px 16px', background: 'rgba(73,85,52,0.04)' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -282,16 +282,16 @@ export default function AdminPracticePage() {
                         </td>
                       ) : (
                         <>
-                          <td style={tdStyle}>{item.sort_order}</td>
-                          <td style={{ ...tdStyle, color: 'var(--ink-mute)', fontSize: 12.5 }}>{weekLabel(item.session_date)}</td>
-                          <td style={tdStyle}>{item.session_date}</td>
-                          <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>{item.time_label}</td>
-                          <td style={tdStyle}>
+                          <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>{item.sort_order}</td>
+                          <td style={{ ...tdStyle, color: 'var(--ink-mute)', fontSize: 12.5, opacity: item.enabled ? 1 : 0.45 }}>{weekLabel(item.session_date)}</td>
+                          <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>{item.session_date}</td>
+                          <td style={{ ...tdStyle, whiteSpace: 'nowrap', opacity: item.enabled ? 1 : 0.45 }}>{item.time_label}</td>
+                          <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>
                             <div style={{ fontWeight: 600 }}>{item.title}</div>
                             {item.subtitle && <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>{item.subtitle}</div>}
                           </td>
-                          <td style={{ ...tdStyle, textAlign: 'center' }}>{item.is_live ? '✅' : ''}</td>
-                          <td style={{ ...tdStyle, textAlign: 'center' }}>{item.enabled ? '✅' : '⏸'}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center', opacity: item.enabled ? 1 : 0.45 }}>{item.is_live ? '✅' : ''}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center', opacity: item.enabled ? 1 : 0.45 }}>{item.enabled ? '✅' : '⏸'}</td>
                           <td style={tdStyle}>
                             <div style={{ display: 'flex', gap: 6 }}>
                               <button onClick={() => setEditingItem({ ...item })}
