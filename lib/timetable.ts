@@ -59,7 +59,7 @@ export const DEFAULT_TIMETABLE: Timetable = {
         { time: '09:00 — 10:00', title: '自由修行', desc: '' },
         { time: '10:00 — 11:30', title: '法談並檢查作業', desc: '老師E 開示（n 人）・全體學員在大會議室旁聽', badge: 'gold' },
         { time: '11:30 — 14:00', title: '午餐、自由修行', desc: '' },
-        { time: '14:00 — 15:30', title: '法談並檢查作業', desc: '麥琪媽媽（n 人）・泰國線上，泰國時間 13:00 – 14:30', badge: 'gold' },
+        { time: '14:00 — 15:30', title: '法談並檢查作業', desc: '麥琪奧蘭努（n 人）・泰國線上，泰國時間 13:00 – 14:30', badge: 'gold' },
         { time: '15:30 — 16:30', title: '休息', desc: '' },
         { time: '16:30 — 18:00', title: '分組法談', desc: '老師A／老師C／老師D（n×n）・老師E 組：休息／進行合適的修行／檢查剩餘學員作業', badge: 'gold' },
         { time: '18:00 — 19:00', title: '晚餐、發展覺性', desc: '' },
