@@ -1,17 +1,8 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-})
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+const FROM = process.env.RESEND_FROM || '台灣四念處學會 <no-reply@satipatthana.org.tw>'
 
 export async function sendMail({
   to,
@@ -28,20 +19,45 @@ export async function sendMail({
   bcc?: string | string[]
   attachments?: { filename: string; content: Buffer; contentType?: string }[]
 }) {
-  try {
-    const result = await transporter.sendMail({
-      from: `台灣四念處學會 <${process.env.GMAIL_USER}>`,
-      to,
-      cc,
-      bcc,
-      subject,
-      html,
-      attachments,
-    })
-    console.log('Mail sent:', result.messageId, 'to:', to, 'cc:', cc ?? '—', 'attachments:', attachments?.length ?? 0)
-    return result
-  } catch (err) {
-    console.error('Mail error:', err)
-    throw err
+  const result = await resend.emails.send({
+    from: FROM,
+    to: Array.isArray(to) ? to : [to],
+    cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
+    bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
+    subject,
+    html,
+    attachments: attachments?.map(a => ({
+      filename: a.filename,
+      content: a.content,
+    })),
+  })
+  console.log('Mail sent via Resend:', result.data?.id, 'to:', to)
+  return result
+}
+
+// 批次發送（最多 100 封 / call），用於大量寄信避免 timeout
+export async function sendMailBatch(mails: {
+  to: string
+  subject: string
+  html: string
+  bcc?: string
+}[]) {
+  const batches: typeof mails[] = []
+  for (let i = 0; i < mails.length; i += 100) {
+    batches.push(mails.slice(i, i + 100))
   }
+  const results = []
+  for (const batch of batches) {
+    const r = await resend.batch.send(
+      batch.map(m => ({
+        from: FROM,
+        to: [m.to],
+        bcc: m.bcc ? [m.bcc] : undefined,
+        subject: m.subject,
+        html: m.html,
+      }))
+    )
+    results.push(r)
+  }
+  return results
 }
