@@ -32,9 +32,16 @@ export function buildTimetableNotifyPayload(reg: TimetableReg) {
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">
       本屆課程設有線上打卡功能，請於每節課程結束後，至學員專區的「課程打卡」記錄出席或缺席。
     </p>
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 20px;">
-      打卡記錄可協助學會統計參課情況，也作為您本屆完課的憑證。
-    </p>
+    <table style="border-collapse:collapse;width:100%;font-size:13px;margin:0 0 18px;background:rgba(216,194,154,0.1);border-radius:8px;overflow:hidden;">
+      <tr>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkMute};width:36px;font-size:16px;text-align:center;">📋</td>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;">
+          <strong style="color:${C.ink};display:block;margin-bottom:4px;">打卡注意事項</strong>
+          <span style="color:${C.inkSoft};">・每個場次僅能修改 <strong style="color:${C.ink};">3 次</strong>，請確認後再送出。</span><br/>
+          <span style="color:${C.inkSoft};">・須<strong style="color:${C.ink};">全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</span>
+        </td>
+      </tr>
+    </table>
     ${emailButton(checkinUrl, '前往課程打卡 →', 'gold')}
     ` : ''}
 

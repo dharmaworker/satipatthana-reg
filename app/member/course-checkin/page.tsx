@@ -138,6 +138,15 @@ function CheckinContent() {
           <p style={{ fontSize: 14, color: 'var(--ink-soft)' }}>每次課程結束後請記錄出席或缺席，記錄自動儲存。</p>
         </div>
 
+        {/* 打卡規則提醒 */}
+        <div style={{ background: 'rgba(216,194,154,0.15)', border: '1px solid rgba(216,194,154,0.5)', borderRadius: 12, padding: '14px 18px', marginBottom: 28 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold-deep)', marginBottom: 8, letterSpacing: '0.04em' }}>📋 打卡注意事項</div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 2 }}>
+            <li>每個場次僅能修改 <strong style={{ color: 'var(--ink)' }}>3 次</strong>，請確認後再送出。</li>
+            <li>須<strong style={{ color: 'var(--ink)' }}>全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</li>
+          </ul>
+        </div>
+
         {error && (
           <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 10, padding: '14px 18px', color: '#b8523a', fontSize: 14, marginBottom: 20 }}>
             {error}
@@ -148,13 +157,13 @@ function CheckinContent() {
           <>
             {/* 出席摘要 */}
             {(() => {
-              const disqualified = absentCount >= 3
+              const disqualified = absentCount >= 1
               return (
                 <div style={{ marginBottom: 28 }}>
                   <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席摘要</h2>
                   {disqualified && (
                     <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.25)', borderRadius: 10, padding: '12px 16px', color: '#b8523a', fontSize: 13.5, marginBottom: 14, lineHeight: 1.7 }}>
-                      缺席達 {absentCount} 堂，出席次數不計入參課資格。
+                      有缺席記錄（{absentCount} 堂），出席次數不計入參課資格。
                     </div>
                   )}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
