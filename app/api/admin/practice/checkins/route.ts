@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         .from('practice_checkins')
         .select('registration_id, schedule_item_id')
         .in('registration_id', regIds)
+        .eq('checked', true)
     : { data: [] }
 
   const checkinMap: Record<string, Set<string>> = {}
