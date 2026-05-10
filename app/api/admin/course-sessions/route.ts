@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { fetchTimetable, saveTimetable } from '@/lib/timetable'
 
 function checkAuth(request: NextRequest) {
   return request.cookies.get('admin_role')?.value || null
@@ -65,4 +66,16 @@ export async function PATCH(request: NextRequest) {
     .eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
+}
+
+// POST: 重新同步時間表（清除舊場次、更新內容）
+export async function POST(request: NextRequest) {
+  if (checkAuth(request) !== 'admin') return NextResponse.json({ error: '權限不足' }, { status: 403 })
+  try {
+    const timetable = await fetchTimetable()
+    await saveTimetable(timetable)
+    return NextResponse.json({ ok: true })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || '同步失敗' }, { status: 500 })
+  }
 }

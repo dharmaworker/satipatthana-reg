@@ -48,6 +48,7 @@ export default function AttendanceRecordsPage() {
   const [viewMode, setViewMode] = useState<'session' | 'student'>('session')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
   const [togglingSession, setTogglingSession] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -69,6 +70,13 @@ export default function AttendanceRecordsPage() {
     window.addEventListener('admin-format-change', handler)
     return () => window.removeEventListener('admin-format-change', handler)
   }, [])
+
+  const syncFromTimetable = async () => {
+    setSyncing(true)
+    await fetch('/api/admin/course-sessions', { method: 'POST' })
+    await fetchData()
+    setSyncing(false)
+  }
 
   const toggleRequiresCheckin = async (session: Session) => {
     setTogglingSession(session.id)
@@ -146,6 +154,10 @@ export default function AttendanceRecordsPage() {
               value={search} onChange={e => setSearch(e.target.value)} style={{ width: 240 }} />
           )}
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
+          <button onClick={syncFromTimetable} disabled={syncing} className="admin-btn-sm"
+            style={{ background: syncing ? undefined : 'rgba(73,85,52,0.1)', opacity: syncing ? 0.6 : 1 }}>
+            {syncing ? '同步中⋯' : '從時間表同步場次'}
+          </button>
         </div>
 
         {loading ? (

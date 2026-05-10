@@ -195,20 +195,57 @@ async function syncCourseSessions(t: Timetable): Promise<void> {
 
   if (sessionList.length === 0) return
 
-  // 保留現有 requires_checkin 設定，只覆寫 metadata
-  const { data: existing } = await supabaseAdmin
+  const currentSyncKeySet = new Set(sessionList.map(s => s.sync_key))
+
+  // 1. 取得所有現有場次
+  const { data: allExisting } = await supabaseAdmin
     .from('course_sessions')
-    .select('sync_key, requires_checkin')
-    .in('sync_key', sessionList.map(s => s.sync_key))
+    .select('id, sync_key, requires_checkin')
 
-  const existingMap = new Map((existing || []).map(s => [s.sync_key, s.requires_checkin]))
+  // 2. 對每個 sync_key 只保留第一筆；其餘（重複、null、已移除）都視為 stale
+  const existingMap = new Map<string, { id: string; requires_checkin: boolean }>()
+  const staleIds: string[] = []
 
-  const toUpsert = sessionList.map(s => ({
-    ...s,
-    requires_checkin: existingMap.get(s.sync_key) ?? false,
-  }))
+  for (const s of allExisting || []) {
+    if (!s.sync_key || !currentSyncKeySet.has(s.sync_key)) {
+      staleIds.push(s.id)  // null sync_key 或已從時間表移除
+    } else if (!existingMap.has(s.sync_key)) {
+      existingMap.set(s.sync_key, { id: s.id, requires_checkin: s.requires_checkin })
+    } else {
+      staleIds.push(s.id)  // 同 sync_key 的重複場次
+    }
+  }
 
-  await supabaseAdmin
-    .from('course_sessions')
-    .upsert(toUpsert, { onConflict: 'sync_key' })
+  // 3. 刪除 stale 場次（跳過有打卡記錄者）
+  if (staleIds.length > 0) {
+    const { data: checkins } = await supabaseAdmin
+      .from('course_session_checkins')
+      .select('session_id')
+      .in('session_id', staleIds)
+    const sessionsWithCheckins = new Set((checkins || []).map((c: any) => c.session_id))
+    const safeToDelete = staleIds.filter(id => !sessionsWithCheckins.has(id))
+    if (safeToDelete.length > 0) {
+      await supabaseAdmin.from('course_sessions').delete().in('id', safeToDelete)
+    }
+  }
+
+  // 4. 更新現有場次 / 新增尚未存在的場次
+  const toUpdate: any[] = []
+  const toInsert: any[] = []
+
+  for (const s of sessionList) {
+    const found = existingMap.get(s.sync_key)
+    if (found) {
+      toUpdate.push({ id: found.id, ...s, requires_checkin: found.requires_checkin })
+    } else {
+      toInsert.push({ ...s, requires_checkin: false })
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    await supabaseAdmin.from('course_sessions').upsert(toUpdate, { onConflict: 'id' })
+  }
+  if (toInsert.length > 0) {
+    await supabaseAdmin.from('course_sessions').insert(toInsert)
+  }
 }
