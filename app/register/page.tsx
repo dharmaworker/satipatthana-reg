@@ -101,6 +101,7 @@ export default function RegisterPage() {
     mental_health_note: 'no',
     retreat_format: '',
     chinese_name: '',
+    id_number: '',
     passport_name: '',
     identity: '',
     dharma_name: '',
@@ -212,17 +213,18 @@ export default function RegisterPage() {
 
   const validateStep4 = (): boolean => {
     if (!form.chinese_name.trim()) return fail('chinese_name', '請填寫 Q19：中文姓名')
-    if (!form.passport_name.trim()) return fail('passport_name', '請填寫 Q20：護照英文姓名')
-    if (!form.identity) return fail('identity', '請選擇 Q21：身份類別（在家人／僧眾）')
-    if (!form.gender) return fail('gender', '請選擇 Q23：性別')
-    if (!form.age) return fail('age', '請填寫 Q24：年齡')
-    if (!form.residence) return fail('residence', '請選擇 Q26：居住地')
-    if (form.residence === '其他地區') return fail('residence', 'Q26：選了「其他地區」請填寫實際居住地')
-    if (!form.phone.trim()) return fail('phone', '請填寫 Q27：手機號碼')
-    if (!form.email.trim()) return fail('email', '請填寫 Q28：電子信箱')
+    if (!form.id_number.trim()) return fail('id_number', '請填寫 Q20：身分證號碼 / 護照號碼')
+    if (!form.passport_name.trim()) return fail('passport_name', '請填寫 Q21：護照英文姓名')
+    if (!form.identity) return fail('identity', '請選擇 Q22：身份類別（在家人／僧眾）')
+    if (!form.gender) return fail('gender', '請選擇 Q24：性別')
+    if (!form.age) return fail('age', '請填寫 Q25：年齡')
+    if (!form.residence) return fail('residence', '請選擇 Q27：居住地')
+    if (form.residence === '其他地區') return fail('residence', 'Q27：選了「其他地區」請填寫實際居住地')
+    if (!form.phone.trim()) return fail('phone', '請填寫 Q28：手機號碼')
+    if (!form.email.trim()) return fail('email', '請填寫 Q29：電子信箱')
     if (!form.email_confirm.trim()) return fail('email_confirm', '請再次輸入電子信箱以確認')
     if (form.email.trim().toLowerCase() !== form.email_confirm.trim().toLowerCase()) return fail('email_confirm', '兩次填寫的電子信箱不一致，請重新確認')
-    if (!form.contact_app) return fail('contact_app', '請選擇 Q29：通訊軟體（LINE 或 微信擇一）')
+    if (!form.contact_app) return fail('contact_app', '請選擇 Q30：通訊軟體（LINE 或 微信擇一）')
     if (form.contact_app === 'line') {
       if (!form.line_id.trim()) return fail('contact_app', '請填寫 LINE ID')
       if (!form.line_qr_url) return fail('contact_app', '請上傳 LINE QR Code 圖片')
@@ -648,19 +650,28 @@ export default function RegisterPage() {
 
               <div className="field-row">
                 <div id="field-chinese_name">
-                  <label className="form-label">19. 中文姓名（身分證／護照姓名）<span className="required">*</span></label>
+                  <label className="form-label">19. 中文姓名 <span className="required">*</span></label>
                   <input className={`form-input ${errCls('chinese_name')}`} value={form.chinese_name}
                     onChange={e => update('chinese_name', e.target.value)} />
                 </div>
+                <div id="field-id_number">
+                  <label className="form-label">20. 身分證號碼 / 護照號碼（擇一）<span className="required">*</span></label>
+                  <input className={`form-input ${errCls('id_number')}`} value={form.id_number}
+                    placeholder="台灣居民填身分證號碼，外籍填護照號碼"
+                    onChange={e => update('id_number', e.target.value)} />
+                </div>
+              </div>
+
+              <div className="field-row" style={{ marginTop: 14 }}>
                 <div id="field-passport_name">
-                  <label className="form-label">20. 護照英文姓名 <span className="required">*</span></label>
+                  <label className="form-label">21. 護照英文姓名 <span className="required">*</span></label>
                   <input className={`form-input ${errCls('passport_name')}`} value={form.passport_name}
                     onChange={e => update('passport_name', e.target.value)} />
                 </div>
               </div>
 
               <div id="field-identity" style={{ marginTop: 14 }}>
-                <label className="form-label">21. 請問您屬於： <span className="required">*</span></label>
+                <label className="form-label">22. 請問您屬於： <span className="required">*</span></label>
                 <div className="opt-group inline">
                   {[['lay', '在家人（居士）'], ['monastic', '僧眾']].map(([val, label]) => (
                     <label key={val} className={`opt ${form.identity === val ? 'selected' : ''}`}>
@@ -675,7 +686,7 @@ export default function RegisterPage() {
 
               {form.identity === 'monastic' && (
                 <div className="branch-reveal active" style={{ marginTop: 12 }}>
-                  <label className="form-label">22. 法名（僅出家師父填寫）</label>
+                  <label className="form-label">23. 法名（僅出家師父填寫）</label>
                   <input className="form-input" value={form.dharma_name}
                     onChange={e => update('dharma_name', e.target.value)} />
                 </div>
@@ -683,7 +694,7 @@ export default function RegisterPage() {
 
               <div className="field-row" style={{ marginTop: 14 }}>
                 <div id="field-gender">
-                  <label className="form-label">23. 性別 <span className="required">*</span></label>
+                  <label className="form-label">24. 性別 <span className="required">*</span></label>
                   <div className="opt-group inline">
                     {[['male', '男'], ['female', '女']].map(([val, label]) => (
                       <label key={val} className={`opt ${form.gender === val ? 'selected' : ''}`}>
@@ -696,7 +707,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div id="field-age">
-                  <label className="form-label">24. 年齡 <span className="required">*</span></label>
+                  <label className="form-label">25. 年齡 <span className="required">*</span></label>
                   <input type="number" className={`form-input ${errCls('age')}`} value={form.age}
                     onChange={e => update('age', e.target.value)} />
                 </div>
@@ -704,7 +715,7 @@ export default function RegisterPage() {
 
               <div className="field-row" style={{ marginTop: 14 }}>
                 <div>
-                  <label className="form-label">25. 護照頒發地</label>
+                  <label className="form-label">26. 護照頒發地</label>
                   {(() => {
                     const isOther = form.passport_country === '其他地區' || form.passport_country.startsWith('其他地區：')
                     const otherText = form.passport_country.startsWith('其他地區：')
@@ -733,7 +744,7 @@ export default function RegisterPage() {
                   })()}
                 </div>
                 <div id="field-residence">
-                  <label className="form-label">26. 居住地 <span className="required">*</span></label>
+                  <label className="form-label">27. 居住地 <span className="required">*</span></label>
                   {(() => {
                     const isOther = form.residence === '其他地區' || form.residence.startsWith('其他地區：')
                     const otherText = form.residence.startsWith('其他地區：')
@@ -765,12 +776,12 @@ export default function RegisterPage() {
 
               <div className="field-row" style={{ marginTop: 14 }}>
                 <div id="field-phone">
-                  <label className="form-label">27. 手機號碼 <span className="required">*</span><span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>海外請加國際碼，例：886+</span></label>
+                  <label className="form-label">28. 手機號碼 <span className="required">*</span><span className="form-hint" style={{ display: 'inline', marginLeft: 6 }}>海外請加國際碼，例：886+</span></label>
                   <input className={`form-input ${errCls('phone')}`} value={form.phone}
                     onChange={e => update('phone', e.target.value)} />
                 </div>
                 <div id="field-email">
-                  <label className="form-label">28. 電子信箱 <span className="required">*</span></label>
+                  <label className="form-label">29. 電子信箱 <span className="required">*</span></label>
                   <input type="email" className={`form-input ${errCls('email')}`} value={form.email}
                     onChange={e => update('email', e.target.value)}
                     autoComplete="email" />
@@ -791,7 +802,7 @@ export default function RegisterPage() {
               </div>
 
               <div id="field-contact_app" style={{ marginTop: 18 }}>
-                <label className="form-label">29. 通訊軟體 <span className="required">*</span></label>
+                <label className="form-label">30. 通訊軟體 <span className="required">*</span></label>
                 <p className="form-hint" style={{ marginBottom: 10 }}>必填，請於 LINE 或 微信擇一填寫並上傳對應 QR Code（檔案上限 500KB）</p>
                 <div className="opt-group inline">
                   <label className={`opt ${form.contact_app === 'line' ? 'selected' : ''}`}>
@@ -902,6 +913,7 @@ export default function RegisterPage() {
                 <div className="review-group">
                   <h4>個人資訊 <span className="edit-link" onClick={() => { setStep(5); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>編輯 Edit</span></h4>
                   <ReviewRow k="中文姓名" v={form.chinese_name} />
+                  <ReviewRow k="身分證／護照號碼" v={form.id_number} />
                   <ReviewRow k="護照英文姓名" v={form.passport_name} />
                   <ReviewRow k="身份" v={form.identity === 'lay' ? '在家人（居士）' : form.identity === 'monastic' ? '僧眾' : '—'} />
                   {form.identity === 'monastic' && <ReviewRow k="法名" v={form.dharma_name} />}
