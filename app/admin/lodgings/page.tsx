@@ -564,6 +564,7 @@ export default function LodgingsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
               <Field label="報名序號" value={detail.registration?.member_id} />
               <Field label="學號" value={detail.registration?.student_id} />
+              <Field label="身分證／護照號碼" value={detail.registration?.id_number} />
               <Field label="Email" value={detail.registration?.email} />
               <Field label="手機" value={detail.registration?.phone} />
               <Field label="居住地" value={detail.registration?.residence} />

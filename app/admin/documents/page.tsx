@@ -108,6 +108,7 @@ export default function DocumentsPage() {
       const match =
         (reg.chinese_name || '').toLowerCase().includes(q) ||
         (reg.passport_name || '').toLowerCase().includes(q) ||
+        (reg.id_number || '').toLowerCase().includes(q) ||
         (reg.member_id || '').toLowerCase().includes(q) ||
         (reg.student_id || '').toLowerCase().includes(q)
       if (!match) return false

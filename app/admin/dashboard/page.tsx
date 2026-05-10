@@ -448,6 +448,7 @@ export default function DashboardPage() {
 
             <DetailSection title="基本資料">
               <DetailField label="中文姓名" value={detailReg.chinese_name} />
+              <DetailField label="身分證／護照號碼" value={detailReg.id_number} />
               <DetailField label="護照英文姓名" value={detailReg.passport_name} />
               <DetailField label="專屬碼" value={detailReg.random_code} mono />
               <DetailField label="報名序號" value={detailReg.member_id} />

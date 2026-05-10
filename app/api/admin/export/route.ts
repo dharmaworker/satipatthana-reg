@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const headers = [
     '報名時間', '報名序號', '專屬碼', '審核狀態', '繳費狀態', '繳費方案',
-    '中文姓名', '護照英文姓名', '身份', '法名', '性別', '年齡',
+    '中文姓名', '身分證／護照號碼', '護照英文姓名', '身份', '法名', '性別', '年齡',
     '護照頒發地', '居住地', '手機', 'Email', 'LINE ID', '微信號',
     'LINE QR 連結', 'WeChat QR 連結',
     '修習年資', '練習頻率', '心理健康備注',
@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     paymentMap[r.payment_status] || r.payment_status,
     r.payment_plan ? (planMap[r.payment_plan] || r.payment_plan) : '',
     r.chinese_name,
+    r.id_number || '',
     r.passport_name,
     r.identity === 'lay' ? '在家人' : '僧眾',
     r.dharma_name || '',
