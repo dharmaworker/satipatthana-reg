@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { fetchTimetable } from '@/lib/timetable'
 
 const MAX_CHANGES = 3
 
@@ -23,9 +22,6 @@ export async function GET(request: NextRequest) {
   if (!reg) return NextResponse.json({ error: '無效連結' }, { status: 401 })
   if (reg.status !== 'approved') return NextResponse.json({ error: '僅限錄取學員' }, { status: 403 })
   if (reg.retreat_format !== 'online') return NextResponse.json({ error: '僅限線上學員' }, { status: 403 })
-
-  const timetable = await fetchTimetable()
-  if (!timetable.published) return NextResponse.json({ sessions: [] })
 
   const [sessionsRes, checkinsRes] = await Promise.all([
     supabaseAdmin
