@@ -12,14 +12,9 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
   `
 }
 
-export async function sendApprovalEmail(reg: {
-  id: string
-  email: string
-  chinese_name: string
-  random_code: string
-  member_id: string | null
-  retreat_format?: string | null
-}) {
+type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null }
+
+export function buildApprovalEmailPayload(reg: ApprovalReg) {
   if (reg.retreat_format === 'online') {
     const onlineBody = `
       ${emailKicker('Approval Notice')}
@@ -44,12 +39,7 @@ export async function sendApprovalEmail(reg: {
       <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
       ${emailSignoff()}
     `
-    return sendMail({
-      to: reg.email,
-      bcc: archiveEmail,
-      subject: '【第二屆台灣四念處禪修】線上課程錄取通知',
-      html: emailWrap(onlineBody, { maxWidth: 680 }),
-    })
+    return { to: reg.email, bcc: archiveEmail, subject: '【第二屆台灣四念處禪修】線上課程錄取通知', html: emailWrap(onlineBody, { maxWidth: 680 }) }
   }
 
   const tableTd = `padding:8px 10px;border:1px solid ${C.line};font-size:13.5px;`
@@ -202,10 +192,9 @@ export async function sendApprovalEmail(reg: {
     ${emailSignoff()}
   `
 
-  return sendMail({
-    to: reg.email,
-    bcc: archiveEmail,
-    subject: '【第二屆台灣四念處禪修】實體課程錄取通知',
-    html: emailWrap(body, { maxWidth: 680 }),
-  })
+  return { to: reg.email, bcc: archiveEmail, subject: '【第二屆台灣四念處禪修】實體課程錄取通知', html: emailWrap(body, { maxWidth: 680 }) }
+}
+
+export async function sendApprovalEmail(reg: ApprovalReg) {
+  return sendMail(buildApprovalEmailPayload(reg))
 }

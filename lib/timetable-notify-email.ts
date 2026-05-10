@@ -4,17 +4,11 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailSignoff 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-export async function sendTimetableNotifyEmail(reg: {
-  id: string
-  email: string
-  chinese_name: string
-  random_code: string
-  member_id: string | null
-  retreat_format?: string | null
-}) {
+type TimetableReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null }
+
+export function buildTimetableNotifyPayload(reg: TimetableReg) {
   const isOnline = reg.retreat_format === 'online'
   const checkinUrl = `${baseUrl}/member/course-checkin?id=${reg.id}&code=${reg.random_code}`
-
   const body = `
     ${emailKicker('Timetable Published')}
     ${emailH1('第二屆台灣四念處禪修・課程時間表已發佈')}
@@ -48,10 +42,9 @@ export async function sendTimetableNotifyEmail(reg: {
     ${emailSignoff()}
   `
 
-  return sendMail({
-    to: reg.email,
-    bcc: archiveEmail,
-    subject: '【第二屆台灣四念處禪修】課程時間表已發佈',
-    html: emailWrap(body, { maxWidth: 620 }),
-  })
+  return { to: reg.email, bcc: archiveEmail, subject: '【第二屆台灣四念處禪修】課程時間表已發佈', html: emailWrap(body, { maxWidth: 620 }) }
+}
+
+export async function sendTimetableNotifyEmail(reg: TimetableReg) {
+  return sendMail(buildTimetableNotifyPayload(reg))
 }

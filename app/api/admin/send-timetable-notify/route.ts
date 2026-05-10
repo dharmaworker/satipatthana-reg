@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendTimetableNotifyEmail } from '@/lib/timetable-notify-email'
+import { buildTimetableNotifyPayload } from '@/lib/timetable-notify-email'
+import { sendMailBatch } from '@/lib/mailer'
 
 export async function POST(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -20,19 +21,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
   }
 
-  const results = []
-  for (const reg of registrations) {
-    try {
-      await sendTimetableNotifyEmail(reg)
-      results.push({ id: reg.id, success: true })
-    } catch {
-      results.push({ id: reg.id, success: false })
-    }
+  try {
+    await sendMailBatch(registrations.map(reg => buildTimetableNotifyPayload(reg)))
+    return NextResponse.json({
+      success: true,
+      message: `成功寄出 ${registrations.length} 封`,
+    })
+  } catch (e: any) {
+    console.error('[send-timetable-notify] batch failed:', e)
+    return NextResponse.json({ error: e.message || '寄送失敗' }, { status: 500 })
   }
-
-  const ok = results.filter(r => r.success).length
-  return NextResponse.json({
-    success: true,
-    message: `成功寄出 ${ok} 封，失敗 ${results.length - ok} 封`,
-  })
 }

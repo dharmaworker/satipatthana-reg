@@ -34,7 +34,7 @@ const BUS_DEST_ZH: Record<string, string> = {
   taoyuan_825_am: '8/25 上午到桃園機場',
 }
 
-export async function sendFormalNotificationEmail(reg: FormalNotifData) {
+export function buildFormalNotificationPayload(reg: FormalNotifData) {
   const l = reg.lodging || {}
 
   const genderZh = reg.gender === 'male' ? '男' : reg.gender === 'female' ? '女' : reg.gender
@@ -114,10 +114,9 @@ export async function sendFormalNotificationEmail(reg: FormalNotifData) {
     ${emailSignoff()}
   `
 
-  return sendMail({
-    to: reg.email,
-    bcc: archiveEmail,
-    subject: '【第二屆台灣四念處禪修】正式學員通知',
-    html: emailWrap(body, { maxWidth: 680 }),
-  })
+  return { to: reg.email, bcc: archiveEmail, subject: '【第二屆台灣四念處禪修】正式學員通知', html: emailWrap(body, { maxWidth: 680 }) }
+}
+
+export async function sendFormalNotificationEmail(reg: FormalNotifData) {
+  return sendMail(buildFormalNotificationPayload(reg))
 }

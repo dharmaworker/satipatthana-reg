@@ -4,14 +4,9 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox,
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-export async function sendStudentIdEmail(reg: {
-  id: string
-  email: string
-  chinese_name: string
-  random_code: string
-  member_id: string | null
-  student_id: string
-}) {
+type StudentIdReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; student_id: string }
+
+export function buildStudentIdPayload(reg: StudentIdReg) {
   const body = `
     ${emailKicker('Student ID Assignment')}
     ${emailH1('第二屆台灣四念處禪修・學號分配通知')}
@@ -39,10 +34,9 @@ export async function sendStudentIdEmail(reg: {
     ${emailSignoff()}
   `
 
-  return sendMail({
-    to: reg.email,
-    bcc: archiveEmail,
-    subject: '【第二屆台灣四念處禪修】學號分配通知',
-    html: emailWrap(body, { maxWidth: 620 }),
-  })
+  return { to: reg.email, bcc: archiveEmail, subject: '【第二屆台灣四念處禪修】學號分配通知', html: emailWrap(body, { maxWidth: 620 }) }
+}
+
+export async function sendStudentIdEmail(reg: StudentIdReg) {
+  return sendMail(buildStudentIdPayload(reg))
 }

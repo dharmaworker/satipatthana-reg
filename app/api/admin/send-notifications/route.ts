@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendApprovalEmail } from '@/lib/approval-email'
+import { buildApprovalEmailPayload } from '@/lib/approval-email'
+import { sendMailBatch } from '@/lib/mailer'
 
 export async function POST(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -10,7 +11,6 @@ export async function POST(request: NextRequest) {
 
   const { ids } = await request.json()
 
-  // 取得要寄信的學員
   const { data: registrations, error } = await supabaseAdmin
     .from('registrations')
     .select('*')
@@ -21,27 +21,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
   }
 
-  const results = []
+  const payloads = registrations.map(reg => buildApprovalEmailPayload(reg))
 
-  for (const reg of registrations) {
-    try {
-      await sendApprovalEmail(reg)
-      await supabaseAdmin
-        .from('registrations')
-        .update({ approval_email_sent_at: new Date().toISOString() })
-        .eq('id', reg.id)
-      results.push({ id: reg.id, email: reg.email, success: true })
-    } catch (err) {
-      results.push({ id: reg.id, email: reg.email, success: false })
-    }
+  try {
+    await sendMailBatch(payloads)
+    // 批次更新寄信時間
+    await supabaseAdmin
+      .from('registrations')
+      .update({ approval_email_sent_at: new Date().toISOString() })
+      .in('id', registrations.map(r => r.id))
+    return NextResponse.json({
+      success: true,
+      message: `成功寄出 ${payloads.length} 封`,
+    })
+  } catch (e: any) {
+    console.error('[send-notifications] batch failed:', e)
+    return NextResponse.json({ error: e.message || '寄送失敗' }, { status: 500 })
   }
-
-  const successCount = results.filter(r => r.success).length
-
-  return NextResponse.json({
-    success: true,
-    message: `成功寄出 ${successCount} 封，失敗 ${results.length - successCount} 封`,
-    results,
-  })
 }
-
