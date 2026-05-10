@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const MAX_CHANGES = 3
-
 async function verifyMember(id: string, code: string) {
   const { data, error } = await supabaseAdmin
     .from('registrations')
@@ -74,10 +72,6 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   const currentCount = existing?.change_count ?? 0
-  if (currentCount >= MAX_CHANGES) {
-    return NextResponse.json({ error: `已達修改上限（${MAX_CHANGES} 次）` }, { status: 400 })
-  }
-
   const newCount = currentCount + 1
 
   const { error } = await supabaseAdmin.from('practice_checkins').upsert(

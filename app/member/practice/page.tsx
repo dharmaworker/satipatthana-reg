@@ -2,8 +2,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-const MAX_CHANGES = 3
-
 type PracticeItem = {
   id: string
   sort_order: number
@@ -75,7 +73,6 @@ function PracticeContent() {
   }, [id, code])
 
   const toggle = async (item: PracticeItem) => {
-    if (item.change_count >= MAX_CHANGES) return
     const next = !item.checked
     setToggling(item.id)
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, checked: next } : i))
@@ -102,8 +99,6 @@ function PracticeContent() {
   }
 
   const checkedCount = items.filter(i => i.checked).length
-  const uncheckedCount = items.length - checkedCount
-  const disqualified = uncheckedCount >= 3
 
   if (loading) {
     return (
@@ -184,17 +179,12 @@ function PracticeContent() {
             )}
 
             {/* 打卡進度 */}
-            {disqualified && (
-              <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.25)', borderRadius: 10, padding: '12px 16px', color: '#b8523a', fontSize: 13.5, marginBottom: 16, lineHeight: 1.7 }}>
-                未打卡達 {uncheckedCount} 堂，打卡次數不計入參課資格。
-              </div>
-            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>打卡進度</span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: disqualified ? 'var(--ink-mute)' : (checkedCount === items.length && items.length > 0 ? 'var(--green)' : 'var(--ink)') }}>
-                {disqualified ? '不計' : checkedCount} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ink-mute)' }}>{!disqualified && `/ ${items.length}`}</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: checkedCount === items.length && items.length > 0 ? 'var(--green)' : 'var(--ink)' }}>
+                {checkedCount} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ink-mute)' }}>/ {items.length}</span>
               </span>
-              {!disqualified && checkedCount === items.length && items.length > 0 && (
+              {checkedCount === items.length && items.length > 0 && (
                 <span style={{ fontSize: 13, color: 'var(--green)', fontWeight: 600 }}>✦ 全部完成</span>
               )}
             </div>
@@ -244,42 +234,24 @@ function PracticeContent() {
                         </>
                       </td>
                       <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                        {item.change_count >= MAX_CHANGES ? (
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            width: 32, height: 32, borderRadius: '50%',
-                            border: '2px solid var(--line)',
-                            background: item.checked ? 'var(--green)' : 'rgba(0,0,0,0.03)',
+                        <button
+                          onClick={() => toggle(item)}
+                          disabled={toggling === item.id}
+                          aria-label={item.checked ? '取消打卡' : '打卡'}
+                          style={{
+                            width: 32, height: 32,
+                            borderRadius: '50%',
+                            border: item.checked ? '2px solid var(--green)' : '2px solid var(--line-strong)',
+                            background: item.checked ? 'var(--green)' : 'transparent',
                             color: item.checked ? '#f8f2e8' : 'var(--ink-mute)',
                             fontSize: 16,
+                            cursor: toggling === item.id ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            opacity: toggling === item.id ? 0.5 : 1,
+                            transition: 'all 0.18s',
                           }}>
-                            {item.checked ? '✓' : ''}
-                          </span>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                            <button
-                              onClick={() => toggle(item)}
-                              disabled={toggling === item.id}
-                              aria-label={item.checked ? '取消打卡' : '打卡'}
-                              style={{
-                                width: 32, height: 32,
-                                borderRadius: '50%',
-                                border: item.checked ? '2px solid var(--green)' : '2px solid var(--line-strong)',
-                                background: item.checked ? 'var(--green)' : 'transparent',
-                                color: item.checked ? '#f8f2e8' : 'var(--ink-mute)',
-                                fontSize: 16,
-                                cursor: toggling === item.id ? 'not-allowed' : 'pointer',
-                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                opacity: toggling === item.id ? 0.5 : 1,
-                                transition: 'all 0.18s',
-                              }}>
-                              {item.checked ? '✓' : ''}
-                            </button>
-                            {item.change_count > 0 && (
-                              <span style={{ fontSize: 10, color: 'var(--ink-mute)', lineHeight: 1 }}>剩{MAX_CHANGES - item.change_count}</span>
-                            )}
-                          </div>
-                        )}
+                          {item.checked ? '✓' : ''}
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -2,8 +2,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-const MAX_CHANGES = 3
-
 type Session = {
   id: string
   day_number: number
@@ -56,7 +54,6 @@ function CheckinContent() {
   }, [id, code])
 
   const setStatus = async (session: Session, next: 'present' | 'absent' | null) => {
-    if (session.change_count >= MAX_CHANGES) return
     // 同一個狀態再點一次 → 清除
     const newStatus = session.status === next ? null : next
     setSaving(session.id)
@@ -172,34 +169,24 @@ function CheckinContent() {
         {!error && (
           <>
             {/* 出席摘要 */}
-            {(() => {
-              const disqualified = absentCount >= 1
-              return (
-                <div style={{ marginBottom: 28 }}>
-                  <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席摘要</h2>
-                  {disqualified && (
-                    <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.25)', borderRadius: 10, padding: '12px 16px', color: '#b8523a', fontSize: 13.5, marginBottom: 14, lineHeight: 1.7 }}>
-                      有缺席記錄（{absentCount} 堂），出席次數不計入參課資格。
-                    </div>
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                    {[
-                      { label: '已出席課程', value: disqualified ? '—' : presentCount, color: disqualified ? 'var(--ink-mute)' : 'var(--green)', bg: disqualified ? 'rgba(0,0,0,0.03)' : 'rgba(73,85,52,0.08)', border: disqualified ? 'var(--line)' : 'rgba(73,85,52,0.2)' },
-                      { label: '缺席課程', value: absentCount, color: 'var(--error)', bg: 'rgba(184,82,58,0.06)', border: 'rgba(184,82,58,0.2)' },
-                      { label: '出席率', value: disqualified ? '不計' : `${rate}%`, color: disqualified ? 'var(--ink-mute)' : (rate >= 80 ? 'var(--green)' : rate >= 50 ? 'var(--gold-deep)' : 'var(--error)'), bg: 'rgba(251,248,242,0.9)', border: 'var(--line)' },
-                    ].map(({ label, value, color, bg, border }) => (
-                      <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
-                        <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 38, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
-                        <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontWeight: 600, letterSpacing: '0.06em' }}>{label}</div>
-                      </div>
-                    ))}
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席摘要</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                {[
+                  { label: '已出席課程', value: presentCount, color: 'var(--green)', bg: 'rgba(73,85,52,0.08)', border: 'rgba(73,85,52,0.2)' },
+                  { label: '缺席課程', value: absentCount, color: 'var(--error)', bg: 'rgba(184,82,58,0.06)', border: 'rgba(184,82,58,0.2)' },
+                  { label: '出席率', value: `${rate}%`, color: rate >= 80 ? 'var(--green)' : rate >= 50 ? 'var(--gold-deep)' : 'var(--error)', bg: 'rgba(251,248,242,0.9)', border: 'var(--line)' },
+                ].map(({ label, value, color, bg, border }) => (
+                  <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 38, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontWeight: 600, letterSpacing: '0.06em' }}>{label}</div>
                   </div>
-                  {unmarkedCount > 0 && (
-                    <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 10, textAlign: 'right' }}>尚有 {unmarkedCount} 個場次未記錄</p>
-                  )}
-                </div>
-              )
-            })()}
+                ))}
+              </div>
+              {unmarkedCount > 0 && (
+                <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 10, textAlign: 'right' }}>尚有 {unmarkedCount} 個場次未記錄</p>
+              )}
+            </div>
 
             {/* 出席歷史 */}
             <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席歷史（課程天數）</h2>
@@ -227,42 +214,31 @@ function CheckinContent() {
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{s.title}</div>
                           <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontFamily: 'var(--font-cormorant), serif' }}>{s.time_label}</div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            {s.change_count >= MAX_CHANGES ? (
-                              <span style={{ fontSize: 12, color: 'var(--ink-mute)', padding: '6px 12px', border: '1.5px solid var(--line)', borderRadius: 999, background: 'rgba(0,0,0,0.03)' }}>已鎖定</span>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => setStatus(s, 'present')}
-                                  disabled={saving === s.id}
-                                  style={{
-                                    padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                                    border: '1.5px solid ' + (s.status === 'present' ? 'var(--green)' : 'var(--line-strong)'),
-                                    background: s.status === 'present' ? 'var(--green)' : 'transparent',
-                                    color: s.status === 'present' ? '#f8f2e8' : 'var(--ink-mute)',
-                                    opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
-                                  }}>
-                                  出席
-                                </button>
-                                <button
-                                  onClick={() => setStatus(s, 'absent')}
-                                  disabled={saving === s.id}
-                                  style={{
-                                    padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                                    border: '1.5px solid ' + (s.status === 'absent' ? 'var(--error)' : 'var(--line-strong)'),
-                                    background: s.status === 'absent' ? 'var(--error)' : 'transparent',
-                                    color: s.status === 'absent' ? '#f8f2e8' : 'var(--ink-mute)',
-                                    opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
-                                  }}>
-                                  缺席
-                                </button>
-                              </>
-                            )}
-                          </div>
-                          {s.change_count > 0 && s.change_count < MAX_CHANGES && (
-                            <span style={{ fontSize: 11, color: 'var(--ink-mute)' }}>剩 {MAX_CHANGES - s.change_count} 次可改</span>
-                          )}
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                          <button
+                            onClick={() => setStatus(s, 'present')}
+                            disabled={saving === s.id}
+                            style={{
+                              padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                              border: '1.5px solid ' + (s.status === 'present' ? 'var(--green)' : 'var(--line-strong)'),
+                              background: s.status === 'present' ? 'var(--green)' : 'transparent',
+                              color: s.status === 'present' ? '#f8f2e8' : 'var(--ink-mute)',
+                              opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
+                            }}>
+                            出席
+                          </button>
+                          <button
+                            onClick={() => setStatus(s, 'absent')}
+                            disabled={saving === s.id}
+                            style={{
+                              padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                              border: '1.5px solid ' + (s.status === 'absent' ? 'var(--error)' : 'var(--line-strong)'),
+                              background: s.status === 'absent' ? 'var(--error)' : 'transparent',
+                              color: s.status === 'absent' ? '#f8f2e8' : 'var(--ink-mute)',
+                              opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
+                            }}>
+                            缺席
+                          </button>
                         </div>
                       </div>
                     ))}
