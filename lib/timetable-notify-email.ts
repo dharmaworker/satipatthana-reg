@@ -10,7 +10,11 @@ export async function sendTimetableNotifyEmail(reg: {
   chinese_name: string
   random_code: string
   member_id: string | null
+  retreat_format?: string | null
 }) {
+  const isOnline = reg.retreat_format === 'online'
+  const checkinUrl = `${baseUrl}/member/course-checkin?id=${reg.id}&code=${reg.random_code}`
+
   const body = `
     ${emailKicker('Timetable Published')}
     ${emailH1('第二屆台灣四念處禪修・課程時間表已發佈')}
@@ -27,6 +31,18 @@ export async function sendTimetableNotifyEmail(reg: {
 
     <p style="font-size:13.5px;color:${C.inkSoft};margin:16px 0 14px;">或從學員專區進入：</p>
     ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'gold')}
+
+    ${isOnline ? `
+    <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
+    ${emailH3('課程打卡提醒（線上學員）')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">
+      本屆課程設有線上打卡功能，請於每節課程結束後，至學員專區的「課程打卡」記錄出席或缺席。
+    </p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 20px;">
+      打卡記錄可協助學會統計參課情況，也作為您本屆完課的憑證。
+    </p>
+    ${emailButton(checkinUrl, '前往課程打卡 →', 'gold')}
+    ` : ''}
 
     <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
     ${emailSignoff()}

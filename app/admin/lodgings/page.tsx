@@ -157,7 +157,7 @@ export default function LodgingsPage() {
 
   const sendAttendanceNotification = async () => {
     if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
-    if (!confirm(`寄出課程簽到通知信給 ${bulkSelected.length} 位學員？`)) return
+    if (!confirm(`寄出課程打卡提醒信（最後一天）給 ${bulkSelected.length} 位學員？`)) return
     setBulkSending('attendance')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-attendance-notify', {
@@ -427,7 +427,7 @@ export default function LodgingsPage() {
             <button onClick={sendAttendanceNotification}
               disabled={bulkSending !== null}
               className="admin-btn-sm primary">
-              {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程簽到通知（${bulkSelected.length}）`}
+              {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程打卡提醒（${bulkSelected.length}）`}
             </button>
           )}
           {bulkMessage && (
