@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
-import { nextAvailableOnlineStudentId } from '@/lib/member-id'
+import { nextAvailableMemberId, nextAvailableOnlineStudentId } from '@/lib/member-id'
 
 function checkAuth(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -105,9 +105,12 @@ export async function PATCH(request: NextRequest) {
   if (member_id !== undefined) updateData.member_id = member_id || null
   if (student_id !== undefined) updateData.student_id = student_id || null
 
-  // 線上報名首次改為 approved → 自動補 C-xxx 學號
+  // 線上報名首次改為 approved → 自動補 L-xxx 會員號 + C-xxx 學號
   const becomingApproved = status === 'approved' && currentReg?.status !== 'approved'
   const isOnline = currentReg?.retreat_format === 'online'
+  if (becomingApproved && isOnline && !currentReg?.member_id && member_id === undefined) {
+    updateData.member_id = await nextAvailableMemberId(true)
+  }
   if (becomingApproved && isOnline && !currentReg?.student_id && student_id === undefined) {
     updateData.student_id = await nextAvailableOnlineStudentId()
   }
