@@ -342,45 +342,6 @@ function addCourseCheckinSheet(
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
-// ========== 課程簽到 ==========
-const ATTENDANCE_COLUMNS = [
-  { key: 'submitted_at', header: '簽到時間', width: 20 },
-  { key: 'member_id', header: '報名序號', width: 12 },
-  { key: 'student_id', header: '學號', width: 12 },
-  { key: 'chinese_name', header: '中文姓名', width: 12 },
-  { key: 'email', header: 'Email', width: 24 },
-  { key: 'phone', header: '手機', width: 15 },
-  { key: 'attendance_status_zh', header: '參課情況', width: 28 },
-]
-
-const ATTENDANCE_STATUS_ZH: Record<string, string> = {
-  full: '已全程完整參課',
-  partial: '基本完整參與，缺勤不超過3次',
-  absent: '缺勤超過3次以上（不計入參課次數）',
-}
-
-function transformAttendanceRow(a: any) {
-  const reg = a.registration || {}
-  return {
-    submitted_at: a.updated_at ? new Date(a.updated_at).toLocaleString('zh-TW') : '',
-    member_id: reg.member_id || '',
-    student_id: reg.student_id || '',
-    chinese_name: reg.chinese_name || '',
-    email: reg.email || '',
-    phone: reg.phone || '',
-    attendance_status_zh: ATTENDANCE_STATUS_ZH[a.attendance_status] || a.attendance_status || '',
-  }
-}
-
-function addAttendanceSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
-  const sheet = wb.addWorksheet(name)
-  sheet.columns = ATTENDANCE_COLUMNS
-  sheet.getRow(1).font = { bold: true }
-  sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
-  rows.forEach(r => sheet.addRow(transformAttendanceRow(r)))
-  sheet.views = [{ state: 'frozen', ySplit: 1 }]
-}
-
 // ========== 互動作業 ==========
 const INTERACTIVE_TASK_COLUMNS = [
   { key: 'updated_at', header: '更新時間', width: 20 },
@@ -476,14 +437,6 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   if (previewId) taskQuery = taskQuery.neq('registration_id', previewId)
   const { data: taskData } = await taskQuery
 
-  // 課程簽到（舊表單）
-  let attendanceQuery = supabaseAdmin
-    .from('attendance_checkins')
-    .select('*, registration:registrations (chinese_name, member_id, student_id, email, phone, retreat_format)')
-    .order('updated_at', { ascending: true })
-  if (previewId) attendanceQuery = attendanceQuery.neq('registration_id', previewId)
-  const { data: attendanceData } = await attendanceQuery
-
   // 課程打卡（逐場次）
   const { data: courseSessionsData } = await supabaseAdmin
     .from('course_sessions')
@@ -554,7 +507,6 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addInteractiveSheet(wb, '互動報名', interactiveData || [])
   addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
   addPracticeSheet(wb, '課前共修打卡', inPerson.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
-  addAttendanceSheet(wb, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format !== 'online'))
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
   const dateStr = (cutoff || new Date()).toISOString().slice(0, 10)
@@ -571,7 +523,6 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wbOnline, '未錄取', online.filter(r => r.status === 'rejected'))
   addPracticeSheet(wbOnline, '課前共修打卡', online.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
   addCourseCheckinSheet(wbOnline, '課程打卡', online.filter(r => r.status === 'approved'), courseSessions, courseCheckinMap)
-  addAttendanceSheet(wbOnline, '課程簽到', (attendanceData || []).filter((a: any) => a.registration?.retreat_format === 'online'))
 
   const bufferOnline = Buffer.from(await wbOnline.xlsx.writeBuffer())
   const filenameOnline = `registrations_線上_${dateStr}.xlsx`
