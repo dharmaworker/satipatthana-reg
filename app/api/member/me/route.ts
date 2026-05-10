@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { fetchInteractiveConfig } from '@/lib/interactive-config'
+import { fetchTimetable } from '@/lib/timetable'
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -72,7 +73,10 @@ export async function GET(request: NextRequest) {
     interactiveTaskSubmitted = !!task
   }
 
-  const interactiveConfig = await fetchInteractiveConfig()
+  const [interactiveConfig, timetable] = await Promise.all([
+    fetchInteractiveConfig(),
+    fetchTimetable(),
+  ])
   const isAdmin = request.cookies.get('admin_role')?.value === 'admin'
 
   return NextResponse.json({
@@ -80,6 +84,7 @@ export async function GET(request: NextRequest) {
     lodging_status: lodgingStatus,
     tests_uploaded: testsUploaded,
     tests_total: 2,
+    timetable_published: timetable.published,
     interactive_open: interactiveConfig.open || isAdmin,
     interactive_preview: isAdmin && !interactiveConfig.open,
     interactive_submitted: interactiveSubmitted,

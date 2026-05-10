@@ -28,6 +28,7 @@ type MemberData = {
   interactive_group_serial: number | null
   interactive_small_serial: number | null
   interactive_task_submitted: boolean
+  timetable_published: boolean
 }
 
 const SESSION_LABEL: Record<string, string> = {
@@ -347,8 +348,8 @@ function MemberDashboardContent() {
               </a>
             </div>
 
-            {/* 課程打卡入口（線上限定） */}
-            {isOnline && (
+            {/* 課程打卡入口（線上且課表已公佈才顯示） */}
+            {isOnline && member.timetable_published && (
               <div style={{
                 background: 'rgba(73,85,52,0.06)', border: '1px solid rgba(73,85,52,0.18)',
                 borderRadius: 14, padding: '18px 22px', marginBottom: 12,
@@ -366,8 +367,8 @@ function MemberDashboardContent() {
               </div>
             )}
 
-            {/* 課程時間表入口 */}
-            <div style={{
+            {/* 課程時間表入口（課表已公佈才顯示） */}
+            {member.timetable_published && <div style={{
               background: 'rgba(180,147,88,0.07)', border: '1px solid rgba(180,147,88,0.25)',
               borderRadius: 14, padding: '18px 22px', marginBottom: 24,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
@@ -381,7 +382,7 @@ function MemberDashboardContent() {
                 style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--gold-deep)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
                 查看時間表 →
               </a>
-            </div>
+            </div>}
 
             {/* 重要時程 */}
             <div className="schedule-strip">
