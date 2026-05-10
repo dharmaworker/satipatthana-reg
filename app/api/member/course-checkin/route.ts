@@ -66,6 +66,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '無效狀態' }, { status: 400 })
   }
 
+  // 確認場次仍存在且需要打卡（課表更新後場次可能已變動）
+  const { data: sessionRow } = await supabaseAdmin
+    .from('course_sessions')
+    .select('id, requires_checkin')
+    .eq('id', session_id)
+    .maybeSingle()
+
+  if (!sessionRow || !sessionRow.requires_checkin) {
+    return NextResponse.json({ error: 'SESSION_OUTDATED' }, { status: 409 })
+  }
+
   // 取得目前記錄的修改次數
   const { data: existing } = await supabaseAdmin
     .from('course_session_checkins')

@@ -36,6 +36,7 @@ function CheckinContent() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; ok: boolean } | null>(null)
+  const [outdated, setOutdated] = useState(false)
 
   const showToast = (message: string, ok: boolean) => {
     setToast({ message, ok })
@@ -72,7 +73,11 @@ function CheckinContent() {
         showToast(newStatus === 'present' ? '已記錄出席' : newStatus === 'absent' ? '已記錄缺席' : '已取消記錄', true)
       } else {
         setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
-        showToast(data.error || '儲存失敗，請再試一次', false)
+        if (data.error === 'SESSION_OUTDATED') {
+          setOutdated(true)
+        } else {
+          showToast(data.error || '儲存失敗，請再試一次', false)
+        }
       }
     } catch {
       setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
@@ -146,6 +151,17 @@ function CheckinContent() {
             <li>須<strong>全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</li>
           </ul>
         </div>
+
+        {outdated && (
+          <div style={{ background: 'rgba(184,82,58,0.1)', border: '2px solid rgba(184,82,58,0.4)', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
+            <div style={{ fontWeight: 700, color: '#b8523a', fontSize: 14, marginBottom: 6 }}>課程場次已更新</div>
+            <p style={{ color: '#b8523a', fontSize: 13.5, margin: '0 0 12px', lineHeight: 1.7 }}>課表內容已變動，請重新整理頁面以取得最新場次。</p>
+            <button onClick={() => window.location.reload()}
+              style={{ padding: '8px 20px', borderRadius: 999, background: '#b8523a', color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+              立即重新整理
+            </button>
+          </div>
+        )}
 
         {error && (
           <div style={{ background: 'rgba(184,82,58,0.08)', border: '1px solid rgba(184,82,58,0.3)', borderRadius: 10, padding: '14px 18px', color: '#b8523a', fontSize: 14, marginBottom: 20 }}>
