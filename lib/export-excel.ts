@@ -437,29 +437,6 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   if (previewId) taskQuery = taskQuery.neq('registration_id', previewId)
   const { data: taskData } = await taskQuery
 
-  // 課程打卡（逐場次）
-  const { data: courseSessionsData } = await supabaseAdmin
-    .from('course_sessions')
-    .select('id, day_number, time_label, title, sort_order')
-    .eq('requires_checkin', true)
-    .order('sort_order', { ascending: true })
-  const courseSessions = courseSessionsData || []
-
-  const onlineApprovedIds = online.filter(r => r.status === 'approved').map(r => r.id)
-  const { data: courseCheckinData } = onlineApprovedIds.length > 0
-    ? await supabaseAdmin
-        .from('course_session_checkins')
-        .select('registration_id, session_id, status')
-        .in('registration_id', onlineApprovedIds)
-    : { data: [] as { registration_id: string; session_id: string; status: string }[] }
-
-  // registration_id → (session_id → status)
-  const courseCheckinMap = new Map<string, Map<string, string | null>>()
-  for (const c of courseCheckinData || []) {
-    if (!courseCheckinMap.has(c.registration_id)) courseCheckinMap.set(c.registration_id, new Map())
-    courseCheckinMap.get(c.registration_id)!.set(c.session_id, c.status)
-  }
-
   // Task 需要 assigned_* 從 interactive_registrations 帶入；建 map
   const intMap = new Map((interactiveData || []).map((i: any) => [i.registration_id, i]))
   const tasksWithInteractive = (taskData || []).map((t: any) => ({
@@ -492,6 +469,28 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   // 實體／線上分開
   const inPerson = all.filter(r => r.retreat_format !== 'online')
   const online = all.filter(r => r.retreat_format === 'online')
+
+  // 課程打卡（逐場次）
+  const { data: courseSessionsData } = await supabaseAdmin
+    .from('course_sessions')
+    .select('id, day_number, time_label, title, sort_order')
+    .eq('requires_checkin', true)
+    .order('sort_order', { ascending: true })
+  const courseSessions = courseSessionsData || []
+
+  const onlineApprovedIds = online.filter(r => r.status === 'approved').map(r => r.id)
+  const { data: courseCheckinData } = onlineApprovedIds.length > 0
+    ? await supabaseAdmin
+        .from('course_session_checkins')
+        .select('registration_id, session_id, status')
+        .in('registration_id', onlineApprovedIds)
+    : { data: [] as { registration_id: string; session_id: string; status: string }[] }
+
+  const courseCheckinMap = new Map<string, Map<string, string | null>>()
+  for (const c of courseCheckinData || []) {
+    if (!courseCheckinMap.has(c.registration_id)) courseCheckinMap.set(c.registration_id, new Map())
+    courseCheckinMap.get(c.registration_id)!.set(c.session_id, c.status)
+  }
 
   // ─── 實體 workbook ───
   const wb = new ExcelJS.Workbook()
