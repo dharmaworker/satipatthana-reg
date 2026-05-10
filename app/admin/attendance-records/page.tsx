@@ -49,6 +49,7 @@ export default function AttendanceRecordsPage() {
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
   const [togglingSession, setTogglingSession] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [deletingSession, setDeletingSession] = useState<string | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
@@ -70,6 +71,19 @@ export default function AttendanceRecordsPage() {
     window.addEventListener('admin-format-change', handler)
     return () => window.removeEventListener('admin-format-change', handler)
   }, [])
+
+  const deleteSession = async (session: Session) => {
+    const label = session.title || session.time_label
+    const hasCheckins = session.present + session.absent > 0
+    const msg = hasCheckins
+      ? `確定刪除「${label}」？此場次有 ${session.present + session.absent} 筆打卡記錄也會一併刪除。`
+      : `確定刪除「${label}」？`
+    if (!confirm(msg)) return
+    setDeletingSession(session.id)
+    await fetch(`/api/admin/course-sessions?id=${session.id}`, { method: 'DELETE' })
+    await fetchData()
+    setDeletingSession(null)
+  }
 
   const syncFromTimetable = async () => {
     setSyncing(true)
@@ -185,6 +199,7 @@ export default function AttendanceRecordsPage() {
                           <th style={{ ...thStyle, textAlign: 'center' }}>需打卡</th>
                           <th style={{ ...thStyle, textAlign: 'center' }}>出席 / 缺席</th>
                           <th style={{ ...thStyle, textAlign: 'center' }}>出席率</th>
+                          <th style={{ ...thStyle, textAlign: 'center', width: 40 }}></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -209,6 +224,13 @@ export default function AttendanceRecordsPage() {
                                 <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: rate >= 80 ? 'rgba(73,85,52,0.12)' : rate >= 50 ? 'rgba(216,194,154,0.2)' : 'rgba(184,82,58,0.08)', color: rate >= 80 ? 'var(--green)' : rate >= 50 ? 'var(--gold-deep)' : 'var(--error)' }}>
                                   {rate}%
                                 </span>
+                              </td>
+                              <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                <button onClick={() => deleteSession(s)} disabled={deletingSession === s.id}
+                                  title="刪除此場次"
+                                  style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line-strong)', background: 'transparent', color: 'var(--error)', fontSize: 13, cursor: 'pointer', opacity: deletingSession === s.id ? 0.4 : 0.6, lineHeight: 1 }}>
+                                  ✕
+                                </button>
                               </td>
                             </tr>
                           )

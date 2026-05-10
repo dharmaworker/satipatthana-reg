@@ -79,3 +79,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: e.message || '同步失敗' }, { status: 500 })
   }
 }
+
+// DELETE: 強制刪除場次（含打卡記錄）
+export async function DELETE(request: NextRequest) {
+  if (checkAuth(request) !== 'admin') return NextResponse.json({ error: '權限不足' }, { status: 403 })
+  const id = new URL(request.url).searchParams.get('id')
+  if (!id) return NextResponse.json({ error: '缺少 id' }, { status: 400 })
+
+  // 先刪打卡記錄，再刪場次
+  await supabaseAdmin.from('course_session_checkins').delete().eq('session_id', id)
+  const { error } = await supabaseAdmin.from('course_sessions').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
