@@ -32,6 +32,12 @@ function CheckinContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; ok: boolean } | null>(null)
+
+  const showToast = (message: string, ok: boolean) => {
+    setToast({ message, ok })
+    setTimeout(() => setToast(null), 2000)
+  }
 
   useEffect(() => {
     if (!id || !code) { setError('網址缺少必要參數'); setLoading(false); return }
@@ -56,9 +62,15 @@ function CheckinContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, code, session_id: session.id, status: newStatus }),
       })
-      if (!res.ok) setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
+      if (res.ok) {
+        showToast(newStatus === 'present' ? '已記錄出席' : newStatus === 'absent' ? '已記錄缺席' : '已取消記錄', true)
+      } else {
+        setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
+        showToast('儲存失敗，請再試一次', false)
+      }
     } catch {
       setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
+      showToast('網路錯誤，請再試一次', false)
     } finally {
       setSaving(null)
     }
@@ -80,6 +92,19 @@ function CheckinContent() {
 
   return (
     <>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: toast.ok ? 'rgba(73,85,52,0.93)' : 'rgba(184,82,58,0.93)',
+          color: '#fff', padding: '10px 22px', borderRadius: 999,
+          fontSize: 14, fontWeight: 600, zIndex: 9999,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          transition: 'opacity 0.2s',
+        }}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="page-bg">
         <div className="page-blob b1" /><div className="page-blob b2" />
         <div className="page-blob b3" /><div className="page-blob b4" />
