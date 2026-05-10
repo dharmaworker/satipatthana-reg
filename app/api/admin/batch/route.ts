@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
   if (action === 'approve') {
     // 批次錄取：對尚未編號者依序編（線上 L-XXX，實體 T-XXX）
     const needAssignInPerson = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format !== 'online')
-    const needAssignOnline = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format === 'online')
 
     if (needAssignInPerson.length > 0) {
       const start = await nextAvailableMemberId(false)
@@ -103,28 +102,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (needAssignOnline.length > 0) {
-      const startOnline = await nextAvailableMemberId(true)
-      const mo = startOnline.match(/^L-(\d+)$/)
-      let no = mo ? parseInt(mo[1], 10) : 1
-      // 線上學號起始號
-      const startStudentId = await nextAvailableOnlineStudentId()
-      const ms = startStudentId.match(/^C-(\d+)$/)
-      let ns = ms ? parseInt(ms[1], 10) : 1
-      for (const r of needAssignOnline) {
-        const mid = formatOnlineMemberId(no++)
-        const sid = formatOnlineStudentId(ns++)
-        await supabaseAdmin
-          .from('registrations')
-          .update({ status: 'approved', member_id: mid, student_id: sid })
-          .eq('id', r.id)
+    // 線上：所有尚未 approved 的都要處理（有 member_id 但沒 student_id 的也要補）
+    const onlineToApprove = (currentRegs || []).filter(r =>
+      r.status !== 'approved' && r.retreat_format === 'online'
+    )
+    if (onlineToApprove.length > 0) {
+      let no = 1, ns = 1
+      if (onlineToApprove.some(r => !r.member_id)) {
+        const startMid = await nextAvailableMemberId(true)
+        const mo = startMid.match(/^L-(\d+)$/)
+        no = mo ? parseInt(mo[1], 10) : 1
+      }
+      if (onlineToApprove.some(r => !r.student_id)) {
+        const startSid = await nextAvailableOnlineStudentId()
+        const ms = startSid.match(/^C-(\d+)$/)
+        ns = ms ? parseInt(ms[1], 10) : 1
+      }
+      for (const r of onlineToApprove) {
+        const fields: Record<string, unknown> = { status: 'approved' }
+        if (!r.member_id) fields.member_id = formatOnlineMemberId(no++)
+        if (!r.student_id) fields.student_id = formatOnlineStudentId(ns++)
+        await supabaseAdmin.from('registrations').update(fields).eq('id', r.id)
         assignedCount++
       }
     }
 
-    // 剩下的（已 approved 或已有 member_id）只需改狀態（若有變動）
+    // 剩下：實體且已 approved 或已有 member_id 的，只改狀態
     const remaining = (currentRegs || [])
-      .filter(r => !(r.status !== 'approved' && !r.member_id))
+      .filter(r => r.retreat_format !== 'online' && !(r.status !== 'approved' && !r.member_id))
       .map(r => r.id)
     if (remaining.length > 0) {
       const { error: updErr } = await supabaseAdmin
