@@ -141,7 +141,6 @@ function InteractiveContent() {
   const handleSubmit = async () => {
     setError('')
     setErrorField(null)
-    if (!open) { setError('互動報名尚未開放'); return }
     if (pastDeadline) { setError('互動報名已截止'); return }
 
     const filled = TEACHERS
@@ -294,7 +293,7 @@ function InteractiveContent() {
               </div>
             )}
 
-            <fieldset disabled={pastDeadline || !open} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <fieldset disabled={pastDeadline} style={{ border: 'none', padding: 0, margin: 0 }}>
             <div className="form-card">
 
               {step === 1 && (
@@ -445,8 +444,8 @@ function InteractiveContent() {
                 ? <button onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
                 : <a href={dashboardHref} className="btn btn-ghost">← 返回學員專區</a>}
               {step < STEPS.length
-                ? <button onClick={() => goToStep(step + 1)} disabled={pastDeadline || !open} className="btn btn-primary">下一步 <span className="arrow">→</span></button>
-                : <button onClick={handleSubmit} disabled={submitting || pastDeadline || !open} className="btn btn-primary">
+                ? <button onClick={() => goToStep(step + 1)} disabled={pastDeadline} className="btn btn-primary">下一步 <span className="arrow">→</span></button>
+                : <button onClick={handleSubmit} disabled={submitting || pastDeadline} className="btn btn-primary">
                     {submitting ? '送出中⋯' : interactive ? '送出修改' : '送出互動報名'} <span className="arrow">→</span>
                   </button>}
             </div>

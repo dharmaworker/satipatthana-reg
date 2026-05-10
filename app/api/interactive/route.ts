@@ -47,11 +47,6 @@ export async function POST(request: NextRequest) {
   const a = await authMember(body.id ?? null, body.code ?? null)
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
-  const config = await fetchInteractiveConfig()
-  const isAdmin = request.cookies.get('admin_role')?.value === 'admin'
-  if (!config.open && !isAdmin) {
-    return NextResponse.json({ error: '互動報名尚未開放' }, { status: 400 })
-  }
   if (Date.now() > INTERACTIVE_DEADLINE_MS) {
     return NextResponse.json({ error: '互動報名已截止' }, { status: 400 })
   }
