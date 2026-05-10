@@ -271,6 +271,7 @@ function addPracticeSheet(
     }),
     { key: 'checked_count', header: '打卡數', width: 8 },
     { key: 'total', header: '總項目', width: 8 },
+    { key: 'rate', header: '出席率', width: 8 },
   ]
   sheet.columns = cols
   sheet.getRow(1).font = { bold: true }
@@ -284,6 +285,7 @@ function addPracticeSheet(
       chinese_name: reg.chinese_name || '',
       checked_count: checked.size,
       total: scheduleItems.length,
+      rate: scheduleItems.length > 0 ? `${Math.round(checked.size / scheduleItems.length * 100)}%` : '',
     }
     for (const item of scheduleItems) {
       row[`item_${item.id}`] = checked.has(item.id) ? '✓' : ''
