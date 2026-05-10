@@ -154,4 +154,61 @@ export async function saveTimetable(t: Timetable): Promise<void> {
       { onConflict: 'key' }
     )
   if (error) throw error
+
+  // 同步 course_sessions（儲存時間表時自動連動打卡場次）
+  await syncCourseSessions(t)
+}
+
+async function syncCourseSessions(t: Timetable): Promise<void> {
+  const sessionList: {
+    sync_key: string
+    day_number: number
+    session_date: string
+    time_label: string
+    title: string
+    sort_order: number
+  }[] = []
+
+  for (let di = 0; di < t.days.length; di++) {
+    const day = t.days[di]
+    const dayNumber = di + 1
+
+    // 解析 ISO 日期，例："2026 年 8 月 20 日（星期四）" → "2026-08-20"
+    const dateMatch = day.date.match(/(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日/)
+    const sessionDate = dateMatch
+      ? `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`
+      : ''
+
+    for (let ri = 0; ri < day.rows.length; ri++) {
+      const row = day.rows[ri]
+      if (!row.title && !row.time) continue
+      sessionList.push({
+        sync_key: `day${dayNumber}_row${ri + 1}`,
+        day_number: dayNumber,
+        session_date: sessionDate,
+        time_label: row.time,
+        title: row.title,
+        sort_order: di * 100 + ri + 1,
+      })
+    }
+  }
+
+  if (sessionList.length === 0) return
+
+  // 保留現有 requires_checkin 設定，只覆寫 metadata
+  const { data: existing } = await supabaseAdmin
+    .from('course_sessions')
+    .select('sync_key, requires_checkin')
+    .in('sync_key', sessionList.map(s => s.sync_key))
+
+  const existingMap = new Map((existing || []).map(s => [s.sync_key, s.requires_checkin]))
+
+  const toUpsert = sessionList.map(s => ({
+    ...s,
+    requires_checkin: existingMap.get(s.sync_key) ?? false,
+  }))
+
+  await supabaseAdmin
+    .from('course_sessions')
+    .upsert(toUpsert, { onConflict: 'sync_key' })
 }
