@@ -17,6 +17,11 @@ const SESSIONS = [
   { id: 's3', label: '8/24（一）阿姜給',   cap: 5 },
 ]
 const SMALL_GROUP_CAP = 38 // 每位分組老師總名額
+const SMALL_DATES = [
+  { date: '2026-08-21', cap: 13 },
+  { date: '2026-08-22', cap: 13 },
+  { date: '2026-08-23', cap: 12 },
+]
 const SESSION_LABEL: Record<string, string> = Object.fromEntries(SESSIONS.map(s => [s.id, s.label]))
 
 type Row = {
@@ -734,6 +739,7 @@ type DrawResult = {
   serial: number | null
   assigned_session?: string | null
   assigned_group?: string | null
+  assigned_date?: string | null
 }
 
 function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
@@ -794,6 +800,8 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
 function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   const alreadyWon = new Map<string, number>()
   const maxSerial = new Map<string, number>()
+  // 已分配的日期名額：key = "teacher|date"
+  const alreadyWonByDate = new Map<string, number>()
   for (const r of rows) {
     const it = r.interactive
     if (it?.small_status === 'won' && it.assigned_group) {
@@ -801,6 +809,19 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
       if (it.small_serial !== null && it.small_serial !== undefined) {
         maxSerial.set(it.assigned_group, Math.max(maxSerial.get(it.assigned_group) || 0, it.small_serial))
       }
+      if (it.assigned_date) {
+        const k = `${it.assigned_group}|${it.assigned_date}`
+        alreadyWonByDate.set(k, (alreadyWonByDate.get(k) || 0) + 1)
+      }
+    }
+  }
+
+  // 每位老師每個日期剩餘名額
+  const dateRemaining = new Map<string, number>()
+  for (const t of TEACHERS) {
+    for (const d of SMALL_DATES) {
+      const k = `${t.id}|${d.date}`
+      dateRemaining.set(k, Math.max(0, d.cap - (alreadyWonByDate.get(k) || 0)))
     }
   }
 
@@ -846,13 +867,27 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
         const e = shuffled[i]
         if (i < wonCount) {
           const serial = nextSerial.get(teacherId)!
+          // 自動分日期：選剩餘名額最多的日期
+          let assignedDate: string | null = null
+          let bestRem = -1
+          for (const d of SMALL_DATES) {
+            const k = `${teacherId}|${d.date}`
+            const rem = dateRemaining.get(k) ?? 0
+            if (rem > bestRem) { bestRem = rem; assignedDate = d.date }
+          }
+          if (assignedDate && bestRem > 0) {
+            const k = `${teacherId}|${assignedDate}`
+            dateRemaining.set(k, bestRem - 1)
+          } else {
+            assignedDate = null
+          }
           resultMap.set(e.row.registration.id, {
             registration_id: e.row.registration.id,
             chinese_name: e.row.registration.chinese_name,
             member_id: e.row.registration.member_id,
             mode: 'small', won: true,
             label: TEACHER_LABEL[teacherId] || teacherId,
-            serial, assigned_group: teacherId,
+            serial, assigned_group: teacherId, assigned_date: assignedDate,
           })
           nextSerial.set(teacherId, serial + 1)
         } else {
@@ -919,7 +954,7 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
     const patches = results.map(r =>
       r.mode === 'group'
         ? { registration_id: r.registration_id, group_status: r.won ? 'won' : 'lost', assigned_session: r.assigned_session ?? null, group_serial: r.serial }
-        : { registration_id: r.registration_id, small_status: r.won ? 'won' : 'lost', assigned_group: r.assigned_group ?? null, small_serial: r.serial }
+        : { registration_id: r.registration_id, small_status: r.won ? 'won' : 'lost', assigned_group: r.assigned_group ?? null, assigned_date: r.assigned_date ?? null, small_serial: r.serial }
     )
     setApplyProgress({ done: 0, total: patches.length })
     try {
@@ -1041,8 +1076,8 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: 'rgba(73,85,52,0.07)' }}>
-                      {['姓名', '報名序號', '結果', mode === 'group' ? '指定場次' : '指定分組', '序號'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--ink)', textAlign: 'left', borderBottom: '1px solid var(--line-strong)', whiteSpace: 'nowrap' }}>{h}</th>
+                      {['姓名', '報名序號', '結果', mode === 'group' ? '指定場次' : '指定分組', mode === 'small' ? '指定日期' : null, '序號'].filter(Boolean).map(h => (
+                        <th key={h!} style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--ink)', textAlign: 'left', borderBottom: '1px solid var(--line-strong)', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1057,6 +1092,11 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                           </span>
                         </td>
                         <td style={{ padding: '7px 12px', color: r.won ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>{r.won ? r.label : '—'}</td>
+                        {mode === 'small' && (
+                          <td style={{ padding: '7px 12px', color: r.won ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>
+                            {r.won ? (r.assigned_date || <span style={{ color: 'var(--error)' }}>未能分配</span>) : '—'}
+                          </td>
+                        )}
                         <td style={{ padding: '7px 12px', fontFamily: 'monospace', fontWeight: r.won ? 700 : 400, color: r.won ? 'var(--ink)' : 'var(--ink-mute)' }}>{r.serial ?? '—'}</td>
                       </tr>
                     ))}
@@ -1064,7 +1104,7 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                 </table>
               </div>
               <p style={{ fontSize: 12, color: 'var(--ink-mute)', marginTop: 10 }}>
-                套用後可透過「編輯指定」修改個別結果。分組互動的日期需手動補填。
+                套用後可透過「編輯指定」修改個別結果。
               </p>
             </div>
           )}
