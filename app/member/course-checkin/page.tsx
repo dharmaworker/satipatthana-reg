@@ -95,11 +95,13 @@ function CheckinContent() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-          background: toast.ok ? 'rgba(73,85,52,0.93)' : 'rgba(184,82,58,0.93)',
-          color: '#fff', padding: '10px 22px', borderRadius: 999,
-          fontSize: 14, fontWeight: 600, zIndex: 9999,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-          transition: 'opacity 0.2s',
+          background: toast.ok ? '#f0fdf4' : '#fef2f2',
+          color: toast.ok ? '#166534' : '#991b1b',
+          border: `1.5px solid ${toast.ok ? '#86efac' : '#fca5a5'}`,
+          padding: '10px 22px', borderRadius: 999,
+          fontSize: 14, fontWeight: 700, zIndex: 9999,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+          whiteSpace: 'nowrap',
         }}>
           {toast.message}
         </div>
