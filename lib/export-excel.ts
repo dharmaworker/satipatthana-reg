@@ -455,9 +455,10 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   const { data: practiceCheckins } = approvedIds.length > 0
     ? await supabaseAdmin
         .from('practice_checkins')
-        .select('registration_id, schedule_item_id')
+        .select('registration_id, schedule_item_id, checked')
         .in('registration_id', approvedIds)
-    : { data: [] as { registration_id: string; schedule_item_id: string }[] }
+        .eq('checked', true)
+    : { data: [] as { registration_id: string; schedule_item_id: string; checked: boolean }[] }
 
   const checkinsByRegId = new Map<string, Set<string>>()
   for (const c of practiceCheckins || []) {
