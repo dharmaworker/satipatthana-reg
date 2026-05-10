@@ -139,11 +139,11 @@ function CheckinContent() {
         </div>
 
         {/* 打卡規則提醒 */}
-        <div style={{ background: 'rgba(216,194,154,0.15)', border: '1px solid rgba(216,194,154,0.5)', borderRadius: 12, padding: '14px 18px', marginBottom: 28 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold-deep)', marginBottom: 8, letterSpacing: '0.04em' }}>📋 打卡注意事項</div>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 2 }}>
-            <li>每個場次僅能修改 <strong style={{ color: 'var(--ink)' }}>3 次</strong>，請確認後再送出。</li>
-            <li>須<strong style={{ color: 'var(--ink)' }}>全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</li>
+        <div style={{ background: 'rgba(216,194,154,0.25)', border: '2px solid rgba(216,194,154,0.7)', borderRadius: 12, padding: '16px 20px', marginBottom: 28 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--gold-deep)', marginBottom: 10, letterSpacing: '0.06em' }}>注意事項</div>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, color: 'var(--ink)', lineHeight: 2.1 }}>
+            <li>每個場次僅能修改 <strong>3 次</strong>，請確認後再送出。</li>
+            <li>須<strong>全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</li>
           </ul>
         </div>
 
