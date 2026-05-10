@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .order('sort_order', { ascending: true }),
     supabaseAdmin
       .from('course_session_checkins')
-      .select('session_id, checked_in, checked_in_at')
+      .select('session_id, status, checked_in_at')
       .eq('registration_id', id),
   ])
 
@@ -37,32 +37,46 @@ export async function GET(request: NextRequest) {
 
   const sessions = (sessionsRes.data || []).map((s: any) => {
     const c = checkinMap.get(s.id)
-    return { ...s, checked_in: c?.checked_in ?? false, checked_in_at: c?.checked_in_at ?? null }
+    return { ...s, status: c?.status ?? null, checked_in_at: c?.checked_in_at ?? null }
   })
 
   return NextResponse.json({ sessions })
 }
 
 export async function POST(request: NextRequest) {
-  const { id, code, session_id, checked_in } = await request.json()
+  const { id, code, session_id, status } = await request.json()
 
   const reg = await verifyMember(id, code)
   if (!reg) return NextResponse.json({ error: '無效連結' }, { status: 401 })
   if (reg.status !== 'approved') return NextResponse.json({ error: '僅限錄取學員' }, { status: 403 })
   if (reg.retreat_format !== 'online') return NextResponse.json({ error: '僅限線上學員' }, { status: 403 })
 
-  const { error } = await supabaseAdmin
-    .from('course_session_checkins')
-    .upsert(
-      {
-        session_id,
-        registration_id: id,
-        checked_in: !!checked_in,
-        checked_in_at: checked_in ? new Date().toISOString() : null,
-      },
-      { onConflict: 'session_id,registration_id' },
-    )
+  if (status !== null && !['present', 'absent'].includes(status)) {
+    return NextResponse.json({ error: '無效狀態' }, { status: 400 })
+  }
 
-  if (error) return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
+  if (status === null) {
+    // 清除記錄
+    await supabaseAdmin
+      .from('course_session_checkins')
+      .delete()
+      .eq('session_id', session_id)
+      .eq('registration_id', id)
+  } else {
+    const { error } = await supabaseAdmin
+      .from('course_session_checkins')
+      .upsert(
+        {
+          session_id,
+          registration_id: id,
+          status,
+          checked_in: status === 'present',
+          checked_in_at: new Date().toISOString(),
+        },
+        { onConflict: 'session_id,registration_id' },
+      )
+    if (error) return NextResponse.json({ error: '儲存失敗' }, { status: 500 })
+  }
+
   return NextResponse.json({ ok: true })
 }

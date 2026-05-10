@@ -11,7 +11,8 @@ type Session = {
   title: string
   sort_order: number
   requires_checkin: boolean
-  checked: number
+  present: number
+  absent: number
   total: number
 }
 
@@ -21,6 +22,8 @@ type Reg = {
   student_id: string | null
   member_id: string | null
 }
+
+type CheckinMap = Record<string, Record<string, string | null>>
 
 function formatDate(date: string) {
   const d = new Date(date)
@@ -39,7 +42,7 @@ export default function AttendanceRecordsPage() {
   const router = useRouter()
   const [sessions, setSessions] = useState<Session[]>([])
   const [regs, setRegs] = useState<Reg[]>([])
-  const [checkinMap, setCheckinMap] = useState<Record<string, Record<string, boolean>>>({})
+  const [checkinMap, setCheckinMap] = useState<CheckinMap>({})
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<'session' | 'student'>('session')
@@ -95,7 +98,7 @@ export default function AttendanceRecordsPage() {
   const totalOnline = regs.length
   const totalSessions = checkinSessions.length
   const avgRate = totalOnline > 0 && totalSessions > 0
-    ? Math.round(checkinSessions.reduce((sum, s) => sum + s.checked, 0) / (totalOnline * totalSessions) * 100)
+    ? Math.round(checkinSessions.reduce((sum, s) => sum + s.present, 0) / (totalOnline * totalSessions) * 100)
     : 0
 
   const thStyle: React.CSSProperties = {
@@ -118,7 +121,7 @@ export default function AttendanceRecordsPage() {
             { label: '線上學員', value: totalOnline, accent: 'var(--ink-mute)' },
             { label: '需打卡場次', value: totalSessions, accent: 'var(--gold-deep)' },
             { label: '平均打卡率', value: `${avgRate}%`, accent: 'var(--green)' },
-            { label: '今日打卡總數', value: checkinSessions.reduce((s, c) => s + c.checked, 0), accent: 'var(--green)' },
+            { label: '今日打卡總數', value: checkinSessions.reduce((s, c) => s + c.present, 0), accent: 'var(--green)' },
           ].map(({ label, value, accent }) => (
             <div key={label} style={{ background: 'rgba(251,248,242,0.92)', border: '1px solid var(--line)', borderRadius: 14, padding: '20px 18px', textAlign: 'center', borderTop: `3px solid ${accent}` }}>
               <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 36, fontWeight: 700, color: accent, lineHeight: 1 }}>{value}</div>
@@ -168,13 +171,13 @@ export default function AttendanceRecordsPage() {
                           <th style={thStyle}>時間</th>
                           <th style={thStyle}>場次</th>
                           <th style={{ ...thStyle, textAlign: 'center' }}>需打卡</th>
-                          <th style={{ ...thStyle, textAlign: 'center' }}>已打卡</th>
-                          <th style={{ ...thStyle, textAlign: 'center' }}>打卡率</th>
+                          <th style={{ ...thStyle, textAlign: 'center' }}>出席 / 缺席</th>
+                          <th style={{ ...thStyle, textAlign: 'center' }}>出席率</th>
                         </tr>
                       </thead>
                       <tbody>
                         {daySessions.map(s => {
-                          const rate = totalOnline > 0 ? Math.round(s.checked / totalOnline * 100) : 0
+                          const rate = totalOnline > 0 ? Math.round(s.present / totalOnline * 100) : 0
                           return (
                             <tr key={s.id}>
                               <td style={{ ...tdStyle, fontFamily: 'var(--font-cormorant), serif', fontSize: 14, color: 'var(--gold-deep)', whiteSpace: 'nowrap' }}>{s.time_label}</td>
@@ -185,7 +188,11 @@ export default function AttendanceRecordsPage() {
                                   {s.requires_checkin ? '✓' : ''}
                                 </button>
                               </td>
-                              <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600, color: s.checked > 0 ? 'var(--green)' : 'var(--ink-mute)' }}>{s.checked} / {totalOnline}</td>
+                              <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600 }}>
+                                <span style={{ color: s.present > 0 ? 'var(--green)' : 'var(--ink-mute)' }}>{s.present}</span>
+                                <span style={{ color: 'var(--ink-mute)', fontWeight: 400 }}> / </span>
+                                <span style={{ color: s.absent > 0 ? 'var(--error)' : 'var(--ink-mute)' }}>{s.absent}</span>
+                              </td>
                               <td style={{ ...tdStyle, textAlign: 'center' }}>
                                 <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: rate >= 80 ? 'rgba(73,85,52,0.12)' : rate >= 50 ? 'rgba(216,194,154,0.2)' : 'rgba(184,82,58,0.08)', color: rate >= 80 ? 'var(--green)' : rate >= 50 ? 'var(--gold-deep)' : 'var(--error)' }}>
                                   {rate}%
@@ -224,7 +231,7 @@ export default function AttendanceRecordsPage() {
                   <tr><td colSpan={4 + checkinSessions.length} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>尚無資料</td></tr>
                 ) : filteredRegs.map(reg => {
                   const regCheckins = checkinMap[reg.id] || {}
-                  const count = checkinSessions.filter(s => regCheckins[s.id]).length
+                  const count = checkinSessions.filter(s => regCheckins[s.id] === 'present').length
                   const rate = totalSessions > 0 ? Math.round(count / totalSessions * 100) : 0
                   return (
                     <tr key={reg.id}>
@@ -238,8 +245,10 @@ export default function AttendanceRecordsPage() {
                       </td>
                       {checkinSessions.map(s => (
                         <td key={s.id} style={{ ...tdStyle, textAlign: 'center' }}>
-                          {regCheckins[s.id] ? (
+                          {regCheckins[s.id] === 'present' ? (
                             <span style={{ color: 'var(--green)', fontSize: 15 }}>✓</span>
+                          ) : regCheckins[s.id] === 'absent' ? (
+                            <span style={{ color: 'var(--error)', fontSize: 13 }}>✗</span>
                           ) : (
                             <span style={{ color: 'var(--line-strong)', fontSize: 13 }}>—</span>
                           )}

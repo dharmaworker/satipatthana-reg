@@ -9,7 +9,7 @@ type Session = {
   time_label: string
   title: string
   sort_order: number
-  checked_in: boolean
+  status: 'present' | 'absent' | null
   checked_in_at: string | null
 }
 
@@ -31,7 +31,7 @@ function CheckinContent() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toggling, setToggling] = useState<string | null>(null)
+  const [saving, setSaving] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id || !code) { setError('網址缺少必要參數'); setLoading(false); return }
@@ -45,34 +45,36 @@ function CheckinContent() {
       .finally(() => setLoading(false))
   }, [id, code])
 
-  const toggle = async (session: Session) => {
-    const next = !session.checked_in
-    setToggling(session.id)
-    setSessions(prev => prev.map(s => s.id === session.id ? { ...s, checked_in: next, checked_in_at: next ? new Date().toISOString() : null } : s))
+  const setStatus = async (session: Session, next: 'present' | 'absent' | null) => {
+    // 同一個狀態再點一次 → 清除
+    const newStatus = session.status === next ? null : next
+    setSaving(session.id)
+    setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: newStatus, checked_in_at: newStatus ? new Date().toISOString() : null } : s))
     try {
       const res = await fetch('/api/member/course-checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, code, session_id: session.id, checked_in: next }),
+        body: JSON.stringify({ id, code, session_id: session.id, status: newStatus }),
       })
-      if (!res.ok) setSessions(prev => prev.map(s => s.id === session.id ? { ...s, checked_in: session.checked_in, checked_in_at: session.checked_in_at } : s))
+      if (!res.ok) setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
     } catch {
-      setSessions(prev => prev.map(s => s.id === session.id ? { ...s, checked_in: session.checked_in, checked_in_at: session.checked_in_at } : s))
+      setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: session.status, checked_in_at: session.checked_in_at } : s))
     } finally {
-      setToggling(null)
+      setSaving(null)
     }
   }
 
-  // Group by day
   const byDay = sessions.reduce((acc, s) => {
-    const key = s.day_number
-    if (!acc[key]) acc[key] = { date: s.session_date, sessions: [] }
-    acc[key].sessions.push(s)
+    if (!acc[s.day_number]) acc[s.day_number] = { date: s.session_date, sessions: [] }
+    acc[s.day_number].sessions.push(s)
     return acc
   }, {} as Record<number, { date: string; sessions: Session[] }>)
 
-  const checkedCount = sessions.filter(s => s.checked_in).length
   const total = sessions.length
+  const presentCount = sessions.filter(s => s.status === 'present').length
+  const absentCount = sessions.filter(s => s.status === 'absent').length
+  const unmarkedCount = total - presentCount - absentCount
+  const rate = total > 0 ? Math.round(presentCount / total * 100) : 0
 
   if (loading) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><div className="spinner-large" /></div>
 
@@ -100,7 +102,7 @@ function CheckinContent() {
         <div style={{ marginBottom: 28 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 6 }}>Course Attendance</p>
           <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink)', margin: '0 0 6px' }}>課程打卡</h1>
-          <p style={{ fontSize: 14, color: 'var(--ink-soft)' }}>請於每次課程結束後完成打卡，記錄自動儲存。</p>
+          <p style={{ fontSize: 14, color: 'var(--ink-soft)' }}>每次課程結束後請記錄出席或缺席，記錄自動儲存。</p>
         </div>
 
         {error && (
@@ -111,55 +113,88 @@ function CheckinContent() {
 
         {!error && (
           <>
-            {/* 進度 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, padding: '14px 20px', background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 12 }}>
-              <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>打卡進度</span>
-              <span style={{ fontSize: 22, fontWeight: 700, color: checkedCount === total && total > 0 ? 'var(--green)' : 'var(--ink)' }}>
-                {checkedCount} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ink-mute)' }}>/ {total}</span>
-              </span>
-              {checkedCount === total && total > 0 && <span style={{ fontSize: 13, color: 'var(--green)', fontWeight: 600 }}>✦ 全部完成</span>}
+            {/* 出席摘要 */}
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席摘要</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                {[
+                  { label: '已出席課程', value: presentCount, color: 'var(--green)', bg: 'rgba(73,85,52,0.08)', border: 'rgba(73,85,52,0.2)' },
+                  { label: '缺席課程', value: absentCount, color: 'var(--error)', bg: 'rgba(184,82,58,0.06)', border: 'rgba(184,82,58,0.2)' },
+                  { label: '出席率', value: `${rate}%`, color: rate >= 80 ? 'var(--green)' : rate >= 50 ? 'var(--gold-deep)' : 'var(--error)', bg: 'rgba(251,248,242,0.9)', border: 'var(--line)' },
+                ].map(({ label, value, color, bg, border }) => (
+                  <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 38, fontWeight: 700, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', fontWeight: 600, letterSpacing: '0.06em' }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              {unmarkedCount > 0 && (
+                <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 10, textAlign: 'right' }}>尚有 {unmarkedCount} 個場次未記錄</p>
+              )}
             </div>
 
-            {/* 每日課程 */}
-            {Object.entries(byDay).map(([dayNum, { date, sessions: daySessions }]) => (
-              <div key={dayNum} style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 10 }}>
-                  Day {dayNum} · {formatDate(date)}
-                </div>
-                <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--line-strong)' }}>
-                  {daySessions.map((s, idx) => (
-                    <div key={s.id} style={{
-                      display: 'grid', gridTemplateColumns: '1fr auto',
-                      alignItems: 'center', gap: 12,
-                      padding: '14px 18px',
-                      borderTop: idx > 0 ? '1px solid var(--line)' : undefined,
-                      background: s.checked_in ? 'rgba(73,85,52,0.04)' : 'var(--bg-pure)',
-                      transition: 'background 0.15s',
-                    }}>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{s.title}</div>
-                        <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontFamily: 'var(--font-cormorant), serif' }}>{s.time_label}</div>
-                      </div>
-                      <button
-                        onClick={() => toggle(s)}
-                        disabled={toggling === s.id}
-                        aria-label={s.checked_in ? '取消打卡' : '打卡'}
-                        style={{
-                          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                          border: s.checked_in ? '2px solid var(--green)' : '2px solid var(--line-strong)',
-                          background: s.checked_in ? 'var(--green)' : 'transparent',
-                          color: s.checked_in ? '#f8f2e8' : 'var(--ink-mute)',
-                          fontSize: 17, cursor: toggling === s.id ? 'not-allowed' : 'pointer',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          opacity: toggling === s.id ? 0.5 : 1, transition: 'all 0.18s',
-                        }}>
-                        {s.checked_in ? '✓' : ''}
-                      </button>
+            {/* 出席歷史 */}
+            <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: 14 }}>出席歷史（課程天數）</h2>
+
+            {Object.entries(byDay).map(([dayNum, { date, sessions: daySessions }]) => {
+              const dayPresent = daySessions.filter(s => s.status === 'present').length
+              return (
+                <div key={dayNum} style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--gold)', textTransform: 'uppercase' }}>
+                      第 {dayNum} 日 · {formatDate(date)}
                     </div>
-                  ))}
+                    <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>出席 {dayPresent} / {daySessions.length}</div>
+                  </div>
+                  <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--line-strong)' }}>
+                    {daySessions.map((s, idx) => (
+                      <div key={s.id} style={{
+                        display: 'grid', gridTemplateColumns: '1fr auto',
+                        alignItems: 'center', gap: 12, padding: '14px 16px',
+                        borderTop: idx > 0 ? '1px solid var(--line)' : undefined,
+                        background: s.status === 'present' ? 'rgba(73,85,52,0.04)' : s.status === 'absent' ? 'rgba(184,82,58,0.03)' : 'var(--bg-pure)',
+                        transition: 'background 0.15s',
+                      }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{s.title}</div>
+                          <div style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontFamily: 'var(--font-cormorant), serif' }}>{s.time_label}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                          <button
+                            onClick={() => setStatus(s, 'present')}
+                            disabled={saving === s.id}
+                            style={{
+                              padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                              border: '1.5px solid ' + (s.status === 'present' ? 'var(--green)' : 'var(--line-strong)'),
+                              background: s.status === 'present' ? 'var(--green)' : 'transparent',
+                              color: s.status === 'present' ? '#f8f2e8' : 'var(--ink-mute)',
+                              opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
+                            }}>
+                            出席
+                          </button>
+                          <button
+                            onClick={() => setStatus(s, 'absent')}
+                            disabled={saving === s.id}
+                            style={{
+                              padding: '6px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                              border: '1.5px solid ' + (s.status === 'absent' ? 'var(--error)' : 'var(--line-strong)'),
+                              background: s.status === 'absent' ? 'var(--error)' : 'transparent',
+                              color: s.status === 'absent' ? '#f8f2e8' : 'var(--ink-mute)',
+                              opacity: saving === s.id ? 0.5 : 1, transition: 'all 0.18s',
+                            }}>
+                            缺席
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
+
+            <p style={{ marginTop: 16, fontSize: 12.5, color: 'var(--ink-mute)', textAlign: 'center', lineHeight: 1.7 }}>
+              點擊「出席」或「缺席」記錄參課狀態，再次點擊同一按鈕可取消。
+            </p>
           </>
         )}
       </main>

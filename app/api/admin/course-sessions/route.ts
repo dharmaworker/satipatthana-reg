@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       .order('sort_order', { ascending: true }),
     supabaseAdmin
       .from('course_session_checkins')
-      .select('session_id, registration_id, checked_in, checked_in_at'),
+      .select('session_id, registration_id, status, checked_in_at'),
     supabaseAdmin
       .from('registrations')
       .select('id, chinese_name, student_id, member_id')
@@ -29,26 +29,27 @@ export async function GET(request: NextRequest) {
   const regs = regsRes.data || []
 
   // per-session stats
-  const statsMap = new Map<string, { checked: number; total: number }>()
-  for (const s of sessions) statsMap.set(s.id, { checked: 0, total: regs.length })
+  const statsMap = new Map<string, { present: number; absent: number; total: number }>()
+  for (const s of sessions) statsMap.set(s.id, { present: 0, absent: 0, total: regs.length })
   for (const c of checkins) {
-    if (c.checked_in) {
-      const stat = statsMap.get(c.session_id)
-      if (stat) stat.checked++
+    const stat = statsMap.get(c.session_id)
+    if (stat) {
+      if (c.status === 'present') stat.present++
+      else if (c.status === 'absent') stat.absent++
     }
   }
 
   // per-student per-session map for detail view
-  const regCheckinMap: Record<string, Record<string, boolean>> = {}
+  const regCheckinMap: Record<string, Record<string, string | null>> = {}
   for (const reg of regs) regCheckinMap[reg.id] = {}
   for (const c of checkins) {
     if (regCheckinMap[c.registration_id]) {
-      regCheckinMap[c.registration_id][c.session_id] = c.checked_in
+      regCheckinMap[c.registration_id][c.session_id] = c.status
     }
   }
 
   return NextResponse.json({
-    sessions: sessions.map(s => ({ ...s, ...statsMap.get(s.id) })),
+    sessions: sessions.map(s => ({ ...s, present: statsMap.get(s.id)?.present ?? 0, absent: statsMap.get(s.id)?.absent ?? 0, total: regs.length })),
     regs,
     checkin_map: regCheckinMap,
   })
