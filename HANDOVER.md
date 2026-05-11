@@ -10,6 +10,8 @@
 |---|---|---|
 | GitHub | 原始碼 | `dharmaworker/satipatthana-reg` |
 | Vercel | 部署 | `https://satipatthana-reg-eihf.vercel.app` |
+| Cloudflare | 反向代理／DNS（中國可訪問） | 域名 `tw-satipatthana-2026-reg.org`，免費方案 |
+| 正式域名 | 對外網址 | `https://tw-satipatthana-2026-reg.org` |
 | Supabase | DB + Storage + Auth | `https://stjghujtfuhbbskgbjau.supabase.co` |
 | Gmail SMTP | 寄信 | `satipatthana.tw@gmail.com`（寄件者） |
 | Gmail 學會 | 備存 | `satipatthana.taipei@gmail.com`（BCC 收件） |
@@ -162,6 +164,44 @@ cp .env.local.example .env.local
 # 4. 啟動
 npm run dev  # http://localhost:3000
 ```
+
+---
+
+## Cloudflare 反向代理設定（中國可訪問）
+
+正式域名 `tw-satipatthana-2026-reg.org` 透過 Cloudflare 代理，改善中國大陸訪問。
+
+### 架構
+```
+中國用戶 → Cloudflare POP（香港/東京） → Vercel
+```
+用戶不直連 Vercel，Cloudflare 作為中間代理層。Cloudflare IP 段被封鎖風險遠低於直連 Vercel IP。
+
+### DNS 設定（Cloudflare 管理）
+| 類型 | 名稱 | 目標 | 代理 |
+|------|------|------|------|
+| `CNAME` | `@` | `cname.vercel-dns.com` | ✅ 已代理（橘色雲朵） |
+| `CNAME` | `www` | `cname.vercel-dns.com` | ✅ 已代理（橘色雲朵） |
+
+> **重要：** 代理必須開啟（橘色雲朵），否則流量直通 Vercel，失去代理效果。
+
+### SSL/TLS 設定
+Cloudflare → SSL/TLS → 加密模式設為 **Full（嚴格）**，避免重定向迴圈。
+
+### Vercel 域名設定
+Vercel 專案 → Settings → Domains 已加入：
+- `tw-satipatthana-2026-reg.org`（307 重定向至 www）
+- `www.tw-satipatthana-2026-reg.org`（Production）
+
+### 環境變數
+需在 Vercel 設定以下 env，確保信件連結指向正確域名：
+- `NEXT_PUBLIC_BASE_URL` = `https://tw-satipatthana-2026-reg.org`
+- `NEXT_PUBLIC_SITE_URL` = `https://tw-satipatthana-2026-reg.org`
+
+### 注意事項
+- Cloudflare 免費方案，無流量上限費用
+- 中國可訪問性視 ISP 而定，無法 100% 保證（電信／聯通／移動行為不同）
+- 原 `satipatthana-reg.vercel.app` 仍有效，兩個網址同時運作
 
 ---
 
