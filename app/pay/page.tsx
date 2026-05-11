@@ -23,6 +23,7 @@ function PayContent() {
   const router = useRouter()
   const registration_id = searchParams.get('id') || ''
   const random_code = searchParams.get('code') || ''
+  const devMode = searchParams.get('dev') === '1'
   const dashboardUrl = registration_id && random_code ? `/member/dashboard?id=${registration_id}&code=${encodeURIComponent(random_code)}` : '/member'
 
   const [reg, setReg] = useState<any>(null)
@@ -239,7 +240,7 @@ function PayContent() {
               </div>
 
               <div className="opt-group">
-                {PLANS.map(p => {
+                {PLANS.filter(p => !p.test || devMode).map(p => {
                   const checked = plan === p.id
                   return (
                     <label key={p.id} className={`opt ${checked ? 'selected' : ''}`}
