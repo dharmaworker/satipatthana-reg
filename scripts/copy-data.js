@@ -152,7 +152,7 @@ module.exports = {
         ['報名表 > Step2 > 課程資訊', 'register.step2.method_value', '段落', '實體禪修', ''],
         ['報名表 > Step2 > 課程資訊', 'register.step2.location_value', '段落', '南投日月潭湖畔會館', ''],
         ['報名表 > Step2 > 課程資訊', 'register.step2.capacity_value', '段落', '250 名（額滿為止）', ''],
-        ['報名表 > Step2 > 課程資訊', 'register.step2.fee_value', '段落', '課程免費，食宿、場地及交通等費用自理', ''],
+        ['報名表 > Step2 > 課程資訊', 'register.step2.fee_value', '段落', '課程免費\n8/20–8/24 禪修期間之食宿、交通及場地費用：NT$18,600 元整\n（如需提前或延後住宿，將另計相關費用）', ''],
         // Step 3：報名資格（原 Step 2）
         ['報名表 > Step3', 'register.step3.title', '標題', '報名資格', ''],
         ['報名表 > Step3', 'register.step3.desc', '說明', '請確認您符合以下資格後再進入下一步。', ''],
