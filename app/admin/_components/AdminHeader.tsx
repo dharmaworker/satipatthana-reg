@@ -131,7 +131,7 @@ export function AdminHeader() {
           {/* 分隔線 */}
           <div style={{ width: 1, height: 24, background: 'var(--line-strong)', margin: '0 6px', flexShrink: 0 }} />
 
-          {/* 課程簽到（線上專用，排在設定 tabs 最前） */}
+          {/* 設課程簽到（線上專用，排在設定 tabs 最前） */}
           {formatFilter === 'online' && (() => {
             const path = '/admin/attendance-records'
             const isActive = pathname === path
@@ -143,7 +143,7 @@ export function AdminHeader() {
                   background: isActive ? 'var(--gold-deep)' : 'rgba(216, 194, 154, 0.15)',
                   color: isActive ? '#f8f2e8' : 'var(--ink-soft)', cursor: 'pointer', transition: 'all 0.2s',
                 }}>
-                課程簽到
+                設課程簽到
               </button>
             )
           })()}
