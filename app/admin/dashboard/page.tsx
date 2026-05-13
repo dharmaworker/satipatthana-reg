@@ -201,6 +201,7 @@ export default function DashboardPage() {
     pending: registrations.filter(r => r.status === 'pending').length,
     approved: registrations.filter(r => r.status === 'approved').length,
     rejected: registrations.filter(r => r.status === 'rejected').length,
+    waitlist: registrations.filter(r => r.status === 'waitlist').length,
     paid: registrations.filter(r => r.payment_status === 'verified').length,
   }
 
@@ -208,6 +209,7 @@ export default function DashboardPage() {
     { label: '總報名', value: stats.total, accent: 'var(--ink-mute)' },
     { label: '審核中', value: stats.pending, accent: 'var(--warning)' },
     { label: '已錄取', value: stats.approved, accent: 'var(--success)' },
+    { label: '候補', value: stats.waitlist, accent: '#2a6fa8' },
     { label: '未錄取', value: stats.rejected, accent: 'var(--error)' },
   ]
 
@@ -261,6 +263,7 @@ export default function DashboardPage() {
             <option value="all">全部狀態</option>
             <option value="pending">審核中</option>
             <option value="approved">已錄取</option>
+            <option value="waitlist">候補</option>
             <option value="rejected">未錄取</option>
           </select>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
@@ -318,10 +321,11 @@ export default function DashboardPage() {
                   <td>
                     <select value={reg.status}
                       onChange={e => updateStatus(reg.id, e.target.value)}
-                      className={`admin-status-badge ${reg.status === 'pending' ? 'warn' : reg.status === 'approved' ? 'ok' : 'error'}`}
+                      className={`admin-status-badge ${reg.status === 'pending' ? 'warn' : reg.status === 'approved' ? 'ok' : reg.status === 'waitlist' ? 'info' : 'error'}`}
                       style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
                       <option value="pending">審核中</option>
                       <option value="approved">已錄取</option>
+                      <option value="waitlist">候補</option>
                       <option value="rejected">未錄取</option>
                     </select>
                   </td>
@@ -515,7 +519,7 @@ export default function DashboardPage() {
             )}
 
             <DetailSection title="狀態 / 繳費">
-              <DetailField label="審核狀態" value={({ pending: '審核中', approved: '已錄取', rejected: '未錄取' } as Record<string, string>)[detailReg.status] || detailReg.status} />
+              <DetailField label="審核狀態" value={({ pending: '審核中', approved: '已錄取', waitlist: '候補', rejected: '未錄取' } as Record<string, string>)[detailReg.status] || detailReg.status} />
               <DetailField label="繳費狀態" value={({ unpaid: '未繳費', paid: '已回報待確認', verified: '已確認繳費' } as Record<string, string>)[detailReg.payment_status] || detailReg.payment_status} />
               <DetailField label="繳費方案" value={detailReg.payment_plan} />
               <DetailField label="繳費確認時間" value={detailReg.payment_confirmed_at ? new Date(detailReg.payment_confirmed_at).toLocaleString('zh-TW') : '—'} />

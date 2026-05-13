@@ -43,6 +43,7 @@ const TEACHER_LABEL: Record<string, string> = {
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   approved: { label: '已錄取', cls: 'accepted' },
   pending: { label: '審核中', cls: 'pending' },
+  waitlist: { label: '候補', cls: 'waitlist' },
   rejected: { label: '未錄取', cls: 'rejected' },
 }
 
@@ -425,6 +426,18 @@ function MemberDashboardContent() {
             <h3>報名審核中</h3>
             <p>您已報名{isOnline ? '線上課程（Zoom）' : '實體課程'}，資料已收到，學會正在審核。<br />錄取通知將於 <strong>06/06</strong> 以 Email 發送，請留意收件匣與垃圾信箱。</p>
             <p>在錄取確認前，請勿購買機票或安排行程。</p>
+            <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>
+              <a href="/" className="btn btn-ghost">返回主站</a>
+            </div>
+          </div>
+        )}
+        {member.status === 'waitlist' && (
+          <div className="pending-card">
+            <div className="icon">✦</div>
+            <h3>您已列入候補名單</h3>
+            <p>感謝您的報名。本次禪修名額有限，您目前列為候補學員。<br />若有名額釋出，學會將另行以 Email 通知。請留意收件匣與垃圾信箱。</p>
+            <p>在正式錄取確認前，請勿購買機票或安排行程。</p>
             <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>
               <a href="/" className="btn btn-ghost">返回主站</a>

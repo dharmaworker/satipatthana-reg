@@ -521,6 +521,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .status-badge.pending { background: rgba(184, 133, 44, 0.12); color: var(--warning); border: 1px solid rgba(184, 133, 44, 0.3); }
 .status-badge.accepted { background: rgba(90, 139, 82, 0.12); color: var(--success); border: 1px solid rgba(90, 139, 82, 0.3); }
 .status-badge.paid { background: var(--green); color: #f8f2e8; border: 1px solid var(--green); }
+.status-badge.waitlist { background: rgba(66, 133, 180, 0.12); color: #2a6fa8; border: 1px solid rgba(66, 133, 180, 0.3); }
 .status-badge.rejected { background: rgba(133, 119, 107, 0.15); color: var(--ink-mute); border: 1px solid rgba(133, 119, 107, 0.3); }
 
 /* ============================================================

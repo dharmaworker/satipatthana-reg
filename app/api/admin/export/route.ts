@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 
   const statusMap: Record<string, string> = {
-    pending: '審核中', approved: '已錄取', rejected: '未錄取'
+    pending: '審核中', approved: '已錄取', waitlist: '候補', rejected: '未錄取'
   }
   const paymentMap: Record<string, string> = {
     unpaid: '未繳費', paid: '待確認', verified: '已確認'
