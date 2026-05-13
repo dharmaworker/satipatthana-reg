@@ -6,7 +6,7 @@ function checkAuth(request: NextRequest) {
   return request.cookies.get('admin_role')?.value || null
 }
 
-const validStatus: StatusValue[] = ['pending', 'won', 'waitlist', 'lost']
+const validStatus: StatusValue[] = ['pending', 'won', 'waitlist', 'lost', 'abstain']
 
 export async function GET(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })

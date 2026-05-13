@@ -29,8 +29,8 @@ type Row = {
   interactive: {
     wanted_sessions: string[]
     wanted_ranking: string[]
-    group_status: 'pending' | 'won' | 'waitlist' | 'lost'
-    small_status: 'pending' | 'won' | 'waitlist' | 'lost'
+    group_status: 'pending' | 'won' | 'waitlist' | 'lost' | 'abstain'
+    small_status: 'pending' | 'won' | 'waitlist' | 'lost' | 'abstain'
     assigned_session: string | null
     assigned_group: string | null
     assigned_date: string | null
@@ -377,6 +377,7 @@ export default function InteractiveAdminPage() {
                           <option value="won">中簽</option>
                           <option value="waitlist">候補</option>
                           <option value="lost">沒中簽</option>
+                          <option value="abstain">棄權</option>
                         </select>
                       ) : '—'}
                     </td>
@@ -405,6 +406,7 @@ export default function InteractiveAdminPage() {
                           <option value="won">中簽</option>
                           <option value="waitlist">候補</option>
                           <option value="lost">沒中簽</option>
+                          <option value="abstain">棄權</option>
                         </select>
                       ) : '—'}
                     </td>
@@ -464,7 +466,7 @@ export default function InteractiveAdminPage() {
 }
 
 function statusCls(s: string) {
-  return s === 'won' ? 'ok' : s === 'lost' ? 'error' : s === 'waitlist' ? 'info' : 'warn'
+  return s === 'won' ? 'ok' : s === 'lost' ? 'error' : s === 'waitlist' ? 'info' : s === 'abstain' ? '' : 'warn'
 }
 
 function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; onSave: (patch: any) => void }) {
@@ -509,6 +511,7 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                     <option value="won">中簽</option>
                     <option value="waitlist">候補</option>
                     <option value="lost">沒中簽</option>
+                    <option value="abstain">棄權</option>
                   </select>
                 </div>
                 {(groupStatus === 'won' || groupStatus === 'waitlist') && (
@@ -552,6 +555,7 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                     <option value="won">中簽</option>
                     <option value="waitlist">候補</option>
                     <option value="lost">沒中簽</option>
+                    <option value="abstain">棄權</option>
                   </select>
                 </div>
                 {(smallStatus === 'won' || smallStatus === 'waitlist') && (
