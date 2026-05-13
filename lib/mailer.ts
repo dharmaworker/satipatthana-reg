@@ -6,52 +6,76 @@ const FROM = process.env.RESEND_FROM || '台灣四念處學會 <no-reply@satipat
 
 const ALERT_EMAIL = 'dharmaworker2.tw@gmail.com'
 
-export async function sendMail({
-  to,
-  subject,
-  html,
-  cc,
-  bcc,
-  attachments,
-}: {
+type MailParams = {
   to: string | string[]
   subject: string
   html: string
   cc?: string | string[]
   bcc?: string | string[]
   attachments?: { filename: string; content: Buffer; contentType?: string }[]
-}) {
+}
+
+async function sendOnce(params: MailParams) {
+  const { to, subject, html, cc, bcc, attachments } = params
+  const result = await resend.emails.send({
+    from: FROM,
+    to: Array.isArray(to) ? to : [to],
+    cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
+    bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
+    subject,
+    html,
+    attachments: attachments?.map(a => ({
+      filename: a.filename,
+      content: a.content,
+    })),
+  })
+  if (result.error) {
+    throw new Error(result.error.message)
+  }
+  console.log('Mail sent via Resend:', result.data?.id, 'to:', to)
+  return result
+}
+
+function sendAlert(params: MailParams, err: unknown, attempts?: number) {
+  const toStr = Array.isArray(params.to) ? params.to.join(', ') : params.to
+  const retryNote = attempts ? `（已重試 ${attempts} 次）` : ''
+  resend.emails.send({
+    from: FROM,
+    to: [ALERT_EMAIL],
+    subject: `⚠️ Email 發送失敗${retryNote}：${params.subject}`,
+    html: `<p><strong>收件人：</strong>${toStr}</p>
+           <p><strong>主旨：</strong>${params.subject}</p>
+           <p><strong>錯誤：</strong>${err instanceof Error ? err.message : String(err)}</p>`,
+  }).catch(() => {})
+}
+
+export async function sendMail(params: MailParams) {
   try {
-    const result = await resend.emails.send({
-      from: FROM,
-      to: Array.isArray(to) ? to : [to],
-      cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
-      bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
-      subject,
-      html,
-      attachments: attachments?.map(a => ({
-        filename: a.filename,
-        content: a.content,
-      })),
-    })
-    if (result.error) {
-      throw new Error(result.error.message)
-    }
-    console.log('Mail sent via Resend:', result.data?.id, 'to:', to)
-    return result
+    return await sendOnce(params)
   } catch (err) {
-    console.error('sendMail failed:', err, '| to:', to, '| subject:', subject)
-    // 直接呼叫 Resend，不透過 sendMail 避免遞迴
-    resend.emails.send({
-      from: FROM,
-      to: [ALERT_EMAIL],
-      subject: `⚠️ Email 發送失敗：${subject}`,
-      html: `<p><strong>收件人：</strong>${Array.isArray(to) ? to.join(', ') : to}</p>
-             <p><strong>主旨：</strong>${subject}</p>
-             <p><strong>錯誤：</strong>${err instanceof Error ? err.message : String(err)}</p>`,
-    }).catch(() => {})
+    console.error('sendMail failed:', err, '| to:', params.to, '| subject:', params.subject)
+    sendAlert(params, err)
     throw err
   }
+}
+
+// 有 retry 版本，用於學員端確認信（報名確認、食宿確認）
+// 只在最後一次失敗才寄警告信，不重複告警
+export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, baseDelayMs = 600) {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await sendOnce(params)
+    } catch (err) {
+      lastErr = err
+      console.error(`sendMailWithRetry attempt ${attempt}/${maxAttempts} failed:`, err, '| to:', params.to)
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, baseDelayMs * attempt))
+      }
+    }
+  }
+  sendAlert(params, lastErr, maxAttempts)
+  throw lastErr
 }
 
 // 批次發送（最多 100 封 / call），用於大量寄信避免 timeout

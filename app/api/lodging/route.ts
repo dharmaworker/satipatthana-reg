@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { planToLodgingDefaults } from '@/lib/lodging-plan'
-import { sendMail } from '@/lib/mailer'
+import { sendMailWithRetry } from '@/lib/mailer'
 import { quickTestsButtonHtml } from '@/lib/quicktests-email'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
         wuri_825_am: '8/25 上午 9:00 到烏日高鐵',
       }[fields.bus_destination as string] || ''
 
-      await sendMail({
+      await sendMailWithRetry({
         to: reg.email,
         bcc: archiveEmail,
         subject: '【第二屆台灣四念處禪修】食宿登記確認',

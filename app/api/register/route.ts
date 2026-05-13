@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { nextAvailableMemberId } from '@/lib/member-id'
-import { sendMail } from '@/lib/mailer'
+import { sendMail, sendMailWithRetry } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
         ${emailSignoff()}
         <p style="color:${C.inkMute};font-size:12px;margin:6px 0 0;">若您沒有報名本課程，請忽略此信。</p>
       `
-      await sendMail({
+      await sendMailWithRetry({
         to: data.email,
         subject: isOnline
           ? '【第二屆台灣四念處禪修】線上課程報名確認'
