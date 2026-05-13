@@ -34,6 +34,9 @@ export async function sendMail({
         content: a.content,
       })),
     })
+    if (result.error) {
+      throw new Error(result.error.message)
+    }
     console.log('Mail sent via Resend:', result.data?.id, 'to:', to)
     return result
   } catch (err) {
@@ -73,6 +76,9 @@ export async function sendMailBatch(mails: {
         html: m.html,
       }))
     )
+    if (r.error) {
+      throw new Error(r.error.message)
+    }
     results.push(r)
   }
   return results
