@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -36,6 +37,26 @@ async function sendOnce(params: MailParams) {
   return result
 }
 
+async function sendOnceViaGmail(params: MailParams) {
+  const { to, subject, html, cc, bcc } = params
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  })
+  await transporter.sendMail({
+    from: process.env.GMAIL_USER,
+    to: Array.isArray(to) ? to.join(', ') : to,
+    cc: cc ? (Array.isArray(cc) ? cc.join(', ') : cc) : undefined,
+    bcc: bcc ? (Array.isArray(bcc) ? bcc.join(', ') : bcc) : undefined,
+    subject,
+    html,
+  })
+  console.log('Mail sent via Gmail fallback to:', to)
+}
+
 function sendAlert(params: MailParams, err: unknown, attempts?: number) {
   const toStr = Array.isArray(params.to) ? params.to.join(', ') : params.to
   const retryNote = attempts ? `（已重試 ${attempts} 次）` : ''
@@ -60,11 +81,15 @@ export async function sendMail(params: MailParams) {
 }
 
 // 有 retry 版本，用於學員端確認信（報名確認、食宿確認）
-// 只在最後一次失敗才寄警告信，不重複告警
+// 前兩次用 Resend，最後一次改用 Gmail 備援，只在全部失敗才寄警告信
 export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, baseDelayMs = 600) {
   let lastErr: unknown
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      if (attempt === maxAttempts) {
+        // 最後一次改用 Gmail 備援
+        return await sendOnceViaGmail(params)
+      }
       return await sendOnce(params)
     } catch (err) {
       lastErr = err
