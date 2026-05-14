@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       to: email.toLowerCase().trim(),
       subject: '【第二屆台灣四念處禪修】學員專區專屬代碼',
       html,
-    }, 3, 600, false)
+    }, 3, 600, true)
 
     return NextResponse.json({ ok: true })
   } catch {

@@ -53,5 +53,5 @@ export async function sendQuickTestsConfirmationEmail(reg: {
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】快篩檢測上傳確認',
     html: emailWrap(body),
-  }, 3, 600, false)
+  }, 3, 600, true)
 }

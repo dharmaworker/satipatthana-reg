@@ -47,5 +47,5 @@ export async function sendInteractiveInviteEmail(reg: {
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】互動報名開放通知',
     html: emailWrap(body, { maxWidth: 680 }),
-  }, 3, 600, false)
+  }, 3, 600, true)
 }
