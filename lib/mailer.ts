@@ -102,14 +102,32 @@ export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, bas
   throw lastErr
 }
 
-// 批次發送（最多 100 封 / call），用於大量寄信避免 timeout
-export async function sendMailBatch(mails: {
-  to: string
-  subject: string
-  html: string
-  bcc?: string
-}[]) {
-  const batches: typeof mails[] = []
+type BatchMail = { to: string; subject: string; html: string; bcc?: string }
+
+async function sendBatchViaGmail(mails: BatchMail[]) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  })
+  for (const m of mails) {
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: m.to,
+      bcc: m.bcc,
+      subject: m.subject,
+      html: m.html,
+    })
+  }
+  console.log(`Batch sent via Gmail fallback: ${mails.length} mails`)
+}
+
+// 批次發送（最多 100 封 / call）
+// Resend 失敗時自動改用 Gmail 逐封補送
+export async function sendMailBatch(mails: BatchMail[]) {
+  const batches: BatchMail[][] = []
   for (let i = 0; i < mails.length; i += 100) {
     batches.push(mails.slice(i, i + 100))
   }
@@ -125,7 +143,8 @@ export async function sendMailBatch(mails: {
       }))
     )
     if (r.error) {
-      throw new Error(r.error.message)
+      console.error('sendMailBatch Resend failed, falling back to Gmail:', r.error.message)
+      await sendBatchViaGmail(batch)
     }
     results.push(r)
   }
