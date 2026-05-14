@@ -9,6 +9,7 @@ create table if not exists registrations (
   student_id text unique,   -- 學號：R-001/R-002（食宿管理頁手動編，給正式學員通知信用）
 
   chinese_name text not null,
+  id_number text,
   passport_name text not null,
   identity text not null,
   dharma_name text,
@@ -123,6 +124,33 @@ create table if not exists scheduled_exports (
   created_at timestamptz not null default now()
 );
 alter table scheduled_exports enable row level security;
+
+-- ========== course_sessions ==========
+create table if not exists public.course_sessions (
+  id uuid primary key default gen_random_uuid(),
+  sync_key text unique,
+  day_number int,
+  session_date date,
+  time_label text,
+  title text,
+  sort_order int,
+  requires_checkin boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table public.course_sessions enable row level security;
+
+-- ========== course_session_checkins ==========
+create table if not exists public.course_session_checkins (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.course_sessions(id) on delete cascade,
+  registration_id uuid not null references public.registrations(id) on delete cascade,
+  status text,
+  checked_in boolean default false,
+  checked_in_at timestamptz,
+  change_count int not null default 0,
+  unique (session_id, registration_id)
+);
+alter table public.course_session_checkins enable row level security;
 
 -- ========== RLS ==========
 -- 程式全部用 service_role (secret) key 走 supabaseAdmin，不靠 anon 讀寫，
