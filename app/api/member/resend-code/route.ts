@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendMail } from '@/lib/mailer'
+import { sendMailWithRetry } from '@/lib/mailer'
 import { emailWrap, C, FONT } from '@/lib/email-style'
 
 export async function POST(request: NextRequest) {
@@ -51,11 +51,11 @@ export async function POST(request: NextRequest) {
       </p>
     `)
 
-    await sendMail({
+    await sendMailWithRetry({
       to: email.toLowerCase().trim(),
       subject: '【第二屆台灣四念處禪修】學員專區專屬代碼',
       html,
-    })
+    }, 3, 600, false)
 
     return NextResponse.json({ ok: true })
   } catch {

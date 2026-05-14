@@ -1,4 +1,4 @@
-import { sendMail } from './mailer'
+import { sendMailWithRetry } from './mailer'
 import { C, FONT, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailAlert, emailWarning, emailSignoff } from './email-style'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
@@ -48,10 +48,10 @@ export async function sendQuickTestsConfirmationEmail(reg: {
     ${emailSignoff()}
   `
 
-  return sendMail({
+  return sendMailWithRetry({
     to: reg.email,
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】快篩檢測上傳確認',
     html: emailWrap(body),
-  })
+  }, 3, 600, false)
 }

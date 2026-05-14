@@ -80,14 +80,13 @@ export async function sendMail(params: MailParams) {
   }
 }
 
-// 有 retry 版本，用於學員端確認信（報名確認、食宿確認）
-// 前兩次用 Resend，最後一次改用 Gmail 備援，只在全部失敗才寄警告信
-export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, baseDelayMs = 600) {
+// 有 retry 版本，只在全部失敗才寄警告信
+// gmailFallback=true（預設）：最後一次改用 Gmail 備援；false：全程用 Resend
+export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, baseDelayMs = 600, gmailFallback = true) {
   let lastErr: unknown
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      if (attempt === maxAttempts) {
-        // 最後一次改用 Gmail 備援
+      if (gmailFallback && attempt === maxAttempts) {
         return await sendOnceViaGmail(params)
       }
       return await sendOnce(params)

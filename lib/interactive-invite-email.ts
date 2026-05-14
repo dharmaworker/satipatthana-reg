@@ -1,4 +1,4 @@
-import { sendMail } from './mailer'
+import { sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailWarning, emailHighlight, emailSignoff } from './email-style'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
@@ -42,10 +42,10 @@ export async function sendInteractiveInviteEmail(reg: {
     ${emailSignoff()}
   `
 
-  return sendMail({
+  return sendMailWithRetry({
     to: reg.email,
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】互動報名開放通知',
     html: emailWrap(body, { maxWidth: 680 }),
-  })
+  }, 3, 600, false)
 }
