@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS public.practice_checkins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   registration_id UUID NOT NULL REFERENCES public.registrations(id) ON DELETE CASCADE,
   schedule_item_id UUID NOT NULL REFERENCES public.practice_schedule(id) ON DELETE CASCADE,
+  checked BOOLEAN NOT NULL DEFAULT true,
+  change_count INTEGER NOT NULL DEFAULT 0,
   checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (registration_id, schedule_item_id)
 );

@@ -45,6 +45,10 @@ create table if not exists registrations (
   payment_note text,
   payment_confirmed_at timestamptz,
 
+  qr_code_url text,
+  event_id uuid,
+  approval_email_sent_at timestamptz,
+
   created_at timestamptz not null default now()
 );
 
@@ -58,7 +62,7 @@ create table if not exists admin_users (
   id uuid primary key default gen_random_uuid(),
   username text not null unique,
   password_hash text not null,
-  role text not null,                               -- admin | readonly | finance
+  role text not null default 'readonly',             -- admin | readonly | finance | reviewer
   name text not null,
   created_at timestamptz not null default now()
 );
@@ -134,7 +138,7 @@ create table if not exists public.course_sessions (
   time_label text,
   title text,
   sort_order int,
-  requires_checkin boolean not null default false,
+  requires_checkin boolean not null default true,
   created_at timestamptz not null default now()
 );
 alter table public.course_sessions enable row level security;
