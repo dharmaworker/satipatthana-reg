@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
   const teachers = deriveTeachersFromSlots(slots)
 
   const validSessions = new Set(sessions.map(s => s.id))
-  if (!wanted_sessions.every(s => validSessions.has(s))) {
-    return NextResponse.json({ error: '集體場次選擇不合法' }, { status: 400 })
-  }
+  // 靜默過濾：已停用/刪除的場次 ID 不拒絕，而是直接去除（避免學員無法重新送出舊資料）
+  const filteredSessions = wanted_sessions.filter(s => validSessions.has(s))
+
   const validTeachers = new Set(teachers.map(t => t.key))
   if (wanted_ranking.length > teachers.length) {
     return NextResponse.json({ error: `分組互動最多選 ${teachers.length} 個` }, { status: 400 })
@@ -69,13 +69,17 @@ export async function POST(request: NextRequest) {
   if (!wanted_ranking.every(t => validTeachers.has(t))) {
     return NextResponse.json({ error: '分組老師選擇不合法' }, { status: 400 })
   }
+  // 不允許重複的老師 ID
+  if (new Set(wanted_ranking).size !== wanted_ranking.length) {
+    return NextResponse.json({ error: '分組老師選擇有重複' }, { status: 400 })
+  }
 
   const { error } = await supabaseAdmin
     .from('interactive_registrations')
     .upsert(
       {
         registration_id: a.reg.id,
-        wanted_sessions,
+        wanted_sessions: filteredSessions,
         wanted_ranking,
         updated_at: new Date().toISOString(),
       },
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
 
   await sendInteractiveSubmitConfirmEmail(
     { email: a.reg.email, chinese_name: a.reg.chinese_name, id: a.reg.id, random_code: body.code },
-    { wanted_sessions, wanted_ranking }
+    { wanted_sessions: filteredSessions, wanted_ranking }
   ).catch(err => console.error('[interactive] 確認信寄送失敗:', err))
 
   return NextResponse.json({ success: true })

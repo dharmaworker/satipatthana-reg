@@ -1,7 +1,7 @@
 import { sendMail, sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailAlert, emailSignoff } from './email-style'
 import { type StatusValue } from './interactive'
-import { fetchActiveSessions, fetchActiveSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
+import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -28,7 +28,7 @@ export async function sendInteractiveNotificationEmail(opts: {
     group_serial, small_serial } = opts
 
   // 從 DB 取得目前最新場次與老師資料
-  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const [sessions, slots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
   const sessionLabelMap = buildSessionLabelMap(sessions)
   const teachers = deriveTeachersFromSlots(slots)
   const teacherLabelMap = buildTeacherLabelMap(teachers)
@@ -109,7 +109,7 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
     group_status, small_status, assigned_session, assigned_group, assigned_date } = opts
 
   // 從 DB 取得最新 label
-  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const [sessions, slots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
   const sessionLabelMap = buildSessionLabelMap(sessions)
   const teachers = deriveTeachersFromSlots(slots)
   const teacherLabelMap = buildTeacherLabelMap(teachers)
