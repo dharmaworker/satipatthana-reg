@@ -88,3 +88,4 @@ export async function POST(request: NextRequest) {
   ).catch(err => console.error('[interactive] 確認信寄送失敗:', err))
 
   return NextResponse.json({ success: true })
+}
