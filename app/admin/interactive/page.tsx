@@ -1493,6 +1493,12 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
                 </tbody>
               </table>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: editingSession ? 'var(--gold-deep)' : 'var(--green-deep)', letterSpacing: '0.06em' }}>
+                {editingSession ? `✏ 編輯場次 ${editingSession.id}` : '＋ 新增場次'}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
               <div>
                 <label className="form-label">ID {!editingSession && <span className="required">*</span>}</label>
@@ -1569,6 +1575,12 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: editingSlot ? 'var(--gold-deep)' : 'var(--green-deep)', letterSpacing: '0.06em' }}>
+                {editingSlot ? `✏ 編輯 Slot` : '＋ 新增 Slot'}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
               <div>
