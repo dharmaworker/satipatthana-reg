@@ -3,11 +3,35 @@ import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
+function formatDeadline(dlParam: string | null): string {
+  const ms = dlParam ? parseInt(dlParam, 10) : NaN
+  if (!ms || isNaN(ms)) return '2026/07/15'
+  const taipeiMs = ms + 8 * 3600 * 1000
+  const d = new Date(taipeiMs)
+  const y = d.getUTCFullYear()
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}/${mo}/${day}`
+}
+
+function formatDeadlineShort(dlParam: string | null): string {
+  const ms = dlParam ? parseInt(dlParam, 10) : NaN
+  if (!ms || isNaN(ms)) return '截止日期'
+  const taipeiMs = ms + 8 * 3600 * 1000
+  const d = new Date(taipeiMs)
+  const mo = d.getUTCMonth() + 1
+  const day = d.getUTCDate()
+  return `${mo}/${day}`
+}
+
 function InteractiveSuccessContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
+  const dl = searchParams.get('dl')
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
+  const deadlineDisplay = formatDeadline(dl)
+  const deadlineShort = formatDeadlineShort(dl)
 
   return (
     <>
@@ -31,13 +55,13 @@ function InteractiveSuccessContent() {
           <h1 className="success-title">互動報名已送出</h1>
           <p className="success-desc">
             系統已收到您的互動報名。<br />
-            如有調整請於 7/15 截止前回到此頁修改後再次送出。
+            如有調整請於 {deadlineShort} 截止前回到此頁修改後再次送出。
           </p>
 
           <div className="success-next">
             <h5>接下來</h5>
             <ol>
-              <li>互動報名截止日：<strong>2026/07/15</strong></li>
+              <li>互動報名截止日：<strong>{deadlineDisplay}</strong></li>
               <li>可於截止前回到此頁修改並重新送出</li>
               <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢狀態</li>
             </ol>

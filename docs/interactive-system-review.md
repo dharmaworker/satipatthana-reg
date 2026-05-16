@@ -60,6 +60,26 @@
 
 ---
 
+---
+
+### 6. 截止時間硬寫（已修）
+
+**檔案：** `lib/interactive.ts`、`app/api/interactive/route.ts`、`app/member/interactive/page.tsx`、`app/member/interactive/success/page.tsx`
+
+**問題：** `INTERACTIVE_DEADLINE_MS = Date.UTC(2026, 6, 15, 12, 0, 0)` 硬寫在程式碼中，每屆需改 code。側欄顯示 `07.15` / `晚上 8:00`、成功頁顯示 `2026/07/15` 皆為硬寫。
+
+**修正：**
+- `lib/interactive-config.ts` 新增 `deadline_ms?: number` 欄位及 `resolveDeadlineMs(config)` helper（fallback 至 `INTERACTIVE_DEADLINE_MS`）
+- `site_config` 的 `interactive_config` key 可存 `{ open: bool, deadline_ms: number }`
+- `app/api/admin/interactive-config` GET/PUT 支援讀寫 `deadline_ms`
+- Admin 後台「開放狀態」列加入台北時間 `datetime-local` 輸入，送出轉 UTC epoch ms 存入 DB
+- `app/api/interactive/config`（公開端點）回傳 `deadline_ms`
+- `app/api/interactive` GET 回傳 `resolveDeadlineMs(config)` 而非硬寫常數；POST 驗截止也改用 `resolveDeadlineMs`
+- 學員側欄截止日期從 `deadline` state 動態推算台北時間 MM.DD + 時段 + 時間
+- 成功頁從 URL `?dl=<epoch>` 取得截止日期顯示，fallback 顯示 `2026/07/15`
+
+---
+
 ## 二、設計確認（無問題，記錄供參考）
 
 ### 驗證邊界

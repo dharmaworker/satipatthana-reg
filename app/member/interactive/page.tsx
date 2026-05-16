@@ -86,6 +86,21 @@ function InteractiveContent() {
   const pastDeadline = deadline > 0 && Date.now() > deadline
   const initial = reg?.chinese_name?.charAt(0) || '?'
 
+  // 截止時間顯示（台北 UTC+8）
+  const deadlineTaipei = deadline > 0 ? (() => {
+    const taipeiMs = deadline + 8 * 3600 * 1000
+    const d = new Date(taipeiMs)
+    const month = d.getUTCMonth() + 1
+    const day = d.getUTCDate()
+    const hour = d.getUTCHours()
+    const min = d.getUTCMinutes()
+    const monthDay = `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`
+    const period = hour < 6 ? '凌晨' : hour < 12 ? '早上' : hour === 12 ? '中午' : hour < 18 ? '下午' : '晚上'
+    const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const timeStr = min === 0 ? `${h12}:00` : `${h12}:${String(min).padStart(2, '0')}`
+    return { monthDay, period, timeStr }
+  })() : null
+
   const toggleSession = (sid: string) => {
     setSelectedSessions(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid])
   }
@@ -156,7 +171,7 @@ function InteractiveContent() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || '送出失敗')
-      router.push(`/member/interactive/success?id=${id}&code=${encodeURIComponent(code)}`)
+      router.push(`/member/interactive/success?id=${id}&code=${encodeURIComponent(code)}&dl=${deadline}`)
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -453,8 +468,8 @@ function InteractiveContent() {
           <aside>
             <div className="deadline-card">
               <div className="deadline-label">Deadline</div>
-              <div className="deadline-date">07.15</div>
-              <div className="deadline-text">台北時間晚上 <strong>8:00</strong> 前完成<br />逾期將無法提交</div>
+              <div className="deadline-date">{deadlineTaipei ? deadlineTaipei.monthDay : '—'}</div>
+              <div className="deadline-text">台北時間{deadlineTaipei ? <>{deadlineTaipei.period} <strong>{deadlineTaipei.timeStr}</strong></> : '—'} 前完成<br />逾期將無法提交</div>
             </div>
 
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>

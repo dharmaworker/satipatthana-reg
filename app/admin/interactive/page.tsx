@@ -53,6 +53,8 @@ export default function InteractiveAdminPage() {
   const [editing, setEditing] = useState<Row | null>(null)
   const [autoDrawOpen, setAutoDrawOpen] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null)
+  const [deadlineInput, setDeadlineInput] = useState('')
   const [configSaving, setConfigSaving] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [sessions, setSessions] = useState<DbSession[]>([])
@@ -79,6 +81,13 @@ export default function InteractiveAdminPage() {
     if (cRes.ok) {
       const cfg = await cRes.json()
       setConfigOpen(!!cfg.open)
+      const ms: number | null = cfg.deadline_ms ?? null
+      setDeadlineMs(ms)
+      if (ms) {
+        // 轉成台北時間 datetime-local 字串（UTC+8）
+        const taipeiMs = ms + 8 * 3600 * 1000
+        setDeadlineInput(new Date(taipeiMs).toISOString().slice(0, 16))
+      }
     }
     setLoading(false)
   }
@@ -135,6 +144,27 @@ export default function InteractiveAdminPage() {
     } else {
       const d = await res.json().catch(() => ({}))
       setMessage(`切換失敗：${d.error || res.status}`)
+    }
+    setConfigSaving(false)
+  }
+
+  const saveDeadline = async () => {
+    if (!deadlineInput) { setMessage('請輸入截止時間'); return }
+    const ms = new Date(deadlineInput + '+08:00').getTime()
+    if (isNaN(ms) || ms <= 0) { setMessage('截止時間格式錯誤'); return }
+    setConfigSaving(true)
+    setMessage('')
+    const res = await fetch('/api/admin/interactive-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deadline_ms: ms }),
+    })
+    if (res.ok) {
+      setDeadlineMs(ms)
+      setMessage('截止時間已儲存')
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`儲存失敗：${d.error || res.status}`)
     }
     setConfigSaving(false)
   }
@@ -315,6 +345,18 @@ export default function InteractiveAdminPage() {
           >
             {configSaving ? '儲存中⋯' : configOpen ? '關閉互動報名' : '開放互動報名'}
           </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <label style={{ fontSize: 13, color: 'var(--ink-mute)', whiteSpace: 'nowrap' }}>截止時間（台北）</label>
+            <input
+              type="datetime-local"
+              value={deadlineInput}
+              onChange={e => setDeadlineInput(e.target.value)}
+              style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)' }}
+            />
+            <button onClick={saveDeadline} disabled={configSaving} className="admin-btn-sm">
+              儲存截止時間
+            </button>
+          </div>
         </div>
 
         <SessionManagePanel sessions={sessions} slots={slots} onRefresh={fetchData} />

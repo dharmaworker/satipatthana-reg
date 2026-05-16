@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { fetchActiveSessions, fetchActiveSmallSlots, deriveTeachersFromSlots } from '@/lib/interactive-db'
-import { INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
-import { fetchInteractiveConfig } from '@/lib/interactive-config'
+import { fetchInteractiveConfig, resolveDeadlineMs } from '@/lib/interactive-config'
 import { sendInteractiveSubmitConfirmEmail } from '@/lib/interactive-invite-email'
 
 async function authMember(id: string | null, code: string | null) {
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     registration: a.reg,
     interactive: row,
-    deadline: INTERACTIVE_DEADLINE_MS,
+    deadline: resolveDeadlineMs(config),
     open: config.open || isAdmin,
     preview: isAdmin && !config.open,
   })
@@ -47,7 +46,8 @@ export async function POST(request: NextRequest) {
   const a = await authMember(body.id ?? null, body.code ?? null)
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
 
-  if (Date.now() > INTERACTIVE_DEADLINE_MS) {
+  const postConfig = await fetchInteractiveConfig()
+  if (Date.now() > resolveDeadlineMs(postConfig)) {
     return NextResponse.json({ error: '互動報名已截止' }, { status: 400 })
   }
 
