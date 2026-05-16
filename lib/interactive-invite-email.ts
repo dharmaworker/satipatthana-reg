@@ -1,5 +1,6 @@
 import { sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailWarning, emailHighlight, emailSignoff } from './email-style'
+import { SESSION_LABEL, TEACHER_LABEL } from './interactive'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -46,6 +47,57 @@ export async function sendInteractiveInviteEmail(reg: {
     to: reg.email,
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】互動報名開放通知',
+    html: emailWrap(body, { maxWidth: 680 }),
+  }, 3, 600, true)
+}
+
+export async function sendInteractiveSubmitConfirmEmail(reg: {
+  email: string
+  chinese_name: string
+  id: string
+  random_code: string
+}, submission: {
+  wanted_sessions: string[]
+  wanted_ranking: string[]
+}) {
+  const sessionRows = submission.wanted_sessions.length === 0
+    ? `<tr><td colspan="2" style="padding:10px 14px;color:${C.inkMute};font-size:13px;">（未選擇集體互動場次）</td></tr>`
+    : submission.wanted_sessions.map(sid => {
+        const label = SESSION_LABEL[sid] ?? sid
+        return `<tr><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};color:${C.inkMute};font-size:13px;width:32px;">✓</td><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};font-size:13.5px;color:${C.ink};">${label}</td></tr>`
+      }).join('')
+
+  const rankingRows = submission.wanted_ranking.length === 0
+    ? `<tr><td colspan="2" style="padding:10px 14px;color:${C.inkMute};font-size:13px;">（未填分組互動意願）</td></tr>`
+    : submission.wanted_ranking.map((tid, i) => {
+        const label = TEACHER_LABEL[tid] ?? tid
+        return `<tr><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};color:${C.inkMute};font-size:13px;width:32px;font-weight:600;">${i + 1}</td><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};font-size:13.5px;color:${C.ink};">${label}</td></tr>`
+      }).join('')
+
+  const body = `
+    ${emailKicker('Interactive Registration')}
+    ${emailH1('互動報名已收到 🙏')}
+    <p style="margin:0 0 14px;color:${C.inkSoft};">${reg.chinese_name} 法友您好，</p>
+    <p style="margin:0 0 20px;color:${C.inkSoft};">系統已收到您的互動報名，登記內容如下：</p>
+
+    ${emailH3('集體互動')}
+    <table style="border-collapse:collapse;width:100%;background:${C.bgPure};border:1px solid ${C.line};border-radius:10px;overflow:hidden;margin-bottom:20px;">${sessionRows}</table>
+
+    ${emailH3('分組互動意願順序')}
+    <table style="border-collapse:collapse;width:100%;background:${C.bgPure};border:1px solid ${C.line};border-radius:10px;overflow:hidden;margin-bottom:20px;">${rankingRows}</table>
+
+    ${emailWarning('截止前可隨時重新送出，以最後一次送出的內容為準。')}
+
+    <p style="font-size:13px;color:${C.inkMute};margin-top:16px;">如需修改，請再次開啟互動報名頁面重新送出：</p>
+    ${emailButton(`${baseUrl}/member/interactive?id=${reg.id}&code=${reg.random_code}`, '修改互動報名', 'green')}
+
+    ${emailSignoff()}
+  `
+
+  return sendMailWithRetry({
+    to: reg.email,
+    bcc: archiveEmail,
+    subject: '【第二屆台灣四念處禪修】互動報名確認',
     html: emailWrap(body, { maxWidth: 680 }),
   }, 3, 600, true)
 }

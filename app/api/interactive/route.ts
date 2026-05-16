@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { SESSIONS, TEACHERS, INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
 import { fetchInteractiveConfig } from '@/lib/interactive-config'
+import { sendInteractiveSubmitConfirmEmail } from '@/lib/interactive-invite-email'
 
 // id + code 可來自 query string 或 body（呼叫方傳入已解析的值）
 async function authMember(id: string | null, code: string | null) {
@@ -80,5 +81,10 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  sendInteractiveSubmitConfirmEmail(
+    { email: a.reg.email, chinese_name: a.reg.chinese_name, id: a.reg.id, random_code: body.code },
+    { wanted_sessions, wanted_ranking }
+  ).catch(err => console.error('[interactive] 確認信寄送失敗:', err))
+
   return NextResponse.json({ success: true })
-}
