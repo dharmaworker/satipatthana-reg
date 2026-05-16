@@ -1078,7 +1078,15 @@ function AutoDrawModal({ rows, sessions, slots, teachers, onClose, onApplied }: 
   const runDraw = async () => {
     setStep('drawing')
     await new Promise(r => setTimeout(r, 1600))
-    const res = mode === 'group' ? runGroupDraw(rows, scope, sessions, sessionLabel) : runSmallGroupDraw(rows, slots, teachers, teacherLabel)
+    // 抽簽只用 is_active 的場次 / slots
+    const activeSessions = sessions.filter(s => s.is_active)
+    const activeSlots = slots.filter(s => s.is_active)
+    const activeTeachers = derivedTeachers(activeSlots)
+    const activeSessionLabel: Record<string, string> = Object.fromEntries(activeSessions.map(s => [s.id, `${s.date} ${s.time}　${s.teacher}`]))
+    const activeTeacherLabel: Record<string, string> = Object.fromEntries(activeTeachers.map(t => [t.key, t.label]))
+    const res = mode === 'group'
+      ? runGroupDraw(rows, scope, activeSessions, activeSessionLabel)
+      : runSmallGroupDraw(rows, activeSlots, activeTeachers, activeTeacherLabel)
     setResults(res)
     setStep('results')
   }
@@ -1164,7 +1172,7 @@ function AutoDrawModal({ rows, sessions, slots, teachers, onClose, onApplied }: 
                   <label className="form-label">抽簽範圍（場次）</label>
                   <select className="form-select" value={scope} onChange={e => setScope(e.target.value)} style={{ maxWidth: 360 }}>
                     <option value="all">全部場次（同時抽）</option>
-                    {sessions.map(s => <option key={s.id} value={s.id}>{s.date} {s.time}　{s.teacher}（名額 {s.cap}）</option>)}
+                    {sessions.filter(s => s.is_active).map(s => <option key={s.id} value={s.id}>{s.date} {s.time}　{s.teacher}（名額 {s.cap}）</option>)}
                   </select>
                 </div>
               )}

@@ -64,10 +64,10 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({ success: true })
 }
 
-// DELETE /api/admin/interactive-small-slots?id=<uuid>
+// DELETE /api/admin/interactive-small-slots  body: { id }
 export async function DELETE(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
-  const id = new URL(request.url).searchParams.get('id')
+  const { id } = await request.json().catch(() => ({}))
   if (!id) return NextResponse.json({ error: '缺少 id' }, { status: 400 })
   const { error } = await supabaseAdmin.from('interactive_small_slots').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
