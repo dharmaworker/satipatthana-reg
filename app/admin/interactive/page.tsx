@@ -17,7 +17,8 @@ const SESSIONS = [
   { id: 's3', label: '8/24（一）阿姜給',   cap: 5 },
 ]
 const SMALL_GROUP_CAP = 38 // 每位分組老師總名額
-const SMALL_WAITLIST_CAP = 4 // 每位老師每個日期候補名額
+const SMALL_WAITLIST_CAP = 4  // 每位老師每個日期候補名額
+const SESSION_WAITLIST_CAP = 4 // 每個集體場次候補名額
 const SMALL_DATES = [
   { date: '2026-08-21', cap: 13 },
   { date: '2026-08-22', cap: 13 },
@@ -139,9 +140,17 @@ export default function InteractiveAdminPage() {
     const m = new Map<string, number>()
     for (const r of rows) {
       const it = r.interactive
-      if (it?.group_status === 'won' && it.assigned_session) {
+      if (it?.group_status === 'won' && it.assigned_session)
         m.set(it.assigned_session, (m.get(it.assigned_session) || 0) + 1)
-      }
+    }
+    return m
+  })()
+  const sessionWaitlistCounts = (() => {
+    const m = new Map<string, number>()
+    for (const r of rows) {
+      const it = r.interactive
+      if (it?.group_status === 'waitlist' && it.assigned_session)
+        m.set(it.assigned_session, (m.get(it.assigned_session) || 0) + 1)
     }
     return m
   })()
@@ -322,7 +331,7 @@ export default function InteractiveAdminPage() {
           <span className="count">共 {filtered.length} 筆</span>
         </div>
 
-        <CapacityPanel sessionCounts={sessionCounts} smallCounts={smallCounts} />
+        <CapacityPanel sessionCounts={sessionCounts} sessionWaitlistCounts={sessionWaitlistCounts} smallCounts={smallCounts} />
 
         <div className="admin-table-card scroll">
           <table className="admin-table">
@@ -615,8 +624,9 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
   )
 }
 
-function CapacityPanel({ sessionCounts, smallCounts }: {
+function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts }: {
   sessionCounts: Map<string, number>
+  sessionWaitlistCounts: Map<string, number>
   smallCounts: Map<string, number>
 }) {
   const [open, setOpen] = useState(false)
@@ -658,11 +668,12 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
         <div style={{ padding: "14px 18px 18px", borderTop: "1px solid var(--line)" }}>
           <div style={{ marginBottom: 14 }}>
             <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--green-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
-              集體互動場次
+              集體互動場次（每場次候補 {SESSION_WAITLIST_CAP}）
             </h5>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
               {SESSIONS.map(s => {
                 const c = sessionCounts.get(s.id) || 0
+                const wc = sessionWaitlistCounts.get(s.id) || 0
                 const over = c > s.cap
                 return (
                   <div key={s.id} style={{
@@ -678,6 +689,9 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
                       marginTop: 2,
                     }}>
                       {c} ／ {s.cap}{over && " ⚠"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#2a6fa8", marginTop: 2 }}>
+                      候補 {wc} ／ {SESSION_WAITLIST_CAP}
                     </div>
                   </div>
                 )
@@ -760,29 +774,37 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
   const sessions = scope === 'all' ? SESSIONS : SESSIONS.filter(s => s.id === scope)
 
   const alreadyWon = new Map<string, number>()
+  const alreadyWaitlist = new Map<string, number>()
   const maxSerial = new Map<string, number>()
+  const maxWaitlistSerial = new Map<string, number>()
   for (const r of rows) {
     const it = r.interactive
-    if (it?.group_status === 'won' && it.assigned_session) {
-      alreadyWon.set(it.assigned_session, (alreadyWon.get(it.assigned_session) || 0) + 1)
-      if (it.group_serial !== null && it.group_serial !== undefined) {
-        maxSerial.set(it.assigned_session, Math.max(maxSerial.get(it.assigned_session) || 0, it.group_serial))
+    if (it?.assigned_session) {
+      if (it.group_status === 'won') {
+        alreadyWon.set(it.assigned_session, (alreadyWon.get(it.assigned_session) || 0) + 1)
+        if (it.group_serial !== null && it.group_serial !== undefined)
+          maxSerial.set(it.assigned_session, Math.max(maxSerial.get(it.assigned_session) || 0, it.group_serial))
+      } else if (it.group_status === 'waitlist') {
+        alreadyWaitlist.set(it.assigned_session, (alreadyWaitlist.get(it.assigned_session) || 0) + 1)
+        if (it.group_serial !== null && it.group_serial !== undefined)
+          maxWaitlistSerial.set(it.assigned_session, Math.max(maxWaitlistSerial.get(it.assigned_session) || 0, it.group_serial))
       }
     }
   }
 
   const remaining = new Map(sessions.map(s => [s.id, Math.max(0, s.cap - (alreadyWon.get(s.id) || 0))]))
+  const waitlistRemaining = new Map(sessions.map(s => [s.id, Math.max(0, SESSION_WAITLIST_CAP - (alreadyWaitlist.get(s.id) || 0))]))
   const nextSerial = new Map(sessions.map(s => [s.id, (maxSerial.get(s.id) || 0) + 1]))
+  const waitlistNextSerial = new Map(sessions.map(s => [s.id, (maxWaitlistSerial.get(s.id) || 0) + 1]))
 
   const eligible = rows.filter(r => {
     const it = r.interactive
     if (!it || it.group_status !== 'pending') return false
     const wanted = it.wanted_sessions || []
-    return scope === 'all'
-      ? wanted.length > 0
-      : wanted.some(s => s === scope)
+    return scope === 'all' ? wanted.length > 0 : wanted.some(s => s === scope)
   })
 
+  // Phase 1：中簽
   const results: DrawResult[] = []
   for (const row of shuffle(eligible)) {
     const wanted = (row.interactive!.wanted_sessions || []).filter(s => sessions.find(x => x.id === s))
@@ -808,6 +830,28 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
       assigned_session: assigned?.session ?? null,
     })
   }
+
+  // Phase 2：候補（lost 的學員依意願順序找第一個有候補名額的場次）
+  for (const result of results) {
+    if (result.status !== 'lost') continue
+    const row = rows.find(r => r.registration.id === result.registration_id)
+    if (!row?.interactive) continue
+    const wanted = (row.interactive.wanted_sessions || []).filter(s => sessions.find(x => x.id === s))
+    for (const sessionId of wanted) {
+      const wrem = waitlistRemaining.get(sessionId) ?? 0
+      if (wrem > 0) {
+        const serial = waitlistNextSerial.get(sessionId)!
+        waitlistRemaining.set(sessionId, wrem - 1)
+        waitlistNextSerial.set(sessionId, serial + 1)
+        result.status = 'waitlist'
+        result.label = SESSION_LABEL[sessionId] || sessionId
+        result.serial = serial
+        result.assigned_session = sessionId
+        break
+      }
+    }
+  }
+
   return results
 }
 
