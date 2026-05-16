@@ -38,9 +38,9 @@ ALTER TABLE interactive_small_slots ENABLE ROW LEVEL SECURITY;
 -- ──────────────────────────────────────────
 INSERT INTO interactive_sessions (id, teacher, date, time, cap, waitlist_cap, sort_order)
 VALUES
-  ('s1', '阿姜宋猜尊者', '8/20（四）', '14:30 — 15:30', 5, 4, 1),
-  ('s2', '麥琪奧蘭努',   '8/21（五）', '14:00 — 15:30', 8, 4, 2),
-  ('s3', '阿姜給尊者',   '8/24（一）', '14:00 — 15:30', 5, 4, 3)
+  ('s1', '阿姜宋猜尊者', '2026/8/20（四）', '14:30 — 15:30', 5, 4, 1),
+  ('s2', '麥琪奧蘭努',   '2026/8/21（五）', '14:00 — 15:30', 8, 4, 2),
+  ('s3', '阿姜給尊者',   '2026/8/24（一）', '14:00 — 15:30', 5, 4, 3)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO interactive_small_slots (teacher_key, teacher_label, date, cap, waitlist_cap, sort_order)

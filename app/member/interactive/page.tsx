@@ -343,7 +343,7 @@ function InteractiveContent() {
                         <label key={s.id} className={`session-cell ${checked ? 'selected' : ''}`}>
                           <input type="checkbox" checked={checked} onChange={() => toggleSession(s.id)} />
                           <div className="session-check" />
-                          <div className="session-date">2026年{s.date}</div>
+                          <div className="session-date">{s.date}</div>
                           <div className="session-time">{s.time}</div>
                           <div className="session-teacher">
                             {s.teacher} 互動問答<span className="seats">{s.cap} 人</span>
