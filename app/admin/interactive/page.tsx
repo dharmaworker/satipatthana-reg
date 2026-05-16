@@ -17,6 +17,7 @@ const SESSIONS = [
   { id: 's3', label: '8/24（一）阿姜給',   cap: 5 },
 ]
 const SMALL_GROUP_CAP = 38 // 每位分組老師總名額
+const SMALL_WAITLIST_CAP = 4 // 每位老師每個日期候補名額
 const SMALL_DATES = [
   { date: '2026-08-21', cap: 13 },
   { date: '2026-08-22', cap: 13 },
@@ -685,12 +686,18 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
           </div>
           <div>
             <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--gold-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
-              分組互動（每位老師名額 {SMALL_GROUP_CAP}）
+              分組互動（每位老師名額 {SMALL_GROUP_CAP}，每日期候補 {SMALL_WAITLIST_CAP}）
             </h5>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
               {TEACHERS.map(t => {
                 const c = teacherTotals.get(t.id) || 0
                 const over = c > SMALL_GROUP_CAP
+                // 候補人數（per teacher，跨所有日期）
+                const wc = SMALL_DATES.reduce((sum, d) => {
+                  const wk = `${t.id}|${d.date}`
+                  return sum + Array.from(rows).filter(r => r.interactive?.small_status === 'waitlist' && r.interactive.assigned_group === t.id && r.interactive.assigned_date === d.date).length
+                }, 0)
+                const waitlistTotal = SMALL_DATES.length * SMALL_WAITLIST_CAP
                 return (
                   <div key={t.id} style={{
                     padding: "8px 12px",
@@ -705,6 +712,9 @@ function CapacityPanel({ sessionCounts, smallCounts }: {
                       marginTop: 2,
                     }}>
                       {c} ／ {SMALL_GROUP_CAP}{over && " ⚠"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#2a6fa8", marginTop: 2 }}>
+                      候補 {wc} ／ {waitlistTotal}
                     </div>
                   </div>
                 )
@@ -738,7 +748,7 @@ type DrawResult = {
   chinese_name: string
   member_id: string | null
   mode: DrawMode
-  won: boolean
+  status: 'won' | 'waitlist' | 'lost'
   label: string
   serial: number | null
   assigned_session?: string | null
@@ -792,7 +802,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
       chinese_name: row.registration.chinese_name,
       member_id: row.registration.member_id,
       mode: 'group',
-      won: !!assigned,
+      status: assigned ? 'won' : 'lost',
       label: assigned ? (SESSION_LABEL[assigned.session] || assigned.session) : '—',
       serial: assigned?.serial ?? null,
       assigned_session: assigned?.session ?? null,
@@ -802,43 +812,52 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
 }
 
 function runSmallGroupDraw(rows: Row[]): DrawResult[] {
-  const alreadyWon = new Map<string, number>()
-  // maxSerial key = "teacher|date"（每位老師每個日期各自序號）
-  const maxSerial = new Map<string, number>()
-  // 已分配的日期名額：key = "teacher|date"
-  const alreadyWonByDate = new Map<string, number>()
+  // ── 統計 DB 中已有的中簽與候補記錄 ──
+  const alreadyWon = new Map<string, number>()           // per teacher
+  const alreadyWaitlist = new Map<string, number>()      // per teacher|date
+  const maxSerial = new Map<string, number>()            // per teacher|date（中簽序號）
+  const maxWaitlistSerial = new Map<string, number>()    // per teacher|date（候補序號）
+  const alreadyWonByDate = new Map<string, number>()     // per teacher|date
+
   for (const r of rows) {
     const it = r.interactive
-    if (it?.small_status === 'won' && it.assigned_group) {
-      alreadyWon.set(it.assigned_group, (alreadyWon.get(it.assigned_group) || 0) + 1)
-      if (it.assigned_date) {
-        const dk = `${it.assigned_group}|${it.assigned_date}`
+    if (!it?.assigned_group) continue
+    const tid = it.assigned_group
+    const dk = it.assigned_date ? `${tid}|${it.assigned_date}` : null
+
+    if (it.small_status === 'won') {
+      alreadyWon.set(tid, (alreadyWon.get(tid) || 0) + 1)
+      if (dk) {
         alreadyWonByDate.set(dk, (alreadyWonByDate.get(dk) || 0) + 1)
-        if (it.small_serial !== null && it.small_serial !== undefined) {
+        if (it.small_serial !== null && it.small_serial !== undefined)
           maxSerial.set(dk, Math.max(maxSerial.get(dk) || 0, it.small_serial))
-        }
+      }
+    } else if (it.small_status === 'waitlist') {
+      if (dk) {
+        alreadyWaitlist.set(dk, (alreadyWaitlist.get(dk) || 0) + 1)
+        if (it.small_serial !== null && it.small_serial !== undefined)
+          maxWaitlistSerial.set(dk, Math.max(maxWaitlistSerial.get(dk) || 0, it.small_serial))
       }
     }
   }
 
-  // 每位老師每個日期剩餘名額
-  const dateRemaining = new Map<string, number>()
+  // ── 剩餘名額 ──
+  const dateRemaining = new Map<string, number>()       // 中簽名額 per teacher|date
+  const waitlistRemaining = new Map<string, number>()   // 候補名額 per teacher|date
+  const nextSerial = new Map<string, number>()          // 中簽序號 per teacher|date
+  const waitlistNextSerial = new Map<string, number>()  // 候補序號 per teacher|date
+
   for (const t of TEACHERS) {
     for (const d of SMALL_DATES) {
       const k = `${t.id}|${d.date}`
       dateRemaining.set(k, Math.max(0, d.cap - (alreadyWonByDate.get(k) || 0)))
+      waitlistRemaining.set(k, Math.max(0, SMALL_WAITLIST_CAP - (alreadyWaitlist.get(k) || 0)))
+      nextSerial.set(k, (maxSerial.get(k) || 0) + 1)
+      waitlistNextSerial.set(k, (maxWaitlistSerial.get(k) || 0) + 1)
     }
   }
 
   const remaining = new Map(TEACHERS.map(t => [t.id, Math.max(0, SMALL_GROUP_CAP - (alreadyWon.get(t.id) || 0))]))
-  // nextSerial key = "teacher|date"
-  const nextSerial = new Map<string, number>()
-  for (const t of TEACHERS) {
-    for (const d of SMALL_DATES) {
-      const k = `${t.id}|${d.date}`
-      nextSerial.set(k, (maxSerial.get(k) || 0) + 1)
-    }
-  }
 
   type PoolEntry = { row: Row; prefIndex: number }
   const resultMap = new Map<string, DrawResult>()
@@ -847,19 +866,18 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
     .filter(r => r.interactive && r.interactive.small_status === 'pending' && (r.interactive.wanted_ranking || []).length > 0)
     .map(row => ({ row, prefIndex: 0 }))
 
-  // 依意願輪次分配：第1意願 → 第2意願 → …
-  // 每輪：若某老師報名人數 ≤ 剩餘名額 → 全上；超出 → 抽籤，未中者進下一輪
+  // ── Phase 1：多輪意願抽簽（中簽） ──
   while (pool.length > 0) {
     const byTeacher = new Map<string, PoolEntry[]>()
     for (const entry of pool) {
       const ranking = entry.row.interactive!.wanted_ranking || []
       if (entry.prefIndex >= ranking.length) {
-        // 意願已用盡 → 沒中簽
+        // 意願用盡 → 暫時標 lost，Phase 2 再嘗試候補
         resultMap.set(entry.row.registration.id, {
           registration_id: entry.row.registration.id,
           chinese_name: entry.row.registration.chinese_name,
           member_id: entry.row.registration.member_id,
-          mode: 'small', won: false, label: '—', serial: null, assigned_group: null,
+          mode: 'small', status: 'lost', label: '—', serial: null, assigned_group: null,
         })
         continue
       }
@@ -867,7 +885,6 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
       if (!byTeacher.has(tid)) byTeacher.set(tid, [])
       byTeacher.get(tid)!.push(entry)
     }
-
     if (byTeacher.size === 0) break
 
     const nextPool: PoolEntry[] = []
@@ -878,31 +895,31 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
       for (let i = 0; i < shuffled.length; i++) {
         const e = shuffled[i]
         if (i < wonCount) {
-          // 先選日期（剩餘名額最多），再取該日期的序號
+          // 先選日期，再取該日期序號
           let assignedDate: string | null = null
           let bestRem = -1
           for (const d of SMALL_DATES) {
             const k = `${teacherId}|${d.date}`
-            const rem = dateRemaining.get(k) ?? 0
-            if (rem > bestRem) { bestRem = rem; assignedDate = d.date }
+            const r = dateRemaining.get(k) ?? 0
+            if (r > bestRem) { bestRem = r; assignedDate = d.date }
           }
           if (assignedDate && bestRem > 0) {
             const k = `${teacherId}|${assignedDate}`
             dateRemaining.set(k, bestRem - 1)
+            const serial = nextSerial.get(k)!
+            nextSerial.set(k, serial + 1)
+            resultMap.set(e.row.registration.id, {
+              registration_id: e.row.registration.id,
+              chinese_name: e.row.registration.chinese_name,
+              member_id: e.row.registration.member_id,
+              mode: 'small', status: 'won',
+              label: TEACHER_LABEL[teacherId] || teacherId,
+              serial, assigned_group: teacherId, assigned_date: assignedDate,
+            })
           } else {
-            assignedDate = null
+            // 名額已滿（理論上不應發生），進下一輪
+            nextPool.push({ row: e.row, prefIndex: e.prefIndex + 1 })
           }
-          const serialKey = assignedDate ? `${teacherId}|${assignedDate}` : null
-          const serial = serialKey ? nextSerial.get(serialKey)! : null
-          if (serialKey && serial !== null) nextSerial.set(serialKey, serial + 1)
-          resultMap.set(e.row.registration.id, {
-            registration_id: e.row.registration.id,
-            chinese_name: e.row.registration.chinese_name,
-            member_id: e.row.registration.member_id,
-            mode: 'small', won: true,
-            label: TEACHER_LABEL[teacherId] || teacherId,
-            serial, assigned_group: teacherId, assigned_date: assignedDate,
-          })
         } else {
           nextPool.push({ row: e.row, prefIndex: e.prefIndex + 1 })
         }
@@ -912,15 +929,52 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
     pool = nextPool
   }
 
-  // 剩餘（所有老師都滿額）→ 沒中簽
+  // 剩餘（所有老師都滿額）→ 標 lost，Phase 2 再嘗試候補
   for (const entry of pool) {
     if (!resultMap.has(entry.row.registration.id)) {
       resultMap.set(entry.row.registration.id, {
         registration_id: entry.row.registration.id,
         chinese_name: entry.row.registration.chinese_name,
         member_id: entry.row.registration.member_id,
-        mode: 'small', won: false, label: '—', serial: null, assigned_group: null,
+        mode: 'small', status: 'lost', label: '—', serial: null, assigned_group: null,
       })
+    }
+  }
+
+  // ── Phase 2：候補分配（依意願順序，找第一個有候補名額的老師＋日期） ──
+  for (const result of resultMap.values()) {
+    if (result.status !== 'lost') continue
+    const row = rows.find(r => r.registration.id === result.registration_id)
+    if (!row?.interactive) continue
+    const ranking = row.interactive.wanted_ranking || []
+    let assigned = false
+    for (const teacherId of ranking) {
+      // 找該老師剩餘候補名額最多的日期
+      let bestDate: string | null = null
+      let bestRem = 0
+      for (const d of SMALL_DATES) {
+        const k = `${teacherId}|${d.date}`
+        const rem = waitlistRemaining.get(k) ?? 0
+        if (rem > bestRem) { bestRem = rem; bestDate = d.date }
+      }
+      if (bestDate && bestRem > 0) {
+        const k = `${teacherId}|${bestDate}`
+        waitlistRemaining.set(k, bestRem - 1)
+        const serial = waitlistNextSerial.get(k)!
+        waitlistNextSerial.set(k, serial + 1)
+        result.status = 'waitlist'
+        result.label = TEACHER_LABEL[teacherId] || teacherId
+        result.serial = serial
+        result.assigned_group = teacherId
+        result.assigned_date = bestDate
+        assigned = true
+        break
+      }
+    }
+    if (!assigned) {
+      result.label = '—'
+      result.serial = null
+      result.assigned_group = null
     }
   }
 
@@ -966,8 +1020,8 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
     setApplyError('')
     const patches = results.map(r =>
       r.mode === 'group'
-        ? { registration_id: r.registration_id, group_status: r.won ? 'won' : 'lost', assigned_session: r.assigned_session ?? null, group_serial: r.serial }
-        : { registration_id: r.registration_id, small_status: r.won ? 'won' : 'lost', assigned_group: r.assigned_group ?? null, assigned_date: r.assigned_date ?? null, small_serial: r.serial }
+        ? { registration_id: r.registration_id, group_status: r.status, assigned_session: r.assigned_session ?? null, group_serial: r.serial }
+        : { registration_id: r.registration_id, small_status: r.status, assigned_group: r.assigned_group ?? null, assigned_date: r.assigned_date ?? null, small_serial: r.serial }
     )
     setApplyProgress({ done: 0, total: patches.length })
     try {
@@ -986,11 +1040,12 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
     }
   }
 
-  const wonCount = results.filter(r => r.won).length
-  const lostCount = results.filter(r => !r.won).length
+  const wonCount = results.filter(r => r.status === 'won').length
+  const waitlistCount = results.filter(r => r.status === 'waitlist').length
+  const lostCount = results.filter(r => r.status === 'lost').length
   const byLabel = new Map<string, number>()
   for (const r of results) {
-    if (r.won) byLabel.set(r.label, (byLabel.get(r.label) || 0) + 1)
+    if (r.status === 'won') byLabel.set(r.label, (byLabel.get(r.label) || 0) + 1)
   }
 
   const overlayStyle: React.CSSProperties = {
@@ -1069,6 +1124,11 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                 <div style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(73,85,52,0.08)', border: '1px solid rgba(73,85,52,0.2)', fontSize: 13 }}>
                   ✓ 中簽 <strong style={{ fontSize: 18, color: 'var(--green-deep)' }}>{wonCount}</strong> 人
                 </div>
+                {mode === 'small' && (
+                  <div style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(42,111,168,0.08)', border: '1px solid rgba(42,111,168,0.2)', fontSize: 13 }}>
+                    ✦ 候補 <strong style={{ fontSize: 18, color: '#2a6fa8' }}>{waitlistCount}</strong> 人
+                  </div>
+                )}
                 <div style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(180,147,88,0.08)', border: '1px solid rgba(180,147,88,0.2)', fontSize: 13 }}>
                   ✗ 沒中簽 <strong style={{ fontSize: 18, color: 'var(--gold-deep)' }}>{lostCount}</strong> 人
                 </div>
@@ -1095,24 +1155,35 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.map(r => (
-                      <tr key={r.registration_id} style={{ background: r.won ? 'rgba(73,85,52,0.03)' : 'transparent', borderBottom: '1px solid var(--line)' }}>
-                        <td style={{ padding: '7px 12px', fontWeight: 600 }}>{r.chinese_name}</td>
-                        <td style={{ padding: '7px 12px', fontFamily: 'monospace', color: 'var(--ink-mute)' }}>{r.member_id || '—'}</td>
-                        <td style={{ padding: '7px 12px' }}>
-                          <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: r.won ? 'rgba(73,85,52,0.12)' : 'rgba(180,147,88,0.1)', color: r.won ? 'var(--green-deep)' : 'var(--gold-deep)', border: `1px solid ${r.won ? 'rgba(73,85,52,0.25)' : 'rgba(180,147,88,0.25)'}` }}>
-                            {r.won ? '✓ 中簽' : '✗ 沒中簽'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '7px 12px', color: r.won ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>{r.won ? r.label : '—'}</td>
-                        {mode === 'small' && (
-                          <td style={{ padding: '7px 12px', color: r.won ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>
-                            {r.won ? (r.assigned_date || <span style={{ color: 'var(--error)' }}>未能分配</span>) : '—'}
+                    {results.map(r => {
+                      const isWon = r.status === 'won'
+                      const isWaitlist = r.status === 'waitlist'
+                      const rowBg = isWon ? 'rgba(73,85,52,0.03)' : isWaitlist ? 'rgba(42,111,168,0.03)' : 'transparent'
+                      const statusBadge = isWon
+                        ? { bg: 'rgba(73,85,52,0.12)', color: 'var(--green-deep)', border: 'rgba(73,85,52,0.25)', text: '✓ 中簽' }
+                        : isWaitlist
+                          ? { bg: 'rgba(42,111,168,0.10)', color: '#2a6fa8', border: 'rgba(42,111,168,0.25)', text: '✦ 候補' }
+                          : { bg: 'rgba(180,147,88,0.1)', color: 'var(--gold-deep)', border: 'rgba(180,147,88,0.25)', text: '✗ 沒中簽' }
+                      const hasAssign = isWon || isWaitlist
+                      return (
+                        <tr key={r.registration_id} style={{ background: rowBg, borderBottom: '1px solid var(--line)' }}>
+                          <td style={{ padding: '7px 12px', fontWeight: 600 }}>{r.chinese_name}</td>
+                          <td style={{ padding: '7px 12px', fontFamily: 'monospace', color: 'var(--ink-mute)' }}>{r.member_id || '—'}</td>
+                          <td style={{ padding: '7px 12px' }}>
+                            <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
+                              {statusBadge.text}
+                            </span>
                           </td>
-                        )}
-                        <td style={{ padding: '7px 12px', fontFamily: 'monospace', fontWeight: r.won ? 700 : 400, color: r.won ? 'var(--ink)' : 'var(--ink-mute)' }}>{r.serial ?? '—'}</td>
-                      </tr>
-                    ))}
+                          <td style={{ padding: '7px 12px', color: hasAssign ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>{hasAssign ? r.label : '—'}</td>
+                          {mode === 'small' && (
+                            <td style={{ padding: '7px 12px', color: hasAssign ? 'var(--ink)' : 'var(--ink-mute)', fontSize: 12.5 }}>
+                              {hasAssign ? (r.assigned_date || <span style={{ color: 'var(--error)' }}>未能分配</span>) : '—'}
+                            </td>
+                          )}
+                          <td style={{ padding: '7px 12px', fontFamily: 'monospace', fontWeight: hasAssign ? 700 : 400, color: hasAssign ? 'var(--ink)' : 'var(--ink-mute)' }}>{r.serial ?? '—'}</td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
