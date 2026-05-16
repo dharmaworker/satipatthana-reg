@@ -803,6 +803,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
 
 function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   const alreadyWon = new Map<string, number>()
+  // maxSerial key = "teacher|date"（每位老師每個日期各自序號）
   const maxSerial = new Map<string, number>()
   // 已分配的日期名額：key = "teacher|date"
   const alreadyWonByDate = new Map<string, number>()
@@ -810,12 +811,12 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
     const it = r.interactive
     if (it?.small_status === 'won' && it.assigned_group) {
       alreadyWon.set(it.assigned_group, (alreadyWon.get(it.assigned_group) || 0) + 1)
-      if (it.small_serial !== null && it.small_serial !== undefined) {
-        maxSerial.set(it.assigned_group, Math.max(maxSerial.get(it.assigned_group) || 0, it.small_serial))
-      }
       if (it.assigned_date) {
-        const k = `${it.assigned_group}|${it.assigned_date}`
-        alreadyWonByDate.set(k, (alreadyWonByDate.get(k) || 0) + 1)
+        const dk = `${it.assigned_group}|${it.assigned_date}`
+        alreadyWonByDate.set(dk, (alreadyWonByDate.get(dk) || 0) + 1)
+        if (it.small_serial !== null && it.small_serial !== undefined) {
+          maxSerial.set(dk, Math.max(maxSerial.get(dk) || 0, it.small_serial))
+        }
       }
     }
   }
@@ -830,7 +831,14 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   }
 
   const remaining = new Map(TEACHERS.map(t => [t.id, Math.max(0, SMALL_GROUP_CAP - (alreadyWon.get(t.id) || 0))]))
-  const nextSerial = new Map(TEACHERS.map(t => [t.id, (maxSerial.get(t.id) || 0) + 1]))
+  // nextSerial key = "teacher|date"
+  const nextSerial = new Map<string, number>()
+  for (const t of TEACHERS) {
+    for (const d of SMALL_DATES) {
+      const k = `${t.id}|${d.date}`
+      nextSerial.set(k, (maxSerial.get(k) || 0) + 1)
+    }
+  }
 
   type PoolEntry = { row: Row; prefIndex: number }
   const resultMap = new Map<string, DrawResult>()
@@ -870,8 +878,7 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
       for (let i = 0; i < shuffled.length; i++) {
         const e = shuffled[i]
         if (i < wonCount) {
-          const serial = nextSerial.get(teacherId)!
-          // 自動分日期：選剩餘名額最多的日期
+          // 先選日期（剩餘名額最多），再取該日期的序號
           let assignedDate: string | null = null
           let bestRem = -1
           for (const d of SMALL_DATES) {
@@ -885,6 +892,9 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
           } else {
             assignedDate = null
           }
+          const serialKey = assignedDate ? `${teacherId}|${assignedDate}` : null
+          const serial = serialKey ? nextSerial.get(serialKey)! : null
+          if (serialKey && serial !== null) nextSerial.set(serialKey, serial + 1)
           resultMap.set(e.row.registration.id, {
             registration_id: e.row.registration.id,
             chinese_name: e.row.registration.chinese_name,
@@ -893,7 +903,6 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
             label: TEACHER_LABEL[teacherId] || teacherId,
             serial, assigned_group: teacherId, assigned_date: assignedDate,
           })
-          nextSerial.set(teacherId, serial + 1)
         } else {
           nextPool.push({ row: e.row, prefIndex: e.prefIndex + 1 })
         }
