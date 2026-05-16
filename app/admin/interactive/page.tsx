@@ -3,28 +3,21 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '../_components/AdminHeader'
 
-const TEACHERS = [
-  { id: 'prasan',   name: '阿姜巴山' },
-  { id: 'nat',      name: '阿姜納' },
-  { id: 'nitiya',   name: '阿姜妮' },
-  { id: 'napatpol', name: '阿姜松' },
-]
-const TEACHER_LABEL: Record<string, string> = Object.fromEntries(TEACHERS.map(t => [t.id, t.name]))
+// ── 動態設定型別（從 DB 載入，取代舊的 hardcode 常數）
+type DbSession = { id: string; teacher: string; date: string; time: string; cap: number; waitlist_cap: number; is_active: boolean; sort_order: number }
+type DbSlot = { id: string; teacher_key: string; teacher_label: string; date: string; cap: number; waitlist_cap: number; is_active: boolean; sort_order: number }
+type DbTeacher = { key: string; label: string; total_cap: number; slots: DbSlot[] }
 
-const SESSIONS = [
-  { id: 's1', label: '8/20（四）宋猜尊者', cap: 5 },
-  { id: 's2', label: '8/21（五）奧蘭努',   cap: 8 },
-  { id: 's3', label: '8/24（一）阿姜給',   cap: 5 },
-]
-const SMALL_GROUP_CAP = 38 // 每位分組老師總名額
-const SMALL_WAITLIST_CAP = 4  // 每位老師每個日期候補名額
-const SESSION_WAITLIST_CAP = 4 // 每個集體場次候補名額
-const SMALL_DATES = [
-  { date: '2026-08-21', cap: 13 },
-  { date: '2026-08-22', cap: 13 },
-  { date: '2026-08-23', cap: 12 },
-]
-const SESSION_LABEL: Record<string, string> = Object.fromEntries(SESSIONS.map(s => [s.id, s.label]))
+function derivedTeachers(slots: DbSlot[]): DbTeacher[] {
+  const map = new Map<string, DbTeacher>()
+  for (const slot of slots) {
+    if (!map.has(slot.teacher_key)) map.set(slot.teacher_key, { key: slot.teacher_key, label: slot.teacher_label, total_cap: 0, slots: [] })
+    const t = map.get(slot.teacher_key)!
+    t.total_cap += slot.cap
+    t.slots.push(slot)
+  }
+  return Array.from(map.values())
+}
 
 type Row = {
   registration: { id: string; chinese_name: string; member_id: string | null; student_id: string | null; random_code: string; email: string; residence: string }
@@ -62,16 +55,27 @@ export default function InteractiveAdminPage() {
   const [configOpen, setConfigOpen] = useState(false)
   const [configSaving, setConfigSaving] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  const [sessions, setSessions] = useState<DbSession[]>([])
+  const [slots, setSlots] = useState<DbSlot[]>([])
+
+  const teachers = derivedTeachers(slots)
+  const sessionLabel: Record<string, string> = Object.fromEntries(sessions.map(s => [s.id, `${s.date} ${s.time}　${s.teacher}`]))
+  const teacherLabel: Record<string, string> = Object.fromEntries(teachers.map(t => [t.key, t.label]))
 
   const fetchData = async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/interactive')
+    const [res, sessRes, slotRes, cRes] = await Promise.all([
+      fetch('/api/admin/interactive'),
+      fetch('/api/admin/interactive-sessions'),
+      fetch('/api/admin/interactive-small-slots'),
+      fetch('/api/admin/interactive-config'),
+    ])
     if (res.status === 401 || res.status === 403) { router.push('/admin'); return }
-    const d = await res.json()
+    const [d, sessD, slotD] = await Promise.all([res.json(), sessRes.json(), slotRes.json()])
     setRows(d.data || [])
+    setSessions(sessD.data || [])
+    setSlots(slotD.data || [])
     setPage(1)
-    // 同步抓 config
-    const cRes = await fetch('/api/admin/interactive-config')
     if (cRes.ok) {
       const cfg = await cRes.json()
       setConfigOpen(!!cfg.open)
@@ -313,6 +317,8 @@ export default function InteractiveAdminPage() {
           </button>
         </div>
 
+        <SessionManagePanel sessions={sessions} slots={slots} onRefresh={fetchData} />
+
         <div className="admin-toolbar">
           <input type="text" placeholder="搜尋姓名 / 報名序號 / 學號 / Email"
             value={search} onChange={e => setSearch(e.target.value)} style={{ width: 280 }} />
@@ -343,7 +349,7 @@ export default function InteractiveAdminPage() {
           <span className="count">共 {filtered.length} 筆</span>
         </div>
 
-        <CapacityPanel sessionCounts={sessionCounts} sessionWaitlistCounts={sessionWaitlistCounts} smallCounts={smallCounts} smallWaitlistCounts={smallWaitlistCounts} />
+        <CapacityPanel sessions={sessions} teachers={teachers} sessionCounts={sessionCounts} sessionWaitlistCounts={sessionWaitlistCounts} smallCounts={smallCounts} smallWaitlistCounts={smallWaitlistCounts} />
 
         <div className="admin-table-card scroll">
           <table className="admin-table">
@@ -386,7 +392,7 @@ export default function InteractiveAdminPage() {
                     <td className="mono">{r.registration.student_id || '—'}</td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_sessions?.length
-                        ? it.wanted_sessions.map(s => SESSION_LABEL[s] || `（已移除：${s}）`).join('、')
+                        ? it.wanted_sessions.map(s => sessionLabel[s] || `（已移除：${s}）`).join('、')
                         : it ? <span style={{ color: 'var(--ink-mute)' }}>（不報名）</span> : <span style={{ color: 'var(--ink-mute)' }}>未送出</span>}
                     </td>
                     <td>
@@ -405,7 +411,7 @@ export default function InteractiveAdminPage() {
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {groupAbstained ? '—' : it?.assigned_session
-                        ? SESSION_LABEL[it.assigned_session]
+                        ? sessionLabel[it.assigned_session]
                         : it?.group_status === 'won'
                           ? <span style={{ color: 'var(--error)' }}>需指定</span>
                           : '—'}
@@ -415,7 +421,7 @@ export default function InteractiveAdminPage() {
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.wanted_ranking?.length
-                        ? it.wanted_ranking.map((t, i) => `${i + 1}.${TEACHER_LABEL[t] || t}`).join(' ')
+                        ? it.wanted_ranking.map((t, i) => `${i + 1}.${teacherLabel[t] || t}`).join(' ')
                         : it ? <span style={{ color: 'var(--ink-mute)' }}>（不報名）</span> : '—'}
                     </td>
                     <td>
@@ -434,7 +440,7 @@ export default function InteractiveAdminPage() {
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {smallAbstained ? '—' : it?.assigned_group
-                        ? <>{TEACHER_LABEL[it.assigned_group]}<br /><span style={{ fontSize: 11 }}>{it.assigned_date || (it.small_status === 'won' ? <span style={{ color: 'var(--error)' }}>需指定日期</span> : '')}</span></>
+                        ? <>{teacherLabel[it.assigned_group] || it.assigned_group}<br /><span style={{ fontSize: 11 }}>{it.assigned_date || (it.small_status === 'won' ? <span style={{ color: 'var(--error)' }}>需指定日期</span> : '')}</span></>
                         : it?.small_status === 'won'
                           ? <span style={{ color: 'var(--error)' }}>需指定</span>
                           : '—'}
@@ -469,6 +475,7 @@ export default function InteractiveAdminPage() {
 
       {editing && (
         <EditModal row={editing}
+          sessions={sessions} slots={slots} teachers={teachers}
           onClose={() => setEditing(null)}
           onSave={async patch => {
             const ok = await updateStatus(editing.registration.id, patch)
@@ -478,7 +485,7 @@ export default function InteractiveAdminPage() {
 
       {autoDrawOpen && (
         <AutoDrawModal
-          rows={rows}
+          rows={rows} sessions={sessions} slots={slots} teachers={teachers}
           onClose={() => setAutoDrawOpen(false)}
           onApplied={() => { setAutoDrawOpen(false); fetchData() }}
         />
@@ -491,7 +498,7 @@ function statusCls(s: string) {
   return s === 'won' ? 'ok' : s === 'lost' ? 'error' : s === 'waitlist' ? 'info' : s === 'abstain' ? '' : 'warn'
 }
 
-function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; onSave: (patch: any) => void }) {
+function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: Row; sessions: DbSession[]; slots: DbSlot[]; teachers: DbTeacher[]; onClose: () => void; onSave: (patch: any) => void }) {
   const it = row.interactive!
   const groupAbstained = (it.wanted_sessions || []).length === 0
   const smallAbstained = (it.wanted_ranking || []).length === 0
@@ -542,9 +549,11 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                       <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
                         <option value="">（未指定）</option>
-                        {(it.wanted_sessions || []).map(sid => (
-                          <option key={sid} value={sid}>{SESSION_LABEL[sid] || `（已移除：${sid}）`}</option>
-                        ))}
+                        {(it.wanted_sessions || []).map(sid => {
+                          const s = sessions.find(x => x.id === sid)
+                          const label = s ? `${s.date} ${s.time}　${s.teacher}` : `（已移除：${sid}）`
+                          return <option key={sid} value={sid}>{label}</option>
+                        })}
                       </select>
                     </div>
                     <div>
@@ -584,20 +593,21 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
                   <>
                     <div>
                       <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
-                      <select className="form-select" value={assignedGroup} onChange={e => setAssignedGroup(e.target.value)}>
+                      <select className="form-select" value={assignedGroup} onChange={e => { setAssignedGroup(e.target.value); setAssignedDate('') }}>
                         <option value="">（未指定）</option>
-                        {(it.wanted_ranking || []).map((tid, i) => (
-                          <option key={tid} value={tid}>第{i + 1}意願　{TEACHER_LABEL[tid] || tid} 組</option>
-                        ))}
+                        {(it.wanted_ranking || []).map((tid, i) => {
+                          const t = teachers.find(x => x.key === tid)
+                          return <option key={tid} value={tid}>第{i + 1}意願　{t?.label || tid} 組</option>
+                        })}
                       </select>
                     </div>
                     <div>
                       <label className="form-label">指定日期{smallStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}>
                         <option value="">（未指定）</option>
-                        <option value="2026-08-21">2026-08-21（週五）</option>
-                        <option value="2026-08-22">2026-08-22（週六）</option>
-                        <option value="2026-08-23">2026-08-23（週日）</option>
+                        {(teachers.find(t => t.key === assignedGroup)?.slots || slots.filter(s => s.teacher_key === assignedGroup)).map(s => (
+                          <option key={s.date} value={s.date}>{s.date}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -636,7 +646,9 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
   )
 }
 
-function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smallWaitlistCounts }: {
+function CapacityPanel({ sessions, teachers, sessionCounts, sessionWaitlistCounts, smallCounts, smallWaitlistCounts }: {
+  sessions: DbSession[]
+  teachers: DbTeacher[]
   sessionCounts: Map<string, number>
   sessionWaitlistCounts: Map<string, number>
   smallCounts: Map<string, number>
@@ -644,20 +656,19 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smal
 }) {
   const [open, setOpen] = useState(false)
 
-  const totalGroup = SESSIONS.reduce((s, x) => s + (sessionCounts.get(x.id) || 0), 0)
-  const groupCap = SESSIONS.reduce((s, x) => s + x.cap, 0)
+  const totalGroup = sessions.reduce((s, x) => s + (sessionCounts.get(x.id) || 0), 0)
+  const groupCap = sessions.reduce((s, x) => s + x.cap, 0)
   const totalSmall = Array.from(smallCounts.values()).reduce((s, x) => s + x, 0)
-  const smallCap = TEACHERS.length * SMALL_GROUP_CAP
+  const smallCap = teachers.reduce((s, t) => s + t.total_cap, 0)
 
-  // Compute per-teacher totals for over-capacity check
   const teacherTotals = new Map<string, number>()
   for (const [key, count] of smallCounts.entries()) {
     const teacher = key.split('|')[0]
     teacherTotals.set(teacher, (teacherTotals.get(teacher) || 0) + count)
   }
 
-  const anyOver = SESSIONS.some(s => (sessionCounts.get(s.id) || 0) > s.cap)
-    || Array.from(teacherTotals.entries()).some(([_, c]) => c > SMALL_GROUP_CAP)
+  const anyOver = sessions.some(s => (sessionCounts.get(s.id) || 0) > s.cap)
+    || teachers.some(t => (teacherTotals.get(t.key) || 0) > t.total_cap)
 
   return (
     <div className="admin-table-card" style={{ padding: 0, marginBottom: 14 }}>
@@ -681,13 +692,14 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smal
         <div style={{ padding: "14px 18px 18px", borderTop: "1px solid var(--line)" }}>
           <div style={{ marginBottom: 14 }}>
             <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--green-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
-              集體互動場次（每場次候補 {SESSION_WAITLIST_CAP}）
+              集體互動場次
             </h5>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
-              {SESSIONS.map(s => {
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
+              {sessions.map(s => {
                 const c = sessionCounts.get(s.id) || 0
                 const wc = sessionWaitlistCounts.get(s.id) || 0
                 const over = c > s.cap
+                const label = `${s.date} ${s.time}　${s.teacher}`
                 return (
                   <div key={s.id} style={{
                     padding: "8px 12px",
@@ -695,7 +707,7 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smal
                     border: `1px solid ${over ? "rgba(184, 82, 58, 0.3)" : "var(--line)"}`,
                     borderRadius: 8, fontSize: 12.5,
                   }}>
-                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{s.label}</div>
+                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{label}</div>
                     <div style={{
                       fontFamily: "var(--font-cormorant), serif", fontWeight: 700, fontSize: 16,
                       color: over ? "var(--error)" : c >= s.cap ? "var(--gold-deep)" : "var(--green-deep)",
@@ -704,7 +716,7 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smal
                       {c} ／ {s.cap}{over && " ⚠"}
                     </div>
                     <div style={{ fontSize: 11, color: "#2a6fa8", marginTop: 2 }}>
-                      候補 {wc} ／ {SESSION_WAITLIST_CAP}
+                      候補 {wc} ／ {s.waitlist_cap}
                     </div>
                   </div>
                 )
@@ -713,29 +725,28 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smal
           </div>
           <div>
             <h5 style={{ fontFamily: "var(--font-noto-serif-tc), serif", fontSize: 13, color: "var(--gold-deep)", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>
-              分組互動（每位老師名額 {SMALL_GROUP_CAP}，每日期候補 {SMALL_WAITLIST_CAP}）
+              分組互動
             </h5>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
-              {TEACHERS.map(t => {
-                const c = teacherTotals.get(t.id) || 0
-                const over = c > SMALL_GROUP_CAP
-                // 候補人數（per teacher，跨所有日期）
-                const wc = SMALL_DATES.reduce((sum, d) => sum + (smallWaitlistCounts.get(`${t.id}|${d.date}`) || 0), 0)
-                const waitlistTotal = SMALL_DATES.length * SMALL_WAITLIST_CAP
+              {teachers.map(t => {
+                const c = teacherTotals.get(t.key) || 0
+                const over = c > t.total_cap
+                const wc = t.slots.reduce((sum, s) => sum + (smallWaitlistCounts.get(`${t.key}|${s.date}`) || 0), 0)
+                const waitlistTotal = t.slots.reduce((sum, s) => sum + s.waitlist_cap, 0)
                 return (
-                  <div key={t.id} style={{
+                  <div key={t.key} style={{
                     padding: "8px 12px",
                     background: over ? "rgba(184, 82, 58, 0.08)" : "var(--bg-pure)",
                     border: `1px solid ${over ? "rgba(184, 82, 58, 0.3)" : "var(--line)"}`,
                     borderRadius: 8, fontSize: 12.5,
                   }}>
-                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{t.name}</div>
+                    <div style={{ color: "var(--ink-soft)", fontSize: 11.5 }}>{t.label}</div>
                     <div style={{
                       fontFamily: "var(--font-cormorant), serif", fontWeight: 700, fontSize: 16,
-                      color: over ? "var(--error)" : c >= SMALL_GROUP_CAP ? "var(--gold-deep)" : "var(--green-deep)",
+                      color: over ? "var(--error)" : c >= t.total_cap ? "var(--gold-deep)" : "var(--green-deep)",
                       marginTop: 2,
                     }}>
-                      {c} ／ {SMALL_GROUP_CAP}{over && " ⚠"}
+                      {c} ／ {t.total_cap}{over && " ⚠"}
                     </div>
                     <div style={{ fontSize: 11, color: "#2a6fa8", marginTop: 2 }}>
                       候補 {wc} ／ {waitlistTotal}
@@ -780,8 +791,8 @@ type DrawResult = {
   assigned_date?: string | null
 }
 
-function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
-  const sessions = scope === 'all' ? SESSIONS : SESSIONS.filter(s => s.id === scope)
+function runGroupDraw(rows: Row[], scope: GroupScope, allSessions: DbSession[], sessionLabel: Record<string, string>): DrawResult[] {
+  const sessions = scope === 'all' ? allSessions : allSessions.filter(s => s.id === scope)
 
   const alreadyWon = new Map<string, number>()
   const alreadyWaitlist = new Map<string, number>()
@@ -803,7 +814,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
   }
 
   const remaining = new Map(sessions.map(s => [s.id, Math.max(0, s.cap - (alreadyWon.get(s.id) || 0))]))
-  const waitlistRemaining = new Map(sessions.map(s => [s.id, Math.max(0, SESSION_WAITLIST_CAP - (alreadyWaitlist.get(s.id) || 0))]))
+  const waitlistRemaining = new Map(sessions.map(s => [s.id, Math.max(0, s.waitlist_cap - (alreadyWaitlist.get(s.id) || 0))]))
   const nextSerial = new Map(sessions.map(s => [s.id, (maxSerial.get(s.id) || 0) + 1]))
   const waitlistNextSerial = new Map(sessions.map(s => [s.id, (maxWaitlistSerial.get(s.id) || 0) + 1]))
 
@@ -835,7 +846,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
       member_id: row.registration.member_id,
       mode: 'group',
       status: assigned ? 'won' : 'lost',
-      label: assigned ? (SESSION_LABEL[assigned.session] || assigned.session) : '—',
+      label: assigned ? (sessionLabel[assigned.session] || assigned.session) : '—',
       serial: assigned?.serial ?? null,
       assigned_session: assigned?.session ?? null,
     })
@@ -854,7 +865,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
         waitlistRemaining.set(sessionId, wrem - 1)
         waitlistNextSerial.set(sessionId, serial + 1)
         result.status = 'waitlist'
-        result.label = SESSION_LABEL[sessionId] || sessionId
+        result.label = sessionLabel[sessionId] || sessionId
         result.serial = serial
         result.assigned_session = sessionId
         break
@@ -865,7 +876,7 @@ function runGroupDraw(rows: Row[], scope: GroupScope): DrawResult[] {
   return results
 }
 
-function runSmallGroupDraw(rows: Row[]): DrawResult[] {
+function runSmallGroupDraw(rows: Row[], slots: DbSlot[], teachers: DbTeacher[], teacherLabel: Record<string, string>): DrawResult[] {
   // ── 統計 DB 中已有的中簽與候補記錄 ──
   const alreadyWon = new Map<string, number>()           // per teacher
   const alreadyWaitlist = new Map<string, number>()      // per teacher|date
@@ -901,17 +912,15 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   const nextSerial = new Map<string, number>()          // 中簽序號 per teacher|date
   const waitlistNextSerial = new Map<string, number>()  // 候補序號 per teacher|date
 
-  for (const t of TEACHERS) {
-    for (const d of SMALL_DATES) {
-      const k = `${t.id}|${d.date}`
-      dateRemaining.set(k, Math.max(0, d.cap - (alreadyWonByDate.get(k) || 0)))
-      waitlistRemaining.set(k, Math.max(0, SMALL_WAITLIST_CAP - (alreadyWaitlist.get(k) || 0)))
-      nextSerial.set(k, (maxSerial.get(k) || 0) + 1)
-      waitlistNextSerial.set(k, (maxWaitlistSerial.get(k) || 0) + 1)
-    }
+  for (const slot of slots) {
+    const k = `${slot.teacher_key}|${slot.date}`
+    dateRemaining.set(k, Math.max(0, slot.cap - (alreadyWonByDate.get(k) || 0)))
+    waitlistRemaining.set(k, Math.max(0, slot.waitlist_cap - (alreadyWaitlist.get(k) || 0)))
+    nextSerial.set(k, (maxSerial.get(k) || 0) + 1)
+    waitlistNextSerial.set(k, (maxWaitlistSerial.get(k) || 0) + 1)
   }
 
-  const remaining = new Map(TEACHERS.map(t => [t.id, Math.max(0, SMALL_GROUP_CAP - (alreadyWon.get(t.id) || 0))]))
+  const remaining = new Map(teachers.map(t => [t.key, Math.max(0, t.total_cap - (alreadyWon.get(t.key) || 0))]))
 
   type PoolEntry = { row: Row; prefIndex: number }
   const resultMap = new Map<string, DrawResult>()
@@ -952,10 +961,10 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
           // 先選日期，再取該日期序號
           let assignedDate: string | null = null
           let bestRem = -1
-          for (const d of SMALL_DATES) {
-            const k = `${teacherId}|${d.date}`
+          for (const slot of slots.filter(s => s.teacher_key === teacherId)) {
+            const k = `${teacherId}|${slot.date}`
             const r = dateRemaining.get(k) ?? 0
-            if (r > bestRem) { bestRem = r; assignedDate = d.date }
+            if (r > bestRem) { bestRem = r; assignedDate = slot.date }
           }
           if (assignedDate && bestRem > 0) {
             const k = `${teacherId}|${assignedDate}`
@@ -967,7 +976,7 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
               chinese_name: e.row.registration.chinese_name,
               member_id: e.row.registration.member_id,
               mode: 'small', status: 'won',
-              label: TEACHER_LABEL[teacherId] || teacherId,
+              label: teacherLabel[teacherId] || teacherId,
               serial, assigned_group: teacherId, assigned_date: assignedDate,
             })
           } else {
@@ -1006,10 +1015,10 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
       // 找該老師剩餘候補名額最多的日期
       let bestDate: string | null = null
       let bestRem = 0
-      for (const d of SMALL_DATES) {
-        const k = `${teacherId}|${d.date}`
+      for (const slot of slots.filter(s => s.teacher_key === teacherId)) {
+        const k = `${teacherId}|${slot.date}`
         const rem = waitlistRemaining.get(k) ?? 0
-        if (rem > bestRem) { bestRem = rem; bestDate = d.date }
+        if (rem > bestRem) { bestRem = rem; bestDate = slot.date }
       }
       if (bestDate && bestRem > 0) {
         const k = `${teacherId}|${bestDate}`
@@ -1017,7 +1026,7 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
         const serial = waitlistNextSerial.get(k)!
         waitlistNextSerial.set(k, serial + 1)
         result.status = 'waitlist'
-        result.label = TEACHER_LABEL[teacherId] || teacherId
+        result.label = teacherLabel[teacherId] || teacherId
         result.serial = serial
         result.assigned_group = teacherId
         result.assigned_date = bestDate
@@ -1035,11 +1044,16 @@ function runSmallGroupDraw(rows: Row[]): DrawResult[] {
   return Array.from(resultMap.values())
 }
 
-function AutoDrawModal({ rows, onClose, onApplied }: {
+function AutoDrawModal({ rows, sessions, slots, teachers, onClose, onApplied }: {
   rows: Row[]
+  sessions: DbSession[]
+  slots: DbSlot[]
+  teachers: DbTeacher[]
   onClose: () => void
   onApplied: () => void
 }) {
+  const sessionLabel: Record<string, string> = Object.fromEntries(sessions.map(s => [s.id, `${s.date} ${s.time}　${s.teacher}`]))
+  const teacherLabel: Record<string, string> = Object.fromEntries(teachers.map(t => [t.key, t.label]))
   const [step, setStep] = useState<'config' | 'drawing' | 'results' | 'applying' | 'done'>('config')
   const [mode, setMode] = useState<DrawMode>('group')
   const [scope, setScope] = useState<GroupScope>('all')
@@ -1064,7 +1078,7 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
   const runDraw = async () => {
     setStep('drawing')
     await new Promise(r => setTimeout(r, 1600))
-    const res = mode === 'group' ? runGroupDraw(rows, scope) : runSmallGroupDraw(rows)
+    const res = mode === 'group' ? runGroupDraw(rows, scope, sessions, sessionLabel) : runSmallGroupDraw(rows, slots, teachers, teacherLabel)
     setResults(res)
     setStep('results')
   }
@@ -1150,7 +1164,7 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
                   <label className="form-label">抽簽範圍（場次）</label>
                   <select className="form-select" value={scope} onChange={e => setScope(e.target.value)} style={{ maxWidth: 360 }}>
                     <option value="all">全部場次（同時抽）</option>
-                    {SESSIONS.map(s => <option key={s.id} value={s.id}>{s.label}（名額 {s.cap}）</option>)}
+                    {sessions.map(s => <option key={s.id} value={s.id}>{s.date} {s.time}　{s.teacher}（名額 {s.cap}）</option>)}
                   </select>
                 </div>
               )}
@@ -1291,6 +1305,262 @@ function AutoDrawModal({ rows, onClose, onApplied }: {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// 場次 / 分組設定管理面板
+// ─────────────────────────────────────────────────────────────
+
+function SessionManagePanel({ sessions, slots, onRefresh }: {
+  sessions: DbSession[]
+  slots: DbSlot[]
+  onRefresh: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  // ── 集體場次 form ──
+  const blankSession = { id: '', teacher: '', date: '', time: '', cap: 20, waitlist_cap: 5, is_active: true, sort_order: 0 }
+  const [editingSession, setEditingSession] = useState<DbSession | null>(null)
+  const [sessionForm, setSessionForm] = useState<DbSession>(blankSession)
+
+  // ── 分組 slot form ──
+  const blankSlot = { id: '', teacher_key: '', teacher_label: '', date: '', cap: 8, waitlist_cap: 3, is_active: true, sort_order: 0 }
+  const [editingSlot, setEditingSlot] = useState<DbSlot | null>(null)
+  const [slotForm, setSlotForm] = useState<DbSlot>(blankSlot)
+
+  const saveSession = async () => {
+    setSaving(true); setMsg('')
+    const method = editingSession ? 'PATCH' : 'POST'
+    const body = editingSession ? { ...sessionForm } : { ...sessionForm }
+    const res = await fetch('/api/admin/interactive-sessions', {
+      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`儲存失敗：${d.error || res.status}`); return }
+    setMsg('場次已儲存')
+    setEditingSession(null)
+    setSessionForm(blankSession)
+    onRefresh()
+  }
+
+  const deleteSession = async (id: string) => {
+    if (!confirm(`確定刪除場次 ${id}？已有分配到此場次的學員資料不會自動清除，請手動處理。`)) return
+    setSaving(true); setMsg('')
+    const res = await fetch('/api/admin/interactive-sessions', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`刪除失敗：${d.error || res.status}`); return }
+    setMsg('場次已刪除')
+    onRefresh()
+  }
+
+  const saveSlot = async () => {
+    setSaving(true); setMsg('')
+    const method = editingSlot ? 'PATCH' : 'POST'
+    const res = await fetch('/api/admin/interactive-small-slots', {
+      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(slotForm),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`儲存失敗：${d.error || res.status}`); return }
+    setMsg('分組 slot 已儲存')
+    setEditingSlot(null)
+    setSlotForm(blankSlot)
+    onRefresh()
+  }
+
+  const deleteSlot = async (id: string) => {
+    if (!confirm(`確定刪除此分組 slot？`)) return
+    setSaving(true); setMsg('')
+    const res = await fetch('/api/admin/interactive-small-slots', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`刪除失敗：${d.error || res.status}`); return }
+    setMsg('分組 slot 已刪除')
+    onRefresh()
+  }
+
+  return (
+    <div className="admin-table-card" style={{ padding: 0, marginBottom: 14 }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', textAlign: 'left', padding: '12px 18px',
+          background: 'rgba(180, 147, 88, 0.05)', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 12,
+          fontFamily: 'var(--font-noto-serif-tc), serif', fontWeight: 700, fontSize: 14,
+          color: 'var(--ink)', letterSpacing: '0.06em',
+        }}>
+        <span>{open ? '▼' : '▶'}</span>
+        <span>場次 / 分組設定</span>
+        <span style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontWeight: 500 }}>
+          集體 {sessions.length} 場　·　分組 {slots.length} slots
+        </span>
+      </button>
+
+      {open && (
+        <div style={{ padding: '14px 18px 20px', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {msg && <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(73,85,52,0.08)', fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{msg}</div>}
+
+          {/* ── 集體互動場次 ── */}
+          <div>
+            <h5 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 13, color: 'var(--green-deep)', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10 }}>
+              集體互動場次
+            </h5>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 8, marginBottom: 12 }}>
+              <table className="admin-table" style={{ fontSize: 12.5 }}>
+                <thead>
+                  <tr>
+                    <th>ID</th><th>老師</th><th>日期</th><th>時間</th><th>名額</th><th>候補名額</th><th>啟用</th><th>排序</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.length === 0 && <tr><td colSpan={9} style={{ textAlign: 'center', padding: 16, color: 'var(--ink-mute)' }}>尚無場次</td></tr>}
+                  {sessions.map(s => (
+                    <tr key={s.id}>
+                      <td className="mono">{s.id}</td>
+                      <td>{s.teacher}</td>
+                      <td>{s.date}</td>
+                      <td>{s.time}</td>
+                      <td style={{ textAlign: 'center' }}>{s.cap}</td>
+                      <td style={{ textAlign: 'center' }}>{s.waitlist_cap}</td>
+                      <td style={{ textAlign: 'center' }}>{s.is_active ? '✓' : '—'}</td>
+                      <td style={{ textAlign: 'center' }}>{s.sort_order}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="admin-btn-sm" style={{ marginRight: 4 }} onClick={() => { setSessionForm(s); setEditingSession(s) }}>編輯</button>
+                        <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteSession(s.id)}>刪除</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
+              <div>
+                <label className="form-label">ID {!editingSession && <span className="required">*</span>}</label>
+                <input className="form-input" value={sessionForm.id} disabled={!!editingSession}
+                  onChange={e => setSessionForm(f => ({ ...f, id: e.target.value }))} placeholder="s1" />
+              </div>
+              <div>
+                <label className="form-label">老師</label>
+                <input className="form-input" value={sessionForm.teacher} onChange={e => setSessionForm(f => ({ ...f, teacher: e.target.value }))} placeholder="Phra Ajahn" />
+              </div>
+              <div>
+                <label className="form-label">日期</label>
+                <input className="form-input" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-20" />
+              </div>
+              <div>
+                <label className="form-label">時間</label>
+                <input className="form-input" value={sessionForm.time} onChange={e => setSessionForm(f => ({ ...f, time: e.target.value }))} placeholder="09:00" />
+              </div>
+              <div>
+                <label className="form-label">名額</label>
+                <input className="form-input" type="number" value={sessionForm.cap} onChange={e => setSessionForm(f => ({ ...f, cap: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">候補名額</label>
+                <input className="form-input" type="number" value={sessionForm.waitlist_cap} onChange={e => setSessionForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">排序</label>
+                <input className="form-input" type="number" value={sessionForm.sort_order} onChange={e => setSessionForm(f => ({ ...f, sort_order: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">啟用</label>
+                <select className="form-select" value={sessionForm.is_active ? '1' : '0'} onChange={e => setSessionForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                  <option value="1">是</option><option value="0">否</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', paddingBottom: 1 }}>
+                <button className="admin-btn-sm primary" onClick={saveSession} disabled={saving}>
+                  {editingSession ? '更新' : '新增'}場次
+                </button>
+                {editingSession && <button className="admin-btn-sm" onClick={() => { setEditingSession(null); setSessionForm(blankSession) }}>取消</button>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 分組互動 Slots ── */}
+          <div>
+            <h5 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 13, color: 'var(--gold-deep)', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10 }}>
+              分組互動 Slots（老師 × 日期）
+            </h5>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 8, marginBottom: 12 }}>
+              <table className="admin-table" style={{ fontSize: 12.5 }}>
+                <thead>
+                  <tr>
+                    <th>老師 key</th><th>老師名稱</th><th>日期</th><th>名額</th><th>候補名額</th><th>啟用</th><th>排序</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slots.length === 0 && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 16, color: 'var(--ink-mute)' }}>尚無分組 slot</td></tr>}
+                  {slots.map(s => (
+                    <tr key={s.id}>
+                      <td className="mono">{s.teacher_key}</td>
+                      <td>{s.teacher_label}</td>
+                      <td>{s.date}</td>
+                      <td style={{ textAlign: 'center' }}>{s.cap}</td>
+                      <td style={{ textAlign: 'center' }}>{s.waitlist_cap}</td>
+                      <td style={{ textAlign: 'center' }}>{s.is_active ? '✓' : '—'}</td>
+                      <td style={{ textAlign: 'center' }}>{s.sort_order}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="admin-btn-sm" style={{ marginRight: 4 }} onClick={() => { setSlotForm(s); setEditingSlot(s) }}>編輯</button>
+                        <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteSlot(s.id)}>刪除</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
+              <div>
+                <label className="form-label">老師 key</label>
+                <input className="form-input" value={slotForm.teacher_key} onChange={e => setSlotForm(f => ({ ...f, teacher_key: e.target.value }))} placeholder="prasan" />
+              </div>
+              <div>
+                <label className="form-label">老師名稱</label>
+                <input className="form-input" value={slotForm.teacher_label} onChange={e => setSlotForm(f => ({ ...f, teacher_label: e.target.value }))} placeholder="Prasan" />
+              </div>
+              <div>
+                <label className="form-label">日期</label>
+                <input className="form-input" value={slotForm.date} onChange={e => setSlotForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-21" />
+              </div>
+              <div>
+                <label className="form-label">名額</label>
+                <input className="form-input" type="number" value={slotForm.cap} onChange={e => setSlotForm(f => ({ ...f, cap: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">候補名額</label>
+                <input className="form-input" type="number" value={slotForm.waitlist_cap} onChange={e => setSlotForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">排序</label>
+                <input className="form-input" type="number" value={slotForm.sort_order} onChange={e => setSlotForm(f => ({ ...f, sort_order: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="form-label">啟用</label>
+                <select className="form-select" value={slotForm.is_active ? '1' : '0'} onChange={e => setSlotForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                  <option value="1">是</option><option value="0">否</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', paddingBottom: 1 }}>
+                <button className="admin-btn-sm primary" onClick={saveSlot} disabled={saving}>
+                  {editingSlot ? '更新' : '新增'} Slot
+                </button>
+                {editingSlot && <button className="admin-btn-sm" onClick={() => { setEditingSlot(null); setSlotForm(blankSlot) }}>取消</button>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { SESSIONS, TEACHERS, type StatusValue } from '@/lib/interactive'
+import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots } from '@/lib/interactive-db'
+import type { StatusValue } from '@/lib/interactive'
 
 function checkAuth(request: NextRequest) {
   return request.cookies.get('admin_role')?.value || null
@@ -11,7 +12,6 @@ const validStatus: StatusValue[] = ['pending', 'won', 'waitlist', 'lost', 'absta
 export async function GET(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
 
-  // LEFT JOIN registrations 取需要顯示的欄位
   const { data: regs, error: e1 } = await supabaseAdmin
     .from('registrations')
     .select('id, chinese_name, member_id, student_id, random_code, email, residence, status')
@@ -42,6 +42,7 @@ export async function PATCH(request: NextRequest) {
   if (!registration_id) return NextResponse.json({ error: '缺少 registration_id' }, { status: 400 })
 
   const update: Record<string, any> = { updated_at: new Date().toISOString() }
+
   if (group_status !== undefined) {
     if (!validStatus.includes(group_status)) return NextResponse.json({ error: 'group_status 不合法' }, { status: 400 })
     update.group_status = group_status
@@ -51,14 +52,21 @@ export async function PATCH(request: NextRequest) {
     update.small_status = small_status
   }
   if (assigned_session !== undefined) {
-    if (assigned_session && !SESSIONS.find(s => s.id === assigned_session)) {
-      return NextResponse.json({ error: 'assigned_session 不合法' }, { status: 400 })
+    if (assigned_session) {
+      const sessions = await fetchAllSessions()
+      if (!sessions.find(s => s.id === assigned_session)) {
+        return NextResponse.json({ error: 'assigned_session 不合法' }, { status: 400 })
+      }
     }
     update.assigned_session = assigned_session || null
   }
   if (assigned_group !== undefined) {
-    if (assigned_group && !TEACHERS.find(t => t.id === assigned_group)) {
-      return NextResponse.json({ error: 'assigned_group 不合法' }, { status: 400 })
+    if (assigned_group) {
+      const slots = await fetchAllSmallSlots()
+      const teachers = deriveTeachersFromSlots(slots)
+      if (!teachers.find(t => t.key === assigned_group)) {
+        return NextResponse.json({ error: 'assigned_group 不合法' }, { status: 400 })
+      }
     }
     update.assigned_group = assigned_group || null
   }
@@ -76,7 +84,6 @@ export async function PATCH(request: NextRequest) {
     update.small_serial = small_serial
   }
 
-  // #5：禁止 PATCH 對不存在的 row（前端應走學員自行送出建立 row）。先查現況。
   const { data: existing } = await supabaseAdmin
     .from('interactive_registrations')
     .select('group_status, small_status')
@@ -85,8 +92,6 @@ export async function PATCH(request: NextRequest) {
   if (!existing) {
     return NextResponse.json({ error: '此學員尚未送出互動報名，無法編輯' }, { status: 404 })
   }
-
-  // 允許「先中簽、後排場次／組別／序號」；notify 端只要任一中簽即寄，場次/組別未填寫則顯示「待補」。
 
   const { error } = await supabaseAdmin
     .from('interactive_registrations')

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { SESSIONS, TEACHERS, INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
+import { fetchActiveSessions, fetchActiveSmallSlots, deriveTeachersFromSlots } from '@/lib/interactive-db'
+import { INTERACTIVE_DEADLINE_MS } from '@/lib/interactive'
 import { fetchInteractiveConfig } from '@/lib/interactive-config'
 import { sendInteractiveSubmitConfirmEmail } from '@/lib/interactive-invite-email'
 
-// id + code 可來自 query string 或 body（呼叫方傳入已解析的值）
 async function authMember(id: string | null, code: string | null) {
   if (!id || !code) return { error: '缺少必要參數', status: 400 }
 
@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // body 只讀一次
   const body = await request.json().catch(() => ({}))
 
   const a = await authMember(body.id ?? null, body.code ?? null)
@@ -55,15 +54,19 @@ export async function POST(request: NextRequest) {
   const wanted_sessions: string[] = Array.isArray(body.wanted_sessions) ? body.wanted_sessions : []
   const wanted_ranking: string[] = Array.isArray(body.wanted_ranking) ? body.wanted_ranking : []
 
-  const validSessions = new Set(SESSIONS.map(s => s.id))
-  if (!wanted_sessions.every(s => validSessions.has(s as any))) {
+  // 從 DB 取得目前有效的場次與老師清單做驗證
+  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const teachers = deriveTeachersFromSlots(slots)
+
+  const validSessions = new Set(sessions.map(s => s.id))
+  if (!wanted_sessions.every(s => validSessions.has(s))) {
     return NextResponse.json({ error: '集體場次選擇不合法' }, { status: 400 })
   }
-  const validTeachers = new Set(TEACHERS.map(t => t.id))
-  if (wanted_ranking.length > 4) {
-    return NextResponse.json({ error: '分組互動最多選 4 個' }, { status: 400 })
+  const validTeachers = new Set(teachers.map(t => t.key))
+  if (wanted_ranking.length > teachers.length) {
+    return NextResponse.json({ error: `分組互動最多選 ${teachers.length} 個` }, { status: 400 })
   }
-  if (!wanted_ranking.every(t => validTeachers.has(t as any))) {
+  if (!wanted_ranking.every(t => validTeachers.has(t))) {
     return NextResponse.json({ error: '分組老師選擇不合法' }, { status: 400 })
   }
 

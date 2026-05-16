@@ -3,23 +3,10 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
-type SessionId = string
-type TeacherId = string
+type DbSession = { id: string; teacher: string; date: string; time: string; cap: number }
+type DbTeacher = { key: string; label: string; total_cap: number }
 type Reg = { id: string; chinese_name: string; member_id: string | null; student_id: string | null; status: string }
-type Interactive = { wanted_sessions: SessionId[]; wanted_ranking: TeacherId[]; group_status: string; small_status: string }
-
-const TEACHERS: { id: TeacherId; name: string; nameEn: string; seats: number }[] = [
-  { id: 'prasan',   name: '阿姜巴山', nameEn: 'Ajahn Prasan',   seats: 38 },
-  { id: 'nat',      name: '阿姜納',   nameEn: 'Ajahn Nat',      seats: 38 },
-  { id: 'nitiya',   name: '阿姜妮',   nameEn: 'Ajahn Nitiya',   seats: 38 },
-  { id: 'napatpol', name: '阿姜松',   nameEn: 'Ajahn Napatpol', seats: 38 },
-]
-
-const SESSIONS = [
-  { id: 's1', date: '8月20日（四）', time: '14:30 — 15:30', teacher: '阿姜宋猜尊者', seats: 5 },
-  { id: 's2', date: '8月21日（五）', time: '14:00 — 15:30', teacher: '麥琪奧蘭努',   seats: 8 },
-  { id: 's3', date: '8月24日（一）', time: '14:00 — 15:30', teacher: '阿姜給尊者',   seats: 5 },
-]
+type Interactive = { wanted_sessions: string[]; wanted_ranking: string[]; group_status: string; small_status: string }
 
 const STEPS = [
   { num: 1, label: '規則說明' },
@@ -41,6 +28,11 @@ function InteractiveContent() {
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
 
+  // 動態場次與老師（從 /api/interactive/config 載入）
+  const [sessions, setSessions] = useState<DbSession[]>([])
+  const [teachers, setTeachers] = useState<DbTeacher[]>([])
+  const [configLoaded, setConfigLoaded] = useState(false)
+
   const [step, setStep] = useState(1)
   const [maxReached, setMaxReached] = useState(1)
   const [error, setError] = useState('')
@@ -48,10 +40,23 @@ function InteractiveContent() {
   const [submitting, setSubmitting] = useState(false)
   const [done] = useState(false)
 
-  const [sessions, setSessions] = useState<SessionId[]>([])
+  const [selectedSessions, setSelectedSessions] = useState<string[]>([])
   const [noSession, setNoSession] = useState(false)
   const [ranking, setRanking] = useState<Record<string, string>>({})
 
+  // 載入場次、老師設定
+  useEffect(() => {
+    fetch('/api/interactive/config')
+      .then(r => r.json())
+      .then(d => {
+        setSessions(d.sessions || [])
+        setTeachers(d.teachers || [])
+      })
+      .catch(() => {})
+      .finally(() => setConfigLoaded(true))
+  }, [])
+
+  // 載入學員資料
   useEffect(() => {
     if (!id || !code) { setAuthError('需從學員專區進入'); setLoading(false); return }
     fetch(`/api/interactive?id=${id}&code=${encodeURIComponent(code)}`)
@@ -65,9 +70,9 @@ function InteractiveContent() {
         if (d.interactive) {
           setInteractive(d.interactive)
           const ws = d.interactive.wanted_sessions || []
-          setSessions(ws)
+          setSelectedSessions(ws)
           setNoSession(ws.length === 0)
-          const wr: string[] = (d.interactive.wanted_ranking || []).slice(0, 4)
+          const wr: string[] = (d.interactive.wanted_ranking || []).slice(0, 8)
           const r: Record<string, string> = {}
           wr.forEach((tid: string, idx: number) => { if (!r[tid]) r[tid] = String(idx + 1) })
           setRanking(r)
@@ -81,32 +86,26 @@ function InteractiveContent() {
   const pastDeadline = deadline > 0 && Date.now() > deadline
   const initial = reg?.chinese_name?.charAt(0) || '?'
 
-  const toggleSession = (sid: SessionId) => {
-    setSessions(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid])
+  const toggleSession = (sid: string) => {
+    setSelectedSessions(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid])
   }
   const toggleNoSession = () => {
-    if (!noSession) {
-      setSessions([])
-      setNoSession(true)
-    } else {
-      setNoSession(false)
-    }
+    if (!noSession) { setSelectedSessions([]); setNoSession(true) }
+    else { setNoSession(false) }
   }
 
-  const toggleRank = (teacherId: TeacherId, n: number) => {
+  const toggleRank = (teacherKey: string, n: number) => {
     setRanking(prev => {
-      const current = prev[teacherId]
+      const current = prev[teacherKey]
       if (current === String(n)) {
-        // 取消：移除此老師，並清掉所有排在更後面的（維持連號）
         const newR: Record<string, string> = {}
         for (const [tid, rank] of Object.entries(prev)) {
           if (parseInt(rank) < n) newR[tid] = rank
         }
         return newR
       }
-      // 只允許填入下一個連號
       const count = Object.values(prev).filter(Boolean).length
-      if (!current && n === count + 1) return { ...prev, [teacherId]: String(n) }
+      if (!current && n === count + 1) return { ...prev, [teacherKey]: String(n) }
       return prev
     })
   }
@@ -123,7 +122,7 @@ function InteractiveContent() {
   const goToStep = (target: number) => {
     if (target === step) return
     if (target < step) { setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
-    if (step === 2 && target > 2 && !noSession && sessions.length === 0) {
+    if (step === 2 && target > 2 && !noSession && selectedSessions.length === 0) {
       fail('sessions', '若參加集體互動，請至少選擇一個場次（或勾選「不報名參與本次課程的集體互動」）')
       return
     }
@@ -143,17 +142,17 @@ function InteractiveContent() {
     setErrorField(null)
     if (pastDeadline) { setError('互動報名已截止'); return }
 
-    const filled = TEACHERS
-      .filter(t => ranking[t.id])
-      .sort((a, b) => parseInt(ranking[a.id] || '99') - parseInt(ranking[b.id] || '99'))
-      .map(t => t.id)
+    const filled = teachers
+      .filter(t => ranking[t.key])
+      .sort((a, b) => parseInt(ranking[a.key] || '99') - parseInt(ranking[b.key] || '99'))
+      .map(t => t.key)
 
     setSubmitting(true)
     try {
       const res = await fetch('/api/interactive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, code, wanted_sessions: sessions, wanted_ranking: filled }),
+        body: JSON.stringify({ id, code, wanted_sessions: selectedSessions, wanted_ranking: filled }),
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || '送出失敗')
@@ -165,7 +164,7 @@ function InteractiveContent() {
     }
   }
 
-  if (loading) {
+  if (loading || !configLoaded) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><div className="spinner-large" /></div>
   }
   if (authError) {
@@ -269,7 +268,7 @@ function InteractiveContent() {
                 <div className="submit-status-icon" style={{ background: 'var(--error)' }}>!</div>
                 <div className="submit-status-text">
                   <h4>互動報名已截止</h4>
-                  <p>互動報名已於 7/15 晚上 8 點（台北時間）截止，無法再提交。</p>
+                  <p>互動報名已截止，無法再提交。</p>
                 </div>
               </div>
             )}
@@ -279,7 +278,7 @@ function InteractiveContent() {
                 <div className="submit-status-icon">✓</div>
                 <div className="submit-status-text">
                   <h4>互動報名已送出</h4>
-                  <p>送出時間：{new Date().toLocaleString('zh-TW')}　·　如需修改請於 7/15 截止前重新送出</p>
+                  <p>送出時間：{new Date().toLocaleString('zh-TW')}</p>
                 </div>
               </div>
             )}
@@ -338,8 +337,8 @@ function InteractiveContent() {
                       <div className="session-check" />
                       <div className="session-teacher" style={{ fontWeight: 600 }}>不報名參與本次課程的集體互動</div>
                     </label>
-                    {!noSession && SESSIONS.map(s => {
-                      const checked = sessions.includes(s.id)
+                    {!noSession && sessions.map(s => {
+                      const checked = selectedSessions.includes(s.id)
                       return (
                         <label key={s.id} className={`session-cell ${checked ? 'selected' : ''}`}>
                           <input type="checkbox" checked={checked} onChange={() => toggleSession(s.id)} />
@@ -347,7 +346,7 @@ function InteractiveContent() {
                           <div className="session-date">2026年{s.date}</div>
                           <div className="session-time">{s.time}</div>
                           <div className="session-teacher">
-                            {s.teacher} 互動問答<span className="seats">{s.seats} 人</span>
+                            {s.teacher} 互動問答<span className="seats">{s.cap} 人</span>
                           </div>
                         </label>
                       )
@@ -356,8 +355,8 @@ function InteractiveContent() {
                   <div className="selection-summary">
                     {noSession
                       ? <>已選擇：不報名集體互動</>
-                      : sessions.length > 0
-                        ? <>已選 <span className="count">{sessions.length}</span> 個場次　·　可繼續勾選多個場次</>
+                      : selectedSessions.length > 0
+                        ? <>已選 <span className="count">{selectedSessions.length}</span> 個場次　·　可繼續勾選多個場次</>
                         : <span style={{ color: 'var(--error)' }}>請至少選一個場次，或勾選「不報名參與本次課程的集體互動」</span>}
                   </div>
                 </div>
@@ -372,27 +371,27 @@ function InteractiveContent() {
                   </div>
                   <div className="alert-card">
                     <div className="alert-card-title">填寫說明</div>
-                    <p>點選數字按鈕依序設定意願順序（1 = 最希望）；再點同一按鈕可取消，取消後後續順序一併清除。每位老師的數字不可重複，且需連號（例如 1、1、2、3 不行；1、2、3 可以）。全空白代表不報名分組互動。</p>
+                    <p>點選數字按鈕依序設定意願順序（1 = 最希望）；再點同一按鈕可取消，取消後後續順序一併清除。每位老師的數字不可重複，且需連號。全空白代表不報名分組互動。</p>
                   </div>
 
                   <div id="field-ranking" style={{ marginTop: 20 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {TEACHERS.map(t => {
-                        const selected = ranking[t.id] || ''
+                      {teachers.map(t => {
+                        const selected = ranking[t.key] || ''
                         const nextRank = Object.values(ranking).filter(Boolean).length + 1
                         return (
-                          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: selected ? 'rgba(73,85,52,0.06)' : 'rgba(255,255,255,0.6)', borderRadius: 10, border: `1px solid ${selected ? 'rgba(73,85,52,0.35)' : 'var(--line)'}` }}>
+                          <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: selected ? 'rgba(73,85,52,0.06)' : 'rgba(255,255,255,0.6)', borderRadius: 10, border: `1px solid ${selected ? 'rgba(73,85,52,0.35)' : 'var(--line)'}` }}>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 600, fontSize: 15 }}>{t.name}</div>
-                              <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>{t.seats} 個名額</div>
+                              <div style={{ fontWeight: 600, fontSize: 15 }}>{t.label}</div>
+                              <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>{t.total_cap} 個名額</div>
                             </div>
                             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                              {[1, 2, 3, 4].map(n => {
+                              {Array.from({ length: teachers.length }, (_, i) => i + 1).map(n => {
                                 const active = selected === String(n)
                                 const disabled = selected ? !active : n !== nextRank
                                 return (
                                   <button key={n} type="button"
-                                    onClick={() => toggleRank(t.id, n)}
+                                    onClick={() => toggleRank(t.key, n)}
                                     disabled={disabled}
                                     style={{
                                       width: 36, height: 36, borderRadius: 8, border: 'none',
@@ -425,7 +424,7 @@ function InteractiveContent() {
                   <div className="selection-summary" style={{ marginTop: 16 }}>
                     {Object.values(ranking).every(v => !v)
                       ? <>尚未選擇　·　<strong style={{ fontSize: '1.05em' }}>不選代表不報名分組互動</strong></>
-                      : <>已選：{TEACHERS.filter(t => ranking[t.id]).map(t => `${t.name} 第${ranking[t.id]}意願`).join('、')}</>}
+                      : <>已選：{teachers.filter(t => ranking[t.key]).map(t => `${t.label} 第${ranking[t.key]}意願`).join('、')}</>}
                   </div>
                 </div>
               )}
@@ -461,7 +460,7 @@ function InteractiveContent() {
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
               <p>集體互動請至少選一個場次；若不想參加，請勾選「不報名參與本次課程的集體互動」。</p>
-              <p style={{ marginTop: 10 }}>分組互動可棄權；如要報名，請依 1、2、3、4 順序為老師排列意願，不可跳號，未填寫代表不報名。</p>
+              <p style={{ marginTop: 10 }}>分組互動可棄權；如要報名，請依 1、2、3… 順序為老師排列意願，不可跳號，未填寫代表不報名。</p>
               <p style={{ marginTop: 10 }}>抽籤結果由學會於互動報名截止後寄信通知。</p>
             </div>
 

@@ -3,14 +3,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
-const TEACHER_LABEL: Record<string, string> = {
-  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
-}
-const SESSION_LABEL: Record<string, string> = {
-  s1: '8/20（四）14:30 — 15:30　阿姜宋猜尊者',
-  s2: '8/21（五）14:00 — 15:30　麥琪奧蘭努',
-  s3: '8/24（一）14:00 — 15:30　阿姜給尊者',
-}
+// labels 從 /api/interactive/config 動態載入，此處僅作型別宣告
+type LabelMap = Record<string, string>
 
 type Reg = { id: string; chinese_name: string; member_id: string | null; student_id: string | null; gender: string | null; identity: string | null; email: string }
 type Interactive = { group_status: string; small_status: string; assigned_session: string | null; assigned_group: string | null; assigned_date: string | null }
@@ -35,6 +29,8 @@ function TaskContent() {
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState('')
   const [notWon, setNotWon] = useState(false)
+  const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
+  const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
 
   // 計算動態 step 列表（依中簽結果決定有沒有集體 / 分組）
   const wonGroup = interactive?.group_status === 'won'
@@ -58,6 +54,20 @@ function TaskContent() {
     group_prior_interaction: '', group_question: '',
     small_prior_interaction: '', small_question: '',
   })
+
+  useEffect(() => {
+    fetch('/api/interactive/config')
+      .then(r => r.json())
+      .then(d => {
+        const sLabel: LabelMap = {}
+        for (const s of (d.sessions || [])) sLabel[s.id] = `${s.date} ${s.time}　${s.teacher}`
+        setSessionLabel(sLabel)
+        const tLabel: LabelMap = {}
+        for (const t of (d.teachers || [])) tLabel[t.key] = t.label
+        setTeacherLabel(tLabel)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!id || !code) { setAuthError('需從學員專區進入'); setLoading(false); return }
@@ -329,7 +339,7 @@ function TaskContent() {
                   </div>
 
                   <ReadonlyField num="08." label="您中簽的集體互動場次"
-                    value={interactive?.assigned_session ? SESSION_LABEL[interactive.assigned_session] || interactive.assigned_session : '（待學會指定）'} />
+                    value={interactive?.assigned_session ? sessionLabel[interactive.assigned_session] || interactive.assigned_session : '（待學會指定）'} />
 
                   <div style={{ marginTop: 16 }} id="field-group_prior_interaction">
                     <label className="form-label">09. 您是否曾與這位指導老師互動過？ <span className="required">*</span></label>
@@ -372,7 +382,7 @@ function TaskContent() {
 
                   <div className="field-row">
                     <ReadonlyField num="12." label="您中簽的分組"
-                      value={interactive?.assigned_group ? `${TEACHER_LABEL[interactive.assigned_group] || interactive.assigned_group} 組` : '（待學會指定）'} />
+                      value={interactive?.assigned_group ? `${teacherLabel[interactive.assigned_group] || interactive.assigned_group} 組` : '（待學會指定）'} />
                     <ReadonlyField num="14." label="互動日期"
                       value={interactive?.assigned_date || '（待學會指定）'} />
                   </div>

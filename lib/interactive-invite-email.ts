@@ -1,6 +1,6 @@
 import { sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailWarning, emailHighlight, emailSignoff } from './email-style'
-import { SESSION_LABEL, TEACHER_LABEL } from './interactive'
+import { fetchActiveSessions, fetchActiveSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -24,7 +24,7 @@ export async function sendInteractiveInviteEmail(reg: {
     </p>
     <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0 0 12px;">
       <li><strong style="color:${C.green};">集體互動：</strong>勾選想參加的場次（可複選）。學會將以隨機抽籤決定中簽名單。</li>
-      <li><strong style="color:${C.green};">分組互動：</strong>將四位老師依意願順序排序（1～4）。學會將依意願順序與容量分配。</li>
+      <li><strong style="color:${C.green};">分組互動：</strong>將老師依意願順序排序。學會將依意願順序與容量分配。</li>
       <li>兩部分皆<strong>非必填</strong>，可只報其一或皆不報；若皆不報亦請送出空表單以結束流程。</li>
       <li>抽籤結果由學會於截止後另行寄信通知；中簽者再依信內連結填寫互動作業。</li>
     </ul>
@@ -60,17 +60,23 @@ export async function sendInteractiveSubmitConfirmEmail(reg: {
   wanted_sessions: string[]
   wanted_ranking: string[]
 }) {
+  // 從 DB 取得最新 label
+  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const sessionLabel = buildSessionLabelMap(sessions)
+  const teachers = deriveTeachersFromSlots(slots)
+  const teacherLabel = buildTeacherLabelMap(teachers)
+
   const sessionRows = submission.wanted_sessions.length === 0
     ? `<tr><td colspan="2" style="padding:10px 14px;color:${C.inkMute};font-size:13px;">（未選擇集體互動場次）</td></tr>`
     : submission.wanted_sessions.map(sid => {
-        const label = SESSION_LABEL[sid] ?? sid
+        const label = sessionLabel[sid] ?? sid
         return `<tr><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};color:${C.inkMute};font-size:13px;width:32px;">✓</td><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};font-size:13.5px;color:${C.ink};">${label}</td></tr>`
       }).join('')
 
   const rankingRows = submission.wanted_ranking.length === 0
     ? `<tr><td colspan="2" style="padding:10px 14px;color:${C.inkMute};font-size:13px;">（未填分組互動意願）</td></tr>`
     : submission.wanted_ranking.map((tid, i) => {
-        const label = TEACHER_LABEL[tid] ?? tid
+        const label = teacherLabel[tid] ?? tid
         return `<tr><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};color:${C.inkMute};font-size:13px;width:32px;font-weight:600;">${i + 1}</td><td style="padding:8px 14px;border-bottom:1px dotted ${C.line};font-size:13.5px;color:${C.ink};">${label}</td></tr>`
       }).join('')
 

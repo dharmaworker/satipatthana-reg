@@ -3,12 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '../_components/AdminHeader'
 
-const TEACHER_LABEL: Record<string, string> = { prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松' }
-const SESSION_LABEL: Record<string, string> = {
-  s1: '8/21 巴山', s2: '8/21 納',
-  s3: '8/22 妮',  s4: '8/22 松',
-  s5: '8/23 巴山', s6: '8/23 妮',
-}
+type LabelMap = Record<string, string>
 
 type Row = {
   task: any
@@ -26,6 +21,27 @@ export default function InteractiveTasksAdminPage() {
   const [filter, setFilter] = useState<'all' | 'group' | 'small' | 'both'>('all')
   const [page, setPage] = useState(1)
   const [detail, setDetail] = useState<Row | null>(null)
+  const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
+  const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
+
+  useEffect(() => {
+    fetch('/api/admin/interactive-sessions')
+      .then(r => r.json())
+      .then(d => {
+        const m: LabelMap = {}
+        for (const s of (d.data || [])) m[s.id] = `${s.date} ${s.time}　${s.teacher}`
+        setSessionLabel(m)
+      })
+      .catch(() => {})
+    fetch('/api/admin/interactive-small-slots')
+      .then(r => r.json())
+      .then(d => {
+        const m: LabelMap = {}
+        for (const s of (d.data || [])) if (!m[s.teacher_key]) m[s.teacher_key] = s.teacher_label
+        setTeacherLabel(m)
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -111,12 +127,12 @@ export default function InteractiveTasksAdminPage() {
                     <td className="mono">{r.registration?.student_id || '—'}</td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.group_status === 'won'
-                        ? (it.assigned_session ? SESSION_LABEL[it.assigned_session] : '中簽')
+                        ? (it.assigned_session ? sessionLabel[it.assigned_session] : '中簽')
                         : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12 }}>
                       {it?.small_status === 'won'
-                        ? (it.assigned_group ? `${TEACHER_LABEL[it.assigned_group]} 組（${it.assigned_date || ''}）` : '中簽')
+                        ? (it.assigned_group ? `${teacherLabel[it.assigned_group]} 組（${it.assigned_date || ''}）` : '中簽')
                         : '—'}
                     </td>
                     <td className="muted" style={{ fontSize: 12.5, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -164,7 +180,7 @@ export default function InteractiveTasksAdminPage() {
 
             {detail.interactive?.group_status === 'won' && (
               <DetailSection title="集體互動">
-                <DetailRow label="場次" value={detail.interactive.assigned_session ? SESSION_LABEL[detail.interactive.assigned_session] : '—'} />
+                <DetailRow label="場次" value={detail.interactive.assigned_session ? sessionLabel[detail.interactive.assigned_session] : '—'} />
                 <DetailRow label="曾互動過" value={detail.task.group_prior_interaction === 'yes' ? '是' : detail.task.group_prior_interaction === 'no' ? '否' : '—'} />
                 <DetailRow label="互動問題" value={detail.task.group_question} fullWidth multiline />
               </DetailSection>
@@ -172,7 +188,7 @@ export default function InteractiveTasksAdminPage() {
 
             {detail.interactive?.small_status === 'won' && (
               <DetailSection title="分組互動">
-                <DetailRow label="分組" value={detail.interactive.assigned_group ? `${TEACHER_LABEL[detail.interactive.assigned_group]} 組` : '—'} />
+                <DetailRow label="分組" value={detail.interactive.assigned_group ? `${teacherLabel[detail.interactive.assigned_group]} 組` : '—'} />
                 <DetailRow label="日期" value={detail.interactive.assigned_date} />
                 <DetailRow label="曾互動過" value={detail.task.small_prior_interaction === 'yes' ? '是' : detail.task.small_prior_interaction === 'no' ? '否' : '—'} />
                 <DetailRow label="互動問題" value={detail.task.small_question} fullWidth multiline />

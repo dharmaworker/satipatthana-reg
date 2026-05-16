@@ -1,9 +1,14 @@
 import { sendMail, sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailAlert, emailSignoff } from './email-style'
-import { SESSIONS, TEACHER_LABEL, type StatusValue } from './interactive'
+import { type StatusValue } from './interactive'
+import { fetchActiveSessions, fetchActiveSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
+
+const serialBadge = (n: number | null | undefined) =>
+  (n === null || n === undefined) ? '' :
+  `<span style="display:inline-block;background:${C.gold};color:#fff8ee;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;letter-spacing:0.04em;margin-left:6px;">序號 ${n}</span>`
 
 export async function sendInteractiveNotificationEmail(opts: {
   registration_id: string
@@ -22,22 +27,23 @@ export async function sendInteractiveNotificationEmail(opts: {
     group_status, small_status, assigned_session, assigned_group, assigned_date,
     group_serial, small_serial } = opts
 
+  // 從 DB 取得目前最新場次與老師資料
+  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const sessionLabelMap = buildSessionLabelMap(sessions)
+  const teachers = deriveTeachersFromSlots(slots)
+  const teacherLabelMap = buildTeacherLabelMap(teachers)
+
   const wonAny = group_status === 'won' || small_status === 'won'
   const hasResult = wonAny || group_status === 'waitlist' || small_status === 'waitlist'
-  const serialBadge = (n: number | null | undefined) =>
-    (n === null || n === undefined) ? '' :
-    `<span style="display:inline-block;background:${C.gold};color:#fff8ee;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;letter-spacing:0.04em;margin-left:6px;">序號 ${n}</span>`
 
   const groupLine = group_status === 'won'
     ? (() => {
-        const s = SESSIONS.find(x => x.id === assigned_session)
-        const txt = s ? `${s.date} ${s.time}　${s.teacher}` : '（場次待補）'
+        const txt = assigned_session ? (sessionLabelMap[assigned_session] || '（場次待補）') : '（場次待補）'
         return `<strong style="color:${C.green};">✓ 集體互動：中簽</strong>${serialBadge(group_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">場次：${txt}</span>`
       })()
     : group_status === 'waitlist'
       ? (() => {
-          const s = SESSIONS.find(x => x.id === assigned_session)
-          const txt = s ? `${s.date} ${s.time}　${s.teacher}` : '（場次待補）'
+          const txt = assigned_session ? (sessionLabelMap[assigned_session] || '（場次待補）') : '（場次待補）'
           return `<strong style="color:#2a6fa8;">✦ 集體互動：候補</strong>${serialBadge(group_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">場次：${txt}</span>`
         })()
     : group_status === 'lost'
@@ -45,20 +51,19 @@ export async function sendInteractiveNotificationEmail(opts: {
       : `<span style="color:${C.inkMute};">⏳ 集體互動：未定</span>`
 
   const smallLine = small_status === 'won'
-    ? `<strong style="color:${C.green};">✓ 分組互動：中簽</strong>${serialBadge(small_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? TEACHER_LABEL[assigned_group] || assigned_group : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
+    ? `<strong style="color:${C.green};">✓ 分組互動：中簽</strong>${serialBadge(small_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? (teacherLabelMap[assigned_group] || assigned_group) : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
     : small_status === 'waitlist'
-      ? `<strong style="color:#2a6fa8;">✦ 分組互動：候補</strong>${serialBadge(small_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? TEACHER_LABEL[assigned_group] || assigned_group : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
+      ? `<strong style="color:#2a6fa8;">✦ 分組互動：候補</strong>${serialBadge(small_serial)}<br><span style="color:${C.inkSoft};font-size:13px;">小組：${assigned_group ? (teacherLabelMap[assigned_group] || assigned_group) : '（待補）'} 組　日期：${assigned_date || '（待補）'}</span>`
     : small_status === 'lost'
       ? `<span style="color:${C.inkMute};">✗ 分組互動：未中簽</span>`
       : `<span style="color:${C.inkMute};">⏳ 分組互動：未定</span>`
 
   const taskLink = `${baseUrl}/member/interactive/task?id=${registration_id}&code=${random_code}`
-
   const onlyWaitlist = !wonAny && hasResult
 
   const body = `
     ${emailKicker('Interactive Lottery Result')}
-    ${emailH1(wonAny ? '互動報名結果通知 🎉' : hasResult ? '互動報名結果通知' : '互動報名結果通知')}
+    ${emailH1(wonAny ? '互動報名結果通知 🎉' : '互動報名結果通知')}
     <p style="margin:0 0 12px;color:${C.inkSoft};">${chinese_name} 法友您好：</p>
     <p style="margin:0 0 16px;color:${C.inkSoft};">您於互動報名的抽籤結果如下：</p>
 
@@ -103,9 +108,14 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
   const { email, chinese_name, registration_id, random_code,
     group_status, small_status, assigned_session, assigned_group, assigned_date } = opts
 
-  const sessionLabel = assigned_session ? SESSIONS.find(s => s.id === assigned_session) : null
-  const sessionText = sessionLabel ? `${sessionLabel.date} ${sessionLabel.time}　${sessionLabel.teacher}` : '（待補）'
-  const groupText = assigned_group ? (TEACHER_LABEL[assigned_group] || assigned_group) : '（待補）'
+  // 從 DB 取得最新 label
+  const [sessions, slots] = await Promise.all([fetchActiveSessions(), fetchActiveSmallSlots()])
+  const sessionLabelMap = buildSessionLabelMap(sessions)
+  const teachers = deriveTeachersFromSlots(slots)
+  const teacherLabelMap = buildTeacherLabelMap(teachers)
+
+  const sessionText = assigned_session ? (sessionLabelMap[assigned_session] || '（待補）') : '（待補）'
+  const groupText = assigned_group ? (teacherLabelMap[assigned_group] || assigned_group) : '（待補）'
   const dateText = assigned_date || '（待補）'
 
   const rows: string[] = []

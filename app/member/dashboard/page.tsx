@@ -31,14 +31,8 @@ type MemberData = {
   timetable_published: boolean
 }
 
-const SESSION_LABEL: Record<string, string> = {
-  s1: '8/21（五）阿姜巴山', s2: '8/21（五）阿姜納',
-  s3: '8/22（六）阿姜妮',   s4: '8/22（六）阿姜松',
-  s5: '8/23（日）阿姜巴山', s6: '8/23（日）阿姜妮',
-}
-const TEACHER_LABEL: Record<string, string> = {
-  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
-}
+// SESSION_LABEL / TEACHER_LABEL 改從 /api/interactive/config 動態載入（見 useEffect）
+type LabelMap = Record<string, string>
 
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   approved: { label: '已錄取', cls: 'accepted' },
@@ -55,6 +49,22 @@ function MemberDashboardContent() {
 
   const [member, setMember] = useState<MemberData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
+  const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
+
+  useEffect(() => {
+    fetch('/api/interactive/config')
+      .then(r => r.json())
+      .then(d => {
+        const sLabel: LabelMap = {}
+        for (const s of (d.sessions || [])) sLabel[s.id] = `${s.date} ${s.time}　${s.teacher}`
+        setSessionLabel(sLabel)
+        const tLabel: LabelMap = {}
+        for (const t of (d.teachers || [])) tLabel[t.key] = t.label
+        setTeacherLabel(tLabel)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!id || !code) {
@@ -168,7 +178,7 @@ function MemberDashboardContent() {
                 {(member.interactive_group_status === 'won' || member.interactive_group_status === 'waitlist') && (
                   <div style={{ marginBottom: 4 }}>
                     <span style={{ color: 'var(--ink-soft)' }}>集體{member.interactive_group_status === 'waitlist' ? '（候補）' : ''}：</span>
-                    <strong>{member.interactive_assigned_session ? SESSION_LABEL[member.interactive_assigned_session] ?? member.interactive_assigned_session : '（待指定）'}</strong>
+                    <strong>{member.interactive_assigned_session ? sessionLabel[member.interactive_assigned_session] ?? member.interactive_assigned_session : '（待指定）'}</strong>
                     <span style={{ color: 'var(--ink-soft)', marginLeft: 8 }}>
                       序號 {member.interactive_group_serial !== null ? member.interactive_group_serial : '—'}
                     </span>
@@ -177,7 +187,7 @@ function MemberDashboardContent() {
                 {(member.interactive_small_status === 'won' || member.interactive_small_status === 'waitlist') && (
                   <div>
                     <span style={{ color: 'var(--ink-soft)' }}>分組{member.interactive_small_status === 'waitlist' ? '（候補）' : ''}：</span>
-                    <strong>{member.interactive_assigned_group ? TEACHER_LABEL[member.interactive_assigned_group] ?? member.interactive_assigned_group : '（待指定）'}</strong>
+                    <strong>{member.interactive_assigned_group ? teacherLabel[member.interactive_assigned_group] ?? member.interactive_assigned_group : '（待指定）'}</strong>
                     <span style={{ color: 'var(--ink-soft)', marginLeft: 6 }}>
                       {member.interactive_assigned_date || '—'}
                     </span>
