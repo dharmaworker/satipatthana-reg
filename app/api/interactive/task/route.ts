@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendInteractiveTaskConfirmEmail } from '@/lib/interactive-notify-email'
 
 async function authMember(request: NextRequest) {
   const url = new URL(request.url)
@@ -12,7 +13,7 @@ async function authMember(request: NextRequest) {
 
   const { data: reg, error } = await supabaseAdmin
     .from('registrations')
-    .select('id, status, chinese_name, member_id, student_id, gender, identity, email')
+    .select('id, status, chinese_name, member_id, student_id, gender, identity, email, random_code')
     .eq('id', finalId)
     .eq('random_code', finalCode.toUpperCase().trim())
     .single()
@@ -84,6 +85,18 @@ export async function POST(request: NextRequest) {
       { onConflict: 'registration_id' }
     )
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await sendInteractiveTaskConfirmEmail({
+    email: a.reg.email,
+    chinese_name: a.reg.chinese_name,
+    registration_id: a.reg.id,
+    random_code: a.reg.random_code ?? '',
+    group_status: a.it.group_status,
+    small_status: a.it.small_status,
+    assigned_session: a.it.assigned_session,
+    assigned_group: a.it.assigned_group,
+    assigned_date: a.it.assigned_date,
+  }).catch(err => console.error('[interactive-task] 確認信寄送失敗:', err))
 
   return NextResponse.json({ success: true })
 }

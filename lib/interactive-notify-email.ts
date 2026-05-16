@@ -1,4 +1,4 @@
-import { sendMail } from './mailer'
+import { sendMail, sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailAlert, emailSignoff } from './email-style'
 import { SESSIONS, TEACHER_LABEL, type StatusValue } from './interactive'
 
@@ -87,4 +87,55 @@ export async function sendInteractiveNotificationEmail(opts: {
     subject: '【第二屆台灣四念處禪修】互動報名結果通知',
     html: emailWrap(body),
   })
+}
+
+export async function sendInteractiveTaskConfirmEmail(opts: {
+  email: string
+  chinese_name: string
+  registration_id: string
+  random_code: string
+  group_status: StatusValue
+  small_status: StatusValue
+  assigned_session: string | null
+  assigned_group: string | null
+  assigned_date: string | null
+}) {
+  const { email, chinese_name, registration_id, random_code,
+    group_status, small_status, assigned_session, assigned_group, assigned_date } = opts
+
+  const sessionLabel = assigned_session ? SESSIONS.find(s => s.id === assigned_session) : null
+  const sessionText = sessionLabel ? `${sessionLabel.date} ${sessionLabel.time}　${sessionLabel.teacher}` : '（待補）'
+  const groupText = assigned_group ? (TEACHER_LABEL[assigned_group] || assigned_group) : '（待補）'
+  const dateText = assigned_date || '（待補）'
+
+  const rows: string[] = []
+  if (group_status === 'won')
+    rows.push(`<tr><td style="padding:10px 14px;border-bottom:1px dotted ${C.line};color:${C.inkMute};font-size:13px;font-weight:600;width:110px;">集體互動</td><td style="padding:10px 14px;border-bottom:1px dotted ${C.line};font-size:13.5px;color:${C.ink};">✓ 中簽　${sessionText}</td></tr>`)
+  if (small_status === 'won')
+    rows.push(`<tr><td style="padding:10px 14px;color:${C.inkMute};font-size:13px;font-weight:600;">分組互動</td><td style="padding:10px 14px;font-size:13.5px;color:${C.ink};">✓ 中簽　${groupText} 組　${dateText}</td></tr>`)
+
+  const taskLink = `${baseUrl}/member/interactive/task?id=${registration_id}&code=${random_code}`
+
+  const body = `
+    ${emailKicker('Interactive Task')}
+    ${emailH1('互動作業已收到 🙏')}
+    <p style="margin:0 0 14px;color:${C.inkSoft};">${chinese_name} 法友您好，</p>
+    <p style="margin:0 0 20px;color:${C.inkSoft};">系統已收到您的互動作業，感謝填寫。老師將依您的問題與背景準備指導。</p>
+
+    <table style="border-collapse:collapse;width:100%;background:${C.bgPure};border:1px solid ${C.line};border-radius:10px;overflow:hidden;margin-bottom:20px;">
+      ${rows.join('')}
+    </table>
+
+    <p style="font-size:13px;color:${C.inkMute};margin-top:8px;">截止前可重新開啟作業頁面修改，以最後一次送出為準：</p>
+    ${emailButton(taskLink, '查看／修改互動作業', 'green')}
+
+    ${emailSignoff()}
+  `
+
+  return sendMailWithRetry({
+    to: email,
+    bcc: archiveEmail,
+    subject: '【第二屆台灣四念處禪修】互動作業確認',
+    html: emailWrap(body),
+  }, 3, 600, true)
 }
