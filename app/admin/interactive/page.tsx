@@ -154,6 +154,18 @@ export default function InteractiveAdminPage() {
     }
     return m
   })()
+  const smallWaitlistCounts = (() => {
+    // key = "teacher|date"，候補人數
+    const m = new Map<string, number>()
+    for (const r of rows) {
+      const it = r.interactive
+      if (it?.small_status === 'waitlist' && it.assigned_group && it.assigned_date) {
+        const k = `${it.assigned_group}|${it.assigned_date}`
+        m.set(k, (m.get(k) || 0) + 1)
+      }
+    }
+    return m
+  })()
   const smallCounts = (() => {
     // key = "teacher|date"
     const m = new Map<string, number>()
@@ -331,7 +343,7 @@ export default function InteractiveAdminPage() {
           <span className="count">共 {filtered.length} 筆</span>
         </div>
 
-        <CapacityPanel sessionCounts={sessionCounts} sessionWaitlistCounts={sessionWaitlistCounts} smallCounts={smallCounts} />
+        <CapacityPanel sessionCounts={sessionCounts} sessionWaitlistCounts={sessionWaitlistCounts} smallCounts={smallCounts} smallWaitlistCounts={smallWaitlistCounts} />
 
         <div className="admin-table-card scroll">
           <table className="admin-table">
@@ -624,10 +636,11 @@ function EditModal({ row, onClose, onSave }: { row: Row; onClose: () => void; on
   )
 }
 
-function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts }: {
+function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts, smallWaitlistCounts }: {
   sessionCounts: Map<string, number>
   sessionWaitlistCounts: Map<string, number>
   smallCounts: Map<string, number>
+  smallWaitlistCounts: Map<string, number>
 }) {
   const [open, setOpen] = useState(false)
 
@@ -707,10 +720,7 @@ function CapacityPanel({ sessionCounts, sessionWaitlistCounts, smallCounts }: {
                 const c = teacherTotals.get(t.id) || 0
                 const over = c > SMALL_GROUP_CAP
                 // 候補人數（per teacher，跨所有日期）
-                const wc = SMALL_DATES.reduce((sum, d) => {
-                  const wk = `${t.id}|${d.date}`
-                  return sum + Array.from(rows).filter(r => r.interactive?.small_status === 'waitlist' && r.interactive.assigned_group === t.id && r.interactive.assigned_date === d.date).length
-                }, 0)
+                const wc = SMALL_DATES.reduce((sum, d) => sum + (smallWaitlistCounts.get(`${t.id}|${d.date}`) || 0), 0)
                 const waitlistTotal = SMALL_DATES.length * SMALL_WAITLIST_CAP
                 return (
                   <div key={t.id} style={{
