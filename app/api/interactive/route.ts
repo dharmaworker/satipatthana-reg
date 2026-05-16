@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  sendInteractiveSubmitConfirmEmail(
+  await sendInteractiveSubmitConfirmEmail(
     { email: a.reg.email, chinese_name: a.reg.chinese_name, id: a.reg.id, random_code: body.code },
     { wanted_sessions, wanted_ranking }
   ).catch(err => console.error('[interactive] 確認信寄送失敗:', err))
