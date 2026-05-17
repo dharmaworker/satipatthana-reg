@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       phone: '0000000000',
       email: emailToUse,
       status: 'approved',
+      retreat_format: 'in_person',
     })
     .select('id')
     .single()
