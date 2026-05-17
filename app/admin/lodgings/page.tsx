@@ -38,7 +38,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance'>(null)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance' | 'group_join'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
   const [onlyNotNotified, setOnlyNotNotified] = useState(false)
@@ -161,6 +161,22 @@ export default function LodgingsPage() {
     setBulkSending('attendance')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-attendance-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendGroupJoin = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    if (!confirm(`寄出加入群組通知信給 ${bulkSelected.length} 位學員？\n\n系統會依報名時留下的聯絡方式（LINE / 微信）分別寄出對應的群組 QR Code。未留任何聯絡方式的學員會自動跳過。`)) return
+    setBulkSending('group_join')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-group-join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: bulkSelected }),
@@ -408,6 +424,11 @@ export default function LodgingsPage() {
             disabled={bulkSending !== null}
             className="admin-btn-sm primary">
             {bulkSending === 'timetable' ? '寄送中⋯' : `批次寄課表發佈通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendGroupJoin}
+            disabled={bulkSending !== null}
+            className="admin-btn-sm primary">
+            {bulkSending === 'group_join' ? '寄送中⋯' : `批次寄入群通知（${bulkSelected.length}）`}
           </button>
           {/* 正式學員通知暫時隱藏
           <button onClick={sendFormalNotifications}
