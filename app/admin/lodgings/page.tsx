@@ -623,7 +623,29 @@ export default function LodgingsPage() {
               {detail.registration?.passport_name && <Field label="護照英文名" value={detail.registration.passport_name} />}
               {detail.registration?.passport_country && <Field label="護照國籍" value={detail.registration.passport_country} />}
               <Field label="參加方式" value={detail.registration?.retreat_format === 'online' ? '線上' : detail.registration?.retreat_format === 'in_person' ? '實體' : detail.registration?.retreat_format} />
-              <Field label="通訊方式" value={detail.registration?.line_id ? `LINE：${detail.registration.line_id}` : detail.registration?.wechat_id ? `微信：${detail.registration.wechat_id}` : '—'} />
+              <div style={{ gridColumn: 'span 2', display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                {detail.registration?.line_qr_url && (
+                  <div>
+                    <FieldLabel>LINE（{detail.registration.line_id}）</FieldLabel>
+                    <button onClick={() => setPreview({ url: detail.registration.line_qr_url, title: `${detail.registration.chinese_name} - LINE QR` })}
+                      style={{ marginTop: 4, padding: 0, border: '1px solid var(--line)', borderRadius: 8, background: 'none', cursor: 'pointer', display: 'block' }}>
+                      <img src={detail.registration.line_qr_url} alt="LINE QR" style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 7, display: 'block' }} />
+                    </button>
+                  </div>
+                )}
+                {detail.registration?.wechat_qr_url && (
+                  <div>
+                    <FieldLabel>微信（{detail.registration.wechat_id}）</FieldLabel>
+                    <button onClick={() => setPreview({ url: detail.registration.wechat_qr_url, title: `${detail.registration.chinese_name} - WeChat QR` })}
+                      style={{ marginTop: 4, padding: 0, border: '1px solid var(--line)', borderRadius: 8, background: 'none', cursor: 'pointer', display: 'block' }}>
+                      <img src={detail.registration.wechat_qr_url} alt="WeChat QR" style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 7, display: 'block' }} />
+                    </button>
+                  </div>
+                )}
+                {!detail.registration?.line_qr_url && !detail.registration?.wechat_qr_url && (
+                  <Field label="通訊方式" value="—" />
+                )}
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5, marginTop: 10 }}>
               <Field label="Q3 正式學員課程" value={detail.registration?.attended_formal ? '是' : '否'} />
