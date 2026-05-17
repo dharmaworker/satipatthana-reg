@@ -614,6 +614,48 @@ export default function LodgingsPage() {
               <Field label="緊急聯絡人" value={`${detail.emergency_name}（${detail.emergency_relation}）${detail.emergency_phone}`} />
             </div>
 
+            <h4 style={detailH4Style}>報名資訊</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5 }}>
+              <Field label="性別" value={{ m: '男', f: '女', other: '其他' }[detail.registration?.gender as string] || detail.registration?.gender} />
+              <Field label="年齡" value={detail.registration?.age} />
+              <Field label="身份" value={{ lay: '在家人（居士）', monastic: '僧眾' }[detail.registration?.identity as string] || detail.registration?.identity} />
+              {detail.registration?.dharma_name && <Field label="法名" value={detail.registration.dharma_name} />}
+              {detail.registration?.passport_name && <Field label="護照英文名" value={detail.registration.passport_name} />}
+              {detail.registration?.passport_country && <Field label="護照國籍" value={detail.registration.passport_country} />}
+              <Field label="參加方式" value={detail.registration?.retreat_format === 'online' ? '線上' : detail.registration?.retreat_format === 'in_person' ? '實體' : detail.registration?.retreat_format} />
+              <Field label="通訊方式" value={detail.registration?.line_id ? `LINE：${detail.registration.line_id}` : detail.registration?.wechat_id ? `微信：${detail.registration.wechat_id}` : '—'} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, fontSize: 13.5, marginTop: 10 }}>
+              <Field label="Q3 正式學員課程" value={detail.registration?.attended_formal ? '是' : '否'} />
+              <Field label="Q10 完整觀看 3 屆錄影" value={detail.registration?.watched_recordings ? '是' : '否'} />
+              <Field label="Q11 ZOOM 一對一指導" value={detail.registration?.zoom_guidance ? '是' : '否'} />
+              <Field label="Q12 法談 30 篇以上" value={detail.registration?.watched_30_talks ? '是' : '否'} />
+              <Field label="Q13 持守五戒" value={detail.registration?.keep_precepts ? '是' : '否'} />
+              <Field label="Q14 學習實踐時間" value={detail.registration?.practice_years} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Field label="Q15 固定練習頻率" value={({
+                  every_day: '每天做固定形式的練習至少 30 分鐘',
+                  almost_every_day: '幾乎每天都做，偶有間斷（三個月不多於 5 天）',
+                } as Record<string, string>)[detail.registration?.practice_frequency] || detail.registration?.practice_frequency} />
+              </div>
+            </div>
+            {detail.registration?.attended_courses?.length > 0 && (
+              <div style={{ marginTop: 10, fontSize: 13.5 }}>
+                <FieldLabel>曾參加課程</FieldLabel>
+                <ul style={{ margin: '4px 0 0 0', paddingLeft: 18, color: 'var(--ink)', fontSize: 13 }}>
+                  {detail.registration.attended_courses.map((c: string) => <li key={c}>{c}</li>)}
+                </ul>
+              </div>
+            )}
+            {detail.registration?.mental_health_note && (
+              <div style={{ marginTop: 10 }}>
+                <FieldLabel>心理健康備註</FieldLabel>
+                <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 8, padding: 10, marginTop: 4, fontSize: 12, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                  {detail.registration.mental_health_note}
+                </div>
+              </div>
+            )}
+
             {(detail.flight_arrival_date || detail.flight_departure_date) && (
               <>
                 <h4 style={detailH4Style}>航班資訊</h4>

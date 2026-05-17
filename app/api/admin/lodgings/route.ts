@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
     .select(`
       id, chinese_name, id_number, passport_name, member_id, student_id, email, phone, random_code,
       residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
-      retreat_format, created_at, approval_email_sent_at
+      retreat_format, created_at, approval_email_sent_at,
+      age, identity, passport_country, line_id, wechat_id,
+      attended_formal, watched_recordings, zoom_guidance, watched_30_talks, keep_precepts,
+      practice_years, practice_frequency, mental_health_note, attended_courses
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
