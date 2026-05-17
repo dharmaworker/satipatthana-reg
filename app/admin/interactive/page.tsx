@@ -1373,14 +1373,28 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
   const [msg, setMsg] = useState('')
 
   // ── 集體場次 form ──
-  const blankSession = { id: '', teacher: '', date: '', time: '', cap: 20, waitlist_cap: 5, is_active: true, sort_order: 0 }
+  const blankSession = { id: '', teacher: '', date: '', time: '', cap: 20, waitlist_cap: 5, is_active: true, sort_order: 1 }
   const [editingSession, setEditingSession] = useState<DbSession | null>(null)
   const [sessionForm, setSessionForm] = useState<DbSession>(blankSession)
 
   // ── 分組 slot form ──
-  const blankSlot = { id: '', teacher_key: '', teacher_label: '', date: '', cap: 8, waitlist_cap: 3, is_active: true, sort_order: 0 }
+  const blankSlot = { id: '', teacher_key: '', teacher_label: '', date: '', cap: 8, waitlist_cap: 3, is_active: true, sort_order: 1 }
   const [editingSlot, setEditingSlot] = useState<DbSlot | null>(null)
   const [slotForm, setSlotForm] = useState<DbSlot>(blankSlot)
+
+  // 新增表單的 sort_order 自動跟隨現有最大值 + 1（確保排到最後）
+  useEffect(() => {
+    if (!editingSession) {
+      const maxSort = sessions.length > 0 ? Math.max(...sessions.map(s => s.sort_order)) : 0
+      setSessionForm(f => ({ ...f, sort_order: maxSort + 1 }))
+    }
+  }, [sessions, editingSession])
+  useEffect(() => {
+    if (!editingSlot) {
+      const maxSort = slots.length > 0 ? Math.max(...slots.map(s => s.sort_order)) : 0
+      setSlotForm(f => ({ ...f, sort_order: maxSort + 1 }))
+    }
+  }, [slots, editingSlot])
 
   const saveSession = async () => {
     setSaving(true); setMsg('')
@@ -1509,13 +1523,13 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
                 <label className="form-label">老師</label>
                 <input className="form-input" value={sessionForm.teacher} onChange={e => setSessionForm(f => ({ ...f, teacher: e.target.value }))} placeholder="Phra Ajahn" />
               </div>
-              <div>
-                <label className="form-label">日期</label>
-                <input className="form-input" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-20" />
+              <div style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">日期 <span style={{ fontWeight: 400, color: 'var(--ink-mute)' }}>（含星期，如 2026/8/20（四））</span></label>
+                <input className="form-input" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} placeholder="2026/8/20（四）" />
               </div>
               <div>
                 <label className="form-label">時間</label>
-                <input className="form-input" value={sessionForm.time} onChange={e => setSessionForm(f => ({ ...f, time: e.target.value }))} placeholder="09:00" />
+                <input className="form-input" value={sessionForm.time} onChange={e => setSessionForm(f => ({ ...f, time: e.target.value }))} placeholder="14:30 — 15:30" />
               </div>
               <div>
                 <label className="form-label">名額</label>
