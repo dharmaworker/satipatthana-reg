@@ -48,9 +48,15 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
     ${emailKicker('Group Invitation')}
     ${emailH1('第二屆台灣四念處禪修・學員群組邀請')}
     <p style="margin:0 0 16px;color:${C.inkSoft};">${reg.chinese_name} 法友您好：</p>
-    <p style="margin:0 0 20px;color:${C.inkSoft};">
-      歡迎加入本屆禪修學員通訊群組！群組將用於發佈禪修相關公告與提醒，請勿在群組中聊天。
+    <p style="margin:0 0 16px;color:${C.inkSoft};">
+      本屆禪修營的相關資訊（報到流程、行前叮嚀、課程異動公告等）將透過學員群組統一佈達，
+      <strong style="color:${C.ink};">請務必加入群組</strong>，以確保您能即時收到所有重要通知。
     </p>
+    <div style="background:#fff8ee;border-left:3px solid ${C.gold};border-radius:6px;padding:12px 16px;margin:0 0 20px;">
+      <p style="margin:0;font-size:13.5px;color:${C.ink};">
+        群組為單向公告用途，請勿在群組中聊天。如有問題，請直接聯絡學會。
+      </p>
+    </div>
 
     ${emailH3('加入群組')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">${platformNote}</p>
@@ -63,7 +69,6 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
       </p>
     </div>
 
-    <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
     ${emailSignoff()}
   `
 
