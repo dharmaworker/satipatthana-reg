@@ -48,7 +48,7 @@ export default function InteractiveAdminPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'submitted' | 'group_won' | 'small_won' | 'has_pending' | 'not_notified'>('all')
+  const [filter, setFilter] = useState<'all' | 'submitted' | 'group_won' | 'small_won' | 'has_pending' | 'not_notified' | 'group_waitlist' | 'small_waitlist' | 'any_waitlist'>('all')
   const [page, setPage] = useState(1)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
@@ -247,6 +247,12 @@ export default function InteractiveAdminPage() {
       if (!hasWon) return false
       if (it.notification_sent_at) return false
     }
+    if (filter === 'group_waitlist' && it?.group_status !== 'waitlist') return false
+    if (filter === 'small_waitlist' && it?.small_status !== 'waitlist') return false
+    if (filter === 'any_waitlist') {
+      if (!it) return false
+      if (it.group_status !== 'waitlist' && it.small_status !== 'waitlist') return false
+    }
     return true
   })
 
@@ -408,6 +414,9 @@ export default function InteractiveAdminPage() {
             <option value="group_won">集體中簽</option>
             <option value="small_won">分組中簽</option>
             <option value="not_notified">中簽但未寄通知信</option>
+            <option value="group_waitlist">集體候補</option>
+            <option value="small_waitlist">分組候補</option>
+            <option value="any_waitlist">任一候補</option>
           </select>
           <button onClick={fetchData} className="admin-btn-sm">重新整理</button>
           <label>
