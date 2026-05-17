@@ -480,14 +480,15 @@ export default function LodgingsPage() {
                 {formatFilter !== 'online' && <th>飲食</th>}
                 {formatFilter !== 'online' && <th>打鼾</th>}
                 {formatFilter !== 'online' && <th>緊急聯絡人</th>}
+                <th>QR</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={formatFilter === 'online' ? 7 : 13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 8 : 14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>載入中⋯</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={formatFilter === 'online' ? 7 : 13} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
+                <tr><td colSpan={formatFilter === 'online' ? 8 : 14} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-mute)' }}>{formatFilter === 'online' ? '尚無錄取學員' : '尚無食宿登記'}</td></tr>
               ) : pagedRows.map(r => {
                 const reg = r.registration || {}
                 return (
@@ -545,6 +546,15 @@ export default function LodgingsPage() {
                         <span className="muted">{r.emergency_phone}</span>
                       </> : '—'}
                     </td>}
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {(reg.line_qr_url || reg.wechat_qr_url) ? (
+                        <button onClick={() => setPreview({ url: reg.line_qr_url || reg.wechat_qr_url, title: `${reg.chinese_name} - ${reg.line_qr_url ? 'LINE' : 'WeChat'} QR` })}
+                          style={{ padding: 0, border: '1px solid var(--line)', borderRadius: 6, background: 'none', cursor: 'pointer', display: 'block' }}>
+                          <img src={reg.line_qr_url || reg.wechat_qr_url} alt="QR"
+                            style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 5, display: 'block' }} />
+                        </button>
+                      ) : <span className="muted" style={{ fontSize: 12 }}>—</span>}
+                    </td>
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button onClick={() => setDetail(r)} disabled={!r.id} className="admin-btn-sm">詳細</button>
