@@ -53,6 +53,7 @@ export default function InteractiveAdminPage() {
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
   const [sendingInvite, setSendingInvite] = useState(false)
+  const [sendingWaitlist, setSendingWaitlist] = useState(false)
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
   const [autoDrawOpen, setAutoDrawOpen] = useState(false)
@@ -286,6 +287,22 @@ export default function InteractiveAdminPage() {
     if (res.ok) setBulkSelected([])
   }
 
+  const sendWaitlistNotifications = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選對象'); return }
+    if (!confirm(`寄出候補通知信給 ${bulkSelected.length} 位學員？\n\n只有「候補（非中簽）」的學員才會收到，其餘自動跳過。`)) return
+    setSendingWaitlist(true)
+    setMessage('')
+    const res = await fetch('/api/admin/interactive/notify-waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const d = await res.json()
+    setMessage(d.message || (res.ok ? '寄送完成' : `寄送失敗：${d.error || res.status}`))
+    setSendingWaitlist(false)
+    if (res.ok) setBulkSelected([])
+  }
+
   const sendNotifications = async () => {
     if (bulkSelected.length === 0) { alert('請先勾選對象'); return }
     if (!confirm(`寄出互動結果通知信給 ${bulkSelected.length} 位學員？`)) return
@@ -398,11 +415,15 @@ export default function InteractiveAdminPage() {
               onChange={toggleAll} />
             全選本頁
           </label>
-          <button onClick={sendInvite} disabled={sendingInvite || bulkSending}
+          <button onClick={sendInvite} disabled={sendingInvite || bulkSending || sendingWaitlist}
             className="admin-btn-sm">
             {sendingInvite ? '寄送中⋯' : `批次寄報名互動通知（${bulkSelected.length}）`}
           </button>
-          <button onClick={sendNotifications} disabled={bulkSending || sendingInvite}
+          <button onClick={sendWaitlistNotifications} disabled={sendingWaitlist || bulkSending || sendingInvite}
+            className="admin-btn-sm">
+            {sendingWaitlist ? '寄送中⋯' : `批次寄候補通知信（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendNotifications} disabled={bulkSending || sendingInvite || sendingWaitlist}
             className="admin-btn-sm primary">
             {bulkSending ? '寄送中⋯' : `批次寄中簽通知信（${bulkSelected.length}）`}
           </button>
