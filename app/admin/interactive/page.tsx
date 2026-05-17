@@ -6,17 +6,20 @@ import { AdminHeader } from '../_components/AdminHeader'
 // ── 動態設定型別（從 DB 載入，取代舊的 hardcode 常數）
 type DbSession = { id: string; teacher: string; date: string; time: string; cap: number; waitlist_cap: number; is_active: boolean; sort_order: number }
 type DbSlot = { id: string; teacher_key: string; teacher_label: string; date: string; cap: number; waitlist_cap: number; is_active: boolean; sort_order: number }
-type DbTeacher = { key: string; label: string; total_cap: number; slots: DbSlot[] }
+type DbTeacher = { key: string; label: string; sort_order: number; is_active: boolean; total_cap: number; slots: DbSlot[] }
 
 function derivedTeachers(slots: DbSlot[]): DbTeacher[] {
   const map = new Map<string, DbTeacher>()
   for (const slot of slots) {
-    if (!map.has(slot.teacher_key)) map.set(slot.teacher_key, { key: slot.teacher_key, label: slot.teacher_label, total_cap: 0, slots: [] })
+    if (!map.has(slot.teacher_key)) map.set(slot.teacher_key, { key: slot.teacher_key, label: slot.teacher_label, sort_order: slot.sort_order, is_active: slot.is_active, total_cap: 0, slots: [] })
     const t = map.get(slot.teacher_key)!
     t.total_cap += slot.cap
     t.slots.push(slot)
   }
-  return Array.from(map.values())
+  const result = Array.from(map.values())
+  result.sort((a, b) => a.sort_order - b.sort_order)
+  for (const t of result) t.slots.sort((a, b) => a.date.localeCompare(b.date))
+  return result
 }
 
 type Row = {
@@ -1377,24 +1380,35 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
   const [editingSession, setEditingSession] = useState<DbSession | null>(null)
   const [sessionForm, setSessionForm] = useState<DbSession>(blankSession)
 
-  // ── 分組 slot form ──
-  const blankSlot = { id: '', teacher_key: '', teacher_label: '', date: '', cap: 8, waitlist_cap: 3, is_active: true, sort_order: 1 }
+  // ── 分組（以老師為單位） ──
+  const teachers = derivedTeachers(slots)
+  const [editingTeacher, setEditingTeacher] = useState<string | null>(null)
+  const [teacherEditForm, setTeacherEditForm] = useState({ label: '', sort_order: 1, is_active: true })
+  const [addingDateFor, setAddingDateFor] = useState<string | null>(null)
+  const [newDateForm, setNewDateForm] = useState({ date: '', cap: 8, waitlist_cap: 3, is_active: true })
   const [editingSlot, setEditingSlot] = useState<DbSlot | null>(null)
-  const [slotForm, setSlotForm] = useState<DbSlot>(blankSlot)
+  const [slotEditForm, setSlotEditForm] = useState({ date: '', cap: 8, waitlist_cap: 3, is_active: true })
+  const [showNewTeacher, setShowNewTeacher] = useState(false)
+  const blankNewTeacher = { key: '', label: '', sort_order: 1, is_active: true, date: '', cap: 8, waitlist_cap: 3 }
+  const [newTeacherForm, setNewTeacherForm] = useState(blankNewTeacher)
 
-  // 新增表單的 sort_order 自動跟隨現有最大值 + 1（確保排到最後）
+  // 新增集體場次：auto-fill ID 和 sort_order
   useEffect(() => {
-    if (!editingSession) {
-      const maxSort = sessions.length > 0 ? Math.max(...sessions.map(s => s.sort_order)) : 0
-      setSessionForm(f => ({ ...f, sort_order: maxSort + 1 }))
-    }
+    if (editingSession) return
+    const nums = sessions.map(s => s.id.match(/^s(\d+)$/)).filter(Boolean).map(m => parseInt(m![1]))
+    const nextId = `s${nums.length > 0 ? Math.max(...nums) + 1 : 1}`
+    const maxSort = sessions.length > 0 ? Math.max(...sessions.map(s => s.sort_order)) : 0
+    setSessionForm(f => ({ ...f, id: nextId, sort_order: maxSort + 1 }))
   }, [sessions, editingSession])
+  // 新增老師：auto-fill key 和 sort_order
   useEffect(() => {
-    if (!editingSlot) {
-      const maxSort = slots.length > 0 ? Math.max(...slots.map(s => s.sort_order)) : 0
-      setSlotForm(f => ({ ...f, sort_order: maxSort + 1 }))
-    }
-  }, [slots, editingSlot])
+    if (!showNewTeacher) return
+    const existingKeys = [...new Set(slots.map(s => s.teacher_key))]
+    const nums = existingKeys.map(k => k.match(/^t(\d+)$/)?.at(1)).filter(Boolean).map(Number)
+    const nextKey = `t${nums.length > 0 ? Math.max(...nums) + 1 : 1}`
+    const maxSort = teachers.length > 0 ? Math.max(...teachers.map(t => t.sort_order)) : 0
+    setNewTeacherForm(f => ({ ...f, key: nextKey, sort_order: maxSort + 1 }))
+  }, [slots, showNewTeacher])
 
   const saveSession = async () => {
     setSaving(true); setMsg('')
@@ -1413,7 +1427,7 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
   }
 
   const deleteSession = async (id: string) => {
-    if (!confirm(`確定刪除場次 ${id}？已有分配到此場次的學員資料不會自動清除，請手動處理。`)) return
+    if (!confirm(`確定刪除此場次？已有分配到此場次的學員資料不會自動清除，請手動處理。`)) return
     setSaving(true); setMsg('')
     const res = await fetch('/api/admin/interactive-sessions', {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
@@ -1425,23 +1439,126 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
     onRefresh()
   }
 
-  const saveSlot = async () => {
+  const moveSession = async (id: string, dir: 'up' | 'down') => {
+    const sorted = sessions.slice().sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sorted.findIndex(s => s.id === id)
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sorted.length) return
+    const a = sorted[idx], b = sorted[swapIdx]
+    setSaving(true)
+    await Promise.all([
+      fetch('/api/admin/interactive-sessions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: a.id, sort_order: b.sort_order }) }),
+      fetch('/api/admin/interactive-sessions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.id, sort_order: a.sort_order }) }),
+    ])
+    setSaving(false)
+    onRefresh()
+  }
+
+  const saveNewTeacher = async () => {
+    if (!newTeacherForm.key || !newTeacherForm.date) { setMsg('請填寫日期'); return }
     setSaving(true); setMsg('')
-    const method = editingSlot ? 'PATCH' : 'POST'
     const res = await fetch('/api/admin/interactive-small-slots', {
-      method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(slotForm),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: '', teacher_key: newTeacherForm.key, teacher_label: newTeacherForm.label,
+        date: newTeacherForm.date, cap: newTeacherForm.cap, waitlist_cap: newTeacherForm.waitlist_cap,
+        sort_order: newTeacherForm.sort_order, is_active: newTeacherForm.is_active,
+      }),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`新增失敗：${d.error || res.status}`); return }
+    setMsg('老師已新增')
+    setShowNewTeacher(false)
+    setNewTeacherForm(blankNewTeacher)
+    onRefresh()
+  }
+
+  const saveTeacherEdit = async (key: string) => {
+    const teacherSlots = slots.filter(s => s.teacher_key === key)
+    setSaving(true); setMsg('')
+    const results = await Promise.all(teacherSlots.map(s =>
+      fetch('/api/admin/interactive-small-slots', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...s, teacher_label: teacherEditForm.label, sort_order: teacherEditForm.sort_order, is_active: teacherEditForm.is_active }),
+      })
+    ))
+    setSaving(false)
+    if (results.some(r => !r.ok)) { setMsg('部分更新失敗'); return }
+    setMsg('老師資料已更新')
+    setEditingTeacher(null)
+    onRefresh()
+  }
+
+  const deleteTeacher = async (key: string, label: string) => {
+    const teacherSlots = slots.filter(s => s.teacher_key === key)
+    if (!confirm(`確定刪除老師「${label}」（含其 ${teacherSlots.length} 個日期）？已有分配到此老師的學員資料不會自動清除。`)) return
+    setSaving(true); setMsg('')
+    await Promise.all(teacherSlots.map(s =>
+      fetch('/api/admin/interactive-small-slots', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id }),
+      })
+    ))
+    setSaving(false)
+    setMsg('老師已刪除')
+    onRefresh()
+  }
+
+  const moveTeacher = async (key: string, dir: 'up' | 'down') => {
+    const idx = teachers.findIndex(t => t.key === key)
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= teachers.length) return
+    const a = teachers[idx], b = teachers[swapIdx]
+    const aSlots = slots.filter(s => s.teacher_key === a.key)
+    const bSlots = slots.filter(s => s.teacher_key === b.key)
+    setSaving(true)
+    await Promise.all([
+      ...aSlots.map(s => fetch('/api/admin/interactive-small-slots', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...s, sort_order: b.sort_order }) })),
+      ...bSlots.map(s => fetch('/api/admin/interactive-small-slots', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...s, sort_order: a.sort_order }) })),
+    ])
+    setSaving(false)
+    onRefresh()
+  }
+
+  const addDateToTeacher = async (key: string) => {
+    if (!newDateForm.date) { setMsg('請填寫日期'); return }
+    const existingSlot = slots.find(s => s.teacher_key === key)
+    if (!existingSlot) return
+    setSaving(true); setMsg('')
+    const res = await fetch('/api/admin/interactive-small-slots', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: '', teacher_key: key, teacher_label: existingSlot.teacher_label,
+        date: newDateForm.date, cap: newDateForm.cap, waitlist_cap: newDateForm.waitlist_cap,
+        sort_order: existingSlot.sort_order, is_active: newDateForm.is_active,
+      }),
+    })
+    const d = await res.json()
+    setSaving(false)
+    if (!res.ok) { setMsg(`新增失敗：${d.error || res.status}`); return }
+    setMsg('日期已新增')
+    setAddingDateFor(null)
+    setNewDateForm({ date: '', cap: 8, waitlist_cap: 3, is_active: true })
+    onRefresh()
+  }
+
+  const updateSlot = async () => {
+    if (!editingSlot) return
+    setSaving(true); setMsg('')
+    const res = await fetch('/api/admin/interactive-small-slots', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...editingSlot, ...slotEditForm }),
     })
     const d = await res.json()
     setSaving(false)
     if (!res.ok) { setMsg(`儲存失敗：${d.error || res.status}`); return }
-    setMsg('分組 slot 已儲存')
+    setMsg('已更新')
     setEditingSlot(null)
-    setSlotForm(blankSlot)
     onRefresh()
   }
 
   const deleteSlot = async (id: string) => {
-    if (!confirm(`確定刪除此分組 slot？`)) return
+    if (!confirm('確定刪除此日期？')) return
     setSaving(true); setMsg('')
     const res = await fetch('/api/admin/interactive-small-slots', {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
@@ -1449,7 +1566,7 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
     const d = await res.json()
     setSaving(false)
     if (!res.ok) { setMsg(`刪除失敗：${d.error || res.status}`); return }
-    setMsg('分組 slot 已刪除')
+    setMsg('日期已刪除')
     onRefresh()
   }
 
@@ -1466,7 +1583,7 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
         <span>{open ? '▼' : '▶'}</span>
         <span>場次 / 分組設定</span>
         <span style={{ fontSize: 12.5, color: 'var(--ink-mute)', fontWeight: 500 }}>
-          集體 {sessions.length} 場　·　分組 {slots.length} slots
+          集體 {sessions.length} 場　·　分組 {teachers.length} 位老師
         </span>
       </button>
 
@@ -1483,22 +1600,22 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
               <table className="admin-table" style={{ fontSize: 12.5 }}>
                 <thead>
                   <tr>
-                    <th>ID</th><th>老師</th><th>日期</th><th>時間</th><th>名額</th><th>候補名額</th><th>啟用</th><th>排序</th><th>操作</th>
+                    <th>老師</th><th>日期</th><th>時間</th><th>名額</th><th>候補名額</th><th>啟用</th><th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.length === 0 && <tr><td colSpan={9} style={{ textAlign: 'center', padding: 16, color: 'var(--ink-mute)' }}>尚無場次</td></tr>}
-                  {sessions.map(s => (
+                  {sessions.length === 0 && <tr><td colSpan={7} style={{ textAlign: 'center', padding: 16, color: 'var(--ink-mute)' }}>尚無場次</td></tr>}
+                  {sessions.slice().sort((a, b) => a.sort_order - b.sort_order).map((s, idx, arr) => (
                     <tr key={s.id}>
-                      <td className="mono">{s.id}</td>
                       <td>{s.teacher}</td>
                       <td>{s.date}</td>
                       <td>{s.time}</td>
                       <td style={{ textAlign: 'center' }}>{s.cap}</td>
                       <td style={{ textAlign: 'center' }}>{s.waitlist_cap}</td>
                       <td style={{ textAlign: 'center' }}>{s.is_active ? '✓' : '—'}</td>
-                      <td style={{ textAlign: 'center' }}>{s.sort_order}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="admin-btn-sm" style={{ marginRight: 2 }} onClick={() => moveSession(s.id, 'up')} disabled={saving || idx === 0}>▲</button>
+                        <button className="admin-btn-sm" style={{ marginRight: 6 }} onClick={() => moveSession(s.id, 'down')} disabled={saving || idx === arr.length - 1}>▼</button>
                         <button className="admin-btn-sm" style={{ marginRight: 4 }} onClick={() => { setSessionForm(s); setEditingSession(s) }}>編輯</button>
                         <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteSession(s.id)}>刪除</button>
                       </td>
@@ -1509,16 +1626,11 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span style={{ fontSize: 12.5, fontWeight: 700, color: editingSession ? 'var(--gold-deep)' : 'var(--green-deep)', letterSpacing: '0.06em' }}>
-                {editingSession ? `✏ 編輯場次 ${editingSession.id}` : '＋ 新增場次'}
+                {editingSession ? `✏ 編輯場次` : '＋ 新增場次'}
               </span>
               <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
-              <div>
-                <label className="form-label">ID {!editingSession && <span className="required">*</span>}</label>
-                <input className="form-input" value={sessionForm.id} disabled={!!editingSession}
-                  onChange={e => setSessionForm(f => ({ ...f, id: e.target.value }))} placeholder="s1" />
-              </div>
               <div>
                 <label className="form-label">老師</label>
                 <input className="form-input" value={sessionForm.teacher} onChange={e => setSessionForm(f => ({ ...f, teacher: e.target.value }))} placeholder="Phra Ajahn" />
@@ -1540,10 +1652,6 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
                 <input className="form-input" type="number" value={sessionForm.waitlist_cap} onChange={e => setSessionForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} />
               </div>
               <div>
-                <label className="form-label">排序</label>
-                <input className="form-input" type="number" value={sessionForm.sort_order} onChange={e => setSessionForm(f => ({ ...f, sort_order: Number(e.target.value) }))} />
-              </div>
-              <div>
                 <label className="form-label">啟用</label>
                 <select className="form-select" value={sessionForm.is_active ? '1' : '0'} onChange={e => setSessionForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
                   <option value="1">是</option><option value="0">否</option>
@@ -1558,82 +1666,172 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
             </div>
           </div>
 
-          {/* ── 分組互動 Slots ── */}
+          {/* ── 分組互動（以老師為單位） ── */}
           <div>
-            <h5 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 13, color: 'var(--gold-deep)', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10 }}>
-              分組互動 Slots（老師 × 日期）
-            </h5>
-            <div style={{ overflowX: 'auto', border: '1px solid var(--line)', borderRadius: 8, marginBottom: 12 }}>
-              <table className="admin-table" style={{ fontSize: 12.5 }}>
-                <thead>
-                  <tr>
-                    <th>老師 key</th><th>老師名稱</th><th>日期</th><th>名額</th><th>候補名額</th><th>啟用</th><th>排序</th><th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {slots.length === 0 && <tr><td colSpan={8} style={{ textAlign: 'center', padding: 16, color: 'var(--ink-mute)' }}>尚無分組 slot</td></tr>}
-                  {slots.map(s => (
-                    <tr key={s.id}>
-                      <td className="mono">{s.teacher_key}</td>
-                      <td>{s.teacher_label}</td>
-                      <td>{s.date}</td>
-                      <td style={{ textAlign: 'center' }}>{s.cap}</td>
-                      <td style={{ textAlign: 'center' }}>{s.waitlist_cap}</td>
-                      <td style={{ textAlign: 'center' }}>{s.is_active ? '✓' : '—'}</td>
-                      <td style={{ textAlign: 'center' }}>{s.sort_order}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <button className="admin-btn-sm" style={{ marginRight: 4 }} onClick={() => { setSlotForm(s); setEditingSlot(s) }}>編輯</button>
-                        <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteSlot(s.id)}>刪除</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <h5 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 13, color: 'var(--gold-deep)', letterSpacing: '0.08em', fontWeight: 700, margin: 0 }}>
+                分組互動
+              </h5>
+              <button className="admin-btn-sm" style={{ color: showNewTeacher ? 'var(--ink-mute)' : 'var(--green-deep)' }}
+                onClick={() => setShowNewTeacher(v => !v)}>
+                {showNewTeacher ? '取消' : '＋ 新增老師'}
+              </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: editingSlot ? 'var(--gold-deep)' : 'var(--green-deep)', letterSpacing: '0.06em' }}>
-                {editingSlot ? `✏ 編輯 Slot` : '＋ 新增 Slot'}
-              </span>
-              <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, alignItems: 'end' }}>
-              <div>
-                <label className="form-label">老師 key</label>
-                <input className="form-input" value={slotForm.teacher_key} onChange={e => setSlotForm(f => ({ ...f, teacher_key: e.target.value }))} placeholder="prasan" />
+
+            {/* 新增老師表單 */}
+            {showNewTeacher && (
+              <div style={{ padding: '12px 14px', background: 'rgba(73,85,52,0.04)', border: '1px solid var(--line)', borderRadius: 8, marginBottom: 14 }}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: 'var(--green-deep)', marginBottom: 8, letterSpacing: '0.06em' }}>＋ 新增老師（含第一個日期）</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8, alignItems: 'end' }}>
+                  <div>
+                    <label className="form-label">老師名稱</label>
+                    <input className="form-input" value={newTeacherForm.label} onChange={e => setNewTeacherForm(f => ({ ...f, label: e.target.value }))} placeholder="阿姜巴山" />
+                  </div>
+                  <div>
+                    <label className="form-label">日期 <span className="required">*</span></label>
+                    <input className="form-input" value={newTeacherForm.date} onChange={e => setNewTeacherForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-21" />
+                  </div>
+                  <div>
+                    <label className="form-label">名額</label>
+                    <input className="form-input" type="number" value={newTeacherForm.cap} onChange={e => setNewTeacherForm(f => ({ ...f, cap: Number(e.target.value) }))} />
+                  </div>
+                  <div>
+                    <label className="form-label">候補名額</label>
+                    <input className="form-input" type="number" value={newTeacherForm.waitlist_cap} onChange={e => setNewTeacherForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} />
+                  </div>
+                  <div>
+                    <label className="form-label">啟用</label>
+                    <select className="form-select" value={newTeacherForm.is_active ? '1' : '0'} onChange={e => setNewTeacherForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                      <option value="1">是</option><option value="0">否</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', paddingBottom: 1 }}>
+                    <button className="admin-btn-sm primary" onClick={saveNewTeacher} disabled={saving}>新增</button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="form-label">老師名稱</label>
-                <input className="form-input" value={slotForm.teacher_label} onChange={e => setSlotForm(f => ({ ...f, teacher_label: e.target.value }))} placeholder="Prasan" />
+            )}
+
+            {/* 老師列表 */}
+            {teachers.length === 0 && <div style={{ padding: 16, textAlign: 'center', color: 'var(--ink-mute)', fontSize: 13 }}>尚無老師</div>}
+            {teachers.map((t, tIdx) => (
+              <div key={t.key} style={{ border: '1px solid var(--line)', borderRadius: 8, marginBottom: 10, overflow: 'hidden' }}>
+                {/* 老師 header */}
+                <div style={{ padding: '8px 14px', background: 'rgba(180,147,88,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  {editingTeacher === t.key ? (
+                    <>
+                      <input className="form-input" style={{ width: 120 }} value={teacherEditForm.label}
+                        onChange={e => setTeacherEditForm(f => ({ ...f, label: e.target.value }))} placeholder="名稱" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <label className="form-label" style={{ margin: 0 }}>啟用</label>
+                        <select className="form-select" style={{ width: 70 }} value={teacherEditForm.is_active ? '1' : '0'}
+                          onChange={e => setTeacherEditForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                          <option value="1">是</option><option value="0">否</option>
+                        </select>
+                      </div>
+                      <button className="admin-btn-sm primary" onClick={() => saveTeacherEdit(t.key)} disabled={saving}>儲存</button>
+                      <button className="admin-btn-sm" onClick={() => setEditingTeacher(null)}>取消</button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        <button className="admin-btn-sm" onClick={() => moveTeacher(t.key, 'up')} disabled={saving || tIdx === 0}>▲</button>
+                        <button className="admin-btn-sm" onClick={() => moveTeacher(t.key, 'down')} disabled={saving || tIdx === teachers.length - 1}>▼</button>
+                      </div>
+                      <span style={{ fontWeight: 700, fontSize: 13 }}>{t.label}</span>
+                      <span style={{ fontSize: 12, color: t.is_active ? 'var(--green-deep)' : 'var(--ink-mute)' }}>
+                        {t.is_active ? '✓ 啟用' : '— 停用'}
+                      </span>
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                        <button className="admin-btn-sm" onClick={() => {
+                          setEditingTeacher(t.key)
+                          setTeacherEditForm({ label: t.label, sort_order: t.sort_order, is_active: t.is_active })
+                        }}>編輯</button>
+                        <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteTeacher(t.key, t.label)}>刪除老師</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 日期列表 */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="admin-table" style={{ fontSize: 12.5, margin: 0 }}>
+                    <thead>
+                      <tr><th>日期</th><th>名額</th><th>候補</th><th>啟用</th><th>操作</th></tr>
+                    </thead>
+                    <tbody>
+                      {t.slots.map(s => (
+                        <tr key={s.id}>
+                          {editingSlot?.id === s.id ? (
+                            <>
+                              <td><input className="form-input" style={{ width: 120 }} value={slotEditForm.date}
+                                onChange={e => setSlotEditForm(f => ({ ...f, date: e.target.value }))} /></td>
+                              <td><input className="form-input" type="number" style={{ width: 60 }} value={slotEditForm.cap}
+                                onChange={e => setSlotEditForm(f => ({ ...f, cap: Number(e.target.value) }))} /></td>
+                              <td><input className="form-input" type="number" style={{ width: 60 }} value={slotEditForm.waitlist_cap}
+                                onChange={e => setSlotEditForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} /></td>
+                              <td>
+                                <select className="form-select" style={{ width: 60 }} value={slotEditForm.is_active ? '1' : '0'}
+                                  onChange={e => setSlotEditForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                                  <option value="1">是</option><option value="0">否</option>
+                                </select>
+                              </td>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                <button className="admin-btn-sm primary" style={{ marginRight: 4 }} onClick={updateSlot} disabled={saving}>儲存</button>
+                                <button className="admin-btn-sm" onClick={() => setEditingSlot(null)}>取消</button>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td>{s.date}</td>
+                              <td style={{ textAlign: 'center' }}>{s.cap}</td>
+                              <td style={{ textAlign: 'center' }}>{s.waitlist_cap}</td>
+                              <td style={{ textAlign: 'center' }}>{s.is_active ? '✓' : '—'}</td>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                <button className="admin-btn-sm" style={{ marginRight: 4 }} onClick={() => {
+                                  setEditingSlot(s)
+                                  setSlotEditForm({ date: s.date, cap: s.cap, waitlist_cap: s.waitlist_cap, is_active: s.is_active })
+                                }}>編輯</button>
+                                <button className="admin-btn-sm" style={{ color: 'var(--error)' }} onClick={() => deleteSlot(s.id)}>刪除</button>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                      {/* 新增日期 inline row */}
+                      {addingDateFor === t.key && (
+                        <tr>
+                          <td><input className="form-input" style={{ width: 120 }} value={newDateForm.date}
+                            onChange={e => setNewDateForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-21" /></td>
+                          <td><input className="form-input" type="number" style={{ width: 60 }} value={newDateForm.cap}
+                            onChange={e => setNewDateForm(f => ({ ...f, cap: Number(e.target.value) }))} /></td>
+                          <td><input className="form-input" type="number" style={{ width: 60 }} value={newDateForm.waitlist_cap}
+                            onChange={e => setNewDateForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} /></td>
+                          <td>
+                            <select className="form-select" style={{ width: 60 }} value={newDateForm.is_active ? '1' : '0'}
+                              onChange={e => setNewDateForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
+                              <option value="1">是</option><option value="0">否</option>
+                            </select>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <button className="admin-btn-sm primary" style={{ marginRight: 4 }} onClick={() => addDateToTeacher(t.key)} disabled={saving}>新增</button>
+                            <button className="admin-btn-sm" onClick={() => setAddingDateFor(null)}>取消</button>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {addingDateFor !== t.key && (
+                  <div style={{ padding: '6px 14px' }}>
+                    <button className="admin-btn-sm" onClick={() => {
+                      setAddingDateFor(t.key)
+                      setNewDateForm({ date: '', cap: 8, waitlist_cap: 3, is_active: true })
+                    }}>＋ 新增日期</button>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="form-label">日期</label>
-                <input className="form-input" value={slotForm.date} onChange={e => setSlotForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-08-21" />
-              </div>
-              <div>
-                <label className="form-label">名額</label>
-                <input className="form-input" type="number" value={slotForm.cap} onChange={e => setSlotForm(f => ({ ...f, cap: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="form-label">候補名額</label>
-                <input className="form-input" type="number" value={slotForm.waitlist_cap} onChange={e => setSlotForm(f => ({ ...f, waitlist_cap: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="form-label">排序</label>
-                <input className="form-input" type="number" value={slotForm.sort_order} onChange={e => setSlotForm(f => ({ ...f, sort_order: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="form-label">啟用</label>
-                <select className="form-select" value={slotForm.is_active ? '1' : '0'} onChange={e => setSlotForm(f => ({ ...f, is_active: e.target.value === '1' }))}>
-                  <option value="1">是</option><option value="0">否</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', paddingBottom: 1 }}>
-                <button className="admin-btn-sm primary" onClick={saveSlot} disabled={saving}>
-                  {editingSlot ? '更新' : '新增'} Slot
-                </button>
-                {editingSlot && <button className="admin-btn-sm" onClick={() => { setEditingSlot(null); setSlotForm(blankSlot) }}>取消</button>}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
