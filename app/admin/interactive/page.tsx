@@ -52,6 +52,7 @@ export default function InteractiveAdminPage() {
   const [page, setPage] = useState(1)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState(false)
+  const [sendingInvite, setSendingInvite] = useState(false)
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
   const [autoDrawOpen, setAutoDrawOpen] = useState(false)
@@ -269,6 +270,22 @@ export default function InteractiveAdminPage() {
     return true
   }
 
+  const sendInvite = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選對象'); return }
+    if (!confirm(`寄出互動報名開放通知信給 ${bulkSelected.length} 位學員？\n\n提醒：寄信前請確認互動報名已開放，否則學員點開連結將看到「尚未開放」。`)) return
+    setSendingInvite(true)
+    setMessage('')
+    const res = await fetch('/api/admin/send-interactive-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const d = await res.json()
+    setMessage(d.message || (res.ok ? '寄送完成' : `寄送失敗：${d.error || res.status}`))
+    setSendingInvite(false)
+    if (res.ok) setBulkSelected([])
+  }
+
   const sendNotifications = async () => {
     if (bulkSelected.length === 0) { alert('請先勾選對象'); return }
     if (!confirm(`寄出互動結果通知信給 ${bulkSelected.length} 位學員？`)) return
@@ -381,7 +398,11 @@ export default function InteractiveAdminPage() {
               onChange={toggleAll} />
             全選本頁
           </label>
-          <button onClick={sendNotifications} disabled={bulkSending}
+          <button onClick={sendInvite} disabled={sendingInvite || bulkSending}
+            className="admin-btn-sm">
+            {sendingInvite ? '寄送中⋯' : `批次寄報名互動通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendNotifications} disabled={bulkSending || sendingInvite}
             className="admin-btn-sm primary">
             {bulkSending ? '寄送中⋯' : `批次寄中簽通知信（${bulkSelected.length}）`}
           </button>
