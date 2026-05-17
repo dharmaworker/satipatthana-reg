@@ -638,7 +638,7 @@ export default function LodgingsPage() {
         <div onClick={() => !saving && setEdit(null)} className="admin-modal-overlay">
           <div onClick={e => e.stopPropagation()} className="admin-modal-card lg">
             <h3>
-              <span>編輯{edit.id ? '食宿登記' : '學員資料（線上）'}：{edit.registration?.chinese_name}</span>
+              <span>編輯{edit.registration?.retreat_format === 'online' ? '學員資料（線上）' : edit.id ? '食宿登記' : '學員資料（尚未填食宿）'}：{edit.registration?.chinese_name}</span>
               <button onClick={() => !saving && setEdit(null)} className="admin-btn-sm">✕</button>
             </h3>
 
@@ -658,9 +658,14 @@ export default function LodgingsPage() {
               </div>
             </div>
 
-            {!edit.id && (
+            {edit.registration?.retreat_format === 'online' && (
               <p style={{ color: 'var(--ink-mute)', fontSize: 13, marginBottom: 14, padding: '8px 12px', background: 'rgba(73,85,52,0.05)', borderRadius: 8 }}>
                 線上課程學員，無食宿登記資料。僅可編輯學號。
+              </p>
+            )}
+            {edit.registration?.retreat_format !== 'online' && !edit.id && (
+              <p style={{ color: 'var(--ink-mute)', fontSize: 13, marginBottom: 14, padding: '8px 12px', background: 'rgba(73,85,52,0.05)', borderRadius: 8 }}>
+                學員尚未填寫食宿登記。學號可直接編輯，其餘資料等學員填寫後再行調整。
               </p>
             )}
 
