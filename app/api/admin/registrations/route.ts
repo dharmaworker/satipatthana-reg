@@ -200,13 +200,22 @@ export async function DELETE(request: NextRequest) {
     .eq('registration_id', id)
     .maybeSingle()
 
+  // 先刪子表（避免 FK 阻擋主表刪除）
+  await Promise.all([
+    supabaseAdmin.from('interactive_registrations').delete().eq('registration_id', id),
+    supabaseAdmin.from('interactive_tasks').delete().eq('registration_id', id),
+    supabaseAdmin.from('lodging_registrations').delete().eq('registration_id', id),
+    supabaseAdmin.from('practice_checkins').delete().eq('registration_id', id),
+    supabaseAdmin.from('course_session_checkins').delete().eq('registration_id', id),
+  ])
+
   const { error } = await supabaseAdmin
     .from('registrations')
     .delete()
     .eq('id', id)
 
   if (error) {
-    return NextResponse.json({ error: '刪除失敗' }, { status: 500 })
+    return NextResponse.json({ error: `刪除失敗：${error.message}` }, { status: 500 })
   }
 
   // 清 Storage 檔（失敗不影響主流程）
