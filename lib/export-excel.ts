@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs'
 import { supabaseAdmin } from './supabase'
 import { getPreviewRegistrationId } from './preview-test-student'
+import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
 
 const STATUS_LABEL: Record<string, string> = { pending: '審核中', approved: '已錄取', rejected: '未錄取' }
 const PAYMENT_LABEL: Record<string, string> = { unpaid: '未繳費', paid: '待確認', verified: '已確認' }
@@ -205,17 +206,9 @@ const INTERACTIVE_COLUMNS = [
   { key: 'submitted_at', header: '學員送出時間', width: 20 },
 ]
 
-const SESSION_LABEL_EXPORT: Record<string, string> = {
-  s1: '8/20（四）宋猜尊者',
-  s2: '8/21（五）奧蘭努',
-  s3: '8/24（一）阿姜給',
-}
-const TEACHER_LABEL_EXPORT: Record<string, string> = {
-  prasan: '阿姜巴山', nat: '阿姜納', nitiya: '阿姜妮', napatpol: '阿姜松',
-}
 const STATUS_ZH: Record<string, string> = { pending: '未定', won: '中簽', lost: '沒中簽' }
 
-function transformInteractiveRow(i: any) {
+function transformInteractiveRow(i: any, sessionLabel: Record<string, string>, teacherLabel: Record<string, string>) {
   const reg = i.registration || {}
   const wantedSessions = Array.isArray(i.wanted_sessions) ? i.wanted_sessions : []
   const wantedRanking = Array.isArray(i.wanted_ranking) ? i.wanted_ranking : []
@@ -225,15 +218,15 @@ function transformInteractiveRow(i: any) {
     member_id: reg.member_id || '',
     student_id: reg.student_id || '',
     random_code: reg.random_code || '',
-    wanted_sessions_str: wantedSessions.map((s: string) => SESSION_LABEL_EXPORT[s] || s).join('、') || '（不報名）',
+    wanted_sessions_str: wantedSessions.map((s: string) => sessionLabel[s] || s).join('、') || '（不報名）',
     wanted_ranking_str: wantedRanking.length === 0
       ? '（不報名）'
-      : wantedRanking.map((t: string, idx: number) => `${idx + 1}.${TEACHER_LABEL_EXPORT[t] || t}`).join(' '),
+      : wantedRanking.map((t: string, idx: number) => `${idx + 1}.${teacherLabel[t] || t}`).join(' '),
     group_status_zh: STATUS_ZH[i.group_status] || i.group_status || '',
-    assigned_session_label: i.assigned_session ? SESSION_LABEL_EXPORT[i.assigned_session] || i.assigned_session : '',
+    assigned_session_label: i.assigned_session ? sessionLabel[i.assigned_session] || i.assigned_session : '',
     group_serial: i.group_serial ?? '',
     small_status_zh: STATUS_ZH[i.small_status] || i.small_status || '',
-    assigned_group_label: i.assigned_group ? `${TEACHER_LABEL_EXPORT[i.assigned_group] || i.assigned_group} 組` : '',
+    assigned_group_label: i.assigned_group ? `${teacherLabel[i.assigned_group] || i.assigned_group} 組` : '',
     assigned_date: i.assigned_date || '',
     small_serial: i.small_serial ?? '',
     notification_sent_at: i.notification_sent_at ? new Date(i.notification_sent_at).toLocaleString('zh-TW') : '',
@@ -241,12 +234,12 @@ function transformInteractiveRow(i: any) {
   }
 }
 
-function addInteractiveSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
+function addInteractiveSheet(wb: ExcelJS.Workbook, name: string, rows: any[], sessionLabel: Record<string, string>, teacherLabel: Record<string, string>) {
   const sheet = wb.addWorksheet(name)
   sheet.columns = INTERACTIVE_COLUMNS
   sheet.getRow(1).font = { bold: true }
   sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
-  rows.forEach(r => sheet.addRow(transformInteractiveRow(r)))
+  rows.forEach(r => sheet.addRow(transformInteractiveRow(r, sessionLabel, teacherLabel)))
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
@@ -364,7 +357,7 @@ const INTERACTIVE_TASK_COLUMNS = [
   { key: 'submitted_at', header: '送出時間', width: 20 },
 ]
 
-function transformInteractiveTaskRow(t: any) {
+function transformInteractiveTaskRow(t: any, sessionLabel: Record<string, string>, teacherLabel: Record<string, string>) {
   const reg = t.registration || {}
   const it = t.interactive || {}
   return {
@@ -373,10 +366,10 @@ function transformInteractiveTaskRow(t: any) {
     member_id: reg.member_id || '',
     student_id: reg.student_id || '',
     email: reg.email || '',
-    assigned_session_label: it.assigned_session ? SESSION_LABEL_EXPORT[it.assigned_session] || it.assigned_session : '',
+    assigned_session_label: it.assigned_session ? sessionLabel[it.assigned_session] || it.assigned_session : '',
     group_prior_interaction_zh: t.group_prior_interaction === 'yes' ? '是' : t.group_prior_interaction === 'no' ? '否' : '',
     group_question: t.group_question || '',
-    assigned_group_label: it.assigned_group ? `${TEACHER_LABEL_EXPORT[it.assigned_group] || it.assigned_group} 組` : '',
+    assigned_group_label: it.assigned_group ? `${teacherLabel[it.assigned_group] || it.assigned_group} 組` : '',
     assigned_date: it.assigned_date || '',
     small_prior_interaction_zh: t.small_prior_interaction === 'yes' ? '是' : t.small_prior_interaction === 'no' ? '否' : '',
     small_question: t.small_question || '',
@@ -387,12 +380,12 @@ function transformInteractiveTaskRow(t: any) {
   }
 }
 
-function addInteractiveTaskSheet(wb: ExcelJS.Workbook, name: string, rows: any[]) {
+function addInteractiveTaskSheet(wb: ExcelJS.Workbook, name: string, rows: any[], sessionLabel: Record<string, string>, teacherLabel: Record<string, string>) {
   const sheet = wb.addWorksheet(name)
   sheet.columns = INTERACTIVE_TASK_COLUMNS
   sheet.getRow(1).font = { bold: true }
   sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2E9' } }
-  rows.forEach(r => sheet.addRow(transformInteractiveTaskRow(r)))
+  rows.forEach(r => sheet.addRow(transformInteractiveTaskRow(r, sessionLabel, teacherLabel)))
   sheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
@@ -421,6 +414,12 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
   if (previewId) lodgingQuery = lodgingQuery.neq('registration_id', previewId)
   const { data: lodgingData } = await lodgingQuery
+
+  // 互動場次、老師 label（從 DB 取，不用 hardcode）
+  const [allSessions, allSlots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
+  const allTeachers = deriveTeachersFromSlots(allSlots)
+  const sessionLabel = buildSessionLabelMap(allSessions)
+  const teacherLabel = buildTeacherLabelMap(allTeachers)
 
   // 互動報名 + 互動作業
   let interactiveQuery = supabaseAdmin
@@ -506,8 +505,8 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   addSheet(wb, '已繳費', inPerson.filter(r => r.payment_status === 'verified'))
   addSheet(wb, '未錄取', inPerson.filter(r => r.status === 'rejected'))
   addLodgingSheet(wb, '食宿登記', lodgingData || [])
-  addInteractiveSheet(wb, '互動報名', interactiveData || [])
-  addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive)
+  addInteractiveSheet(wb, '互動報名', interactiveData || [], sessionLabel, teacherLabel)
+  addInteractiveTaskSheet(wb, '互動作業', tasksWithInteractive, sessionLabel, teacherLabel)
   addPracticeSheet(wb, '課前共修打卡', inPerson.filter(r => r.status === 'approved'), practiceSchedule, checkinsByRegId)
 
   const buffer = Buffer.from(await wb.xlsx.writeBuffer())
