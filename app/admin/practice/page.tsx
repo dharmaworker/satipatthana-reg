@@ -153,10 +153,10 @@ export default function AdminPracticePage() {
           <div style={{ display: 'grid', placeItems: 'center', padding: 60 }}><div className="spinner-large" /></div>
         ) : (
           <>
-            {/* Zoom 設定 — hidden */}
-            <section style={{ display: 'none' }}>
+            {/* 全域設定 */}
+            <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>Zoom / 全域設定</h2>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>全域設定</h2>
                 {!editingConfig && (
                   <button onClick={() => { setConfigDraft({ ...config! }); setEditingConfig(true) }}
                     style={{ padding: '6px 16px', background: 'var(--gold-deep)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -170,6 +170,20 @@ export default function AdminPracticePage() {
                     <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       期間標籤
                       <input style={inputStyle} value={configDraft.period_label} onChange={e => setConfigDraft({ ...configDraft, period_label: e.target.value })} />
+                    </label>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      Zoom 會議編號
+                      <input style={inputStyle} value={configDraft.zoom_meeting_id} onChange={e => setConfigDraft({ ...configDraft, zoom_meeting_id: e.target.value })} />
+                    </label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      Zoom 密碼
+                      <input style={inputStyle} value={configDraft.zoom_password} onChange={e => setConfigDraft({ ...configDraft, zoom_password: e.target.value })} />
+                    </label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      Zoom 連結（可選）
+                      <input style={inputStyle} value={configDraft.zoom_url || ''} onChange={e => setConfigDraft({ ...configDraft, zoom_url: e.target.value || null })} placeholder="https://..." />
                     </label>
                   </div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -194,10 +208,13 @@ export default function AdminPracticePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: 14 }}>
                   {[
                     ['期間標籤', config.period_label],
+                    ['Zoom 會議編號', config.zoom_meeting_id || '（未設定）'],
+                    ['Zoom 密碼', config.zoom_password || '（未設定）'],
+                    ['Zoom 連結', config.zoom_url || '（未設定）'],
                     ['備注', config.notes || '（無）'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ color: 'var(--ink-mute)', minWidth: 80 }}>{k}</span>
+                      <span style={{ color: 'var(--ink-mute)', minWidth: 100 }}>{k}</span>
                       <strong style={{ color: 'var(--ink)' }}>{v}</strong>
                     </div>
                   ))}

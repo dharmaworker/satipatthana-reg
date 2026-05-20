@@ -178,6 +178,33 @@ function PracticeContent() {
               </div>
             )}
 
+            {/* Zoom 共修資訊 */}
+            {config.zoom_meeting_id && (
+              <div style={{
+                background: 'rgba(73,85,52,0.06)',
+                border: '1px solid rgba(73,85,52,0.18)',
+                borderRadius: 14,
+                padding: '16px 24px',
+                marginBottom: 28,
+              }}>
+                <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.05em' }}>Zoom 共修連線資訊</p>
+                <div style={{ display: 'grid', gap: 4, fontSize: 13, color: 'var(--ink-soft)' }}>
+                  <div>會議編號：<strong style={{ color: 'var(--ink)', letterSpacing: '0.08em' }}>{config.zoom_meeting_id}</strong></div>
+                  {config.zoom_password && (
+                    <div>密碼：<strong style={{ color: 'var(--ink)' }}>{config.zoom_password}</strong></div>
+                  )}
+                  {config.zoom_url && (
+                    <div style={{ marginTop: 6 }}>
+                      <a href={config.zoom_url} target="_blank" rel="noopener noreferrer"
+                        style={{ color: 'var(--green-deep)', fontWeight: 600, fontSize: 13 }}>
+                        點此加入 Zoom →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* 打卡進度 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>打卡進度</span>
