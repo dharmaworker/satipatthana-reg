@@ -147,7 +147,16 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
       ${rows.join('')}
     </table>
 
-    ${config.task_deadline_ms ? `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">📅 修改截止：<strong style="color:${C.ink};">${fmtTaipei(config.task_deadline_ms)}（台北時間）</strong>，截止前可重新開啟修改，以最後一次送出為準：</p>` : `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">截止前可重新開啟作業頁面修改，以最後一次送出為準：</p>`}
+    ${(() => {
+      const open = config.task_open_ms ? fmtTaipei(config.task_open_ms) : null
+      const dead = config.task_deadline_ms ? fmtTaipei(config.task_deadline_ms) : null
+      const range = open && dead
+        ? `開放 ${open} ～ 截止 ${dead}（台北時間）`
+        : dead ? `截止 ${dead}（台北時間）` : null
+      return range
+        ? `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">📅 作業填寫期間：<strong style="color:${C.ink};">${range}</strong>，截止前可重新開啟修改，以最後一次送出為準：</p>`
+        : `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">截止前可重新開啟作業頁面修改，以最後一次送出為準：</p>`
+    })()}
     ${emailButton(taskLink, '查看／修改互動作業', 'green')}
 
     ${emailSignoff()}
