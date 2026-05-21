@@ -37,7 +37,11 @@ export async function sendInteractiveNotificationEmail(opts: {
   const sessionLabelMap = buildSessionLabelMap(sessions)
   const teachers = deriveTeachersFromSlots(slots)
   const teacherLabelMap = buildTeacherLabelMap(teachers)
+  const taskOpenLabel = config.task_open_ms ? fmtTaipei(config.task_open_ms) : null
   const taskDeadlineLabel = config.task_deadline_ms ? fmtTaipei(config.task_deadline_ms) : null
+  const taskTimeRange = taskOpenLabel && taskDeadlineLabel
+    ? `開放 ${taskOpenLabel} ～ 截止 ${taskDeadlineLabel}（台北時間）`
+    : taskDeadlineLabel ? `截止 ${taskDeadlineLabel}（台北時間）` : null
 
   const wonAny = group_status === 'won' || small_status === 'won'
   const hasResult = wonAny || group_status === 'waitlist' || small_status === 'waitlist'
@@ -81,7 +85,7 @@ export async function sendInteractiveNotificationEmail(opts: {
     ${wonAny ? `
       ${emailH3('下一步：填寫互動作業')}
       <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">恭喜您中簽！請於截止時間前填寫互動作業，老師會依您的問題與背景準備指導。</p>
-      ${taskDeadlineLabel ? `<p style="font-size:13px;color:${C.inkMute};margin:0 0 12px;">📅 作業填寫截止：<strong style="color:${C.ink};">${taskDeadlineLabel}（台北時間）</strong></p>` : ''}
+      ${taskTimeRange ? `<p style="font-size:13px;color:${C.inkMute};margin:0 0 12px;">📅 作業填寫期間：<strong style="color:${C.ink};">${taskTimeRange}</strong></p>` : ''}
       ${emailButton(taskLink, '前往填寫互動作業', 'green')}
       <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">作業內容包含：基本背景、近期實修狀況、希望老師指導的問題（每題 75 字內）。</p>
     ` : onlyWaitlist ? `

@@ -51,6 +51,8 @@ function MemberDashboardContent() {
   const [loading, setLoading] = useState(true)
   const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
   const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
+  const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
+  const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -62,6 +64,8 @@ function MemberDashboardContent() {
         const tLabel: LabelMap = {}
         for (const t of (d.teachers || [])) tLabel[t.key] = t.label
         setTeacherLabel(tLabel)
+        if (d.task_open_ms) setTaskOpenMs(d.task_open_ms)
+        if (d.task_deadline_ms) setTaskDeadlineMs(d.task_deadline_ms)
       })
       .catch(() => {})
   }, [])
@@ -313,7 +317,12 @@ function MemberDashboardContent() {
                     state={member.interactive_task_submitted ? 'done' : 'todo'}
                     statusBadge={member.interactive_task_submitted ? '已送出' : '待填寫'}
                     badgeKind={member.interactive_task_submitted ? 'done' : 'urgent'}
-                    deadline="課程開始前完成"
+                    deadline={(() => {
+                      const fmt = (ms: number) => new Date(ms).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                      if (taskOpenMs && taskDeadlineMs) return `${fmt(taskOpenMs)} 起 ～ ${fmt(taskDeadlineMs)} 截止`
+                      if (taskDeadlineMs) return `截止：${fmt(taskDeadlineMs)}`
+                      return '課程開始前完成'
+                    })()}
                     urgent={!member.interactive_task_submitted}
                     rows={[
                       ['集體', member.interactive_group_status === 'won' ? '✓ 已中簽' : '—'],
