@@ -31,6 +31,8 @@ function TaskContent() {
   const [notWon, setNotWon] = useState(false)
   const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
   const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
+  const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
+  const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
 
   // 計算動態 step 列表（依中簽結果決定有沒有集體 / 分組）
   const wonGroup = interactive?.group_status === 'won'
@@ -65,6 +67,8 @@ function TaskContent() {
         const tLabel: LabelMap = {}
         for (const t of (d.teachers || [])) tLabel[t.key] = t.label
         setTeacherLabel(tLabel)
+        if (d.task_open_ms) setTaskOpenMs(d.task_open_ms)
+        if (d.task_deadline_ms) setTaskDeadlineMs(d.task_deadline_ms)
       })
       .catch(() => {})
   }, [])
@@ -157,9 +161,19 @@ function TaskContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const now = Date.now()
+  const taskNotOpen = taskOpenMs != null && now < taskOpenMs
+  const taskExpired = taskDeadlineMs != null && now > taskDeadlineMs
+
+  function fmtTaipei(ms: number) {
+    return new Date(ms).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  }
+
   const handleSubmit = async () => {
     setError('')
     setErrorField(null)
+    if (taskNotOpen) { setError('互動作業尚未開放填寫，請於開放時間後再試。'); return }
+    if (taskExpired) { setError('互動作業填寫已截止，無法再送出。'); return }
     if (!validateUpToStep(totalSteps)) return
     setSubmitting(true)
     try {
@@ -441,6 +455,29 @@ function TaskContent() {
           </div>
 
           <aside>
+            {(taskOpenMs || taskDeadlineMs) && (
+              <div className="sidebar-card" style={{
+                background: taskExpired ? 'rgba(184,82,58,0.07)' : taskNotOpen ? 'rgba(216,194,154,0.15)' : 'rgba(73,85,52,0.07)',
+                borderColor: taskExpired ? 'rgba(184,82,58,0.35)' : taskNotOpen ? 'rgba(180,147,88,0.35)' : 'rgba(73,85,52,0.25)',
+              }}>
+                <h4 style={{ color: taskExpired ? 'var(--error)' : taskNotOpen ? 'var(--gold-deep)' : 'var(--green-deep)' }}>
+                  {taskExpired ? '⚠ 填寫已截止' : taskNotOpen ? '○ 尚未開放' : '✓ 填寫開放中'}
+                </h4>
+                {taskOpenMs && (
+                  <p style={{ marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'var(--ink-mute)', letterSpacing: '0.1em' }}>開放時間</span><br />
+                    <strong>{fmtTaipei(taskOpenMs)}</strong>
+                  </p>
+                )}
+                {taskDeadlineMs && (
+                  <p style={{ marginBottom: 0 }}>
+                    <span style={{ fontSize: 11, color: 'var(--ink-mute)', letterSpacing: '0.1em' }}>截止時間</span><br />
+                    <strong style={{ color: taskExpired ? 'var(--error)' : 'inherit' }}>{fmtTaipei(taskDeadlineMs)}</strong>
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
               <p>互動問題限 <strong>75 字內</strong>，請聚焦於當前實修狀態與具體疑問。</p>

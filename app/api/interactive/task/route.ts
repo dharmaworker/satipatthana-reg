@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendInteractiveTaskConfirmEmail } from '@/lib/interactive-notify-email'
+import { fetchInteractiveConfig } from '@/lib/interactive-config'
 
 async function authMember(request: NextRequest) {
   const url = new URL(request.url)
@@ -49,6 +50,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const a = await authMember(request)
   if ('error' in a) return NextResponse.json({ error: a.error }, { status: a.status })
+
+  // 時間窗口檢查（僅在有設定時才擋）
+  const config = await fetchInteractiveConfig()
+  const now = Date.now()
+  if (config.task_open_ms && now < config.task_open_ms) {
+    return NextResponse.json({ error: '互動作業尚未開放填寫', notOpen: true }, { status: 403 })
+  }
+  if (config.task_deadline_ms && now > config.task_deadline_ms) {
+    return NextResponse.json({ error: '互動作業填寫已截止', expired: true }, { status: 403 })
+  }
 
   const body = await request.json().catch(() => ({}))
   const fields = {

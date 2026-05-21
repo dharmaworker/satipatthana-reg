@@ -8,7 +8,9 @@ import { INTERACTIVE_DEADLINE_MS } from './interactive'
 
 export type InteractiveConfig = {
   open: boolean
-  deadline_ms?: number  // UTC epoch ms；未設定則 fallback 至 INTERACTIVE_DEADLINE_MS
+  deadline_ms?: number       // 互動報名截止（UTC epoch ms）
+  task_open_ms?: number      // 互動作業開放（UTC epoch ms）
+  task_deadline_ms?: number  // 互動作業截止（UTC epoch ms）
 }
 const DEFAULT: InteractiveConfig = { open: false }
 

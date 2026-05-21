@@ -11,5 +11,10 @@ export async function GET() {
     fetchInteractiveConfig(),
   ])
   const teachers = deriveTeachersFromSlots(slots)
-  return NextResponse.json({ sessions, slots, teachers, deadline_ms: resolveDeadlineMs(config) })
+  return NextResponse.json({
+    sessions, slots, teachers,
+    deadline_ms: resolveDeadlineMs(config),
+    task_open_ms: config.task_open_ms ?? null,
+    task_deadline_ms: config.task_deadline_ms ?? null,
+  })
 }

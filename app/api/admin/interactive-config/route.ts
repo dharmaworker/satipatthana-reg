@@ -21,13 +21,21 @@ export async function PUT(request: NextRequest) {
   if (body.deadline_ms !== undefined && (typeof body.deadline_ms !== 'number' || body.deadline_ms <= 0)) {
     return NextResponse.json({ error: 'deadline_ms 必須是正整數（UTC epoch ms）' }, { status: 400 })
   }
+  const msFields = ['task_open_ms', 'task_deadline_ms'] as const
+  for (const f of msFields) {
+    if (body[f] !== undefined && (typeof body[f] !== 'number' || body[f] <= 0)) {
+      return NextResponse.json({ error: `${f} 必須是正整數（UTC epoch ms）` }, { status: 400 })
+    }
+  }
   try {
     const current = await fetchInteractiveConfig()
     const merged = { ...current }
     if (body.open !== undefined) merged.open = body.open
     if (body.deadline_ms !== undefined) merged.deadline_ms = body.deadline_ms
+    if (body.task_open_ms !== undefined) merged.task_open_ms = body.task_open_ms
+    if (body.task_deadline_ms !== undefined) merged.task_deadline_ms = body.task_deadline_ms
     await saveInteractiveConfig(merged)
-    return NextResponse.json({ success: true, deadline_ms: resolveDeadlineMs(merged) })
+    return NextResponse.json({ success: true, deadline_ms: resolveDeadlineMs(merged), task_open_ms: merged.task_open_ms, task_deadline_ms: merged.task_deadline_ms })
   } catch (e: any) {
     return NextResponse.json({ error: e.message || '儲存失敗' }, { status: 500 })
   }

@@ -2,6 +2,11 @@ import { sendMail, sendMailWithRetry } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailAlert, emailSignoff } from './email-style'
 import { type StatusValue } from './interactive'
 import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
+import { fetchInteractiveConfig } from './interactive-config'
+
+function fmtTaipei(ms: number) {
+  return new Date(ms).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -27,11 +32,12 @@ export async function sendInteractiveNotificationEmail(opts: {
     group_status, small_status, assigned_session, assigned_group, assigned_date,
     group_serial, small_serial } = opts
 
-  // 從 DB 取得目前最新場次與老師資料
-  const [sessions, slots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
+  // 從 DB 取得目前最新場次、老師資料與作業截止時間
+  const [sessions, slots, config] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots(), fetchInteractiveConfig()])
   const sessionLabelMap = buildSessionLabelMap(sessions)
   const teachers = deriveTeachersFromSlots(slots)
   const teacherLabelMap = buildTeacherLabelMap(teachers)
+  const taskDeadlineLabel = config.task_deadline_ms ? fmtTaipei(config.task_deadline_ms) : null
 
   const wonAny = group_status === 'won' || small_status === 'won'
   const hasResult = wonAny || group_status === 'waitlist' || small_status === 'waitlist'
@@ -74,7 +80,8 @@ export async function sendInteractiveNotificationEmail(opts: {
 
     ${wonAny ? `
       ${emailH3('下一步：填寫互動作業')}
-      <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">恭喜您中簽！請於課程開始前填寫互動作業，老師會依您的問題與背景準備指導。</p>
+      <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">恭喜您中簽！請於截止時間前填寫互動作業，老師會依您的問題與背景準備指導。</p>
+      ${taskDeadlineLabel ? `<p style="font-size:13px;color:${C.inkMute};margin:0 0 12px;">📅 作業填寫截止：<strong style="color:${C.ink};">${taskDeadlineLabel}（台北時間）</strong></p>` : ''}
       ${emailButton(taskLink, '前往填寫互動作業', 'green')}
       <p style="margin-top:10px;font-size:12.5px;color:${C.inkMute};">作業內容包含：基本背景、近期實修狀況、希望老師指導的問題（每題 75 字內）。</p>
     ` : onlyWaitlist ? `
@@ -108,8 +115,8 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
   const { email, chinese_name, registration_id, random_code,
     group_status, small_status, assigned_session, assigned_group, assigned_date } = opts
 
-  // 從 DB 取得最新 label
-  const [sessions, slots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
+  // 從 DB 取得最新 label 與作業截止時間
+  const [sessions, slots, config] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots(), fetchInteractiveConfig()])
   const sessionLabelMap = buildSessionLabelMap(sessions)
   const teachers = deriveTeachersFromSlots(slots)
   const teacherLabelMap = buildTeacherLabelMap(teachers)
@@ -136,7 +143,7 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
       ${rows.join('')}
     </table>
 
-    <p style="font-size:13px;color:${C.inkMute};margin-top:8px;">截止前可重新開啟作業頁面修改，以最後一次送出為準：</p>
+    ${config.task_deadline_ms ? `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">📅 修改截止：<strong style="color:${C.ink};">${fmtTaipei(config.task_deadline_ms)}（台北時間）</strong>，截止前可重新開啟修改，以最後一次送出為準：</p>` : `<p style="font-size:13px;color:${C.inkMute};margin-top:8px;">截止前可重新開啟作業頁面修改，以最後一次送出為準：</p>`}
     ${emailButton(taskLink, '查看／修改互動作業', 'green')}
 
     ${emailSignoff()}
