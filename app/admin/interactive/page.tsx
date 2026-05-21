@@ -60,6 +60,10 @@ export default function InteractiveAdminPage() {
   const [configOpen, setConfigOpen] = useState(false)
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null)
   const [deadlineInput, setDeadlineInput] = useState('')
+  const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
+  const [taskOpenInput, setTaskOpenInput] = useState('')
+  const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
+  const [taskDeadlineInput, setTaskDeadlineInput] = useState('')
   const [configSaving, setConfigSaving] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [sessions, setSessions] = useState<DbSession[]>([])
@@ -90,6 +94,12 @@ export default function InteractiveAdminPage() {
       const ms: number | null = cfg.deadline_ms ?? null
       setDeadlineMs(ms)
       setDeadlineInput(toLocal(ms))
+      const tOpen: number | null = cfg.task_open_ms ?? null
+      setTaskOpenMs(tOpen)
+      setTaskOpenInput(toLocal(tOpen))
+      const tDead: number | null = cfg.task_deadline_ms ?? null
+      setTaskDeadlineMs(tDead)
+      setTaskDeadlineInput(toLocal(tDead))
     }
     setLoading(false)
   }
@@ -164,6 +174,34 @@ export default function InteractiveAdminPage() {
     if (res.ok) {
       setDeadlineMs(ms)
       setMessage('截止時間已儲存')
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setMessage(`儲存失敗：${d.error || res.status}`)
+    }
+    setConfigSaving(false)
+  }
+
+  const saveTaskTimes = async () => {
+    const toMs = (s: string) => s ? new Date(s + '+08:00').getTime() : null
+    const openMs = toMs(taskOpenInput)
+    const deadMs = toMs(taskDeadlineInput)
+    if (taskOpenInput && (isNaN(openMs!) || openMs! <= 0)) { setMessage('作業開放時間格式錯誤'); return }
+    if (taskDeadlineInput && (isNaN(deadMs!) || deadMs! <= 0)) { setMessage('作業截止時間格式錯誤'); return }
+    if (openMs && deadMs && openMs >= deadMs) { setMessage('作業截止時間必須晚於開放時間'); return }
+    setConfigSaving(true)
+    setMessage('')
+    const body: Record<string, number> = {}
+    if (openMs) body.task_open_ms = openMs
+    if (deadMs) body.task_deadline_ms = deadMs
+    const res = await fetch('/api/admin/interactive-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      if (openMs) setTaskOpenMs(openMs)
+      if (deadMs) setTaskDeadlineMs(deadMs)
+      setMessage('作業時間已儲存')
     } else {
       const d = await res.json().catch(() => ({}))
       setMessage(`儲存失敗：${d.error || res.status}`)
@@ -395,6 +433,27 @@ export default function InteractiveAdminPage() {
             />
             <button onClick={saveDeadline} disabled={configSaving} className="admin-btn-sm">
               儲存
+            </button>
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 18px', marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--green-deep)', letterSpacing: '0.05em', marginBottom: 12 }}>⏱ 互動作業填寫時間</div>
+          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>開放填寫（台北）</label>
+              <input type="datetime-local" value={taskOpenInput} onChange={e => setTaskOpenInput(e.target.value)}
+                style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
+              {taskOpenMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(taskOpenMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>填寫截止（台北）</label>
+              <input type="datetime-local" value={taskDeadlineInput} onChange={e => setTaskDeadlineInput(e.target.value)}
+                style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
+              {taskDeadlineMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(taskDeadlineMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+            </div>
+            <button onClick={saveTaskTimes} disabled={configSaving} className="admin-btn-sm">
+              {configSaving ? '儲存中⋯' : '儲存'}
             </button>
           </div>
         </div>

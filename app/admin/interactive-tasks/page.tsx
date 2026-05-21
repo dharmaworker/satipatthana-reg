@@ -23,12 +23,6 @@ export default function InteractiveTasksAdminPage() {
   const [detail, setDetail] = useState<Row | null>(null)
   const [sessionLabel, setSessionLabel] = useState<LabelMap>({})
   const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
-  const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
-  const [taskOpenInput, setTaskOpenInput] = useState('')
-  const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
-  const [taskDeadlineInput, setTaskDeadlineInput] = useState('')
-  const [configSaving, setConfigSaving] = useState(false)
-  const [configMsg, setConfigMsg] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/interactive-sessions')
@@ -47,45 +41,7 @@ export default function InteractiveTasksAdminPage() {
         setTeacherLabel(m)
       })
       .catch(() => {})
-    fetch('/api/admin/interactive-config')
-      .then(r => r.json())
-      .then(cfg => {
-        const toLocal = (ms: number | null) => ms ? new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 16) : ''
-        setTaskOpenMs(cfg.task_open_ms ?? null)
-        setTaskOpenInput(toLocal(cfg.task_open_ms ?? null))
-        setTaskDeadlineMs(cfg.task_deadline_ms ?? null)
-        setTaskDeadlineInput(toLocal(cfg.task_deadline_ms ?? null))
-      })
-      .catch(() => {})
   }, [])
-
-  const saveTaskTimes = async () => {
-    const toMs = (s: string) => s ? new Date(s + '+08:00').getTime() : null
-    const openMs = toMs(taskOpenInput)
-    const deadMs = toMs(taskDeadlineInput)
-    if (taskOpenInput && (isNaN(openMs!) || openMs! <= 0)) { setConfigMsg('作業開放時間格式錯誤'); return }
-    if (taskDeadlineInput && (isNaN(deadMs!) || deadMs! <= 0)) { setConfigMsg('作業截止時間格式錯誤'); return }
-    if (openMs && deadMs && openMs >= deadMs) { setConfigMsg('作業截止時間必須晚於開放時間'); return }
-    setConfigSaving(true)
-    setConfigMsg('')
-    const body: Record<string, number> = {}
-    if (openMs) body.task_open_ms = openMs
-    if (deadMs) body.task_deadline_ms = deadMs
-    const res = await fetch('/api/admin/interactive-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (res.ok) {
-      if (openMs) setTaskOpenMs(openMs)
-      if (deadMs) setTaskDeadlineMs(deadMs)
-      setConfigMsg('作業時間已儲存')
-    } else {
-      const d = await res.json().catch(() => ({}))
-      setConfigMsg(`儲存失敗：${d.error || res.status}`)
-    }
-    setConfigSaving(false)
-  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -125,31 +81,6 @@ export default function InteractiveTasksAdminPage() {
       <AdminHeader />
 
       <div className="admin-main">
-        <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 12, padding: '18px 22px', marginBottom: 18 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--green-deep)', letterSpacing: '0.05em', marginBottom: 14 }}>⏱ 互動作業時間設定</div>
-          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>開放填寫（台北）</label>
-              <input type="datetime-local" value={taskOpenInput} onChange={e => setTaskOpenInput(e.target.value)}
-                style={{ fontSize: 13.5, padding: '6px 10px', border: '1px solid var(--line)', borderRadius: 7, background: 'var(--bg)' }} />
-              {taskOpenMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 4 }}>目前：{new Date(taskOpenMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>填寫截止（台北）</label>
-              <input type="datetime-local" value={taskDeadlineInput} onChange={e => setTaskDeadlineInput(e.target.value)}
-                style={{ fontSize: 13.5, padding: '6px 10px', border: '1px solid var(--line)', borderRadius: 7, background: 'var(--bg)' }} />
-              {taskDeadlineMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 4 }}>目前：{new Date(taskDeadlineMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-            </div>
-            <div>
-              <button onClick={saveTaskTimes} disabled={configSaving} className="admin-btn"
-                style={{ background: 'var(--green)', color: '#fff', border: 'none' }}>
-                {configSaving ? '儲存中⋯' : '儲存作業時間'}
-              </button>
-            </div>
-          </div>
-          {configMsg && <p style={{ marginTop: 10, fontSize: 13, color: configMsg.includes('失敗') || configMsg.includes('錯誤') ? 'var(--red)' : 'var(--green-deep)' }}>{configMsg}</p>}
-        </div>
-
         <div className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
           <p>📝 顯示已送出互動作業的學員。基本資料、近期實修、希望請教的問題都可在此檢閱。</p>
           <p>🔍 點「檢視」開啟詳細內容。本頁僅供瀏覽，無編輯功能。</p>
