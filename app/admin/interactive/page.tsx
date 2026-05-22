@@ -368,6 +368,8 @@ export default function InteractiveAdminPage() {
     setBulkSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
+  const messageIsErr = /失敗|錯誤/.test(message)
+
   return (
     <div className="admin-page">
       <AdminHeader />
@@ -497,7 +499,15 @@ export default function InteractiveAdminPage() {
             style={{ background: 'rgba(180, 147, 88, 0.15)', borderColor: 'var(--gold-deep)', color: 'var(--gold-deep)', fontWeight: 700 }}>
             🎲 自動抽簽
           </button>
-          {message && <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message}</span>}
+          {message && (
+            <span style={{
+              fontSize: 13, fontWeight: 700,
+              color: messageIsErr ? '#b8523a' : 'var(--green-deep)',
+              background: messageIsErr ? 'rgba(184,82,58,0.08)' : 'rgba(73,85,52,0.08)',
+              border: messageIsErr ? '1px solid rgba(184,82,58,0.35)' : '1px solid rgba(73,85,52,0.25)',
+              borderRadius: 8, padding: '6px 14px',
+            }}>{message}</span>
+          )}
           <span className="count">共 {filtered.length} 筆</span>
         </div>
 

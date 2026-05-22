@@ -347,6 +347,8 @@ export default function LodgingsPage() {
     { label: '已繳費', value: stats.paid, accent: 'var(--green)' },
   ]
 
+  const bulkMessageIsErr = bulkMessage.includes('失敗')
+
   return (
     <div className="admin-page">
       <AdminHeader />
@@ -452,7 +454,13 @@ export default function LodgingsPage() {
             </button>
           )}
           {bulkMessage && (
-            <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{bulkMessage}</span>
+            <span style={{
+              fontSize: 13, fontWeight: 700,
+              color: bulkMessageIsErr ? '#b8523a' : 'var(--green-deep)',
+              background: bulkMessageIsErr ? 'rgba(184,82,58,0.08)' : 'rgba(73,85,52,0.08)',
+              border: bulkMessageIsErr ? '1px solid rgba(184,82,58,0.35)' : '1px solid rgba(73,85,52,0.25)',
+              borderRadius: 8, padding: '6px 14px',
+            }}>{bulkMessage}</span>
           )}
           <span className="count">共 {filtered.length} 筆</span>
         </div>
