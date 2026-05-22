@@ -11,14 +11,17 @@ export async function POST(request: NextRequest) {
 
   const { ids } = await request.json()
 
-  const { data: registrations, error } = await supabaseAdmin
-    .from('registrations')
-    .select('*')
-    .in('id', ids)
-    .eq('status', 'approved')
+  const [{ data: registrations, error }, { data: practiceConfig }] = await Promise.all([
+    supabaseAdmin.from('registrations').select('*').in('id', ids).eq('status', 'approved'),
+    supabaseAdmin.from('practice_config').select('zoom_meeting_id').eq('id', 1).single(),
+  ])
 
   if (error || !registrations) {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
+  }
+
+  if (!practiceConfig?.zoom_meeting_id) {
+    return NextResponse.json({ error: '請先在「課前共修管理」設定 Zoom 會議編號再寄信' }, { status: 400 })
   }
 
   const payloads = registrations.map(reg => buildApprovalEmailPayload(reg))
