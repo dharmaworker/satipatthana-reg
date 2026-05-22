@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM = process.env.RESEND_FROM || '台灣四念處學會 <no-reply@satipatthana.org.tw>'
+const FROM = process.env.RESEND_FROM || '台灣四念處學會 <noreply@tw-satipatthana-2026-reg.org>'
 
 const ALERT_EMAIL = 'dharmaworker2.tw@gmail.com'
 
