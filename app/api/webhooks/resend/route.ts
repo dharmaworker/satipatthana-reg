@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const type: string = event.type
-  if (type !== 'email.bounced' && type !== 'email.failed') {
+  if (type !== 'email.bounced' && type !== 'email.failed' && type !== 'email.delivery_delayed') {
     return NextResponse.json({ ok: true })
   }
 
