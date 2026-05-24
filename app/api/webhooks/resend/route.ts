@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import nodemailer from 'nodemailer'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const FROM_GMAIL = process.env.GMAIL_USER
+const MAX_DELAYED_RETRIES = 3
 
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
@@ -37,6 +39,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing email_id' }, { status: 400 })
   }
 
+  // delivery_delayed 會重複觸發，限制最多補寄 3 次
+  if (type === 'email.delivery_delayed') {
+    const { data: cfg } = await supabaseAdmin
+      .from('site_config')
+      .select('value')
+      .eq('key', 'webhook_gmail_attempts')
+      .maybeSingle()
+    const attempts: Record<string, number> = (cfg?.value as any) ?? {}
+    const count = (attempts[emailId] ?? 0) + 1
+    if (count > MAX_DELAYED_RETRIES) {
+      console.log(`[resend-webhook] ${emailId} 已達 Gmail 補寄上限 ${MAX_DELAYED_RETRIES} 次，放棄`)
+      return NextResponse.json({ ok: true })
+    }
+    await supabaseAdmin
+      .from('site_config')
+      .upsert({ key: 'webhook_gmail_attempts', value: { ...attempts, [emailId]: count } })
+  }
+
   // 從 Resend API 取回原始郵件內容
   let emailData: any
   try {
@@ -65,12 +85,7 @@ export async function POST(request: NextRequest) {
       },
     })
     for (const addr of to) {
-      await transporter.sendMail({
-        from: FROM_GMAIL,
-        to: addr,
-        subject,
-        html,
-      })
+      await transporter.sendMail({ from: FROM_GMAIL, to: addr, subject, html })
     }
     console.log(`[resend-webhook] Gmail 補寄成功: ${to.join(', ')}`)
   } catch (err) {
