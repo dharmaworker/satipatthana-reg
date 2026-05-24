@@ -16,6 +16,7 @@
 | Gmail SMTP | 寄信 | `satipatthana.tw@gmail.com`（寄件者） |
 | Gmail 學會 | 備存 | `satipatthana.taipei@gmail.com`（BCC 收件） |
 | ECPay 綠界 | 信用卡金流 | 商家 ID 存於 env |
+| Resend | 寄信主線（SMTP 替代） | 域名 `tw-satipatthana-2026-reg.org`，API Key 存於 env |
 
 ---
 
@@ -41,6 +42,7 @@
 > `/admin/*` 經 `proxy.ts`（Next.js 16 的 middleware）擋下未登入者。
 
 ---
+
 
 ## 寄信流程（7 封）
 
@@ -202,6 +204,68 @@ Vercel 專案 → Settings → Domains 已加入：
 - Cloudflare 免費方案，無流量上限費用
 - 中國可訪問性視 ISP 而定，無法 100% 保證（電信／聯通／移動行為不同）
 - 原 `satipatthana-reg.vercel.app` 仍有效，兩個網址同時運作
+
+---
+
+## Resend 郵件服務
+
+### 設定
+
+| 項目 | 值 |
+|---|---|
+| 服務 | [Resend](https://resend.com) |
+| 寄信用域名 | `tw-satipatthana-2026-reg.org`（已驗證） |
+| 舊域名（已失效） | `satipatthana.org.tw`（Cloudflare NS 委派後 DKIM 紀錄消失） |
+| 環境變數 | `RESEND_API_KEY`、`RESEND_FROM`、`RESEND_WEBHOOK_SECRET` |
+
+寄信架構：**Resend 主線 → Gmail 備援**。`lib/mailer.ts` 的 `sendMailWithRetry` 在最後一次 retry 失敗後自動切 Gmail SMTP。Resend webhook（`email.bounced` / `email.failed`）也會觸發 Gmail 補寄，見 `app/api/webhooks/resend/route.ts`。
+
+### DNS 委派說明（為何舊域名失效）
+
+`satipatthana.org.tw` 原在 pchomebiz 管理，DKIM 紀錄設在 pchomebiz DNS。後來有人在 pchomebiz 將 NS 紀錄改指向 Cloudflare（**NS 委派**），Cloudflare 成為 authoritative DNS，pchomebiz 的紀錄全部失效，Resend 驗證所需的 DKIM 紀錄隨之消失。
+
+> NS 委派後，**只有 Cloudflare 的 DNS 設定有效**，pchomebiz 的紀錄不再被解析。若要恢復，需在 Cloudflare 重新加入 Resend 要求的 DKIM/SPF 紀錄。
+
+### 新域名設定 SPF / DKIM / DMARC
+
+換域名或新增域名時，需在 DNS（Cloudflare）加入以下紀錄。**確切值從 Resend Dashboard → Domains → 你的域名 → DNS Records 複製**，以下為類型說明：
+
+| 類型 | 主機名稱 | 說明 |
+|---|---|---|
+| TXT | `@` | SPF：`v=spf1 include:amazonses.com ~all`（Resend 用 Amazon SES 基礎架構） |
+| CNAME | `resend._domainkey` | DKIM：值由 Resend 產生，每個域名不同，需從 Dashboard 複製 |
+| MX | `@` | 優先度 10，Resend 收信用（選填，僅需收信時加） |
+| TXT | `_dmarc` | DMARC：Resend 預設 `p=none`（僅監控），建議改用：`v=DMARC1; p=reject; rua=mailto:your@email.com; sp=reject; adkim=s; aspf=s;` |
+
+> **重要：** Resend 預設 DMARC 為 `p=none`，不會攔截偽造郵件。正式環境建議改為 `p=reject`。  
+> 完整設定參考：https://dmarcdkim.com/setup/how-to-setup-resend-spf-dkim-and-dmarc-records
+
+設定後在 Resend Dashboard 點 **Verify DNS Records**，DNS 傳播最多需 24 小時。
+
+### 域名驗證除錯指令
+
+收到 Resend 錯誤「the xxx domain is no longer verified」時，用 `dig` 確認 DKIM 紀錄是否存在：
+
+```bash
+# 檢查 DKIM 紀錄（將 [網址] 換成實際域名）
+dig resend._domainkey.[網址] TXT
+
+# 例：
+dig resend._domainkey.tw-satipatthana-2026-reg.org TXT
+dig resend._domainkey.satipatthana.org.tw TXT
+```
+
+**正常**：status `NOERROR`，ANSWER SECTION 有 `v=DKIM1; p=...` 紀錄。  
+**異常**：status `NXDOMAIN` 或 ANSWER SECTION 為空 → DKIM 紀錄不存在，去 DNS 管理介面（Cloudflare）補上 Resend 要求的紀錄。
+
+### 補寄失敗郵件
+
+使用 `scripts/resend-fetch-failed.mjs` 和 `scripts/resend-catchup.mjs`，搭配對應帳號的 Resend API Key 執行。
+
+**補寄前請先人工確認**：
+- 在 Resend Dashboard 逐筆查看失敗原因（退信？域名未驗證？收件人不存在？）
+- 確認問題已修復（域名已驗證、DNS 紀錄已生效）再執行補寄
+- 若失敗郵件來自**舊 Resend 帳號**（舊域名時期），需切換至舊帳號的 API Key，郵件資料跨帳號不互通
 
 ---
 
