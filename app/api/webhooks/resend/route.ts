@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       },
     })
     for (const addr of to) {
-      await transporter.sendMail({ from: FROM_GMAIL, to: addr, cc: 'dharmaworker2.tw@gmail.com', subject, html })
+      await transporter.sendMail({ from: FROM_GMAIL, to: addr, subject, html })
     }
     console.log(`[resend-webhook] Gmail 補寄成功: ${to.join(', ')}`)
   } catch (err) {
