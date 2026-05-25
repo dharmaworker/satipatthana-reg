@@ -7,8 +7,8 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox,
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-// 截止：2026/05/25 晚上 24:00（台北時間）= UTC 5/25 16:00
-const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
+// 截止：2026/06/01 晚上 24:00（台北時間）= UTC 6/1 16:00
+const REG_CLOSE_MS = Date.UTC(2026, 5, 1, 16, 0, 0)
 
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // 截止日檢查
     const now = Date.now()
     if (now > REG_CLOSE_MS) {
-      return NextResponse.json({ error: '報名已截止（2026/05/25 晚上 24 點止）' }, { status: 400 })
+      return NextResponse.json({ error: '報名已截止（2026/06/01 晚上 24 點止）' }, { status: 400 })
     }
 
     const body = await request.json()

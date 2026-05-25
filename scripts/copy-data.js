@@ -40,7 +40,7 @@ module.exports = {
         ['首頁 > Hero', 'home.hero.subtitle', '副標', '邁向 · 離苦之道', ''],
         ['首頁 > Hero', 'home.hero.date', '段落', '日期：8/20 — 24（五天）', ''],
         ['首頁 > Hero', 'home.hero.location', '段落', '地點：南投・日月潭', ''],
-        ['首頁 > Hero', 'home.hero.regperiod', '段落', '報名期間：2026/05/11 — 05/25', ''],
+        ['首頁 > Hero', 'home.hero.regperiod', '段落', '報名期間：2026/05/11 — 06/01', ''],
         ['首頁 > Hero', 'home.hero.quote.p1', '引言段落', '人類渴望自由。而事實卻是，人類淪為了慾望的奴隸。', ''],
         ['首頁 > Hero', 'home.hero.quote.intro', '引言段落', '人類及所有眾生趨樂避苦的方法有三種：', ''],
         ['首頁 > Hero', 'home.hero.quote.method1', '引言條列', '尋找快樂的境界或所緣，同時躲避痛苦的境界或所緣', ''],
@@ -125,12 +125,12 @@ module.exports = {
       title: '報名表',
       rows: [
         ['報名表 > 頁首', 'register.page.title', '標題', '第二屆台灣四念處禪修・課程報名', ''],
-        ['報名表 > 頁首', 'register.page.subtitle', '副標', '報名期間：2026/05/11 上午 10:00 — 2026/05/25 晚上 24:00（台北時間）', ''],
+        ['報名表 > 頁首', 'register.page.subtitle', '副標', '報名期間：2026/05/11 上午 10:00 — 2026/06/01 晚上 24:00（台北時間）', ''],
         ['報名表 > 頁首', 'register.page.subtitle2', '副標', '提交報名表單不代表已錄取，錄取結果將於 6/6 以 Email 通知。', ''],
         ['報名表 > 關閉狀態', 'register.closed.title.notyet', '標題', '報名尚未開放', ''],
         ['報名表 > 關閉狀態', 'register.closed.title.past', '標題', '報名已截止', ''],
         ['報名表 > 關閉狀態', 'register.closed.desc.notyet', '說明', '報名將於 2026/05/11 上午 10 點（台北時間）開放。感謝您的關注，請屆時再回到本頁。', ''],
-        ['報名表 > 關閉狀態', 'register.closed.desc.past', '說明', '報名期間已於 2026/05/25 晚上 24 點（台北時間）截止。如有疑問請聯繫學會。', ''],
+        ['報名表 > 關閉狀態', 'register.closed.desc.past', '說明', '報名期間已於 2026/06/01 晚上 24 點（台北時間）截止。如有疑問請聯繫學會。', ''],
         // Step 1：師資團隊
         ['報名表 > Step1', 'register.step1.title', '標題', '師資團隊', ''],
         ['報名表 > Step1', 'register.step1.desc', '說明', '本次禪修由隆波帕默尊者體系助教老師親臨授課指導。', ''],

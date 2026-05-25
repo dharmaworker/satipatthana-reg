@@ -71,8 +71,8 @@ const PRACTICE_FREQ_LABEL: Record<string, string> = {
   commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束',
 }
 
-// 截止：2026/05/25 晚上 24:00（台北時間）= UTC 5/25 16:00
-const REG_CLOSE_MS = Date.UTC(2026, 4, 25, 16, 0, 0)
+// 截止：2026/06/01 晚上 24:00（台北時間）= UTC 6/1 16:00
+const REG_CLOSE_MS = Date.UTC(2026, 5, 1, 16, 0, 0)
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -335,7 +335,7 @@ export default function RegisterPage() {
           <p className="page-kicker">Registration Form</p>
           <h1 className="page-title">第二屆台灣四念處禪修・課程報名</h1>
           <p className="page-subtitle">
-            報名期間：2026/05/11 上午 10:00 — 2026/05/25 晚上 24:00（台北時間）<br />
+            報名期間：2026/05/11 上午 10:00 — 2026/06/01 晚上 24:00（台北時間）<br />
             提交報名表單不代表已錄取，錄取結果將於 6/6 以 Email 通知。
           </p>
 
@@ -385,7 +385,7 @@ export default function RegisterPage() {
             <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.85 }}>
               {notYetOpen
                 ? <>報名將於 <strong>2026/05/11 上午 10 點（台北時間）</strong>開放。<br />感謝您的關注，請屆時再回到本頁。</>
-                : <>報名期間已於 <strong>2026/05/25 晚上 24 點（台北時間）</strong>截止。<br />如有疑問請<a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'var(--green)', fontWeight: 600 }}>聯繫學會</a>。</>}
+                : <>報名期間已於 <strong>2026/06/01 晚上 24 點（台北時間）</strong>截止。<br />如有疑問請<a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'var(--green)', fontWeight: 600 }}>聯繫學會</a>。</>}
             </p>
             <div style={{ marginTop: 22 }}>
               <a href="/" className="btn btn-ghost">← 返回首頁</a>
@@ -991,7 +991,7 @@ export default function RegisterPage() {
             <div className="info-row"><span className="k">日期</span><span className="v">08.20—24</span></div>
             <div className="info-row"><span className="k">地點</span><span className="v">日月潭</span></div>
             <div className="info-row"><span className="k">名額</span><span className="v">250 名</span></div>
-            <div className="info-row"><span className="k">報名截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>05.25</span></div>
+            <div className="info-row"><span className="k">報名截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.01</span></div>
             <div className="info-row"><span className="k">錄取通知</span><span className="v">06.06</span></div>
             <div className="info-row"><span className="k">繳費截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.15</span></div>
           </div>

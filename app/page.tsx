@@ -167,7 +167,7 @@ export default function HomePage() {
               <div className="hero-meta">
                 <span><span className="icon">📅</span>日期：8/20 — 24（五天）</span>
                 <span><span className="icon">📍</span>地點：南投・日月潭</span>
-                <span className="reg-period"><span className="icon">📝</span>報名期間：2026/05/11 — 05/25</span>
+                <span className="reg-period"><span className="icon">📝</span>報名期間：2026/05/11 — 06/01</span>
               </div>
 
               <div className="hero-quote">
