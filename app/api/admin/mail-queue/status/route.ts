@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const BATCH_SIZE = 50
+const BATCH_SIZE = 30
 
 export async function GET(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
