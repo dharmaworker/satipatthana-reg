@@ -44,6 +44,17 @@ export default function LodgingsPage() {
   const [onlyNotNotified, setOnlyNotNotified] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [formatFilter, setFormatFilter] = useState<string>('in_person')
+  const [queuePending, setQueuePending] = useState(0)
+  const [queueEstMinutes, setQueueEstMinutes] = useState(0)
+
+  const refreshQueueStatus = async () => {
+    const res = await fetch('/api/admin/mail-queue/status')
+    if (res.ok) {
+      const d = await res.json()
+      setQueuePending(d.pending ?? 0)
+      setQueueEstMinutes(d.estimatedMinutes ?? 0)
+    }
+  }
 
   const nextStudentId = () => {
     let maxN = 0
@@ -300,6 +311,7 @@ export default function LodgingsPage() {
     const initial = (saved === 'in_person' || saved === 'online') ? saved : 'in_person'
     setFormatFilter(initial)
     fetchData(initial)
+    refreshQueueStatus()
 
     const handler = (e: Event) => {
       const f = (e as CustomEvent<string>).detail
@@ -307,7 +319,12 @@ export default function LodgingsPage() {
       fetchData(f)
     }
     window.addEventListener('admin-format-change', handler)
-    return () => window.removeEventListener('admin-format-change', handler)
+
+    const queueTimer = setInterval(refreshQueueStatus, 30000)
+    return () => {
+      window.removeEventListener('admin-format-change', handler)
+      clearInterval(queueTimer)
+    }
   }, [])
 
   const filtered = rows.filter(r => {
@@ -412,43 +429,48 @@ export default function LodgingsPage() {
               }} />
             全選本頁
           </label>
+          {queuePending > 0 && (
+            <span style={{ color: '#c0392b', fontWeight: 600, fontSize: 13 }}>
+              ⏳ 尚有 {queuePending} 封 QQ/163 排隊中，約 {queueEstMinutes} 分鐘後送完，請勿再次發送
+            </span>
+          )}
           <button onClick={sendApprovalNotifications}
-            disabled={bulkSending !== null}
+            disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm primary">
             {bulkSending === 'approval' ? '寄送中⋯' : `批次寄錄取通知（${bulkSelected.length}）`}
           </button>
           <button onClick={sendStudentIdNotification}
-            disabled={bulkSending !== null}
+            disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm primary">
             {bulkSending === 'student_id' ? '寄送中⋯' : `批次寄學號分配通知（${bulkSelected.length}）`}
           </button>
           <button onClick={sendTimetableNotification}
-            disabled={bulkSending !== null}
+            disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm primary">
             {bulkSending === 'timetable' ? '寄送中⋯' : `批次寄課表發佈通知（${bulkSelected.length}）`}
           </button>
           <button onClick={sendGroupJoin}
-            disabled={bulkSending !== null}
+            disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm primary">
             {bulkSending === 'group_join' ? '寄送中⋯' : `批次寄入群通知（${bulkSelected.length}）`}
           </button>
           {/* 正式學員通知暫時隱藏
           <button onClick={sendFormalNotifications}
-            disabled={bulkSending !== null}
+            disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm gold">
             {bulkSending === 'formal' ? '寄送中⋯' : `批次寄正式學員通知（${bulkSelected.length}）`}
           </button>
           */}
           {formatFilter !== 'online' && (
             <button onClick={sendInteractiveInvite}
-              disabled={bulkSending !== null}
+              disabled={bulkSending !== null || queuePending > 0}
               className="admin-btn-sm">
               {bulkSending === 'invite' ? '寄送中⋯' : `批次寄互動報名通知（${bulkSelected.length}）`}
             </button>
           )}
           {formatFilter === 'online' && (
             <button onClick={sendAttendanceNotification}
-              disabled={bulkSending !== null}
+              disabled={bulkSending !== null || queuePending > 0}
               className="admin-btn-sm primary">
               {bulkSending === 'attendance' ? '寄送中⋯' : `批次寄課程打卡提醒（${bulkSelected.length}）`}
             </button>

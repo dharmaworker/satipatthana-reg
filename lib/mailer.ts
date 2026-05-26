@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import nodemailer from 'nodemailer'
+import { supabaseAdmin } from './supabase'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -104,6 +105,13 @@ export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, bas
 
 type BatchMail = { to: string; subject: string; html: string; bcc?: string }
 
+const THROTTLED_DOMAINS = ['qq.com', '163.com']
+
+function isThrottled(email: string) {
+  const domain = email.split('@')[1]?.toLowerCase()
+  return THROTTLED_DOMAINS.includes(domain)
+}
+
 async function sendBatchViaGmail(mails: BatchMail[]) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -125,11 +133,35 @@ async function sendBatchViaGmail(mails: BatchMail[]) {
 }
 
 // 批次發送（最多 100 封 / call）
-// Resend 失敗時自動改用 Gmail 逐封補送
+// QQ/163 自動寫入 email_queue 由 cron 節流送出
+// 其他收件人直接用 Resend batch 送，失敗改 Gmail
 export async function sendMailBatch(mails: BatchMail[]) {
+  const direct = mails.filter(m => !isThrottled(m.to))
+  const queued = mails.filter(m => isThrottled(m.to))
+
+  // QQ/163 寫入 queue
+  if (queued.length > 0) {
+    const { error } = await supabaseAdmin.from('email_queue').insert(
+      queued.map(m => ({
+        to_email: m.to,
+        subject: m.subject,
+        html: m.html,
+        bcc: m.bcc ?? null,
+        status: 'pending',
+      }))
+    )
+    if (error) {
+      console.error('sendMailBatch: 寫入 email_queue 失敗', error.message)
+    } else {
+      console.log(`sendMailBatch: ${queued.length} 封 QQ/163 寫入 queue`)
+    }
+  }
+
+  // 其他直接 Resend batch
+  if (direct.length === 0) return []
   const batches: BatchMail[][] = []
-  for (let i = 0; i < mails.length; i += 100) {
-    batches.push(mails.slice(i, i + 100))
+  for (let i = 0; i < direct.length; i += 100) {
+    batches.push(direct.slice(i, i + 100))
   }
   const results = []
   for (const batch of batches) {

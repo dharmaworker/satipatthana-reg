@@ -3,7 +3,6 @@ import { Webhook } from 'svix'
 import nodemailer from 'nodemailer'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const FROM_GMAIL = process.env.GMAIL_USER
 const MAX_DELAYED_RETRIES = 1
 
 export async function POST(request: NextRequest) {
@@ -39,22 +38,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing email_id' }, { status: 400 })
   }
 
-  // delivery_delayed 會重複觸發，限制最多補寄 3 次
+  // delivery_delayed 會重複觸發，限制最多補寄 1 次
   if (type === 'email.delivery_delayed') {
     const { data: cfg } = await supabaseAdmin
       .from('site_config')
       .select('value')
-      .eq('key', 'webhook_gmail_attempts')
+      .eq('key', 'webhook_alibaba_attempts')
       .maybeSingle()
     const attempts: Record<string, number> = (cfg?.value as any) ?? {}
     const count = (attempts[emailId] ?? 0) + 1
     if (count > MAX_DELAYED_RETRIES) {
-      console.log(`[resend-webhook] ${emailId} 已達 Gmail 補寄上限 ${MAX_DELAYED_RETRIES} 次，放棄`)
+      console.log(`[resend-webhook] ${emailId} 已達阿里雲補寄上限 ${MAX_DELAYED_RETRIES} 次，放棄`)
       return NextResponse.json({ ok: true })
     }
     await supabaseAdmin
       .from('site_config')
-      .upsert({ key: 'webhook_gmail_attempts', value: { ...attempts, [emailId]: count } })
+      .upsert({ key: 'webhook_alibaba_attempts', value: { ...attempts, [emailId]: count } })
   }
 
   // 從 Resend API 取回原始郵件內容
@@ -74,23 +73,25 @@ export async function POST(request: NextRequest) {
   const subject: string = emailData.subject ?? ''
   const html: string = emailData.html ?? emailData.text ?? ''
 
-  console.log(`[resend-webhook] ${type}，改用 Gmail 補寄 → ${to.join(', ')} | ${subject}`)
+  console.log(`[resend-webhook] ${type}，改用阿里雲補寄 → ${to.join(', ')} | ${subject}`)
 
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.ALIBABA_SMTP_HOST,
+      port: Number(process.env.ALIBABA_SMTP_PORT) || 465,
+      secure: true,
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.ALIBABA_SMTP_USER,
+        pass: process.env.ALIBABA_SMTP_PASSWORD,
       },
     })
     for (const addr of to) {
-      await transporter.sendMail({ from: FROM_GMAIL, to: addr, subject, html })
+      await transporter.sendMail({ from: process.env.ALIBABA_SMTP_FROM, to: addr, subject, html })
     }
-    console.log(`[resend-webhook] Gmail 補寄成功: ${to.join(', ')}`)
+    console.log(`[resend-webhook] 阿里雲補寄成功: ${to.join(', ')}`)
   } catch (err) {
-    console.error('[resend-webhook] Gmail 補寄失敗:', to, err)
-    return NextResponse.json({ error: 'gmail retry failed' }, { status: 500 })
+    console.error('[resend-webhook] 阿里雲補寄失敗:', to, err)
+    return NextResponse.json({ error: 'alibaba retry failed' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
