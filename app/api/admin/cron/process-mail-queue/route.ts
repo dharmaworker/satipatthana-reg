@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import nodemailer from 'nodemailer'
 
-const BATCH_SIZE = 15
+const BATCH_SIZE = 50
 const PROCESSING_TIMEOUT_MS = 3 * 60 * 1000 // 3 分鐘後視為卡住，重設為 pending
 
 function authorized(request: NextRequest) {
