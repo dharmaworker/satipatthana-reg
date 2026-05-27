@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await sendMailBatch(registrations.map(reg => buildAttendanceNotifyPayload(reg)))
+    await sendMailBatch(registrations.map(reg => buildAttendanceNotifyPayload(reg)), {
+      mailType: 'attendance_notify',
+      triggeredFrom: '/api/admin/send-attendance-notify',
+    })
     return NextResponse.json({
       success: true,
       message: `成功寄出 ${registrations.length} 封`,

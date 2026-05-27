@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await sendMailBatch(registrations.map(reg => buildStudentIdPayload(reg as any)))
+    await sendMailBatch(registrations.map(reg => buildStudentIdPayload(reg as any)), {
+      mailType: 'student_id',
+      triggeredFrom: '/api/admin/send-student-id',
+    })
     return NextResponse.json({
       success: true,
       message: `成功寄出 ${registrations.length} 封`,

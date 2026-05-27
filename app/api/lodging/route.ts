@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
             <p style="color:#666;font-size:13px;margin-top:16px;">台灣四念處學會 🙏</p>
           </div>
         `,
-      })
+      }, 3, 600, true)
     } catch (mailErr) {
       console.error('[lodging] 確認信寄送失敗:', mailErr)
     }

@@ -5,6 +5,12 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_DELAYED_RETRIES = 1
 
+const STATUS_MAP: Record<string, string> = {
+  'email.delivered': 'delivered',
+  'email.bounced': 'bounced',
+  'email.failed': 'failed',
+}
+
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
   if (!secret) {
@@ -29,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   const type: string = event.type
-  if (type !== 'email.bounced' && type !== 'email.failed' && type !== 'email.delivery_delayed') {
+  if (type !== 'email.bounced' && type !== 'email.failed' && type !== 'email.delivery_delayed' && type !== 'email.delivered') {
     return NextResponse.json({ ok: true })
   }
 
@@ -38,7 +44,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing email_id' }, { status: 400 })
   }
 
-  // delivery_delayed 會重複觸發，限制最多補寄 1 次
+  // Update email_queue row status for terminal events
+  const newStatus = STATUS_MAP[type]
+  let sourceRow: any = null
+  if (newStatus) {
+    const { data, error } = await supabaseAdmin
+      .from('email_queue')
+      .update({
+        status: newStatus,
+        error: event.data?.bounce?.message || null,
+      })
+      .eq('provider', 'resend')
+      .eq('provider_message_id', emailId)
+      .select('id, to_email, subject, html, bcc, mail_type, batch_id, parent_id, attempt_count')
+      .maybeSingle()
+    if (error) {
+      console.error('[resend-webhook] email_queue update failed:', error.message)
+    }
+    sourceRow = data
+  }
+
+  // delivered: no AliCloud retry needed
+  if (type === 'email.delivered') {
+    return NextResponse.json({ ok: true })
+  }
+
+  // delivery_delayed: enforce 1-retry cap via site_config
   if (type === 'email.delivery_delayed') {
     const { data: cfg } = await supabaseAdmin
       .from('site_config')
@@ -56,7 +87,7 @@ export async function POST(request: NextRequest) {
       .upsert({ key: 'webhook_alibaba_attempts', value: { ...attempts, [emailId]: count } })
   }
 
-  // 從 Resend API 取回原始郵件內容
+  // 從 Resend API 取回原始郵件內容（若 sourceRow 沒有 html，例如 DB 未命中）
   let emailData: any
   try {
     const res = await fetch(`https://api.resend.com/emails/${emailId}`, {
@@ -87,6 +118,22 @@ export async function POST(request: NextRequest) {
     })
     for (const addr of to) {
       await transporter.sendMail({ from: process.env.ALIBABA_SMTP_FROM, to: addr, subject, html })
+
+      // Insert retry row: flat model — all retries point to root
+      const rootId = sourceRow?.parent_id ?? sourceRow?.id ?? null
+      await supabaseAdmin.from('email_queue').insert({
+        to_email: addr,
+        subject,
+        html,
+        bcc: sourceRow?.bcc ?? null,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        provider: 'alicloud',
+        mail_type: sourceRow?.mail_type ?? null,
+        batch_id: sourceRow?.batch_id ?? null,
+        parent_id: rootId,
+        attempt_count: (sourceRow?.attempt_count ?? 1) + 1,
+      })
     }
     console.log(`[resend-webhook] 阿里雲補寄成功: ${to.join(', ')}`)
   } catch (err) {

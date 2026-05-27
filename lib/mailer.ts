@@ -17,6 +17,37 @@ type MailParams = {
   attachments?: { filename: string; content: Buffer; contentType?: string }[]
 }
 
+type BatchMail = { to: string; subject: string; html: string; bcc?: string }
+
+const THROTTLED_DOMAINS = ['qq.com', '163.com']
+
+function isThrottled(email: string) {
+  const domain = email.split('@')[1]?.toLowerCase()
+  return THROTTLED_DOMAINS.includes(domain)
+}
+
+async function logEmailSend(row: {
+  to_email: string
+  subject: string
+  html: string
+  bcc?: string | null
+  provider: 'resend' | 'gmail' | 'alicloud'
+  provider_message_id?: string | null
+  status: 'sent' | 'failed'
+  error?: string | null
+  mail_type?: string | null
+  parent_id?: string | null
+  batch_id?: string | null
+}) {
+  const { error } = await supabaseAdmin.from('email_queue').insert({
+    ...row,
+    sent_at: row.status === 'sent' ? new Date().toISOString() : null,
+  })
+  if (error) {
+    console.error('[mailer] logEmailSend failed:', error.message)
+  }
+}
+
 async function sendOnce(params: MailParams) {
   const { to, subject, html, cc, bcc, attachments } = params
   const result = await resend.emails.send({
@@ -103,16 +134,7 @@ export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, bas
   throw lastErr
 }
 
-type BatchMail = { to: string; subject: string; html: string; bcc?: string }
-
-const THROTTLED_DOMAINS = ['qq.com', '163.com']
-
-function isThrottled(email: string) {
-  const domain = email.split('@')[1]?.toLowerCase()
-  return THROTTLED_DOMAINS.includes(domain)
-}
-
-async function sendBatchViaGmail(mails: BatchMail[]) {
+async function sendBatchViaGmail(mails: BatchMail[], batchId?: string | null, mailType?: string | null) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -128,6 +150,16 @@ async function sendBatchViaGmail(mails: BatchMail[]) {
       subject: m.subject,
       html: m.html,
     })
+    await logEmailSend({
+      to_email: m.to,
+      subject: m.subject,
+      html: m.html,
+      bcc: m.bcc ?? null,
+      provider: 'gmail',
+      status: 'sent',
+      mail_type: mailType ?? null,
+      batch_id: batchId ?? null,
+    })
   }
   console.log(`Batch sent via Gmail fallback: ${mails.length} mails`)
 }
@@ -135,11 +167,31 @@ async function sendBatchViaGmail(mails: BatchMail[]) {
 // 批次發送（最多 100 封 / call）
 // QQ/163 自動寫入 email_queue 由 cron 節流送出
 // 其他收件人直接用 Resend batch 送，失敗改 Gmail
-export async function sendMailBatch(mails: BatchMail[]) {
+export async function sendMailBatch(
+  mails: BatchMail[],
+  opts?: { mailType?: string; triggeredFrom?: string; description?: string }
+): Promise<{ batchId: string | null; results: any[] }> {
+  // Create batch envelope row
+  let batchId: string | null = null
+  const { data: batch, error: batchErr } = await supabaseAdmin
+    .from('email_batches')
+    .insert({
+      triggered_from: opts?.triggeredFrom ?? null,
+      recipient_count: mails.length,
+      description: opts?.description ?? null,
+    })
+    .select('id')
+    .single()
+  if (batchErr) {
+    console.error('[mailer] email_batches insert failed:', batchErr.message)
+  } else {
+    batchId = batch.id
+  }
+
   const direct = mails.filter(m => !isThrottled(m.to))
   const queued = mails.filter(m => isThrottled(m.to))
 
-  // QQ/163 寫入 queue
+  // QQ/163 → queue (cron drains via AliCloud SMTP)
   if (queued.length > 0) {
     const { error } = await supabaseAdmin.from('email_queue').insert(
       queued.map(m => ({
@@ -148,6 +200,9 @@ export async function sendMailBatch(mails: BatchMail[]) {
         html: m.html,
         bcc: m.bcc ?? null,
         status: 'pending',
+        provider: 'alicloud',
+        mail_type: opts?.mailType ?? null,
+        batch_id: batchId,
       }))
     )
     if (error) {
@@ -157,8 +212,8 @@ export async function sendMailBatch(mails: BatchMail[]) {
     }
   }
 
-  // 其他直接 Resend batch
-  if (direct.length === 0) return []
+  // Other recipients → Resend batch
+  if (direct.length === 0) return { batchId, results: [] }
   const batches: BatchMail[][] = []
   for (let i = 0; i < direct.length; i += 100) {
     batches.push(direct.slice(i, i + 100))
@@ -176,9 +231,27 @@ export async function sendMailBatch(mails: BatchMail[]) {
     )
     if (r.error) {
       console.error('sendMailBatch Resend failed, falling back to Gmail:', r.error.message)
-      await sendBatchViaGmail(batch)
+      await sendBatchViaGmail(batch, batchId, opts?.mailType ?? null)
+    } else {
+      // Log each Resend recipient with its provider_message_id
+      const resendItems: any[] = (r.data as any) ?? []
+      for (let i = 0; i < batch.length; i++) {
+        const m = batch[i]
+        const emailId = resendItems[i]?.id ?? null
+        await logEmailSend({
+          to_email: m.to,
+          subject: m.subject,
+          html: m.html,
+          bcc: m.bcc ?? null,
+          provider: 'resend',
+          provider_message_id: emailId,
+          status: 'sent',
+          mail_type: opts?.mailType ?? null,
+          batch_id: batchId,
+        })
+      }
     }
     results.push(r)
   }
-  return results
+  return { batchId, results }
 }

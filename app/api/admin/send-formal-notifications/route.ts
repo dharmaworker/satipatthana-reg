@@ -52,7 +52,10 @@ export async function POST(request: NextRequest) {
   }))
 
   try {
-    await sendMailBatch(payloads)
+    await sendMailBatch(payloads, {
+      mailType: 'formal_notification',
+      triggeredFrom: '/api/admin/send-formal-notifications',
+    })
     return NextResponse.json({
       success: true,
       message: `成功寄出 ${payloads.length} 封（線上學員已略過）`,

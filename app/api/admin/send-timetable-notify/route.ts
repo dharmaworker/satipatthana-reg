@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await sendMailBatch(registrations.map(reg => buildTimetableNotifyPayload(reg)))
+    await sendMailBatch(registrations.map(reg => buildTimetableNotifyPayload(reg)), {
+      mailType: 'timetable_notify',
+      triggeredFrom: '/api/admin/send-timetable-notify',
+    })
     return NextResponse.json({
       success: true,
       message: `成功寄出 ${registrations.length} 封`,

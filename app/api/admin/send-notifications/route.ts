@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
   const payloads = registrations.map(reg => buildApprovalEmailPayload(reg, periodLabel))
 
   try {
-    await sendMailBatch(payloads)
+    await sendMailBatch(payloads, {
+      mailType: 'approval',
+      triggeredFrom: '/api/admin/send-notifications',
+    })
     // 批次更新寄信時間
     await supabaseAdmin
       .from('registrations')
