@@ -53,11 +53,12 @@ async function todayAlicloudCount() {
 }
 
 async function main() {
-  const statusFilter = arg('--status') ?? 'failed'
-  if (!['failed', 'bounced'].includes(statusFilter)) {
-    console.error('--status must be "failed" or "bounced"')
-    process.exit(1)
-  }
+  const statusFilter = arg('--status') ?? null
+  // status restriction removed — allow retrying any status (e.g. sent, bounced, failed)
+  // if (!['failed', 'bounced'].includes(statusFilter)) {
+  //   console.error('--status must be "failed" or "bounced"')
+  //   process.exit(1)
+  // }
 
   const provider = arg('--provider') ?? 'alicloud'
   if (!['alicloud', 'resend', 'gmail'].includes(provider)) {
@@ -68,7 +69,7 @@ async function main() {
   let query = supabase
     .from('email_queue')
     .select('id, to_email, subject, html, bcc, mail_type, batch_id, parent_id, attempt_count, status')
-    .in('status', [statusFilter])
+  if (statusFilter) query = query.in('status', [statusFilter])
 
   const id = arg('--id')
   const to = arg('--to')

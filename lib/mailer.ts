@@ -234,7 +234,7 @@ export async function sendMailBatch(
       await sendBatchViaGmail(batch, batchId, opts?.mailType ?? null)
     } else {
       // Log each Resend recipient with its provider_message_id
-      const resendItems: any[] = (r.data as any) ?? []
+      const resendItems: any[] = (r.data as any)?.data ?? []
       for (let i = 0; i < batch.length; i++) {
         const m = batch[i]
         const emailId = resendItems[i]?.id ?? null

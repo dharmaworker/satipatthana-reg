@@ -103,10 +103,10 @@ async function showBatches(hours) {
   if (error) { console.error('Error:', error.message); process.exit(1) }
   if (!data?.length) { console.log('No batches found.'); return }
 
-  console.log(pad('created_at', 20), pad('triggered_from', 35), pad('count', 6), 'description')
-  console.log('-'.repeat(90))
+  console.log(pad('id', 36), pad('created_at', 20), pad('triggered_from', 35), pad('count', 6), 'description')
+  console.log('-'.repeat(128))
   for (const b of data) {
-    console.log(pad(fmtDate(b.created_at), 20), pad(b.triggered_from ?? '—', 35), pad(b.recipient_count, 6), b.description ?? '')
+    console.log(pad(b.id, 36), pad(fmtDate(b.created_at), 20), pad(b.triggered_from ?? '—', 35), pad(b.recipient_count, 6), b.description ?? '')
   }
 }
 
@@ -162,26 +162,44 @@ async function reconcile() {
 }
 
 function printTable(rows) {
-  // Count children per root
-  const childCount = {}
+  const childrenOf = {}
+  const parents = []
   for (const r of rows) {
-    if (r.parent_id) childCount[r.parent_id] = (childCount[r.parent_id] ?? 0) + 1
+    if (r.parent_id) {
+      if (!childrenOf[r.parent_id]) childrenOf[r.parent_id] = []
+      childrenOf[r.parent_id].push(r)
+    } else {
+      parents.push(r)
+    }
   }
 
-  console.log(pad('created_at', 20), pad('to_email', 24), pad('mail_type', 18), pad('provider', 10), pad('status', 11), pad('att', 4), 'error')
-  console.log('-'.repeat(110))
-  for (const r of rows) {
-    const retryTag = childCount[r.id] ? ` ↳${childCount[r.id]}` : ''
-    const statusStr = statusColor(r.status) + retryTag
+  console.log(pad('id', 36), pad('created_at', 20), pad('to_email', 24), pad('mail_type', 18), pad('provider', 10), 'status')
+  console.log('-'.repeat(140))
+
+  for (const r of parents) {
     console.log(
+      pad(r.id, 36),
       pad(fmtDate(r.created_at), 20),
       pad(r.to_email, 24),
       pad(r.mail_type ?? '—', 18),
       pad(r.provider, 10),
-      statusStr,
-      pad(r.attempt_count ?? 1, 4),
+      statusColor(r.status),
       r.error ? r.error.slice(0, 50) : ''
     )
+    const children = childrenOf[r.id] ?? []
+    for (let i = 0; i < children.length; i++) {
+      const c = children[i]
+      const branch = i < children.length - 1 ? '├─' : '└─'
+      console.log(
+        pad(branch, 36),
+        pad(fmtDate(c.created_at), 20),
+        pad(c.to_email, 24),
+        pad(c.mail_type ?? '—', 18),
+        pad(c.provider, 10),
+        statusColor(c.status),
+        c.error ? c.error.slice(0, 50) : ''
+      )
+    }
   }
 }
 
