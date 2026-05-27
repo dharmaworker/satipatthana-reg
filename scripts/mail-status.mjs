@@ -44,6 +44,10 @@ function fmtDate(iso) {
   return iso.replace('T', ' ').slice(0, 19)
 }
 
+function shortId(id) {
+  return id ? id.slice(0, 8) : '—'
+}
+
 function statusColor(s) {
   const colors = {
     sent: '\x1b[32m',
@@ -103,10 +107,10 @@ async function showBatches(hours) {
   if (error) { console.error('Error:', error.message); process.exit(1) }
   if (!data?.length) { console.log('No batches found.'); return }
 
-  console.log(pad('id', 36), pad('created_at', 20), pad('triggered_from', 35), pad('count', 6), 'description')
-  console.log('-'.repeat(128))
+  console.log(pad('id', 9), pad('created_at', 20), pad('triggered_from', 35), pad('count', 6), 'description')
+  console.log('-'.repeat(100))
   for (const b of data) {
-    console.log(pad(b.id, 36), pad(fmtDate(b.created_at), 20), pad(b.triggered_from ?? '—', 35), pad(b.recipient_count, 6), b.description ?? '')
+    console.log(pad(shortId(b.id), 9), pad(fmtDate(b.created_at), 20), pad(b.triggered_from ?? '—', 35), pad(b.recipient_count, 6), b.description ?? '')
   }
 }
 
@@ -173,12 +177,12 @@ function printTable(rows) {
     }
   }
 
-  console.log(pad('id', 36), pad('created_at', 20), pad('to_email', 24), pad('mail_type', 18), pad('provider', 10), 'status')
-  console.log('-'.repeat(140))
+  console.log(pad('id', 9), pad('created_at', 20), pad('to_email', 24), pad('mail_type', 18), pad('provider', 10), 'status')
+  console.log('-'.repeat(112))
 
   for (const r of parents) {
     console.log(
-      pad(r.id, 36),
+      pad(shortId(r.id), 9),
       pad(fmtDate(r.created_at), 20),
       pad(r.to_email, 24),
       pad(r.mail_type ?? '—', 18),
@@ -189,9 +193,9 @@ function printTable(rows) {
     const children = childrenOf[r.id] ?? []
     for (let i = 0; i < children.length; i++) {
       const c = children[i]
-      const branch = i < children.length - 1 ? '├─' : '└─'
+      const branch = i < children.length - 1 ? '├─' : '└─'      
       console.log(
-        pad(branch, 36),
+        ' '.repeat(9 - branch.length) + branch,
         pad(fmtDate(c.created_at), 20),
         pad(c.to_email, 24),
         pad(c.mail_type ?? '—', 18),

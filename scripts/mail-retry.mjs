@@ -77,7 +77,8 @@ async function main() {
   const batchId = arg('--batch')
 
   if (id) {
-    query = query.eq('id', id)
+    // accept short prefix (e.g. first 8 chars) or full UUID
+    query = id.length < 36 ? query.like('id', `${id}%`) : query.eq('id', id)
   } else if (to) {
     query = query.eq('to_email', to)
   } else if (batchId) {
