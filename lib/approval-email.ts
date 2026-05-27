@@ -4,17 +4,17 @@ import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emai
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: string) {
+function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: string, periodLabel: string) {
   return `
     ${emailH3(`${sectionLabel}課前共修`)}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前（<strong style="color:${C.ink};">7/2 至 8/18</strong>）將安排課前共修。<br>請點擊下方按鈕查看課表、完成打卡，以及取得共修 Zoom 連線資訊。</p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前（<strong style="color:${C.ink};">${periodLabel}</strong>）將安排課前共修。<br>請點擊下方按鈕查看課表、完成打卡，以及取得共修 Zoom 連線資訊。</p>
     ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '查看課前共修課表＆打卡', 'green')}
   `
 }
 
 type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null }
 
-export function buildApprovalEmailPayload(reg: ApprovalReg) {
+export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）') {
   if (reg.retreat_format === 'online') {
     const onlineBody = `
       ${emailKicker('Approval Notice')}
@@ -29,7 +29,7 @@ export function buildApprovalEmailPayload(reg: ApprovalReg) {
         <li>Zoom 連結及課程時程將於開課前另行寄信通知。</li>
       </ul>
 
-      ${practiceBlock(reg, '二、')}
+      ${practiceBlock(reg, '二、', periodLabel)}
 
       ${emailH3('三、學員專區')}
       <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">您可透過學員專區查看課程時間表及審核狀態：</p>
@@ -119,7 +119,7 @@ export function buildApprovalEmailPayload(reg: ApprovalReg) {
     </table>
     ${emailWarning(`匯款時請備註姓名與專屬碼：<strong style="letter-spacing:3px;">${reg.random_code}</strong>，並於上方「前往繳費」頁面回填匯款後五碼。`)}
 
-    ${practiceBlock(reg, '三、')}
+    ${practiceBlock(reg, '三、', periodLabel)}
 
     ${emailH3('四、住宿安排')}
     <ol style="font-size:13.5px;color:${C.inkSoft};line-height:1.85;padding-left:22px;margin:0;">

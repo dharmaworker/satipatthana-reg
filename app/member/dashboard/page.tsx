@@ -53,6 +53,7 @@ function MemberDashboardContent() {
   const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
   const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
   const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
+  const [practicePeriodLabel, setPracticePeriodLabel] = useState('')
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -81,6 +82,10 @@ function MemberDashboardContent() {
         return res.json()
       })
       .then(data => { if (data) setMember(data); setLoading(false) })
+    fetch(`/api/member/practice?id=${id}&code=${encodeURIComponent(code)}`)
+      .then(r => r.json())
+      .then(d => { if (d.config?.period_label) setPracticePeriodLabel(d.config.period_label) })
+      .catch(() => {})
   }, [id, code])
 
   if (loading) {
@@ -360,7 +365,7 @@ function MemberDashboardContent() {
               <div>
                 <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--green)', textTransform: 'uppercase', marginBottom: 4 }}>Pre-Retreat</p>
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課前共修</h3>
-                <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>7/2 至 8/18・線上共修，每次參與後請打卡</p>
+                <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>{practicePeriodLabel ? `${practicePeriodLabel}・` : ''}線上共修，每次參與後請打卡</p>
               </div>
               <a href={withAuth('/member/practice')}
                 style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
