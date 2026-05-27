@@ -15,6 +15,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // practice_editor 只能存取 /admin/practice
+  if (adminRole === 'practice_editor' && !pathname.startsWith('/admin/practice')) {
+    return NextResponse.redirect(new URL('/admin/practice', request.url))
+  }
+
   // /admin/schedules 僅限 admin 角色
   if (pathname.startsWith('/admin/schedules') && adminRole !== 'admin') {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url))

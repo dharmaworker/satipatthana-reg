@@ -24,6 +24,11 @@ export function AdminHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [formatFilter, setFormatFilter] = useState<'in_person' | 'online'>('in_person')
+  const [adminRole, setAdminRole] = useState<string>('')
+
+  useEffect(() => {
+    fetch('/api/admin/me').then(r => r.json()).then(d => { if (d.role) setAdminRole(d.role) }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('admin_format') as 'in_person' | 'online' | null
@@ -61,7 +66,7 @@ export function AdminHeader() {
           </a>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {adminRole !== 'practice_editor' && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, color: 'var(--ink-mute)', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>禪修形式</span>
           {(['in_person', 'online'] as const).map(f => (
             <button key={f}
@@ -85,9 +90,10 @@ export function AdminHeader() {
               {f === 'in_person' ? '實體' : '線上'}
             </button>
           ))}
-        </div>
+        </div>}
 
         <div className="nav-actions">
+          {adminRole !== 'practice_editor' && <>
           <button onClick={() => router.push('/admin/schedules')}
             className="nav-back" style={{ background: 'rgba(216, 194, 154, 0.2)' }}>
             ⚙ 排程匯出
@@ -96,6 +102,7 @@ export function AdminHeader() {
             className="nav-back" style={{ background: 'rgba(216, 194, 154, 0.2)' }}>
             ↓ 匯出
           </button>
+          </>}
           <button onClick={() => router.push('/admin')} className="nav-logout">登出</button>
         </div>
       </div>
@@ -103,8 +110,8 @@ export function AdminHeader() {
       {/* Row 2: tabs */}
       <div className="container" style={{ paddingTop: 8, paddingBottom: 10, borderTop: '1px solid var(--line)' }}>
         <nav style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* 學員資料操作 */}
-          {tabs.map(t => {
+          {/* 學員資料操作（practice_editor 不顯示） */}
+          {adminRole !== 'practice_editor' && tabs.map(t => {
             const active = pathname === t.path || (pathname?.startsWith(t.path) && t.path !== '/admin/dashboard')
             const isDashboardActive = pathname === '/admin/dashboard' && t.path === '/admin/dashboard'
             const isActive = active || isDashboardActive
@@ -128,11 +135,11 @@ export function AdminHeader() {
             )
           })}
 
-          {/* 分隔線 */}
-          <div style={{ width: 1, height: 24, background: 'var(--line-strong)', margin: '0 6px', flexShrink: 0 }} />
+          {/* 分隔線（practice_editor 不顯示） */}
+          {adminRole !== 'practice_editor' && <div style={{ width: 1, height: 24, background: 'var(--line-strong)', margin: '0 6px', flexShrink: 0 }} />}
 
-          {/* 設課程簽到（線上專用，排在設定 tabs 最前） */}
-          {formatFilter === 'online' && (() => {
+          {/* 設課程簽到（線上專用，practice_editor 不顯示） */}
+          {adminRole !== 'practice_editor' && formatFilter === 'online' && (() => {
             const path = '/admin/attendance-records'
             const isActive = pathname === path
             return (
@@ -148,8 +155,8 @@ export function AdminHeader() {
             )
           })()}
 
-          {/* 課表設定 */}
-          {SETTING_TABS.map(t => {
+          {/* 課表設定（practice_editor 只顯示「設課前共修表」） */}
+          {SETTING_TABS.filter(t => adminRole === 'practice_editor' ? t.path === '/admin/practice' : true).map(t => {
             const isActive = pathname === t.path
             return (
               <button key={t.path}

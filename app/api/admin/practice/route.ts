@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 function isAdmin(req: NextRequest) {
-  return req.cookies.get('admin_role')?.value === 'admin'
+  const role = req.cookies.get('admin_role')?.value
+  return role === 'admin' || role === 'practice_editor'
 }
 
 // GET /api/admin/practice — 返回 config + 所有 items（含 disabled）

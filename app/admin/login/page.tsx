@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
       } else {
         localStorage.removeItem(STORAGE_KEY)
       }
-      router.push('/admin/dashboard')
+      router.push(data.role === 'practice_editor' ? '/admin/practice' : '/admin/dashboard')
     } catch (err: any) {
       setError(err.message)
     } finally {
