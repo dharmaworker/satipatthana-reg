@@ -1,6 +1,6 @@
 # 寄信架構與大量發信策略分析
 
-> 更新：2026-05-26
+> 更新：2026-05-28
 
 ---
 
@@ -90,11 +90,21 @@
 ### QQ/163 節流 Queue（`email_queue` table）
 
 `sendMailBatch` 自動依域名分流：
-- QQ/163 → 寫入 `email_queue`
-- 其他 → Resend batch 直接送
+- QQ/163 → 寫入 `email_queue`（`provider='alicloud'`）
+- 其他 → Resend batch 直接送（送出後仍寫入 `email_queue` 追蹤狀態，`provider='resend'`）
+
+**追蹤欄位**（除原本的 `to_email/subject/html/bcc/status/created_at/sent_at/error` 外）：
+- `provider`：`alicloud` / `resend` / `gmail`
+- `provider_message_id`：Resend 回傳的 message id，供 webhook / 對帳查找
+- `mail_type`：信件類別（如 `approval`、`student_id`、`attendance_notify`）
+- `attempt_count`：第幾次寄送（重送時 +1）
+- `parent_id`：若為重送，指向上一封 `email_queue.id`，形成鏈
+- `batch_id`：對應 `email_batches.id`，追蹤批次來源
+
+**`email_batches` 表**：每次 `sendMailBatch` 呼叫產生一筆，記錄 `triggered_from`（API route）、`recipient_count`、`description`。
 
 **Cron job**（`/api/admin/cron/process-mail-queue`，`* * * * *`）：
-- 每分鐘取 **30 筆** `pending`，用阿里雲 SMTP 送出
+- 每分鐘取 **30 筆** `pending` 且 `provider='alicloud'`，用阿里雲 SMTP 送出
 - 194 封 QQ/163 ÷ 30 封/批 = 7 批，約 **7 分鐘**送完
 - 防重複：取出時立即標記 `processing`
 - 卡住復原：超過 3 分鐘仍 `processing` → 重設為 `pending`
@@ -116,5 +126,21 @@
 - `delivery_delayed` 不等於寄失敗，Resend 仍會繼續重試，實測延遲通常在 1 天內送達
 - 信件內容、寄件域名信譽、收件人是否曾互動都會影響 QQ 的投遞判斷
 - 阿里雲 SMTP 每日額度用完後需等隔天重置
-- `email_queue` 的 `failed` 記錄目前不會自動重試，需手動處理
-- 兩個管道都只能確認「接受」，無法即時確認「送達」
+- `email_queue` 的 `failed` / `bounced` 記錄不會自動重試，使用 `scripts/mail-queue.mjs` 手動處理（查詢、對帳、重送，預期件數不多）
+- 兩個管道都只能確認「接受」，無法即時確認「送達」；Resend 的真實狀態須靠 webhook 或 `mail-queue.mjs --reconcile` 拉取
+
+---
+
+## 六、手動運維工具：`scripts/mail-queue.mjs`
+
+統一 CLI，整合查詢、對帳、重送功能（前身為 `mail-status.mjs` + `mail-retry.mjs`）。
+
+| 指令 | 用途 |
+|------|------|
+| `--list` | 列出佇列，支援 `--to/--status/--provider/--batch/--hours/--limit` 篩選 |
+| `--listBatches` | 列出所有 `email_batches` |
+| `--reconcile` | 拉取 Resend API 同步 `sent` 狀態（找出隱性 `bounced`/`delivered`） |
+| `--detail uuid,...` | 顯示郵件鏈樹狀圖 + 完整欄位 dump |
+| `--retry uuid,... --provider P` | 重新加入佇列；`--provider` 必填，建立 `parent_id` 鏈結 |
+
+uuid 參數接受 8 字元短前綴。完整退信處理流程見 `node scripts/mail-queue.mjs --help`。
