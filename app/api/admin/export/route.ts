@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     r.attended_formal ? '是' : '否',
     r.watched_recordings ? '是' : '否',
     r.zoom_guidance ? '是' : '否',
-    r.watched_30_talks ? '是' : '否',
+    r.watched_30_talks === 'yes' ? '是' : r.watched_30_talks === 'commit' ? '承諾於 8/16 前聽完' : '否',
     r.keep_precepts ? '是' : '否',
     r.pay_confirm ? '是' : '否',
     r.health_confirm ? '是' : '否',

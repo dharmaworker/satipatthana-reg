@@ -187,7 +187,8 @@ export default function RegisterPage() {
       form.attended_formal === 'yes' ||
       form.watched_recordings === 'yes' ||
       form.zoom_guidance === 'yes' ||
-      form.watched_30_talks === 'yes'
+      form.watched_30_talks === 'yes' ||
+      form.watched_30_talks === 'commit'
     if (!form.attended_formal) return fail('attended_formal', '請回答 Q3：是否以正式學員身份參加過課程')
     if (!form.watched_recordings) return fail('watched_recordings', '請回答 Q10：是否完整觀看／聆聽過 3 屆錄影')
     if (!form.zoom_guidance) return fail('zoom_guidance', '請回答 Q11：是否透過 ZOOM 做過一對一指導')
@@ -279,7 +280,7 @@ export default function RegisterPage() {
           attended_formal: form.attended_formal === 'yes',
           watched_recordings: form.watched_recordings === 'yes',
           zoom_guidance: form.zoom_guidance === 'yes',
-          watched_30_talks: form.watched_30_talks === 'yes',
+          watched_30_talks: form.watched_30_talks,
           keep_precepts: form.keep_precepts === 'yes',
           pay_confirm: form.pay_confirm === 'yes',
           health_confirm: form.health_confirm === 'yes',
@@ -573,7 +574,16 @@ export default function RegisterPage() {
 
               {yesNoSelect('watched_recordings', '10. 您是否完整地觀看／聆聽過至少 3 屆泰國四念處之旅的錄影／錄音？')}
               {yesNoSelect('zoom_guidance', '11. 您是否透過ZOOM的方式，獲得阿姜巴山、阿姜納、阿姜松、阿姜妮或阿姜沃伊做一對一的禪修指導？')}
-              {yesNoSelect('watched_30_talks', '12. 您是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？')}
+              <div className="question-block" id="field-watched_30_talks">
+                <label className="form-label">12. 您是否觀看／聆聽過隆波帕默尊者法談開示 30 篇以上？ <span className="required">*</span></label>
+                <select className={`form-select ${errCls('watched_30_talks')}`} value={form.watched_30_talks}
+                  onChange={e => update('watched_30_talks', e.target.value)}>
+                  <option value="">請選擇</option>
+                  <option value="yes">是</option>
+                  <option value="no">否</option>
+                  <option value="commit">目前尚未聽完隆波帕默尊者 30 個法談，承諾於 8 月 16 日禪修前，完整聽完 30 個法談</option>
+                </select>
+              </div>
               {yesNoSelect('keep_precepts', '13. 您是否持守五戒？')}
 
               <div className="question-block" id="field-practice_years">
@@ -898,7 +908,7 @@ export default function RegisterPage() {
                   <ReviewRow k="正式學員參加課程" v={form.attended_formal === 'yes' ? '是' : form.attended_formal === 'no' ? '否' : '—'} />
                   <ReviewRow k="3 屆錄影／錄音" v={form.watched_recordings === 'yes' ? '是' : form.watched_recordings === 'no' ? '否' : '—'} />
                   <ReviewRow k="ZOOM 一對一指導" v={form.zoom_guidance === 'yes' ? '是' : form.zoom_guidance === 'no' ? '否' : '—'} />
-                  <ReviewRow k="法談 30 篇以上" v={form.watched_30_talks === 'yes' ? '是' : form.watched_30_talks === 'no' ? '否' : '—'} />
+                  <ReviewRow k="法談 30 篇以上" v={form.watched_30_talks === 'yes' ? '是' : form.watched_30_talks === 'no' ? '否' : form.watched_30_talks === 'commit' ? '承諾於 8/16 禪修前聽完' : '—'} />
                   <ReviewRow k="參加過課程" v={form.attended_courses.length > 0 ? `${form.attended_courses.length} 屆` : '—'} />
                   <ReviewRow k="持守五戒" v={form.keep_precepts === 'yes' ? '是' : form.keep_precepts === 'no' ? '否' : '—'} />
                   <ReviewRow k="學習實踐多久" v={form.practice_years || '—'} />

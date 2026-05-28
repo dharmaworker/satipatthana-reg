@@ -73,7 +73,7 @@ function transformRow(r: any) {
     attended_courses: Array.isArray(r.attended_courses) ? r.attended_courses.join('、') : (r.attended_courses || ''),
     watched_recordings: boolZh(r.watched_recordings),
     zoom_guidance: boolZh(r.zoom_guidance),
-    watched_30_talks: boolZh(r.watched_30_talks),
+    watched_30_talks: r.watched_30_talks === 'yes' ? '是' : r.watched_30_talks === 'commit' ? '承諾於 8/16 前聽完' : r.watched_30_talks === 'no' ? '否' : '',
     keep_precepts: boolZh(r.keep_precepts),
     honest_confirm: boolZh(r.honest_confirm),
     health_confirm: boolZh(r.health_confirm),

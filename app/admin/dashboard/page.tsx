@@ -493,7 +493,7 @@ export default function DashboardPage() {
               <DetailField label="正式學員經驗" value={yn(detailReg.attended_formal)} />
               <DetailField label="觀看 3 屆錄影" value={yn(detailReg.watched_recordings)} />
               <DetailField label="ZOOM 一對一指導" value={yn(detailReg.zoom_guidance)} />
-              <DetailField label="法談 30 篇以上" value={yn(detailReg.watched_30_talks)} />
+              <DetailField label="法談 30 篇以上" value={detailReg.watched_30_talks === 'yes' ? '是' : detailReg.watched_30_talks === 'commit' ? '承諾於 8/16 前聽完' : detailReg.watched_30_talks === 'no' ? '否' : '—'} />
               <DetailField label="持守五戒" value={yn(detailReg.keep_precepts)} />
               <DetailField label="同意繳費" value={yn(detailReg.pay_confirm)} />
               <DetailField label="身體健康" value={yn(detailReg.health_confirm)} />

@@ -13,6 +13,11 @@ const REG_CLOSE_MS = Date.UTC(2026, 5, 1, 16, 0, 0)
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'
 }
+function q12Label(v: string | null | undefined) {
+  if (v === 'yes') return '是'
+  if (v === 'commit') return '承諾於 8/16 禪修前聽完 30 個法談'
+  return '否'
+}
 function nullable(v: string | null | undefined) {
   return v || '—'
 }
@@ -213,7 +218,7 @@ export async function POST(request: NextRequest) {
           tableRow('正式學員經驗', yn(data.attended_formal)),
           tableRow('觀看錄影 3 屆以上', yn(data.watched_recordings)),
           tableRow('Zoom 一對一指導', yn(data.zoom_guidance)),
-          tableRow('法談 30 篇以上', yn(data.watched_30_talks)),
+          tableRow('法談 30 篇以上', q12Label(data.watched_30_talks)),
           tableRow('持守五戒', yn(data.keep_precepts)),
           tableRow('修習年資', nullable(data.practice_years)),
           tableRow('練習頻率', nullable(data.practice_frequency)),
@@ -262,7 +267,7 @@ export async function POST(request: NextRequest) {
           tableRow('正式學員經驗', yn(data.attended_formal)),
           tableRow('觀看錄影 3 屆以上', yn(data.watched_recordings)),
           tableRow('Zoom 一對一指導', yn(data.zoom_guidance)),
-          tableRow('法談 30 篇以上', yn(data.watched_30_talks)),
+          tableRow('法談 30 篇以上', q12Label(data.watched_30_talks)),
           tableRow('持守五戒', yn(data.keep_precepts)),
           tableRow('修習年資', nullable(data.practice_years)),
           tableRow('練習頻率', nullable(data.practice_frequency)),

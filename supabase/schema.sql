@@ -28,7 +28,7 @@ create table if not exists registrations (
   attended_formal boolean not null default false,
   watched_recordings boolean not null default false,
   zoom_guidance boolean not null default false,
-  watched_30_talks boolean not null default false,
+  watched_30_talks text not null default 'no',   -- 'yes' | 'no' | 'commit'（commit=承諾於 8/16 前聽完 30 篇）
   keep_precepts boolean not null default false,
   pay_confirm boolean not null default false,
   health_confirm boolean not null default false,

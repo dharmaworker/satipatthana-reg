@@ -691,7 +691,7 @@ export default function LodgingsPage() {
               <Field label="Q3 正式學員課程" value={detail.registration?.attended_formal ? '是' : '否'} />
               <Field label="Q10 完整觀看 3 屆錄影" value={detail.registration?.watched_recordings ? '是' : '否'} />
               <Field label="Q11 ZOOM 一對一指導" value={detail.registration?.zoom_guidance ? '是' : '否'} />
-              <Field label="Q12 法談 30 篇以上" value={detail.registration?.watched_30_talks ? '是' : '否'} />
+              <Field label="Q12 法談 30 篇以上" value={detail.registration?.watched_30_talks === 'yes' ? '是' : detail.registration?.watched_30_talks === 'commit' ? '承諾於 8/16 前聽完' : '否'} />
               <Field label="Q13 持守五戒" value={detail.registration?.keep_precepts ? '是' : '否'} />
               <Field label="Q14 學習實踐時間" value={detail.registration?.practice_years} />
               <div style={{ gridColumn: 'span 2' }}>
