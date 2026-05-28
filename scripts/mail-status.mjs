@@ -8,7 +8,7 @@
 //   node scripts/mail-status.mjs --provider resend --status bounced
 //   node scripts/mail-status.mjs --batches --hours 168
 //   node scripts/mail-status.mjs --batch <uuid>
-//   node scripts/mail-status.mjs --chain <uuid>
+//   node scripts/mail-status.mjs --chain <uuid|prefix>
 //   node scripts/mail-status.mjs --reconcile
 
 import { createClient } from '@supabase/supabase-js'
@@ -34,9 +34,16 @@ const arg = (name) => {
   return i !== -1 && args[i + 1] ? args[i + 1] : null
 }
 
+function displayWidth(s) {
+  let w = 0
+  for (const ch of s) w += ch.codePointAt(0) > 0x2E7F ? 2 : 1
+  return w
+}
+
 function pad(str, len) {
   const s = String(str ?? '')
-  return s.length >= len ? s.slice(0, len) : s + ' '.repeat(len - s.length)
+  const w = displayWidth(s)
+  return w >= len ? s : s + ' '.repeat(len - w)
 }
 
 function fmtDate(iso) {
@@ -46,6 +53,18 @@ function fmtDate(iso) {
 
 function shortId(id) {
   return id ? id.slice(0, 8) : '—'
+}
+
+const MAIL_TYPE_LABEL = {
+  approval:             '錄取通知',
+  student_id:           '學號分配通知',
+  timetable_notify:     '課表發佈通知',
+  formal_notification:  '正式學員通知',
+  attendance_notify:    '出席通知',
+}
+
+function fmtMailType(t) {
+  return MAIL_TYPE_LABEL[t] ?? t ?? '—'
 }
 
 function statusColor(s) {
@@ -61,8 +80,15 @@ function statusColor(s) {
   return (colors[s] ?? '') + s + reset
 }
 
-// --chain <uuid>
+// --chain <uuid|prefix>
 async function showChain(id) {
+  // Resolve short prefix to full id
+  if (id.length < 36) {
+    const { data: ids } = await supabase.rpc('find_ids_by_prefix', { prefixes: [id], tbl: 'email_queue' })
+    if (!ids?.length) { console.log('No row found for prefix:', id); return }
+    id = ids[0]
+  }
+
   // Resolve root: if id is a child, follow parent_id up
   const { data: self } = await supabase
     .from('email_queue')
@@ -177,15 +203,15 @@ function printTable(rows) {
     }
   }
 
-  console.log(pad('id', 9), pad('created_at', 20), pad('to_email', 24), pad('mail_type', 18), pad('provider', 10), 'status')
-  console.log('-'.repeat(112))
+  console.log(pad('id', 9), pad('created_at', 20), pad('to_email', 24), pad('mail_type', 14), pad('provider', 10), 'status')
+  console.log('-'.repeat(108))
 
   for (const r of parents) {
     console.log(
       pad(shortId(r.id), 9),
       pad(fmtDate(r.created_at), 20),
       pad(r.to_email, 24),
-      pad(r.mail_type ?? '—', 18),
+      pad(fmtMailType(r.mail_type), 14),
       pad(r.provider, 10),
       statusColor(r.status),
       r.error ? r.error.slice(0, 50) : ''
@@ -193,12 +219,12 @@ function printTable(rows) {
     const children = childrenOf[r.id] ?? []
     for (let i = 0; i < children.length; i++) {
       const c = children[i]
-      const branch = i < children.length - 1 ? '├─' : '└─'      
+      const branch =   (i < children.length - 1 ? '├─' : '└─')
       console.log(
         ' '.repeat(9 - branch.length) + branch,
         pad(fmtDate(c.created_at), 20),
         pad(c.to_email, 24),
-        pad(c.mail_type ?? '—', 18),
+        pad(fmtMailType(c.mail_type), 14),
         pad(c.provider, 10),
         statusColor(c.status),
         c.error ? c.error.slice(0, 50) : ''

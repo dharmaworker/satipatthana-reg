@@ -36,7 +36,19 @@ CREATE INDEX IF NOT EXISTS email_queue_batch_id_idx
   ON public.email_queue (batch_id)
   WHERE batch_id IS NOT NULL;
 
--- 4. RLS (service_role only)
+-- 4. Helper function for short-prefix UUID lookup (used by dev scripts)
+CREATE OR REPLACE FUNCTION find_ids_by_prefix(prefixes text[], tbl text)
+RETURNS SETOF uuid AS $$
+BEGIN
+  IF tbl = 'email_batches' THEN
+    RETURN QUERY SELECT id FROM email_batches WHERE id::text LIKE ANY(SELECT p || '%' FROM unnest(prefixes) p);
+  ELSE
+    RETURN QUERY SELECT id FROM email_queue WHERE id::text LIKE ANY(SELECT p || '%' FROM unnest(prefixes) p);
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 5. RLS (service_role only)
 ALTER TABLE public.email_queue ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all" ON public.email_queue;
 CREATE POLICY "service_role_all" ON public.email_queue

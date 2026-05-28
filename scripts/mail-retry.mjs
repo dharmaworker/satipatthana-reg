@@ -78,7 +78,13 @@ async function main() {
 
   if (id) {
     // accept short prefix (e.g. first 8 chars) or full UUID
-    query = id.length < 36 ? query.like('id', `${id}%`) : query.eq('id', id)
+    if (id.length < 36) {
+      const { data: ids } = await supabase.rpc('find_ids_by_prefix', { prefixes: [id], tbl: 'email_queue' })
+      if (!ids?.length) { console.log('No row found for prefix:', id); return }
+      query = query.eq('id', ids[0])
+    } else {
+      query = query.eq('id', id)
+    }
   } else if (to) {
     query = query.eq('to_email', to)
   } else if (batchId) {
