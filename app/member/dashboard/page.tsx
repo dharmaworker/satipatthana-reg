@@ -59,6 +59,19 @@ function MemberDashboardContent() {
   const [practiceEnabled, setPracticeEnabled] = useState(false)
   const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
 
+  type ProfileData = {
+    remaining: number
+    chinese_name: string; id_number: string | null; passport_name: string
+    dharma_name: string | null; gender: string; age: number
+    passport_country: string | null; residence: string; phone: string
+    line_id: string | null; wechat_id: string | null
+  }
+  const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [profileDraft, setProfileDraft] = useState<ProfileData | null>(null)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMsg, setProfileMsg] = useState('')
+
   useEffect(() => {
     fetch('/api/interactive/config')
       .then(r => r.json())
@@ -94,6 +107,10 @@ function MemberDashboardContent() {
         setPracticeOpenAt(openAt)
         setPracticeEnabled(openAt != null && Date.now() >= new Date(openAt).getTime())
       })
+      .catch(() => {})
+    fetch(`/api/member/profile?id=${id}&code=${encodeURIComponent(code)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setProfileData(d) })
       .catch(() => {})
   }, [id, code])
 
@@ -427,6 +444,108 @@ function MemberDashboardContent() {
                   </span>
               }
             </div>
+
+            {/* 個人資料修改 */}
+            {profileData && (
+              <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '18px 22px', marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: editingProfile ? 16 : 0 }}>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 2 }}>Personal Info</p>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>個人資料</h3>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, color: profileData.remaining > 0 ? 'var(--ink-mute)' : 'var(--red, #c0392b)' }}>
+                      還有 {profileData.remaining} 次修改機會
+                    </span>
+                    {!editingProfile && profileData.remaining > 0 && (
+                      <button onClick={() => { setProfileDraft({ ...profileData }); setEditingProfile(true); setProfileMsg('') }}
+                        style={{ padding: '6px 18px', background: 'var(--gold-deep)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        修改
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editingProfile && profileDraft ? (
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    {profileMsg && <p style={{ margin: 0, padding: '8px 12px', borderRadius: 8, background: profileMsg.startsWith('✓') ? 'rgba(73,85,52,0.08)' : 'rgba(192,57,43,0.08)', color: profileMsg.startsWith('✓') ? 'var(--green)' : '#c0392b', fontSize: 13 }}>{profileMsg}</p>}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {([
+                        ['中文姓名', 'chinese_name', 'text', true],
+                        ['護照英文姓名', 'passport_name', 'text', true],
+                        ['身分證／護照號碼', 'id_number', 'text', false],
+                        ['法名', 'dharma_name', 'text', false],
+                        ['手機號碼', 'phone', 'text', true],
+                        ['年齡', 'age', 'number', true],
+                        ['LINE ID', 'line_id', 'text', false],
+                        ['WeChat 微信號', 'wechat_id', 'text', false],
+                      ] as [string, keyof typeof profileDraft, string, boolean][]).map(([label, field, type, required]) => (
+                        <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {label}{required && <span style={{ color: 'var(--red,#c0392b)' }}> *</span>}
+                          <input type={type} value={(profileDraft[field] as any) ?? ''}
+                            onChange={e => setProfileDraft({ ...profileDraft, [field]: type === 'number' ? Number(e.target.value) : (e.target.value || null) })}
+                            style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }} />
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        性別 <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
+                        <select value={profileDraft.gender} onChange={e => setProfileDraft({ ...profileDraft, gender: e.target.value })}
+                          style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }}>
+                          <option value="male">男</option>
+                          <option value="female">女</option>
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        居住地 <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
+                        <select value={profileDraft.residence} onChange={e => setProfileDraft({ ...profileDraft, residence: e.target.value })}
+                          style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }}>
+                          {['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區'].map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        護照頒發地（選填）
+                        <select value={profileDraft.passport_country ?? ''} onChange={e => setProfileDraft({ ...profileDraft, passport_country: e.target.value || null })}
+                          style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }}>
+                          <option value="">—</option>
+                          {['台灣','中國大陸/內地','香港','澳門','馬來西亞','泰國','日本','美國','加拿大','新加坡','英國','斯里蘭卡','其他地區'].map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <button disabled={profileSaving} onClick={async () => {
+                        setProfileSaving(true); setProfileMsg('')
+                        const res = await fetch(`/api/member/profile?id=${id}&code=${encodeURIComponent(code)}`, {
+                          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(profileDraft),
+                        })
+                        const d = await res.json()
+                        setProfileSaving(false)
+                        if (res.ok) {
+                          setProfileData({ ...profileDraft, remaining: d.remaining })
+                          setEditingProfile(false)
+                          setProfileMsg('')
+                        } else {
+                          setProfileMsg(d.error || '儲存失敗')
+                        }
+                      }}
+                        style={{ padding: '9px 24px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: profileSaving ? 'not-allowed' : 'pointer' }}>
+                        {profileSaving ? '儲存中…' : '確認修改'}
+                      </button>
+                      <button onClick={() => { setEditingProfile(false); setProfileMsg('') }}
+                        style={{ padding: '9px 16px', background: 'transparent', border: '1.5px solid var(--line-strong)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
+                        取消
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
 
             {/* 重要時程 — period/notify dates derive from applicant's batch (created_at) */}
             {(() => {
