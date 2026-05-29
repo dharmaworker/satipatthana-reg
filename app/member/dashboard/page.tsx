@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { copyForCreatedAt } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -14,6 +15,7 @@ type MemberData = {
   payment_plan: string | null
   residence: string | null
   retreat_format: string | null
+  created_at: string
   lodging_status: 'none' | 'submitted_editable' | 'locked'
   tests_uploaded: number
   tests_total: number
@@ -448,7 +450,7 @@ function MemberDashboardContent() {
           <div className="pending-card">
             <div className="icon">⏳</div>
             <h3>報名審核中</h3>
-            <p>您已報名{isOnline ? '線上課程（Zoom）' : '實體課程'}，資料已收到，學會正在審核。<br />錄取通知將於 <strong>06/06</strong> 以 Email 發送，請留意收件匣與垃圾信箱。</p>
+            <p>您已報名{isOnline ? '線上課程（Zoom）' : '實體課程'}，資料已收到，學會正在審核。<br />錄取通知將於 <strong>{copyForCreatedAt(member.created_at).notifyShort}</strong> 以 Email 發送，請留意收件匣與垃圾信箱。</p>
             <p>在錄取確認前，請勿購買機票或安排行程。</p>
             <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>

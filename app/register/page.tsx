@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { getPhaseCopy } from '@/lib/registration-period'
 
 const THAILAND_COURSES = [
   '第一屆泰國四念處課程（2014年）',
@@ -71,9 +72,6 @@ const PRACTICE_FREQ_LABEL: Record<string, string> = {
   commit_from_now: '未曾持續練習，但承諾自即日起每日練習 30 分鐘至 1 小時，持續至課程結束',
 }
 
-// 截止：2026/06/01 晚上 24:00（台北時間）= UTC 6/1 16:00
-const REG_CLOSE_MS = Date.UTC(2026, 5, 1, 16, 0, 0)
-
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -81,11 +79,10 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // 截止日檢查
-  const now = Date.now()
-  const notYetOpen = false
-  const pastDeadline = now > REG_CLOSE_MS
-  const outOfPeriod = pastDeadline
+  // 報名期間 / 模式判定 — see lib/registration-period.ts
+  const copy = getPhaseCopy()
+  const outOfPeriod = !copy.isOpen
+  const notYetOpen = copy.phase === 'not-yet'
 
   const [form, setForm] = useState({
     honest_confirm: '',
@@ -336,8 +333,11 @@ export default function RegisterPage() {
           <p className="page-kicker">Registration Form</p>
           <h1 className="page-title">第二屆台灣四念處禪修・課程報名</h1>
           <p className="page-subtitle">
-            報名期間：2026/05/11 上午 10:00 — 2026/06/01 晚上 24:00（台北時間）<br />
-            提交報名表單不代表已錄取，錄取結果將於 6/6 以 Email 通知。
+            {copy.badge && (
+              <span style={{ display: 'inline-block', padding: '2px 10px', background: copy.badgeColor, color: '#fff', borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', marginRight: 8 }}>{copy.badge}</span>
+            )}
+            {copy.periodLabel}<br />
+            提交報名表單不代表已錄取，錄取結果將於 {copy.notifyShort} 以 Email 通知。
           </p>
 
           {/* Stepper */}
@@ -376,17 +376,18 @@ export default function RegisterPage() {
               fontSize: 28,
               display: 'grid', placeItems: 'center',
               margin: '0 auto 18px',
-            }}>{notYetOpen ? '⏳' : '🔒'}</div>
+            }}>{copy.closedIcon}</div>
             <h2 style={{
               fontFamily: 'var(--font-noto-serif-tc), serif',
               fontSize: 22, fontWeight: 700,
               color: 'var(--ink)', letterSpacing: '0.08em',
               marginBottom: 12,
-            }}>{notYetOpen ? '報名尚未開放' : '報名已截止'}</h2>
+            }}>{copy.closedHeading}</h2>
             <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.85 }}>
-              {notYetOpen
-                ? <>報名將於 <strong>2026/05/11 上午 10 點（台北時間）</strong>開放。<br />感謝您的關注，請屆時再回到本頁。</>
-                : <>報名期間已於 <strong>2026/06/01 晚上 24 點（台北時間）</strong>截止。<br />如有疑問請<a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'var(--green)', fontWeight: 600 }}>聯繫學會</a>。</>}
+              {copy.closedDetail}
+              {!notYetOpen && (<>
+                <br />如有疑問請<a href="mailto:satipatthana.tw@gmail.com" style={{ color: 'var(--green)', fontWeight: 600 }}>聯繫學會</a>。
+              </>)}
             </p>
             <div style={{ marginTop: 22 }}>
               <a href="/" className="btn btn-ghost">← 返回首頁</a>
@@ -477,7 +478,7 @@ export default function RegisterPage() {
 
               <div className="info-section">
                 <h3>錄取流程</h3>
-                <p>1. 提交報名表後，將於 <strong>6 月 6 日</strong>以 Email 發送錄取通知（提交報名表單不代表已錄取）。</p>
+                <p>1. {copy.recruitFlowNotifyLine}</p>
                 <p>2. 收到錄取通知後，須於 <strong>6月15日（台北時間）晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
                 <p>3. 正式錄取者，將建立 LINE 及微信群組。</p>
                 <p>4. 實體禪修場地條件有限，最終錄取結果由課程組決定。</p>
@@ -950,7 +951,7 @@ export default function RegisterPage() {
 
               <div className="alert-card" style={{ marginTop: 12 }}>
                 <div className="alert-card-title">送出前再次提醒</div>
-                <p>提交報名表後並不代表已錄取，錄取結果將於 <strong>6/6</strong> 以 Email 通知。請以您填寫的 Email 為準，注意查收（含垃圾信箱）。</p>
+                <p>提交報名表後並不代表已錄取，錄取結果將於 <strong>{copy.notifyShort}</strong> 以 Email 通知。請以您填寫的 Email 為準，注意查收（含垃圾信箱）。</p>
                 <p>送出後將自動寄送一封確認信至您的 Email，內含繳費專屬碼，請妥善保管。</p>
               </div>
             </div>
@@ -996,13 +997,23 @@ export default function RegisterPage() {
         </div>
 
         <aside>
+          {copy.highlightCard && (
+            <div className="sidebar-card" style={{ background: 'linear-gradient(135deg, #FFF4E6 0%, #FCE5C8 100%)', borderColor: copy.badgeColor, borderWidth: 2 }}>
+              <h4 style={{ color: '#9C5A26' }}>{copy.highlightCard.title} <small style={{ color: '#9C5A26' }}>{copy.highlightCard.subtitle}</small></h4>
+              {copy.highlightCard.lines.map((line, i) => (
+                <p key={i} style={{ color: '#7A4214', fontSize: 13.5, lineHeight: 1.75, margin: i === 0 ? '0 0 8px' : '0 0 6px' }}>
+                  {line}
+                </p>
+              ))}
+            </div>
+          )}
           <div className="sidebar-card">
             <h4>禪修概要 <small>At a Glance</small></h4>
             <div className="info-row"><span className="k">日期</span><span className="v">08.20—24</span></div>
             <div className="info-row"><span className="k">地點</span><span className="v">日月潭</span></div>
             <div className="info-row"><span className="k">名額</span><span className="v">250 名</span></div>
-            <div className="info-row"><span className="k">報名截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.01</span></div>
-            <div className="info-row"><span className="k">錄取通知</span><span className="v">06.06</span></div>
+            <div className="info-row"><span className="k">{copy.sidebarDeadlineLabel}</span><span className="v" style={{ color: copy.badgeColor }}>{copy.sidebarDeadlineDate}</span></div>
+            <div className="info-row"><span className="k">錄取通知</span><span className="v">{copy.sidebarNotifyDate}</span></div>
             <div className="info-row"><span className="k">繳費截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.15</span></div>
           </div>
 

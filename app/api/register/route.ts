@@ -3,12 +3,13 @@ import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { nextAvailableMemberId } from '@/lib/member-id'
 import { sendMail, sendMailWithRetry } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
+import { getPhaseCopy, PHASE_STARTS } from '@/lib/registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
-// 截止：2026/06/01 晚上 24:00（台北時間）= UTC 6/1 16:00
-const REG_CLOSE_MS = Date.UTC(2026, 5, 1, 16, 0, 0)
+// 截止：start of 'closed' phase in registration-period.ts
+const REG_CLOSE_MS = PHASE_STARTS.find(p => p.key === 'closed')!.startMs
 
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'
@@ -27,8 +28,9 @@ export async function POST(request: NextRequest) {
     // 截止日檢查
     const now = Date.now()
     if (now > REG_CLOSE_MS) {
-      return NextResponse.json({ error: '報名已截止（2026/06/01 晚上 24 點止）' }, { status: 400 })
+      return NextResponse.json({ error: '報名已截止' }, { status: 400 })
     }
+    const copy = getPhaseCopy(now)
 
     const body = await request.json()
 
@@ -131,7 +133,7 @@ export async function POST(request: NextRequest) {
 
         ${emailH3('接下來')}
         <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
-          <li>錄取通知：將於 <strong style="color:${C.ink};">2026/06/06</strong> 由本信箱寄出</li>
+          <li>錄取通知：將於 <strong style="color:${C.ink};">${copy.notifyLabel}</strong> 由本信箱寄出</li>
           <li>課程方式：<strong style="color:${C.ink};">線上 Zoom 視訊</strong></li>
           <li>課程日期：<strong style="color:${C.ink};">2026/08/20 ～ 08/24</strong></li>
           <li>Zoom 連結及課程時程將於錄取後另行通知</li>
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
 
         ${emailH3('接下來')}
         <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
-          <li>錄取通知：將於 <strong style="color:${C.ink};">2026/06/06</strong> 由本信箱寄出</li>
+          <li>錄取通知：將於 <strong style="color:${C.ink};">${copy.notifyLabel}</strong> 由本信箱寄出</li>
           <li>若錄取，請於 <strong style="color:${C.ink};">2026/06/15 晚上 8 點前</strong>完成繳費</li>
           <li>課程日期：<strong style="color:${C.ink};">2026/08/20 ～ 08/24</strong>（南投日月潭湖畔會館）</li>
         </ul>

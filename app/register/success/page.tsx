@@ -2,6 +2,7 @@
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { getPhaseCopy } from '@/lib/registration-period'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
@@ -9,6 +10,8 @@ function SuccessContent() {
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
+  // Just-submitted — current phase's notify date applies.
+  const copy = getPhaseCopy()
 
   return (
     <>
@@ -43,7 +46,7 @@ function SuccessContent() {
             <h5>接下來</h5>
             {isOnline ? (
               <ol>
-                <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
+                <li>錄取通知將於 <strong>{copy.notifyLabel}</strong> 透過 E-mail 發送</li>
                 <li>課程方式：<strong>線上 Zoom 視訊</strong></li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong></li>
                 <li>Zoom 連結及課程時程將於錄取後另行寄信通知</li>
@@ -51,7 +54,7 @@ function SuccessContent() {
               </ol>
             ) : (
               <ol>
-                <li>錄取通知將於 <strong>2026/06/06</strong> 透過 E-mail 發送</li>
+                <li>錄取通知將於 <strong>{copy.notifyLabel}</strong> 透過 E-mail 發送</li>
                 <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
                 <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>

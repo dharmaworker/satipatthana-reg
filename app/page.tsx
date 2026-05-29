@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { getPhaseCopy } from '@/lib/registration-period'
 
 const TEACHERS = {
   'luangpu-pramote': {
@@ -108,6 +109,7 @@ export default function HomePage() {
   const [modal, setModal] = useState<TeacherId | null>(null)
   const savedScrollY = useRef(0)
   const t = modal ? TEACHERS[modal] : null
+  const copy = getPhaseCopy()
 
   useEffect(() => {
     if (modal) {
@@ -167,7 +169,10 @@ export default function HomePage() {
               <div className="hero-meta">
                 <span><span className="icon">📅</span>日期：8/20 — 24（五天）</span>
                 <span><span className="icon">📍</span>地點：南投・日月潭</span>
-                <span className="reg-period"><span className="icon">📝</span>報名期間：2026/05/11 — 06/01</span>
+                <span className="reg-period" style={copy.highlightCard ? { background: copy.badgeColor, color: '#fff', padding: '4px 12px', borderRadius: 999 } : undefined}>
+                  <span className="icon">{copy.highlightCard ? '🔔' : '📝'}</span>
+                  {copy.highlightCard ? `補報名 ${copy.sidebarDeadlineDate} 截止` : '報名期間：2026/05/11 — 06/01'}
+                </span>
               </div>
 
               <div className="hero-quote">
@@ -191,6 +196,32 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Late-registration attention block — rendered only when COPY supplies a highlightCard. */}
+        {copy.highlightCard && (
+          <section className="section" style={{ background: 'linear-gradient(135deg, #FFF4E6 0%, #FCE5C8 100%)', borderTop: `3px solid ${copy.badgeColor}`, borderBottom: `3px solid ${copy.badgeColor}` }}>
+            <div className="container" style={{ maxWidth: 880, textAlign: 'center' }}>
+              <p className="section-kicker" style={{ color: copy.badgeColor }}>{copy.highlightCard.subtitle}</p>
+              <h2 style={{ color: '#7A4214' }}>{copy.highlightCard.title}</h2>
+              <p style={{ color: '#7A4214', fontSize: 15, lineHeight: 1.9, margin: '8px 0 18px' }}>
+                第二屆台灣四念處禪修｜<strong>補報名簡章</strong>
+              </p>
+              <div style={{ display: 'grid', gap: 10, maxWidth: 640, margin: '0 auto', color: '#7A4214', fontSize: 14.5, lineHeight: 1.85 }}>
+                {copy.highlightCard.lines.map((line, i) => (
+                  <p key={i} style={{ margin: 0, padding: '10px 18px', background: 'rgba(255,255,255,0.55)', borderRadius: 10, border: `1px solid ${copy.badgeColor}30` }}>
+                    {line}
+                  </p>
+                ))}
+              </div>
+              <div style={{ marginTop: 18, fontSize: 13, color: '#9C5A26' }}>
+                <strong>報名資格</strong>：曾參加隆波帕默尊者體系任意一屆課程；或承諾於 2026/08/16 前聆聽或觀看隆波帕默尊者至少 30 個法談。
+              </div>
+              <a href="/register" className="btn btn-primary" style={{ marginTop: 22, background: copy.badgeColor, borderColor: copy.badgeColor }}>
+                立即補報名 <span className="arrow">→</span>
+              </a>
+            </div>
+          </section>
+        )}
 
         {/* About */}
         <section className="section" id="about">
@@ -286,8 +317,12 @@ export default function HomePage() {
               <p>請留意以下關鍵日期。</p>
             </div>
             <div className="timeline">
-              <TimelineItem side="left" date="05.11 — 05.25" title="報名期間" desc="線上填寫報名表，提交個人資料與修學歷程。" />
+              <TimelineItem side="left" date="05.11 — 06.01" title="報名期間" desc="線上填寫報名表，提交個人資料與修學歷程。" />
               <TimelineItem side="right" date="06.06　錄取通知" title="錄取通知發送" desc="錄取者將於 6 月 6 日收到 E-mail 通知。提交報名表單不代表已錄取。" />
+              {copy.highlightCard && <>
+                <TimelineItem side="left" date={`06.01 — 06.07　${copy.highlightCard.title}`} title="補報名期間" desc="實體 60 名（額滿候補），線上不限名額。詳見上方補報名簡章。" />
+                <TimelineItem side="right" date={`${copy.sidebarNotifyDate}　補報名錄取通知`} title="補報名批次錄取通知" desc={`補報名批次將於 ${copy.notifyLabel} 前統一以 Email 通知。`} />
+              </>}
               <TimelineItem side="left" date="06.15　繳費截止" title="完成繳費以正式錄取" desc="錄取者須於 6月15日（台北時間）晚上 8 時前完成繳費，才算正式錄取。" />
               <TimelineItem side="right" date="08.20 — 08.24" title="報到、入住後" desc="展開為期五日四夜的四念處禪修" />
             </div>
@@ -311,7 +346,7 @@ export default function HomePage() {
               </details>
               <details>
                 <summary>錄取流程是怎樣的？</summary>
-                <p>提交報名表單<strong>不代表已錄取</strong>。錄取通知將於 <strong>6 月 6 日</strong>以 Email 發送，請留意收件匣與垃圾信箱。<br />
+                <p>提交報名表單<strong>不代表已錄取</strong>。錄取通知將於 <strong>{copy.notifyLabel}</strong> 以 Email 發送，請留意收件匣與垃圾信箱。<br />
                 收到錄取通知後，須於 <strong>6月15日（台北時間）晚上 8 時前</strong>匯款／刷卡繳交食宿、場地及交通等費用，並至學員專區填寫繳費資料，才算完成正式錄取。<br />
                 正式錄取者將建立 LINE 及微信群組聯繫。<strong style={{ color: 'var(--gold-deep)' }}>請勿在錄取確認前購買機票或安排行程。</strong></p>
               </details>
