@@ -15,7 +15,6 @@ export type TimetableDay = {
   rows: TimetableRow[]
 }
 export type Timetable = {
-  published: boolean
   publish_at?: string | null
   zoom_link?: string
   zoom_meeting_id?: string
@@ -24,7 +23,6 @@ export type Timetable = {
 }
 
 export function isTimetablePublished(t: Timetable): boolean {
-  if (t.published) return true
   if (t.publish_at == null) return false
   return Date.now() >= new Date(t.publish_at).getTime()
 }
@@ -32,7 +30,7 @@ export function isTimetablePublished(t: Timetable): boolean {
 const KEY = 'course_timetable'
 
 export const DEFAULT_TIMETABLE: Timetable = {
-  published: false,
+  publish_at: null,
   days: [
     {
       tabLabel: 'Day 1',

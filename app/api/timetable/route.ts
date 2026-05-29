@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchTimetable } from '@/lib/timetable'
+import { fetchTimetable, isTimetablePublished } from '@/lib/timetable'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
   }
 
   const t = await fetchTimetable()
-  if (!t.published) {
+  if (!isTimetablePublished(t)) {
     return NextResponse.json({ published: false, days: [] })
   }
-  return NextResponse.json(t)
+  return NextResponse.json({ ...t, published: true })
 }

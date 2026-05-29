@@ -5,7 +5,7 @@ import { AdminHeader } from '../_components/AdminHeader'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { published: boolean; publish_at?: string | null; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
+type Timetable = { publish_at?: string | null; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
 
 function toDatetimeLocal(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -53,7 +53,6 @@ export default function TimetableAdminPage() {
     setSaving(false)
   }
 
-  const togglePublished = () => data && setData({ ...data, published: !data.published })
   const setPublishAt = (val: string) => data && setData({ ...data, publish_at: val ? new Date(val).toISOString() : null })
 
   const updateDay = (idx: number, patch: Partial<Day>) => {

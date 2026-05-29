@@ -5,7 +5,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { published: boolean; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
+type Timetable = { zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
 
 type State =
   | { kind: 'loading' }
