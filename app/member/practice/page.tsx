@@ -221,7 +221,6 @@ function PracticeContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, background: 'var(--bg-pure)' }}>
                 <thead>
                   <tr style={{ background: 'rgba(73,85,52,0.07)' }}>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 68 }}>週次</th>
                     <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 130 }}>日期 / 時間</th>
                     <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em' }}>課程內容</th>
                     <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: 'var(--ink)', fontSize: 13, letterSpacing: '0.06em', width: 72 }}>打卡</th>
@@ -235,9 +234,6 @@ function PracticeContent() {
                         background: item.checked ? 'rgba(73,85,52,0.04)' : undefined,
                         transition: 'background 0.15s',
                       }}>
-                      <td style={{ padding: '12px 14px', color: 'var(--ink-mute)', fontSize: 13, fontWeight: 600 }}>
-                        {weekLabel(item.session_date)}
-                      </td>
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 13.5 }}>{formatDate(item.session_date)}</div>
                         <div style={{ color: 'var(--ink-mute)', fontSize: 12.5, marginTop: 2 }}>{item.time_label}</div>

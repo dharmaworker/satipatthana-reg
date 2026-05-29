@@ -35,9 +35,11 @@ const tdStyle: React.CSSProperties = {
   padding: '10px 12px', borderBottom: '1px solid var(--line)', fontSize: 13.5, verticalAlign: 'middle',
 }
 
-function weekLabel(date: string) {
-  const start = new Date('2026-07-02')
+function weekLabel(date: string, firstDate: string) {
+  if (!date || !firstDate) return ''
+  const start = new Date(firstDate)
   const d = new Date(date)
+  if (isNaN(start.getTime()) || isNaN(d.getTime())) return ''
   const week = Math.floor((d.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
   return `第 ${week} 週`
 }
@@ -236,7 +238,7 @@ export default function AdminPracticePage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: 'rgba(73,85,52,0.06)' }}>
-                    {['順序', '週次', '日期', '時間', '課程', '直播', '啟用', '操作'].map(h => (
+                    {['順序', '日期', '時間', '課程', '直播', '啟用', '操作'].map(h => (
                       <th key={h} style={{ ...tdStyle, fontWeight: 700, color: 'var(--ink)', textAlign: 'left' }}>{h}</th>
                     ))}
                   </tr>
@@ -303,7 +305,6 @@ export default function AdminPracticePage() {
                       ) : (
                         <>
                           <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>{item.sort_order}</td>
-                          <td style={{ ...tdStyle, color: 'var(--ink-mute)', fontSize: 12.5, opacity: item.enabled ? 1 : 0.45 }}>{weekLabel(item.session_date)}</td>
                           <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>{item.session_date}</td>
                           <td style={{ ...tdStyle, whiteSpace: 'nowrap', opacity: item.enabled ? 1 : 0.45 }}>{item.time_label}</td>
                           <td style={{ ...tdStyle, opacity: item.enabled ? 1 : 0.45 }}>
