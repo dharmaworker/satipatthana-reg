@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { fetchInteractiveConfig } from '@/lib/interactive-config'
-import { fetchTimetable } from '@/lib/timetable'
+import { fetchTimetable, isTimetablePublished } from '@/lib/timetable'
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     lodging_status: lodgingStatus,
     tests_uploaded: testsUploaded,
     tests_total: 2,
-    timetable_published: timetable.published,
+    timetable_published: isTimetablePublished(timetable),
     interactive_open: interactiveConfig.open || isAdmin,
     interactive_preview: isAdmin && !interactiveConfig.open,
     interactive_submitted: interactiveSubmitted,

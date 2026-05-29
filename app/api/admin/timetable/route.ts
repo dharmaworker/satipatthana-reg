@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: '格式錯誤' }, { status: 400 })
   }
 
-  if (typeof body.published !== 'boolean' || !Array.isArray(body.days)) {
+  if (!Array.isArray(body.days)) {
     return NextResponse.json({ error: '資料結構不正確' }, { status: 400 })
   }
   // 基本欄位檢查

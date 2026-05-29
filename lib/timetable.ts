@@ -16,10 +16,17 @@ export type TimetableDay = {
 }
 export type Timetable = {
   published: boolean
+  publish_at?: string | null
   zoom_link?: string
   zoom_meeting_id?: string
   zoom_password?: string
   days: TimetableDay[]
+}
+
+export function isTimetablePublished(t: Timetable): boolean {
+  if (t.published) return true
+  if (t.publish_at == null) return false
+  return Date.now() >= new Date(t.publish_at).getTime()
 }
 
 const KEY = 'course_timetable'

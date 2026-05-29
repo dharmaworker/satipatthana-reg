@@ -5,7 +5,14 @@ import { AdminHeader } from '../_components/AdminHeader'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { published: boolean; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
+type Timetable = { published: boolean; publish_at?: string | null; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
+
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 const EMPTY_ROW: Row = { time: '', title: '', desc: '', badge: '' }
 const EMPTY_DAY: Day = { tabLabel: 'Day X', tabDate: '', title: '', date: '', desc: '', rows: [{ ...EMPTY_ROW }] }
@@ -47,6 +54,7 @@ export default function TimetableAdminPage() {
   }
 
   const togglePublished = () => data && setData({ ...data, published: !data.published })
+  const setPublishAt = (val: string) => data && setData({ ...data, publish_at: val ? new Date(val).toISOString() : null })
 
   const updateDay = (idx: number, patch: Partial<Day>) => {
     if (!data) return
@@ -110,14 +118,17 @@ export default function TimetableAdminPage() {
       <div className="admin-main" style={{ maxWidth: 1100 }}>
         <div className="admin-info-strip" style={{ background: 'rgba(73, 85, 52, 0.05)', borderLeftColor: 'var(--green)' }}>
           <p>📅 編輯課程時間表，學員會在 <strong>學員專區 → 課程時間表</strong> 看到。</p>
-          <p>💡 勾「公開顯示」才會給學員看見；未勾時學員看到「尚未發佈」。</p>
+          <p>💡 設定「公開時間」後，時間到自動對學員開放；未設定時學員看到「尚未開始」。</p>
           <p>↕ 每日內可上下調整時段順序，整日也可調整順序。「重點」會顯示金色 badge。</p>
         </div>
 
         <div className="admin-toolbar">
-          <label style={{ background: 'rgba(73, 85, 52, 0.06)', border: '1px solid rgba(73, 85, 52, 0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={data?.published || false} onChange={togglePublished} disabled={loading} />
-            公開顯示給學員
+          <label style={{ background: 'rgba(73, 85, 52, 0.06)', border: '1px solid rgba(73, 85, 52, 0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            課程表公開時間（台灣時間）
+            <input type="datetime-local" disabled={loading}
+              value={toDatetimeLocal(data?.publish_at)}
+              onChange={e => setPublishAt(e.target.value)}
+              style={{ fontSize: 13, padding: '3px 8px', borderRadius: 6, border: '1.5px solid var(--line-strong)', background: 'var(--bg-pure)', color: 'var(--ink)' }} />
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 會議編號</span>
