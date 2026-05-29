@@ -44,7 +44,7 @@ export interface PhaseDef {
 export const PHASE_DEFS: PhaseDef[] = [
   { key: 'not-yet', startMs: 0 },
   { key: 'open',    startMs: tpeToUtcMs(2026, 4, 11, 10, 0), notifyMs: tpeToUtcMs(2026, 5, 6, 12, 0) },
-  { key: 'late',    startMs: tpeToUtcMs(2026, 5, 1,  8, 0),  notifyMs: tpeToUtcMs(2026, 5, 10, 12, 0) },
+  { key: 'late',    startMs: tpeToUtcMs(2026, 4, 28,  8, 0),  notifyMs: tpeToUtcMs(2026, 5, 10, 12, 0) },
   { key: 'closed',  startMs: tpeToUtcMs(2026, 5, 7, 24, 0) },
 ]
 
