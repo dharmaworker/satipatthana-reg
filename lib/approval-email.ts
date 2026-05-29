@@ -1,5 +1,6 @@
 import { sendMail } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
+import { copyForCreatedAt } from './registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -12,9 +13,10 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
   `
 }
 
-type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null }
+type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null; created_at?: string | null }
 
 export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）') {
+  const payCopy = copyForCreatedAt(reg.created_at)
   if (reg.retreat_format === 'online') {
     const onlineBody = `
       ${emailKicker('Approval Notice')}
@@ -57,7 +59,7 @@ export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（�
     ${emailH3('二、繳費 / 食宿登記 / 快篩 / 承諾書')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>。前三項為線上完成，第四項為下載列印後<strong style="color:${C.ink};">現場繳交</strong>。<strong style="color:${C.ink};">互動報名</strong>將另行寄信通知開放時間。</p>
 
-    <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>6 月 15 日台北時間晚上 8 時前</strong></p>
+    <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>${payCopy.payDeadlineCN}台北時間晚上 8 時前</strong></p>
     ${emailButton(`${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}`, '前往繳費', 'green')}
     ${emailWarning('匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。感謝您的諒解及配合！')}
 

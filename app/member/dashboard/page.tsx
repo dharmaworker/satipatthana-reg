@@ -146,6 +146,7 @@ function MemberDashboardContent() {
 
   const sInfo = STATUS_INFO[member.status] || STATUS_INFO.pending
   const initial = member.chinese_name.charAt(0)
+  const memberCopy = copyForCreatedAt(member.created_at)
 
   return (
     <>
@@ -392,7 +393,7 @@ function MemberDashboardContent() {
               <div className="announce-card">
                 <div className="announce-card-title">最新公告</div>
                 <p>
-                  錄取通知已發送，請於 <strong>6/15 晚上 8 時前</strong>完成{' '}
+                  錄取通知已發送，請於 <strong>{memberCopy.payDeadlineShort} 晚上 8 時前</strong>完成{' '}
                   <a href={withAuth('/pay')}>繳費</a>，並於 <strong>6/20 晚上 8 時前</strong>完成{' '}
                   <a href={withAuth('/lodging')}>食宿登記</a>，才算正式錄取。
                 </p>
@@ -429,7 +430,7 @@ function MemberDashboardContent() {
                   state={paymentDone ? 'done' : paymentPending ? 'todo' : 'todo'}
                   statusBadge={paymentDone ? '已完成' : paymentPending ? '待確認' : '待繳費'}
                   badgeKind={paymentDone ? 'done' : paymentPending ? 'todo' : 'urgent'}
-                  deadline="06/15 晚上 8 時前" urgent={!paymentDone}
+                  deadline={`${memberCopy.payDeadlineShort} 晚上 8 時前`} urgent={!paymentDone}
                   rows={[
                     ['方案', member.payment_plan || '尚未選擇'],
                     ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
@@ -598,7 +599,7 @@ function MemberDashboardContent() {
                   <div className="schedule-grid">
                     <div className="schedule-cell done"><div className="date">{sched.periodStartDot}–{sched.sidebarDeadlineDate}</div><div className="label">{sched.phase === 'late' ? '補報名期間' : '報名期間'}</div></div>
                     <div className="schedule-cell done"><div className="date">{sched.sidebarNotifyDate}</div><div className="label">錄取通知</div></div>
-                    {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">06.15</div><div className="label">繳費截止</div></div>}
+                    {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">{memberCopy.payDeadlineDot}</div><div className="label">繳費截止</div></div>}
                     {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>}
                     <div className="schedule-cell"><div className="date">08.20–08.24</div><div className="label">禪修課程</div></div>
                   </div>

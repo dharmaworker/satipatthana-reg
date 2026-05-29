@@ -200,7 +200,7 @@ export default function RegisterPage() {
 
     if (form.retreat_format !== 'online') {
       if (!form.pay_confirm) return fail('pay_confirm', '請回答 Q16：是否願意按時繳費')
-      if (form.pay_confirm !== 'yes') return fail('pay_confirm', '需同意於 6/15 前完成繳費（Q16 須選「是」）')
+      if (form.pay_confirm !== 'yes') return fail('pay_confirm', `需同意於 ${copy.payDeadlineShort} 前完成繳費（Q16 須選「是」）`)
 
       if (!form.health_confirm) return fail('health_confirm', '請回答 Q17：是否身體健康能全程參與')
       if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q17 須選「是」）')
@@ -479,7 +479,7 @@ export default function RegisterPage() {
               <div className="info-section">
                 <h3>錄取流程</h3>
                 <p>1. {copy.recruitFlowNotifyLine}</p>
-                <p>2. 收到錄取通知後，須於 <strong>6月15日（台北時間）晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
+                <p>2. 收到錄取通知後，須於 <strong>{copy.payDeadlineCN}（台北時間）晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
                 <p>3. 正式錄取者，將建立 LINE 及微信群組。</p>
                 <p>4. 實體禪修場地條件有限，最終錄取結果由課程組決定。</p>
               </div>
@@ -610,7 +610,7 @@ export default function RegisterPage() {
               {form.retreat_format !== 'online' && (
                 <>
                   <div className="question-block" id="field-pay_confirm">
-                    <label className="form-label">16. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 6 月 15 日前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
+                    <label className="form-label">16. 實體禪修課程之食宿、場地及交通等費用需由學員自行負擔，並請於 {copy.payDeadlineCN}前完成匯款或刷卡支付。請問您是否可於期限內完成付款？ <span className="required">*</span></label>
                     <select className={`form-select ${errCls('pay_confirm')}`} value={form.pay_confirm}
                       onChange={e => update('pay_confirm', e.target.value)}>
                       <option value="">請選擇</option>
@@ -945,7 +945,7 @@ export default function RegisterPage() {
                 <div className="alert-card" style={{ marginTop: 18 }}>
                   <div className="alert-card-title">8/20–8/24 禪修期間之食宿、交通及場地費用</div>
                   <p>食宿、交通及場地費用：<strong>NT$18,600 元整</strong>（如需提前或延後住宿，將另計相關費用）</p>
-                  <p>錄取後將提供繳費連結，請於 6 月 15 日前完成繳費。</p>
+                  <p>錄取後將提供繳費連結，請於 {copy.payDeadlineCN}前完成繳費。</p>
                 </div>
               )}
 
@@ -1014,7 +1014,7 @@ export default function RegisterPage() {
             <div className="info-row"><span className="k">名額</span><span className="v">250 名</span></div>
             <div className="info-row"><span className="k">{copy.sidebarDeadlineLabel}</span><span className="v" style={{ color: copy.badgeColor }}>{copy.sidebarDeadlineDate}</span></div>
             <div className="info-row"><span className="k">錄取通知</span><span className="v">{copy.sidebarNotifyDate}</span></div>
-            <div className="info-row"><span className="k">繳費截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>06.15</span></div>
+            <div className="info-row"><span className="k">繳費截止</span><span className="v" style={{ color: 'var(--gold-deep)' }}>{copy.payDeadlineDot}</span></div>
           </div>
 
           <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>

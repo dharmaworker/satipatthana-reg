@@ -40,11 +40,12 @@ export interface PhaseDef {
   key: RegPhase
   startMs: number
   notifyMs?: number
+  payDeadlineMs?: number
 }
 export const PHASE_DEFS: PhaseDef[] = [
   { key: 'not-yet', startMs: 0 },
-  { key: 'open',    startMs: tpeToUtcMs(2026, 4, 11, 10, 0), notifyMs: tpeToUtcMs(2026, 5, 6, 12, 0) },
-  { key: 'late',    startMs: tpeToUtcMs(2026, 5, 1,  8, 0),  notifyMs: tpeToUtcMs(2026, 5, 10, 12, 0) },
+  { key: 'open',    startMs: tpeToUtcMs(2026, 4, 11, 10, 0), notifyMs: tpeToUtcMs(2026, 5, 6, 12, 0),  payDeadlineMs: tpeToUtcMs(2026, 5, 15, 20, 0) },
+  { key: 'late',    startMs: tpeToUtcMs(2026, 5, 1,  8, 0),  notifyMs: tpeToUtcMs(2026, 5, 10, 12, 0), payDeadlineMs: tpeToUtcMs(2026, 5, 20, 20, 0) },
   { key: 'closed',  startMs: tpeToUtcMs(2026, 5, 7, 24, 0) },
 ]
 
@@ -70,6 +71,11 @@ export function getRegPhase(atMs: number = Date.now()): RegPhase {
   let current: RegPhase = 'not-yet'
   for (const p of PHASE_DEFS) if (atMs >= p.startMs) current = p.key
   return current
+}
+
+/** True once late-registration window has begun (still true after it closes). */
+export function isLateRegOpen(atMs: number = Date.now()): boolean {
+  return atMs >= spanOf('late').startMs
 }
 
 // ─── Formatters (Taipei display) ────────────────────────────────────────────
@@ -99,6 +105,11 @@ function fmtShortDate(ms: number): string {
 function fmtMonthDay(ms: number, asEnd = false): string {
   const p = toTpeParts(asEnd ? ms - 1 : ms)
   return `${pad2(p.mo)}.${pad2(p.d)}`
+}
+/** "6月15日" */
+function fmtMonthDayCN(ms: number): string {
+  const p = toTpeParts(ms)
+  return `${p.mo}月${p.d}日`
 }
 /**
  * "2026/06/01 上午 8:00" / "2026/05/11 上午 10:00".
@@ -217,6 +228,11 @@ export interface PhaseCopy {
   sidebarNotifyDate: string
   recruitFlowNotifyLine: string
   highlightCard: { title: string; subtitle: string; lines: string[] } | null
+  // ── Payment deadline (per phase) ──
+  payDeadlineDot: string                // "06.15"
+  payDeadlineShort: string              // "6/15"
+  payDeadlineFull: string               // "2026/06/15"
+  payDeadlineCN: string                 // "6月15日"
 }
 
 function buildVars(phase: RegPhase): Record<string, string> {
@@ -234,6 +250,11 @@ function buildVars(phase: RegPhase): Record<string, string> {
                  : phase === 'closed'  ? spanOf('late').notifyMs
                  : span.notifyMs
 
+  // Payment deadline reference: same fallback policy as notify.
+  const payMs = phase === 'not-yet' ? spanOf('open').payDeadlineMs
+              : phase === 'closed'  ? spanOf('late').payDeadlineMs
+              : span.payDeadlineMs
+
   return {
     periodStart: fmtDateTime(refSpan.startMs),
     periodEnd: Number.isFinite(refSpan.endMs) ? fmtDateTime(refSpan.endMs, true) : '',
@@ -243,6 +264,10 @@ function buildVars(phase: RegPhase): Record<string, string> {
     notifyDot: notifyMs ? fmtMonthDay(notifyMs) : '',
     deadlineDot: Number.isFinite(refSpan.endMs) ? fmtMonthDay(refSpan.endMs, true) : '—',
     periodStartDot: fmtMonthDay(refSpan.startMs),
+    payDeadlineDot: payMs ? fmtMonthDay(payMs) : '',
+    payDeadlineShort: payMs ? fmtShortDate(payMs) : '',
+    payDeadlineFull: payMs ? fmtFullDate(payMs) : '',
+    payDeadlineCN: payMs ? fmtMonthDayCN(payMs) : '',
   }
 }
 
@@ -270,6 +295,10 @@ function resolveCopy(phase: RegPhase): PhaseCopy {
       subtitle: tmpl.highlightCard.subtitle,
       lines: tmpl.highlightCard.lineTemplates.map(l => sub(l, vars)),
     } : null,
+    payDeadlineDot: vars.payDeadlineDot,
+    payDeadlineShort: vars.payDeadlineShort,
+    payDeadlineFull: vars.payDeadlineFull,
+    payDeadlineCN: vars.payDeadlineCN,
   }
 }
 
@@ -281,6 +310,26 @@ export function getPhaseCopy(atMs: number = Date.now()): PhaseCopy {
 // Notification date depends on WHEN the applicant submitted, not on `now`.
 // Pass the registration's `created_at` so old records still show their
 // original notify date even after phase boundaries shift forward.
+// ─── Direct payment-deadline lookup (phase-agnostic display) ────────────────
+// Used by static UI (homepage timeline, generic info page) that must show
+// both the main and late deadlines side-by-side regardless of `now`.
+export interface PayDeadlineLabels {
+  dot: string        // "06.15"
+  short: string      // "6/15"
+  full: string       // "2026/06/15"
+  cn: string         // "6月15日"
+}
+export function payDeadlineFor(phase: 'open' | 'late'): PayDeadlineLabels {
+  const ms = spanOf(phase).payDeadlineMs
+  if (!ms) return { dot: '', short: '', full: '', cn: '' }
+  return {
+    dot: fmtMonthDay(ms),
+    short: fmtShortDate(ms),
+    full: fmtFullDate(ms),
+    cn: fmtMonthDayCN(ms),
+  }
+}
+
 export function copyForCreatedAt(createdAt: string | number | Date | null | undefined): PhaseCopy {
   if (createdAt == null) return resolveCopy('open')
   const ms = typeof createdAt === 'string' ? Date.parse(createdAt)

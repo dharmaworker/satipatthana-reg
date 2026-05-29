@@ -1,5 +1,13 @@
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { payDeadlineFor, isLateRegOpen } from '@/lib/registration-period'
+
+// Phase boundary (6/1) affects rendered output → must re-evaluate per request.
+export const dynamic = 'force-dynamic'
+
 export default function PaymentPage() {
+  const mainPay = payDeadlineFor('open')
+  const latePay = payDeadlineFor('late')
+  const showLatePay = isLateRegOpen()
   return (
     <>
       <div className="page-bg">
@@ -106,7 +114,8 @@ export default function PaymentPage() {
         <div className="alert-card">
           <div className="alert-card-title">繳費注意事項</div>
           <ul>
-            <li>請於 <strong>2026 年 6 月 15 日晚上 8 時前</strong>完成繳費</li>
+            <li>主報名錄取者請於 <strong>{mainPay.full} 晚上 8 時前</strong>完成繳費</li>
+            {showLatePay && <li>補報名錄取者請於 <strong>{latePay.full} 晚上 8 時前</strong>完成繳費</li>}
             <li>一旦繳費後取消報名，<strong>已付費用恕無法退款或轉讓</strong></li>
           </ul>
         </div>

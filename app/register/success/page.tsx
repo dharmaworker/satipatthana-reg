@@ -55,7 +55,7 @@ function SuccessContent() {
             ) : (
               <ol>
                 <li>錄取通知將於 <strong>{copy.notifyLabel}</strong> 透過 E-mail 發送</li>
-                <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
+                <li>錄取者請於 <strong>{copy.payDeadlineFull} 晚上 8 點前</strong>完成繳費</li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
                 <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
               </ol>

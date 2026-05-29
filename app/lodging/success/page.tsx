@@ -2,6 +2,7 @@
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { payDeadlineFor, isLateRegOpen } from '@/lib/registration-period'
 
 function LodgingSuccessContent() {
   const searchParams = useSearchParams()
@@ -9,6 +10,9 @@ function LodgingSuccessContent() {
   const code = searchParams.get('code') || ''
   const edited = searchParams.get('edited') === '1'
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
+  const mainPay = payDeadlineFor('open')
+  const latePay = payDeadlineFor('late')
+  const showLatePay = isLateRegOpen()
 
   return (
     <>
@@ -41,7 +45,7 @@ function LodgingSuccessContent() {
             <h5>接下來</h5>
             <ol>
               <li>繳費通知將於錄取後透過 E-mail 發送</li>
-              <li>錄取者請於 <strong>2026/06/15 晚上 8 點前</strong>完成繳費</li>
+              <li>錄取者請於繳費截止前完成繳費：主報名 <strong>{mainPay.full} 晚上 8 點前</strong>{showLatePay && <>；補報名 <strong>{latePay.full} 晚上 8 點前</strong></>}</li>
               <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
             </ol>
           </div>

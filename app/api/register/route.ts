@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
         ${emailH3('接下來')}
         <ul style="font-size:13.5px;color:${C.inkSoft};line-height:1.95;padding-left:22px;margin:0;">
           <li>錄取通知：將於 <strong style="color:${C.ink};">${copy.notifyLabel}</strong> 由本信箱寄出</li>
-          <li>若錄取，請於 <strong style="color:${C.ink};">2026/06/15 晚上 8 點前</strong>完成繳費</li>
+          <li>若錄取，請於 <strong style="color:${C.ink};">${copy.payDeadlineFull} 晚上 8 點前</strong>完成繳費</li>
           <li>課程日期：<strong style="color:${C.ink};">2026/08/20 ～ 08/24</strong>（南投日月潭湖畔會館）</li>
         </ul>
 

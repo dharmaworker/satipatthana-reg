@@ -133,9 +133,9 @@ node scripts/add-admin.mjs <username> <password> <name> <role>
 | 截止 | 位置 |
 |---|---|
 | 食宿登記 6/20 20:00 TPE | `app/lodging/page.tsx` + `app/api/lodging/route.ts` |
-| 其他（繳費 6/15、報名 6/1、快篩時段）僅文字提示 | `lib/approval-email.ts` 內文、首頁提示 |
+| 繳費截止（主報名 6/15、補報名 6/20、快篩時段）僅文字提示 | `lib/registration-period.ts` 之 `PHASE_DEFS.payDeadlineMs`（單一來源，自動帶到郵件、首頁、各專區） |
 
-> 若日期要改，搜尋 `2026-06-20` / `2026-06-15` / `2026-06-01` 統一替換。
+> 若繳費截止日要改：編輯 `lib/registration-period.ts` 中 `PHASE_DEFS` 的 `payDeadlineMs`；其他畫面文字會自動同步。報名期、食宿截止仍以原本檔案為主。
 
 ---
 
@@ -306,7 +306,11 @@ node scripts/add-admin.mjs sati_viewer MyPassword123 viewer readonly
 ```
 
 ### 改繳費截止日
-搜尋 `2026-06-15` 整份 repo，統一改。主要在 `lib/approval-email.ts`、`lib/approval-pdf.tsx`。
+編輯 `lib/registration-period.ts` 中 `PHASE_DEFS` 的 `payDeadlineMs`：
+- `open` 階段 = 主報名繳費截止
+- `late` 階段 = 補報名繳費截止
+
+所有畫面（首頁時程、/register、/pay、/info/payment、學員專區、寄信內容）會自動同步。
 
 ### 新增食宿欄位
 1. SQL `alter table lodging_registrations add column xxx text`
@@ -370,7 +374,8 @@ node scripts/add-admin.mjs sati_viewer MyPassword123 viewer readonly
 | 報名開始 | 2026-05-11 10:00 |
 | 報名截止 | 2026-06-01 22:00 |
 | 錄取通知 | 2026-06-06 |
-| 繳費截止 | 2026-06-15 20:00 |
+| 繳費截止（主報名） | 2026-06-15 20:00 |
+| 繳費截止（補報名） | 2026-06-20 20:00 |
 | 食宿登記截止 | 2026-06-20 20:00 |
 | 快篩 8/17 | 08:00-20:00（線上上傳） |
 | 快篩 8/19 | 12:00 前（線上上傳） |
