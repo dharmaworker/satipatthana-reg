@@ -5,11 +5,25 @@ import { AdminHeader } from '../_components/AdminHeader'
 
 type PracticeConfig = {
   enabled: boolean
+  open_at: string | null
   period_label: string
   zoom_meeting_id: string
   zoom_password: string
   zoom_url: string | null
   notes: string | null
+}
+
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function formatOpenAt(iso: string | null): string {
+  if (!iso) return '（未設定）'
+  const d = new Date(iso)
+  return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 type PracticeItem = {
@@ -173,6 +187,12 @@ export default function AdminPracticePage() {
                       期間標籤
                       <input style={inputStyle} value={configDraft.period_label} onChange={e => setConfigDraft({ ...configDraft, period_label: e.target.value })} />
                     </label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      學員公開時間（台灣時間）
+                      <input type="datetime-local" style={inputStyle}
+                        value={toDatetimeLocal(configDraft.open_at)}
+                        onChange={e => setConfigDraft({ ...configDraft, open_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+                    </label>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                     <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -210,6 +230,7 @@ export default function AdminPracticePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: 14 }}>
                   {[
                     ['期間標籤', config.period_label],
+                    ['學員公開時間', formatOpenAt(config.open_at)],
                     ['Zoom 會議編號', config.zoom_meeting_id || '（未設定）'],
                     ['Zoom 密碼', config.zoom_password || '（未設定）'],
                     ['Zoom 連結', config.zoom_url || '（未設定）'],

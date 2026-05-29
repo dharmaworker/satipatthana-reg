@@ -57,6 +57,7 @@ function MemberDashboardContent() {
   const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
   const [practicePeriodLabel, setPracticePeriodLabel] = useState('')
   const [practiceEnabled, setPracticeEnabled] = useState(false)
+  const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -89,7 +90,9 @@ function MemberDashboardContent() {
       .then(r => r.json())
       .then(d => {
         if (d.config?.period_label) setPracticePeriodLabel(d.config.period_label)
-        if (d.config?.enabled) setPracticeEnabled(true)
+        const openAt: string | null = d.config?.open_at ?? null
+        setPracticeOpenAt(openAt)
+        setPracticeEnabled(openAt != null && Date.now() >= new Date(openAt).getTime())
       })
       .catch(() => {})
   }, [id, code])
