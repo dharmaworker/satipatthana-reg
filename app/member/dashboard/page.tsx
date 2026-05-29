@@ -411,17 +411,22 @@ function MemberDashboardContent() {
               </a>
             </div>}
 
-            {/* 重要時程 */}
-            <div className="schedule-strip">
-              <h3>重要時程 <small>Schedule</small></h3>
-              <div className="schedule-grid">
-                <div className="schedule-cell done"><div className="date">05.11–05.25</div><div className="label">報名期間</div></div>
-                <div className="schedule-cell done"><div className="date">06.06</div><div className="label">錄取通知</div></div>
-                {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">06.15</div><div className="label">繳費截止</div></div>}
-                {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>}
-                <div className="schedule-cell"><div className="date">08.20–08.24</div><div className="label">禪修課程</div></div>
-              </div>
-            </div>
+            {/* 重要時程 — period/notify dates derive from applicant's batch (created_at) */}
+            {(() => {
+              const sched = copyForCreatedAt(member.created_at)
+              return (
+                <div className="schedule-strip">
+                  <h3>重要時程 <small>Schedule</small></h3>
+                  <div className="schedule-grid">
+                    <div className="schedule-cell done"><div className="date">{sched.periodStartDot}–{sched.sidebarDeadlineDate}</div><div className="label">{sched.phase === 'late' ? '補報名期間' : '報名期間'}</div></div>
+                    <div className="schedule-cell done"><div className="date">{sched.sidebarNotifyDate}</div><div className="label">錄取通知</div></div>
+                    {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">06.15</div><div className="label">繳費截止</div></div>}
+                    {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>}
+                    <div className="schedule-cell"><div className="date">08.20–08.24</div><div className="label">禪修課程</div></div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* 資源 */}
             <div className="resources-grid">

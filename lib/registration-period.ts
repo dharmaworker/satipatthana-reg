@@ -212,7 +212,8 @@ export interface PhaseCopy {
   closedHeading: string
   closedDetail: string
   sidebarDeadlineLabel: string
-  sidebarDeadlineDate: string
+  sidebarDeadlineDate: string           // period END as "MM.DD"
+  periodStartDot: string                // period START as "MM.DD"
   sidebarNotifyDate: string
   recruitFlowNotifyLine: string
   highlightCard: { title: string; subtitle: string; lines: string[] } | null
@@ -241,6 +242,7 @@ function buildVars(phase: RegPhase): Record<string, string> {
     notifyFull: notifyMs ? fmtFullDate(notifyMs) : '',
     notifyDot: notifyMs ? fmtMonthDay(notifyMs) : '',
     deadlineDot: Number.isFinite(refSpan.endMs) ? fmtMonthDay(refSpan.endMs, true) : '—',
+    periodStartDot: fmtMonthDay(refSpan.startMs),
   }
 }
 
@@ -260,6 +262,7 @@ function resolveCopy(phase: RegPhase): PhaseCopy {
     closedDetail: sub(tmpl.closedDetailTemplate, vars),
     sidebarDeadlineLabel: tmpl.sidebarDeadlineLabel,
     sidebarDeadlineDate: phase === 'closed' ? '—' : vars.deadlineDot,
+    periodStartDot: vars.periodStartDot,
     sidebarNotifyDate: vars.notifyDot,
     recruitFlowNotifyLine: sub(tmpl.recruitFlowNotifyLineTemplate, vars),
     highlightCard: tmpl.highlightCard ? {
