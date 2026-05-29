@@ -56,6 +56,7 @@ function MemberDashboardContent() {
   const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
   const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
   const [practicePeriodLabel, setPracticePeriodLabel] = useState('')
+  const [practiceEnabled, setPracticeEnabled] = useState(false)
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -86,7 +87,10 @@ function MemberDashboardContent() {
       .then(data => { if (data) setMember(data); setLoading(false) })
     fetch(`/api/member/practice?id=${id}&code=${encodeURIComponent(code)}`)
       .then(r => r.json())
-      .then(d => { if (d.config?.period_label) setPracticePeriodLabel(d.config.period_label) })
+      .then(d => {
+        if (d.config?.period_label) setPracticePeriodLabel(d.config.period_label)
+        if (d.config?.enabled) setPracticeEnabled(true)
+      })
       .catch(() => {})
   }, [id, code])
 
@@ -369,10 +373,15 @@ function MemberDashboardContent() {
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課前共修</h3>
                 <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>{practicePeriodLabel ? `${practicePeriodLabel}・` : ''}線上共修，每次參與後請打卡</p>
               </div>
-              <a href={withAuth('/member/practice')}
-                style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
-                前往共修＆打卡 →
-              </a>
+              {practiceEnabled
+                ? <a href={withAuth('/member/practice')}
+                    style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--green)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
+                    前往共修＆打卡 →
+                  </a>
+                : <span style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--line-strong)', color: 'var(--ink-mute)', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', cursor: 'not-allowed' }}>
+                    尚未開始
+                  </span>
+              }
             </div>
 
             {/* 課程打卡入口（線上且課表已公佈才顯示） */}
@@ -394,8 +403,8 @@ function MemberDashboardContent() {
               </div>
             )}
 
-            {/* 課程時間表入口（課表已公佈才顯示） */}
-            {member.timetable_published && <div style={{
+            {/* 課程時間表入口 */}
+            <div style={{
               background: 'rgba(180,147,88,0.07)', border: '1px solid rgba(180,147,88,0.25)',
               borderRadius: 14, padding: '18px 22px', marginBottom: 24,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
@@ -405,11 +414,16 @@ function MemberDashboardContent() {
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px' }}>課程時間表</h3>
                 <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>8/20 至 8/24・五日禪修完整課程安排</p>
               </div>
-              <a href={withAuth('/info/schedule')}
-                style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--gold-deep)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
-                查看時間表 →
-              </a>
-            </div>}
+              {member.timetable_published
+                ? <a href={withAuth('/info/schedule')}
+                    style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--gold-deep)', color: '#f8f2e8', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', textDecoration: 'none' }}>
+                    查看時間表 →
+                  </a>
+                : <span style={{ display: 'inline-block', padding: '9px 22px', background: 'var(--line-strong)', color: 'var(--ink-mute)', borderRadius: 999, fontSize: 13.5, fontWeight: 600, letterSpacing: '0.06em', cursor: 'not-allowed' }}>
+                    尚未開始
+                  </span>
+              }
+            </div>
 
             {/* 重要時程 — period/notify dates derive from applicant's batch (created_at) */}
             {(() => {
