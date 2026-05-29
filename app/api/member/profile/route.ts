@@ -6,13 +6,13 @@ const MAX_EDITS = 2
 const EDITABLE_FIELDS = [
   'chinese_name', 'id_number', 'passport_name', 'dharma_name',
   'gender', 'age', 'passport_country', 'residence',
-  'phone', 'line_id', 'wechat_id',
+  'phone', 'line_id', 'wechat_id', 'line_qr_url', 'wechat_qr_url',
 ] as const
 
 async function verifyMember(id: string, code: string) {
   const { data } = await supabaseAdmin
     .from('registrations')
-    .select('id, status, profile_edit_count, chinese_name, id_number, passport_name, dharma_name, gender, age, passport_country, residence, phone, line_id, wechat_id')
+    .select('id, status, profile_edit_count, chinese_name, id_number, passport_name, dharma_name, gender, age, passport_country, residence, phone, line_id, wechat_id, line_qr_url, wechat_qr_url')
     .eq('id', id)
     .eq('random_code', code.toUpperCase().trim())
     .single()
@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
     phone: reg.phone,
     line_id: reg.line_id,
     wechat_id: reg.wechat_id,
+    line_qr_url: reg.line_qr_url,
+    wechat_qr_url: reg.wechat_qr_url,
   })
 }
 

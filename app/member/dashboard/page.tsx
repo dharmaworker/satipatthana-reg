@@ -65,12 +65,14 @@ function MemberDashboardContent() {
     dharma_name: string | null; gender: string; age: number
     passport_country: string | null; residence: string; phone: string
     line_id: string | null; wechat_id: string | null
+    line_qr_url: string | null; wechat_qr_url: string | null
   }
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [editingProfile, setEditingProfile] = useState(false)
   const [profileDraft, setProfileDraft] = useState<ProfileData | null>(null)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMsg, setProfileMsg] = useState('')
+  const [uploadingQr, setUploadingQr] = useState(false)
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -268,8 +270,6 @@ function MemberDashboardContent() {
                     ['法名', 'dharma_name', 'text', false],
                     ['手機號碼', 'phone', 'text', true],
                     ['年齡', 'age', 'number', true],
-                    ['LINE ID', 'line_id', 'text', false],
-                    ['WeChat 微信號', 'wechat_id', 'text', false],
                   ] as [string, keyof typeof profileDraft, string, boolean][]).map(([label, field, type, required]) => (
                     <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {label}{required && <span style={{ color: 'var(--red,#c0392b)' }}> *</span>}
@@ -308,6 +308,48 @@ function MemberDashboardContent() {
                     </select>
                   </label>
                 </div>
+                {/* 通訊軟體：依原報名選擇只顯示一個 */}
+                {(() => {
+                  const contactApp = profileDraft.line_id != null ? 'line' : profileDraft.wechat_id != null ? 'wechat' : null
+                  if (!contactApp) return null
+                  const isLine = contactApp === 'line'
+                  const idField = isLine ? 'line_id' : 'wechat_id'
+                  const qrField = isLine ? 'line_qr_url' : 'wechat_qr_url'
+                  const label = isLine ? 'LINE ID' : 'WeChat 微信號'
+                  const qrLabel = isLine ? 'LINE QR Code' : '微信 QR Code'
+                  const currentQr = profileDraft[qrField] as string | null
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {label}
+                        <input type="text" value={(profileDraft[idField] as any) ?? ''}
+                          onChange={e => setProfileDraft({ ...profileDraft, [idField]: e.target.value || null })}
+                          style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }} />
+                      </label>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {qrLabel}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {currentQr && <img src={currentQr} alt="QR" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />}
+                          <label style={{ cursor: 'pointer', padding: '6px 14px', background: 'rgba(73,85,52,0.08)', border: '1px solid var(--line-strong)', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>
+                            {uploadingQr ? '上傳中…' : currentQr ? '重新上傳' : '上傳圖片'}
+                            <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+                              disabled={uploadingQr}
+                              onChange={async e => {
+                                const file = e.target.files?.[0]; if (!file) return
+                                setUploadingQr(true); setProfileMsg('')
+                                const fd = new FormData(); fd.append('file', file); fd.append('kind', contactApp)
+                                const res = await fetch('/api/upload-qr', { method: 'POST', body: fd })
+                                const d = await res.json()
+                                setUploadingQr(false)
+                                if (res.ok) setProfileDraft({ ...profileDraft, [qrField]: d.url })
+                                else setProfileMsg(d.error || '圖片上傳失敗')
+                              }} />
+                          </label>
+                        </div>
+                      </label>
+                    </div>
+                  )
+                })()}
                 <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <button disabled={profileSaving} onClick={async () => {
                     setProfileSaving(true); setProfileMsg('')
