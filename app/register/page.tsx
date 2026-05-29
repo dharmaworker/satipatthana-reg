@@ -582,7 +582,7 @@ export default function RegisterPage() {
                   <option value="">請選擇</option>
                   <option value="yes">是</option>
                   <option value="no">否</option>
-                  <option value="commit">目前尚未聽完隆波帕默尊者 30 個法談，【承諾】於 8 月 16 日禪修前，完整聽完 30 個法談</option>
+                  <option value="commit">【承諾】：目前尚未聽完隆波帕默尊者 30 個法談，承諾於 8 月 16 日禪修前，完整聽完 30 個法談</option>
                 </select>
               </div>
               {yesNoSelect('keep_precepts', '13. 您是否持守五戒？')}

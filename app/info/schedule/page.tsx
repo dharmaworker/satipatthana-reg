@@ -76,7 +76,7 @@ function ScheduleContent() {
                 <span style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginRight: 4 }}>本次課程提供線上 Zoom 連線</span>
                 {state.data.zoom_meeting_id && (
                   <span style={{ fontSize: 13, color: 'var(--ink)' }}>
-                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>會議號</span>
+                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>會議編號</span>
                     <strong style={{ letterSpacing: '0.08em' }}>{state.data.zoom_meeting_id}</strong>
                   </span>
                 )}

@@ -187,7 +187,7 @@ export default function AdminPracticePage() {
                     </label>
                   </div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    備注說明（學員可見）
+                    備註說明（學員可見）
                     <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }}
                       value={configDraft.notes || ''}
                       onChange={e => setConfigDraft({ ...configDraft, notes: e.target.value || null })} />
@@ -211,7 +211,7 @@ export default function AdminPracticePage() {
                     ['Zoom 會議編號', config.zoom_meeting_id || '（未設定）'],
                     ['Zoom 密碼', config.zoom_password || '（未設定）'],
                     ['Zoom 連結', config.zoom_url || '（未設定）'],
-                    ['備注', config.notes || '（無）'],
+                    ['備註', config.notes || '（無）'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', gap: 10 }}>
                       <span style={{ color: 'var(--ink-mute)', minWidth: 100 }}>{k}</span>

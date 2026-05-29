@@ -120,7 +120,7 @@ export default function TimetableAdminPage() {
             公開顯示給學員
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 會議號</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>Zoom 會議編號</span>
             <input className="form-input" style={{ width: 140, padding: '5px 10px', fontSize: 13 }}
               placeholder="123 456 7890"
               value={data?.zoom_meeting_id || ''}
