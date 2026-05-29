@@ -9,14 +9,14 @@ const EDITABLE_FIELDS = [
   'phone', 'line_id', 'wechat_id',
 ] as const
 
-async function verifyApproved(id: string, code: string) {
+async function verifyMember(id: string, code: string) {
   const { data } = await supabaseAdmin
     .from('registrations')
     .select('id, status, profile_edit_count, chinese_name, id_number, passport_name, dharma_name, gender, age, passport_country, residence, phone, line_id, wechat_id')
     .eq('id', id)
     .eq('random_code', code.toUpperCase().trim())
     .single()
-  if (!data || data.status !== 'approved') return null
+  if (!data) return null
   return data
 }
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
-  const reg = await verifyApproved(id, code)
+  const reg = await verifyMember(id, code)
   if (!reg) return NextResponse.json({ error: '無效連結' }, { status: 401 })
 
   const remaining = MAX_EDITS - (reg.profile_edit_count ?? 0)
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
 
-  const reg = await verifyApproved(id, code)
+  const reg = await verifyMember(id, code)
   if (!reg) return NextResponse.json({ error: '無效連結' }, { status: 401 })
 
   const editCount = reg.profile_edit_count ?? 0
