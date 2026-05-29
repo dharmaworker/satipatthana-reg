@@ -584,22 +584,6 @@ export default function RegisterPage() {
                   <option value="no">否</option>
                   <option value="commit">目前尚未聽完隆波帕默尊者 30 個法談，【承諾】於 8 月 16 日禪修前，完整聽完 30 個法談</option>
                 </select>
-                {form.watched_30_talks === 'commit' && (
-                  <div style={{
-                    marginTop: 10,
-                    padding: '12px 16px',
-                    background: 'rgba(184,138,58,0.08)',
-                    border: '1.5px solid rgba(184,138,58,0.35)',
-                    borderRadius: 10,
-                    fontSize: 13.5,
-                    color: 'var(--ink)',
-                    lineHeight: 1.7,
-                  }}>
-                    目前尚未聽完隆波帕默尊者 30 個法談，
-                    <strong style={{ color: 'var(--gold-deep)', fontWeight: 700, letterSpacing: '0.05em' }}>承諾</strong>
-                    於 8 月 16 日禪修前，完整聽完 30 個法談
-                  </div>
-                )}
               </div>
               {yesNoSelect('keep_precepts', '13. 您是否持守五戒？')}
 
