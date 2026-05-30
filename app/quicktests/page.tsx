@@ -2,11 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-
-const TESTS: { key: 'test_0817_url' | 'test_0819_url'; label: string; date: string; deadline: string }[] = [
-  { key: 'test_0817_url', label: '8/17 快篩上傳', date: '08.17', deadline: '8/17 上午 8 點 ～ 晚上 8 點前' },
-  { key: 'test_0819_url', label: '8/19 快篩上傳', date: '08.19', deadline: '8/19 上午 12 點前' },
-]
+import { getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, msToDotLabel, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 function QuickTestsContent() {
   const searchParams = useSearchParams()
@@ -16,6 +12,7 @@ function QuickTestsContent() {
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
 
   const [reg, setReg] = useState<any>(null)
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -27,6 +24,10 @@ function QuickTestsContent() {
     test_0817_url: '', test_0819_url: '',
   })
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!id || !code) {
@@ -113,6 +114,15 @@ function QuickTestsContent() {
   const progressClass = uploadedCount === 2 ? 'complete' : uploadedCount === 1 ? 'partial' : ''
   const initial = reg?.chinese_name?.charAt(0) || '?'
 
+  const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
+  const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
+  const qt1Day = msToDayLabel(qt1Ms)
+  const qt2Day = msToDayLabel(qt2Ms)
+  const TESTS = [
+    { key: 'test_0817_url' as const, label: `${qt1Day} 快篩上傳`, date: msToDotLabel(qt1Ms), deadline: `${qt1Day} 上午 8 點 ～ ${msToTimeLabel(qt1Ms)}前` },
+    { key: 'test_0819_url' as const, label: `${qt2Day} 快篩上傳`, date: msToDotLabel(qt2Ms), deadline: `${qt2Day} ${msToTimeLabel(qt2Ms)}前` },
+  ]
+
   return (
     <>
       <div className="page-bg">
@@ -141,7 +151,7 @@ function QuickTestsContent() {
           <p className="page-kicker">Rapid Test Upload</p>
           <h1 className="page-title">快篩檢測上傳</h1>
           <p className="page-subtitle">
-            8/17 與 8/19 兩個時段的快篩結果請於規定時間前上傳；可分次回到此頁補上。<br />
+            {qt1Day} 與 {qt2Day} 兩個時段的快篩結果請於規定時間前上傳；可分次回到此頁補上。<br />
             8/20、8/22 課程期間的快篩結果請於現場繳交。
           </p>
         </div>
@@ -274,11 +284,11 @@ function QuickTestsContent() {
             <div className="sidebar-card">
               <h4>快篩時程 <small>Schedule</small></h4>
               <div className="info-row">
-                <span className="k">8/17 線上上傳</span>
+                <span className="k">{qt1Day} 線上上傳</span>
                 <span className="v">{files.test_0817_url ? '✓ 已上傳' : '待上傳'}</span>
               </div>
               <div className="info-row">
-                <span className="k">8/19 線上上傳</span>
+                <span className="k">{qt2Day} 線上上傳</span>
                 <span className="v">{files.test_0819_url ? '✓ 已上傳' : '待上傳'}</span>
               </div>
               <div className="info-row">
