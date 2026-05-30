@@ -13,7 +13,7 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
   `
 }
 
-type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null; created_at?: string | null }
+type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null; created_at?: string | null; registration_phase?: string | null }
 
 export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）', schedCfg?: ScheduleConfig | null) {
   const payCopy = copyForCreatedAt(reg.created_at)

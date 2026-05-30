@@ -507,3 +507,23 @@ export function copyForCreatedAt(createdAt: string | number | Date | null | unde
   if (!Number.isFinite(ms)) return resolveCopy('open')
   return resolveCopy(getRegPhase(ms))
 }
+
+// ─── Per-registration copy (stored phase = source of truth) ─────────────────
+// Prefer the registration's stored `registration_phase` (an immutable fact
+// stamped at submit time); fall back to `created_at` derivation when the
+// column is empty or holds an unknown value. Honours ANY phase present in
+// COPY_TEMPLATES, so future phases (late2, late3, …) work without touching
+// this function — only add the phase to RegPhase / COPY_TEMPLATES / PHASE_DEFS.
+export function copyForRegistration(
+  reg: { created_at?: string | number | Date | null; registration_phase?: string | null } | null | undefined,
+  cfg?: ScheduleConfig | null,
+): PhaseCopy {
+  if (!reg) return cfg ? getPhaseCopyWithConfig(cfg) : getPhaseCopy()
+  const stored = reg.registration_phase
+  if (stored && stored in COPY_TEMPLATES) {
+    const defs = buildPhaseDefsFromConfig(cfg)
+    const spans = computeSpansFrom(defs)
+    return resolveCopyFrom(spans, stored as RegPhase)
+  }
+  return cfg ? copyForCreatedAtWithConfig(cfg, reg.created_at) : copyForCreatedAt(reg.created_at)
+}

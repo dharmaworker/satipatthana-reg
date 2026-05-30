@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendMail, sendMailWithRetry } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
-import { copyForCreatedAt } from '@/lib/registration-period'
+import { copyForRegistration } from '@/lib/registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   if (error || !reg) return NextResponse.json({ error: '查無此報名' }, { status: 404 })
 
   const isOnline = reg.retreat_format === 'online'
-  const copy = copyForCreatedAt(reg.created_at)
+  const copy = copyForRegistration(reg)
   const courses = Array.isArray(reg.attended_courses) && reg.attended_courses.length
     ? reg.attended_courses.join('、') : '—'
   const formatLabel = isOnline ? '線上禪修（Zoom）' : '實體禪修'

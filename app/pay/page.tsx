@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForCreatedAt } from '@/lib/registration-period'
+import { copyForRegistration } from '@/lib/registration-period'
 
 type PlanRow = { id: string; label: string; date: string; amount: number; method: 'transfer' | 'card'; test?: boolean }
 const PLANS: PlanRow[] = [
@@ -153,7 +153,7 @@ function PayContent() {
 
   const initial = reg?.chinese_name?.charAt(0) || '$'
   const paidStatus = reg?.payment_status
-  const payCopy = copyForCreatedAt(reg?.created_at)
+  const payCopy = copyForRegistration(reg)
 
   return (
     <>
