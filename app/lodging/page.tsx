@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getLodgingDeadlineMs, msToDotLabel, msToDayLabel, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
+import { getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDotLabel, msToDayLabel, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 const STEPS = [
   { num: 1, label: '行程安排', en: 'Travel' },
@@ -340,6 +340,10 @@ function LodgingContent() {
   const deadlineDot = msToDotLabel(deadlineMs)
   const deadlineDay = msToDayLabel(deadlineMs)
   const deadlineTime = msToTimeLabel(deadlineMs)
+  const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
+  const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
+  const qt1Day = msToDayLabel(qt1Ms)
+  const qt2Day = msToDayLabel(qt2Ms)
 
   if (loading) {
     return (
@@ -814,7 +818,7 @@ function LodgingContent() {
 
                     <div className="alert-card">
                       <div className="alert-card-title">關於快篩檢測上傳</div>
-                      <p>快篩檢測時程在課程開始前後（8/17、8/19、8/20、8/22）。請完成本食宿登記後，另行於專屬頁面上傳。確認信中會附上快篩上傳頁連結。</p>
+                      <p>快篩檢測時程在課程開始前後（{qt1Day}、{qt2Day}、8/20、8/22）。請完成本食宿登記後，另行於專屬頁面上傳。確認信中會附上快篩上傳頁連結。</p>
                     </div>
                   </div>
                 )}
@@ -841,7 +845,7 @@ function LodgingContent() {
                         <h5>快篩檢測時間</h5>
                         <ul>
                           <li>檢測結果必須<strong>載明檢測日期、報名序號、姓名</strong>，快篩試劑請自備。</li>
-                          <li>開課前：8/17 上午 8:00 ～ 晚上 8:00 前上傳、8/19 上午 12:00 前上傳（於快篩頁上傳）</li>
+                          <li>開課前：{qt1Day} 上午 8:00 ～ {msToTimeLabel(qt1Ms)}前上傳、{qt2Day} {msToTimeLabel(qt2Ms)}前上傳（於快篩頁上傳）</li>
                           <li>課程期間：8/20、8/22 上午 8:00 前<strong>現場繳交</strong>（不需線上上傳）</li>
                         </ul>
                         <h5>課程期間規範</h5>
