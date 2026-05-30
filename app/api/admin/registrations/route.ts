@@ -76,6 +76,7 @@ export async function PATCH(request: NextRequest) {
     payment_plan,
     line_qr_url,
     wechat_qr_url,
+    registration_phase,
   } = body
 
   if ((status !== undefined || member_id !== undefined || student_id !== undefined) && !canEditStatus) {
@@ -126,6 +127,7 @@ export async function PATCH(request: NextRequest) {
   if (payment_plan !== undefined) updateData.payment_plan = payment_plan || null
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
+  if (registration_phase !== undefined) updateData.registration_phase = registration_phase
 
   // 學號手動填入時防止重複
   if (student_id) {
