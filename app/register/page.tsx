@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 import { getPhaseCopyWithConfig, ScheduleConfig } from '@/lib/registration-period'
