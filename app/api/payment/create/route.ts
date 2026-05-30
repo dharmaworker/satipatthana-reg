@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import * as crypto from 'crypto'
+import { buildPhaseDefsFromConfig, ScheduleConfig } from '@/lib/registration-period'
 
 const MERCHANT_ID = process.env.ECPAY_MERCHANT_ID!
 const HASH_KEY = process.env.ECPAY_HASH_KEY!
@@ -46,6 +47,16 @@ export async function POST(request: NextRequest) {
 
     if (reg.status !== 'approved') {
       return NextResponse.json({ error: '尚未錄取，無法繳費' }, { status: 403 })
+    }
+
+    // 繳費截止日檢查
+    const { data: scData } = await supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle()
+    const schedCfg = (scData?.value ?? {}) as ScheduleConfig
+    const phaseDefs = buildPhaseDefsFromConfig(schedCfg)
+    const phase = (reg.registration_phase === 'late' ? 'late' : 'open') as 'open' | 'late'
+    const payDeadlineMs = phaseDefs.find(p => p.key === phase)?.payDeadlineMs
+    if (payDeadlineMs && Date.now() > payDeadlineMs) {
+      return NextResponse.json({ error: '繳費截止日已過，無法再繳費' }, { status: 403 })
     }
 
     // 記錄本次選擇的方案（導向綠界前）

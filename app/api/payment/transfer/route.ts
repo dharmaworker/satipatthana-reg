@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
+import { buildPhaseDefsFromConfig, ScheduleConfig } from '@/lib/registration-period'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const { data: reg, error: regErr } = await supabaseAdmin
       .from('registrations')
-      .select('status, payment_status')
+      .select('status, payment_status, registration_phase')
       .eq('id', registration_id)
       .single()
 
@@ -25,6 +26,16 @@ export async function POST(request: NextRequest) {
     }
     if (reg.status !== 'approved') {
       return NextResponse.json({ error: '尚未錄取，無法回填匯款' }, { status: 403 })
+    }
+
+    // 繳費截止日檢查
+    const { data: scData } = await supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle()
+    const schedCfg = (scData?.value ?? {}) as ScheduleConfig
+    const phaseDefs = buildPhaseDefsFromConfig(schedCfg)
+    const phase = (reg.registration_phase === 'late' ? 'late' : 'open') as 'open' | 'late'
+    const payDeadlineMs = phaseDefs.find(p => p.key === phase)?.payDeadlineMs
+    if (payDeadlineMs && Date.now() > payDeadlineMs) {
+      return NextResponse.json({ error: '繳費截止日已過，無法再送出' }, { status: 403 })
     }
 
     const updateData: Record<string, unknown> = {
