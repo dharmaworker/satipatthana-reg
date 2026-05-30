@@ -3,7 +3,7 @@ import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { nextAvailableMemberId } from '@/lib/member-id'
 import { sendMail, sendMailWithRetry } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
-import { getPhaseCopy, PHASE_STARTS } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, PHASE_STARTS, ScheduleConfig } from '@/lib/registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     if (now > REG_CLOSE_MS) {
       return NextResponse.json({ error: '報名已截止' }, { status: 400 })
     }
-    const copy = getPhaseCopy(now)
+    const { data: scData } = await supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle()
+    const schedCfg = (scData?.value ?? {}) as ScheduleConfig
+    const copy = getPhaseCopyWithConfig(schedCfg, now)
 
     const body = await request.json()
 

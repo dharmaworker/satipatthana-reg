@@ -5,6 +5,8 @@ import { AdminHeader } from '../_components/AdminHeader'
 type ScheduleConfig = {
   late_start?: string | null
   late_end?: string | null
+  late_notify?: string | null
+  late_pay_deadline?: string | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -74,18 +76,19 @@ export default function ScheduleConfigPage() {
           {editing ? (
             <div style={{ display: 'grid', gap: 14 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  開始時間（台灣時間）
-                  <input type="datetime-local" style={inputStyle}
-                    value={toDatetimeLocal(draft.late_start)}
-                    onChange={e => setDraft({ ...draft, late_start: e.target.value ? new Date(e.target.value).toISOString() : null })} />
-                </label>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  結束時間（台灣時間）
-                  <input type="datetime-local" style={inputStyle}
-                    value={toDatetimeLocal(draft.late_end)}
-                    onChange={e => setDraft({ ...draft, late_end: e.target.value ? new Date(e.target.value).toISOString() : null })} />
-                </label>
+                {([
+                  ['開始時間', 'late_start'],
+                  ['結束時間', 'late_end'],
+                  ['錄取通知時間', 'late_notify'],
+                  ['繳費截止時間', 'late_pay_deadline'],
+                ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
+                  <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {label}（台灣時間）
+                    <input type="datetime-local" style={inputStyle}
+                      value={toDatetimeLocal(draft[field])}
+                      onChange={e => setDraft({ ...draft, [field]: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+                  </label>
+                ))}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={save} disabled={saving}
@@ -103,6 +106,8 @@ export default function ScheduleConfigPage() {
               {[
                 ['開始時間', formatDisplay(config.late_start)],
                 ['結束時間', formatDisplay(config.late_end)],
+                ['錄取通知', formatDisplay(config.late_notify)],
+                ['繳費截止', formatDisplay(config.late_pay_deadline)],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', gap: 10 }}>
                   <span style={{ color: 'var(--ink-mute)', minWidth: 80 }}>{k}</span>

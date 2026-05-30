@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getPhaseCopy } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, ScheduleConfig } from '@/lib/registration-period'
 
 const THAILAND_COURSES = [
   '第一屆泰國四念處課程（2014年）',
@@ -79,8 +79,12 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
   // 報名期間 / 模式判定 — see lib/registration-period.ts
-  const copy = getPhaseCopy()
+  const copy = getPhaseCopyWithConfig(schedCfg)
   const outOfPeriod = !copy.isOpen
   const notYetOpen = copy.phase === 'not-yet'
 

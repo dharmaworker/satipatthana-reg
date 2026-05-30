@@ -306,6 +306,117 @@ export function getPhaseCopy(atMs: number = Date.now()): PhaseCopy {
   return resolveCopy(getRegPhase(atMs))
 }
 
+// ─── DB config override support ─────────────────────────────────────────────
+export interface ScheduleConfig {
+  late_start?: string | null
+  late_end?: string | null
+  late_notify?: string | null
+  late_pay_deadline?: string | null
+}
+
+export function buildPhaseDefsFromConfig(cfg?: ScheduleConfig | null): PhaseDef[] {
+  if (!cfg) return PHASE_DEFS
+  const defs: PhaseDef[] = PHASE_DEFS.map(p => ({ ...p }))
+  const lateIdx = defs.findIndex(p => p.key === 'late')
+  const closedIdx = defs.findIndex(p => p.key === 'closed')
+  if (cfg.late_start && lateIdx >= 0)
+    defs[lateIdx].startMs = new Date(cfg.late_start).getTime()
+  if (cfg.late_notify && lateIdx >= 0)
+    defs[lateIdx].notifyMs = new Date(cfg.late_notify).getTime()
+  if (cfg.late_pay_deadline && lateIdx >= 0)
+    defs[lateIdx].payDeadlineMs = new Date(cfg.late_pay_deadline).getTime()
+  if (cfg.late_end && closedIdx >= 0)
+    defs[closedIdx].startMs = new Date(cfg.late_end).getTime()
+  return defs
+}
+
+function computeSpansFrom(defs: PhaseDef[]): PhaseSpan[] {
+  return defs.map((p, i) => ({ ...p, endMs: defs[i + 1]?.startMs ?? Number.POSITIVE_INFINITY }))
+}
+
+function getRegPhaseFrom(defs: PhaseDef[], atMs: number): RegPhase {
+  let current: RegPhase = 'not-yet'
+  for (const p of defs) if (atMs >= p.startMs) current = p.key
+  return current
+}
+
+function spanOfFrom(spans: PhaseSpan[], key: RegPhase): PhaseSpan {
+  return spans.find(s => s.key === key)!
+}
+
+function buildVarsFrom(spans: PhaseSpan[], phase: RegPhase): Record<string, string> {
+  const span = spanOfFrom(spans, phase)
+  const refSpan = phase === 'not-yet' ? spanOfFrom(spans, 'open') : span
+  const notifyMs = phase === 'not-yet' ? spanOfFrom(spans, 'open').notifyMs
+                 : phase === 'closed'  ? spanOfFrom(spans, 'late').notifyMs
+                 : span.notifyMs
+  const payMs = phase === 'not-yet' ? spanOfFrom(spans, 'open').payDeadlineMs
+              : phase === 'closed'  ? spanOfFrom(spans, 'late').payDeadlineMs
+              : span.payDeadlineMs
+  return {
+    periodStart: fmtDateTime(refSpan.startMs),
+    periodEnd: Number.isFinite(refSpan.endMs) ? fmtDateTime(refSpan.endMs, true) : '',
+    phaseStart: fmtDateTime(span.startMs, true),
+    notifyShort: notifyMs ? fmtShortDate(notifyMs) : '',
+    notifyFull: notifyMs ? fmtFullDate(notifyMs) : '',
+    notifyDot: notifyMs ? fmtMonthDay(notifyMs) : '',
+    deadlineDot: Number.isFinite(refSpan.endMs) ? fmtMonthDay(refSpan.endMs, true) : '—',
+    periodStartDot: fmtMonthDay(refSpan.startMs),
+    payDeadlineDot: payMs ? fmtMonthDay(payMs) : '',
+    payDeadlineShort: payMs ? fmtShortDate(payMs) : '',
+    payDeadlineFull: payMs ? fmtFullDate(payMs) : '',
+    payDeadlineCN: payMs ? fmtMonthDayCN(payMs) : '',
+  }
+}
+
+function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
+  const tmpl = COPY_TEMPLATES[phase]
+  const vars = buildVarsFrom(spans, phase)
+  return {
+    phase, isOpen: tmpl.isOpen, badge: tmpl.badge, badgeColor: tmpl.badgeColor,
+    periodLabel: sub(tmpl.periodTemplate, vars),
+    notifyShort: vars.notifyShort, notifyLabel: vars.notifyFull,
+    closedIcon: tmpl.closedIcon, closedHeading: tmpl.closedHeading,
+    closedDetail: sub(tmpl.closedDetailTemplate, vars),
+    sidebarDeadlineLabel: tmpl.sidebarDeadlineLabel,
+    sidebarDeadlineDate: phase === 'closed' ? '—' : vars.deadlineDot,
+    periodStartDot: vars.periodStartDot, sidebarNotifyDate: vars.notifyDot,
+    recruitFlowNotifyLine: sub(tmpl.recruitFlowNotifyLineTemplate, vars),
+    highlightCard: tmpl.highlightCard ? {
+      title: tmpl.highlightCard.title, subtitle: tmpl.highlightCard.subtitle,
+      lines: tmpl.highlightCard.lineTemplates.map(l => sub(l, vars)),
+    } : null,
+    payDeadlineDot: vars.payDeadlineDot, payDeadlineShort: vars.payDeadlineShort,
+    payDeadlineFull: vars.payDeadlineFull, payDeadlineCN: vars.payDeadlineCN,
+  }
+}
+
+export function getPhaseCopyWithConfig(cfg: ScheduleConfig | null | undefined, atMs: number = Date.now()): PhaseCopy {
+  const defs = buildPhaseDefsFromConfig(cfg)
+  const spans = computeSpansFrom(defs)
+  const phase = getRegPhaseFrom(defs, atMs)
+  return resolveCopyFrom(spans, phase)
+}
+
+export function copyForCreatedAtWithConfig(cfg: ScheduleConfig | null | undefined, createdAt: string | number | Date | null | undefined): PhaseCopy {
+  if (createdAt == null) return getPhaseCopyWithConfig(cfg)
+  const ms = typeof createdAt === 'string' ? Date.parse(createdAt)
+    : createdAt instanceof Date ? createdAt.getTime() : createdAt as number
+  if (!Number.isFinite(ms)) return getPhaseCopyWithConfig(cfg)
+  const defs = buildPhaseDefsFromConfig(cfg)
+  const spans = computeSpansFrom(defs)
+  const phase = getRegPhaseFrom(defs, ms)
+  return resolveCopyFrom(spans, phase)
+}
+
+export function payDeadlineForWithConfig(cfg: ScheduleConfig | null | undefined, phase: 'open' | 'late'): PayDeadlineLabels {
+  const defs = buildPhaseDefsFromConfig(cfg)
+  const spans = computeSpansFrom(defs)
+  const ms = spanOfFrom(spans, phase).payDeadlineMs
+  if (!ms) return { dot: '', short: '', full: '', cn: '' }
+  return { dot: fmtMonthDay(ms), short: fmtShortDate(ms), full: fmtFullDate(ms), cn: fmtMonthDayCN(ms) }
+}
+
 // ─── Per-record stability ───────────────────────────────────────────────────
 // Notification date depends on WHEN the applicant submitted, not on `now`.
 // Pass the registration's `created_at` so old records still show their

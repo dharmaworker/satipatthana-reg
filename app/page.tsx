@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getPhaseCopy, payDeadlineFor, isLateRegOpen } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, payDeadlineForWithConfig, ScheduleConfig } from '@/lib/registration-period'
 
 const TEACHERS = {
   'luangpu-pramote': {
@@ -109,10 +109,14 @@ export default function HomePage() {
   const [modal, setModal] = useState<TeacherId | null>(null)
   const savedScrollY = useRef(0)
   const t = modal ? TEACHERS[modal] : null
-  const copy = getPhaseCopy()
-  const mainPay = payDeadlineFor('open')
-  const latePay = payDeadlineFor('late')
-  const showLatePay = isLateRegOpen()
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
+  const copy = getPhaseCopyWithConfig(schedCfg)
+  const mainPay = payDeadlineForWithConfig(schedCfg, 'open')
+  const latePay = payDeadlineForWithConfig(schedCfg, 'late')
+  const showLatePay = getPhaseCopyWithConfig(schedCfg, Date.now()).phase === 'late' || getPhaseCopyWithConfig(schedCfg, Date.now()).phase === 'closed'
 
   useEffect(() => {
     if (modal) {
