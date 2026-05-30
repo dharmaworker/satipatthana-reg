@@ -54,6 +54,20 @@ export default function ScheduleConfigPage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // 課程時間表公開時間
+  const [timetablePublishAt, setTimetablePublishAt] = useState<string | null>(null)
+  const [timetablePublishInput, setTimetablePublishInput] = useState('')
+  const [timetableSaving, setTimetableSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/timetable')
+      .then(r => r.json())
+      .then(d => {
+        setTimetablePublishAt(d.publish_at ?? null)
+        setTimetablePublishInput(toDatetimeLocal(d.publish_at))
+      }).catch(() => {})
+  }, [])
+
   // 互動報名時程
   const [intOpenMs, setIntOpenMs] = useState<number | null>(null)
   const [intOpenInput, setIntOpenInput] = useState('')
@@ -123,6 +137,29 @@ export default function ScheduleConfigPage() {
         <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)', marginBottom: 20 }}>時程設定</h1>
 
         {msg && <p style={{ marginBottom: 16, fontSize: 13, color: msg.startsWith('✓') ? 'var(--green)' : '#c0392b' }}>{msg}</p>}
+
+        {/* 課程時間表公開時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>課程時間表</h2>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              公開時間（台灣時間）
+              <input type="datetime-local" style={inputStyle} value={timetablePublishInput}
+                onChange={e => setTimetablePublishInput(e.target.value)} />
+              {timetablePublishAt && <span style={{ fontSize: 11.5, color: 'var(--ink-mute)' }}>目前：{formatDisplay(timetablePublishAt)}</span>}
+            </label>
+            <button disabled={timetableSaving} onClick={async () => {
+              setTimetableSaving(true)
+              const publish_at = timetablePublishInput ? new Date(timetablePublishInput).toISOString() : null
+              const res = await fetch('/api/admin/timetable', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publish_at }) })
+              setTimetableSaving(false)
+              if (res.ok) setTimetablePublishAt(publish_at)
+              else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: timetableSaving ? 'not-allowed' : 'pointer' }}>
+              {timetableSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
+        </section>
 
         {/* 主報名期間 */}
         <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>

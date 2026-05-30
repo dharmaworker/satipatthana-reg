@@ -46,3 +46,16 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: e.message || '儲存失敗' }, { status: 500 })
   }
 }
+
+// PATCH — 只更新 publish_at
+export async function PATCH(request: NextRequest) {
+  if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
+  const { publish_at } = await request.json()
+  try {
+    const current = await fetchTimetable()
+    await saveTimetable({ ...current, publish_at: publish_at ?? null })
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || '儲存失敗' }, { status: 500 })
+  }
+}
