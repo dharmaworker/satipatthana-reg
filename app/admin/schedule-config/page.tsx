@@ -44,12 +44,65 @@ function DisplayRow({ label, value, fallback }: { label: string; value: string; 
   )
 }
 
+const toLocal = (ms: number | null) => ms ? new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 16) : ''
+const fromLocal = (s: string) => s ? new Date(s + '+08:00').getTime() : null
+
 export default function ScheduleConfigPage() {
   const [config, setConfig] = useState<ScheduleConfig>({})
   const [draft, setDraft] = useState<ScheduleConfig>({})
   const [editing, setEditing] = useState<'open' | 'late' | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+
+  // 課前共修公開時間
+  const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
+  const [practiceOpenInput, setPracticeOpenInput] = useState('')
+  const [practicePubSaving, setPracticePubSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/practice')
+      .then(r => r.json())
+      .then(d => {
+        setPracticeOpenAt(d.config?.open_at ?? null)
+        setPracticeOpenInput(toDatetimeLocal(d.config?.open_at))
+      }).catch(() => {})
+  }, [])
+
+  // 課程時間表公開時間
+  const [timetablePublishAt, setTimetablePublishAt] = useState<string | null>(null)
+  const [timetablePublishInput, setTimetablePublishInput] = useState('')
+  const [timetableSaving, setTimetableSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/timetable')
+      .then(r => r.json())
+      .then(d => {
+        setTimetablePublishAt(d.publish_at ?? null)
+        setTimetablePublishInput(toDatetimeLocal(d.publish_at))
+      }).catch(() => {})
+  }, [])
+
+  // 互動報名時程
+  const [intOpenMs, setIntOpenMs] = useState<number | null>(null)
+  const [intOpenInput, setIntOpenInput] = useState('')
+  const [intDeadlineMs, setIntDeadlineMs] = useState<number | null>(null)
+  const [intDeadlineInput, setIntDeadlineInput] = useState('')
+  const [intTaskOpenMs, setIntTaskOpenMs] = useState<number | null>(null)
+  const [intTaskOpenInput, setIntTaskOpenInput] = useState('')
+  const [intTaskDeadlineMs, setIntTaskDeadlineMs] = useState<number | null>(null)
+  const [intTaskDeadlineInput, setIntTaskDeadlineInput] = useState('')
+  const [intSaving, setIntSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/interactive-config')
+      .then(r => r.json())
+      .then(d => {
+        const oMs = d.open_ms ?? null; setIntOpenMs(oMs); setIntOpenInput(toLocal(oMs))
+        const dMs = d.deadline_ms ?? null; setIntDeadlineMs(dMs); setIntDeadlineInput(toLocal(dMs))
+        const tOMs = d.task_open_ms ?? null; setIntTaskOpenMs(tOMs); setIntTaskOpenInput(toLocal(tOMs))
+        const tDMs = d.task_deadline_ms ?? null; setIntTaskDeadlineMs(tDMs); setIntTaskDeadlineInput(toLocal(tDMs))
+      }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/schedule-config')
@@ -171,6 +224,112 @@ export default function ScheduleConfigPage() {
               <DisplayRow label="繳費截止" value={formatDisplay(config.late_pay_deadline)} fallback="2026/06/20 晚上 08:00" />
             </div>
           )}
+        </section>
+
+        {/* 課程時間表公開時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>課程時間表</h2>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              公開時間（台灣時間）
+              <input type="datetime-local" style={inputStyle} value={timetablePublishInput}
+                onChange={e => setTimetablePublishInput(e.target.value)} />
+              {timetablePublishAt && <span style={{ fontSize: 11.5, color: 'var(--ink-mute)' }}>目前：{formatDisplay(timetablePublishAt)}</span>}
+            </label>
+            <button disabled={timetableSaving} onClick={async () => {
+              setTimetableSaving(true)
+              const publish_at = timetablePublishInput ? new Date(timetablePublishInput).toISOString() : null
+              const res = await fetch('/api/admin/timetable', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publish_at }) })
+              setTimetableSaving(false)
+              if (res.ok) setTimetablePublishAt(publish_at)
+              else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: timetableSaving ? 'not-allowed' : 'pointer' }}>
+              {timetableSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
+        </section>
+
+        {/* 課前共修公開時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>課前共修</h2>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              學員公開時間（台灣時間）
+              <input type="datetime-local" style={inputStyle} value={practiceOpenInput}
+                onChange={e => setPracticeOpenInput(e.target.value)} />
+              {practiceOpenAt && <span style={{ fontSize: 11.5, color: 'var(--ink-mute)' }}>目前：{formatDisplay(practiceOpenAt)}</span>}
+            </label>
+            <button disabled={practicePubSaving} onClick={async () => {
+              setPracticePubSaving(true)
+              const open_at = practiceOpenInput ? new Date(practiceOpenInput).toISOString() : null
+              const res = await fetch('/api/admin/practice', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'config', data: { open_at } }) })
+              setPracticePubSaving(false)
+              if (res.ok) setPracticeOpenAt(open_at)
+              else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: practicePubSaving ? 'not-allowed' : 'pointer' }}>
+              {practicePubSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
+        </section>
+
+        {/* 互動報名期間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>互動報名期間</h2>
+          <p style={{ fontSize: 12, color: 'var(--ink-mute)', margin: '0 0 14px' }}>時間內可填寫送出；區間前 task card 不顯示；區間結束後可查看但不能送出。</p>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            {[
+              ['開始時間', intOpenInput, setIntOpenInput, intOpenMs],
+              ['截止時間', intDeadlineInput, setIntDeadlineInput, intDeadlineMs],
+            ].map(([label, val, setter, curMs]: any) => (
+              <div key={label as string}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>{label}（台北）</label>
+                <input type="datetime-local" value={val} onChange={e => setter(e.target.value)}
+                  style={{ ...inputStyle, width: 210 }} />
+                {curMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(curMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+              </div>
+            ))}
+            <button disabled={intSaving} onClick={async () => {
+              if (!intOpenInput || !intDeadlineInput) { alert('請填寫開始與截止時間'); return }
+              const oMs = fromLocal(intOpenInput)!; const dMs = fromLocal(intDeadlineInput)!
+              if (dMs <= oMs) { alert('截止時間必須晚於開始時間'); return }
+              setIntSaving(true)
+              const res = await fetch('/api/admin/interactive-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ open_ms: oMs, deadline_ms: dMs }) })
+              setIntSaving(false)
+              if (res.ok) { setIntOpenMs(oMs); setIntDeadlineMs(dMs) } else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: intSaving ? 'not-allowed' : 'pointer' }}>
+              {intSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
+        </section>
+
+        {/* 互動作業填寫時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>互動作業填寫時間</h2>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            {[
+              ['開放填寫', intTaskOpenInput, setIntTaskOpenInput, intTaskOpenMs],
+              ['填寫截止', intTaskDeadlineInput, setIntTaskDeadlineInput, intTaskDeadlineMs],
+            ].map(([label, val, setter, curMs]: any) => (
+              <div key={label as string}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>{label}（台北）</label>
+                <input type="datetime-local" value={val} onChange={e => setter(e.target.value)}
+                  style={{ ...inputStyle, width: 210 }} />
+                {curMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(curMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+              </div>
+            ))}
+            <button disabled={intSaving} onClick={async () => {
+              const oMs = fromLocal(intTaskOpenInput); const dMs = fromLocal(intTaskDeadlineInput)
+              if (oMs && dMs && oMs >= dMs) { alert('截止時間必須晚於開放時間'); return }
+              const body: Record<string, number> = {}
+              if (oMs) body.task_open_ms = oMs; if (dMs) body.task_deadline_ms = dMs
+              setIntSaving(true)
+              const res = await fetch('/api/admin/interactive-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+              setIntSaving(false)
+              if (res.ok) { if (oMs) setIntTaskOpenMs(oMs); if (dMs) setIntTaskDeadlineMs(dMs) } else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: intSaving ? 'not-allowed' : 'pointer' }}>
+              {intSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
         </section>
       </div>
     </>
