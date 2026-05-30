@@ -87,7 +87,6 @@ export async function GET(request: NextRequest) {
     timetable_published: isTimetablePublished(timetable),
     interactive_open: (resolveOpenMs(interactiveConfig) != null) || isAdmin,
     interactive_accepting: isInteractiveOpen(interactiveConfig) || isAdmin,
-    interactive_preview: isAdmin && !isInteractiveOpen(interactiveConfig),
     interactive_submitted: interactiveSubmitted,
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,
