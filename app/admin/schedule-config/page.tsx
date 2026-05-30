@@ -54,6 +54,20 @@ export default function ScheduleConfigPage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // 課前共修公開時間
+  const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
+  const [practiceOpenInput, setPracticeOpenInput] = useState('')
+  const [practicePubSaving, setPracticePubSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/practice')
+      .then(r => r.json())
+      .then(d => {
+        setPracticeOpenAt(d.config?.open_at ?? null)
+        setPracticeOpenInput(toDatetimeLocal(d.config?.open_at))
+      }).catch(() => {})
+  }, [])
+
   // 課程時間表公開時間
   const [timetablePublishAt, setTimetablePublishAt] = useState<string | null>(null)
   const [timetablePublishInput, setTimetablePublishInput] = useState('')
@@ -157,6 +171,29 @@ export default function ScheduleConfigPage() {
               else alert('儲存失敗')
             }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: timetableSaving ? 'not-allowed' : 'pointer' }}>
               {timetableSaving ? '儲存中…' : '儲存'}
+            </button>
+          </div>
+        </section>
+
+        {/* 課前共修公開時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>課前共修</h2>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              學員公開時間（台灣時間）
+              <input type="datetime-local" style={inputStyle} value={practiceOpenInput}
+                onChange={e => setPracticeOpenInput(e.target.value)} />
+              {practiceOpenAt && <span style={{ fontSize: 11.5, color: 'var(--ink-mute)' }}>目前：{formatDisplay(practiceOpenAt)}</span>}
+            </label>
+            <button disabled={practicePubSaving} onClick={async () => {
+              setPracticePubSaving(true)
+              const open_at = practiceOpenInput ? new Date(practiceOpenInput).toISOString() : null
+              const res = await fetch('/api/admin/practice', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'config', data: { open_at } }) })
+              setPracticePubSaving(false)
+              if (res.ok) setPracticeOpenAt(open_at)
+              else alert('儲存失敗')
+            }} style={{ padding: '8px 20px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: practicePubSaving ? 'not-allowed' : 'pointer' }}>
+              {practicePubSaving ? '儲存中…' : '儲存'}
             </button>
           </div>
         </section>
