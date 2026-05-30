@@ -233,23 +233,22 @@ export async function sendMailBatch(
       console.error('sendMailBatch Resend failed, falling back to Gmail:', r.error.message)
       await sendBatchViaGmail(batch, batchId, opts?.mailType ?? null)
     } else {
-      // Log each Resend recipient with its provider_message_id
+      // Batch insert all log rows in one query (was: sequential await per row → ~20s for 71 records)
       const resendItems: any[] = (r.data as any)?.data ?? []
-      for (let i = 0; i < batch.length; i++) {
-        const m = batch[i]
-        const emailId = resendItems[i]?.id ?? null
-        await logEmailSend({
-          to_email: m.to,
-          subject: m.subject,
-          html: m.html,
-          bcc: m.bcc ?? null,
-          provider: 'resend',
-          provider_message_id: emailId,
-          status: 'sent',
-          mail_type: opts?.mailType ?? null,
-          batch_id: batchId,
-        })
-      }
+      const logRows = batch.map((m, i) => ({
+        to_email: m.to,
+        subject: m.subject,
+        html: m.html,
+        bcc: m.bcc ?? null,
+        provider: 'resend' as const,
+        provider_message_id: resendItems[i]?.id ?? null,
+        status: 'sent' as const,
+        mail_type: opts?.mailType ?? null,
+        batch_id: batchId,
+        sent_at: new Date().toISOString(),
+      }))
+      const { error: logErr } = await supabaseAdmin.from('email_queue').insert(logRows)
+      if (logErr) console.error('[mailer] batch log insert failed:', logErr.message)
     }
     results.push(r)
   }
