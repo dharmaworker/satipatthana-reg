@@ -3,13 +3,10 @@ import { supabaseAdmin, generateRandomCode } from '@/lib/supabase'
 import { nextAvailableMemberId } from '@/lib/member-id'
 import { sendMail, sendMailWithRetry } from '@/lib/mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailButton, emailCodeBox, emailSignoff, tableRow, tableWrap } from '@/lib/email-style'
-import { getPhaseCopyWithConfig, PHASE_STARTS, ScheduleConfig } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, buildPhaseDefsFromConfig, ScheduleConfig } from '@/lib/registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
-
-// 截止：start of 'closed' phase in registration-period.ts
-const REG_CLOSE_MS = PHASE_STARTS.find(p => p.key === 'closed')!.startMs
 
 function yn(v: boolean | null | undefined) {
   return v ? '是' : '否'
@@ -25,13 +22,17 @@ function nullable(v: string | null | undefined) {
 
 export async function POST(request: NextRequest) {
   try {
-    // 截止日檢查
     const now = Date.now()
-    if (now > REG_CLOSE_MS) {
-      return NextResponse.json({ error: '報名已截止' }, { status: 400 })
-    }
     const { data: scData } = await supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle()
     const schedCfg = (scData?.value ?? {}) as ScheduleConfig
+
+    // 截止日從 DB config 取（fallback 到 hardcode）
+    const phaseDefs = buildPhaseDefsFromConfig(schedCfg)
+    const closedStartMs = phaseDefs.find(p => p.key === 'closed')!.startMs
+    if (now >= closedStartMs) {
+      return NextResponse.json({ error: '報名已截止' }, { status: 400 })
+    }
+
     const copy = getPhaseCopyWithConfig(schedCfg, now)
 
     const body = await request.json()
