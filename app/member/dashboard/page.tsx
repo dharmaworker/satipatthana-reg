@@ -482,8 +482,9 @@ function MemberDashboardContent() {
                       ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'waitlist' ? '✦ 候補' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : member.interactive_group_status === 'abstain' ? '— 棄權' : '⏳ 未定'],
                       ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'waitlist' ? '✦ 候補' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : member.interactive_small_status === 'abstain' ? '— 棄權' : '⏳ 未定'],
                     ]}
-                    actionHref={withAuth('/member/interactive')}
-                    actionText={member.interactive_submitted ? '查看／修改' : '前往報名 →'}
+                    actionHref={member.interactive_accepting || member.interactive_submitted ? withAuth('/member/interactive') : undefined}
+                    actionText={member.interactive_submitted ? '查看／修改' : member.interactive_accepting ? '前往報名 →' : '尚未開始'}
+                    actionDisabled={!member.interactive_accepting && !member.interactive_submitted}
                   />
                 )}
 
@@ -685,7 +686,7 @@ function MemberDashboardContent() {
 }
 
 function TaskCard({
-  idLabel, label, title, state, statusBadge, badgeKind, deadline, urgent, rows, actionHref, actionText, actionDownload,
+  idLabel, label, title, state, statusBadge, badgeKind, deadline, urgent, rows, actionHref, actionText, actionDownload, actionDisabled,
 }: {
   idLabel: string
   label: string
@@ -696,9 +697,10 @@ function TaskCard({
   deadline: string
   urgent?: boolean
   rows: [string, string][]
-  actionHref: string
+  actionHref?: string
   actionText: string
   actionDownload?: boolean
+  actionDisabled?: boolean
 }) {
   return (
     <div className={`task-card ${state}`}>
@@ -724,9 +726,12 @@ function TaskCard({
         截止：<span className="due">{deadline}</span>
       </div>
       <div className="task-action">
-        <a href={actionHref} className="btn btn-primary"
-          {...(actionDownload ? { download: '承諾書.docx' } : {})}
-          style={{ flex: 1, fontSize: 13, padding: '10px 16px' }}>{actionText}</a>
+        {actionDisabled
+          ? <span style={{ flex: 1, fontSize: 13, padding: '10px 16px', display: 'inline-block', textAlign: 'center', borderRadius: 999, background: 'var(--line-strong)', color: 'var(--ink-mute)', cursor: 'not-allowed' }}>{actionText}</span>
+          : <a href={actionHref} className="btn btn-primary"
+              {...(actionDownload ? { download: '承諾書.docx' } : {})}
+              style={{ flex: 1, fontSize: 13, padding: '10px 16px' }}>{actionText}</a>
+        }
       </div>
     </div>
   )
