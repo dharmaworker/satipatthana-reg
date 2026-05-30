@@ -27,6 +27,21 @@ function tpeToUtcMs(year: number, monthIdx0: number, day: number, hour: number, 
   return Date.UTC(year, monthIdx0, day, hour - TPE_OFFSET_HOURS, minute, 0)
 }
 
+// ─── 僅限開發環境的時間覆蓋 ─────────────────────────────────────────────────
+// 在 .env.local 設定 NEXT_PUBLIC_MOCK_NOW_TPE 以模擬不同的報名階段。
+// 格式："YYYY-MM-DD" 或 "YYYY-MM-DDTHH:mm"（台北時間，UTC+8）。
+// 範例：NEXT_PUBLIC_MOCK_NOW_TPE=2026-06-02T09:00
+function nowMs(): number {
+  const mock = process.env.NEXT_PUBLIC_MOCK_NOW_TPE
+  if (process.env.NODE_ENV !== 'production' && mock) {
+    const [datePart, timePart = '00:00'] = mock.trim().split('T')
+    const [y, mo, d] = datePart.split('-').map(Number)
+    const [h, mi] = timePart.split(':').map(Number)
+    return tpeToUtcMs(y, mo - 1, d, h, mi)
+  }
+  return Date.now()
+}
+
 export type RegPhase = 'not-yet' | 'open' | 'late' | 'closed'
 
 // ─── Phase definitions (Taipei time) ────────────────────────────────────────
@@ -67,14 +82,14 @@ function spanOf(key: RegPhase): PhaseSpan {
   return SPANS.find(s => s.key === key)!
 }
 
-export function getRegPhase(atMs: number = Date.now()): RegPhase {
+export function getRegPhase(atMs: number = nowMs()): RegPhase {
   let current: RegPhase = 'not-yet'
   for (const p of PHASE_DEFS) if (atMs >= p.startMs) current = p.key
   return current
 }
 
 /** True once late-registration window has begun (still true after it closes). */
-export function isLateRegOpen(atMs: number = Date.now()): boolean {
+export function isLateRegOpen(atMs: number = nowMs()): boolean {
   return atMs >= spanOf('late').startMs
 }
 
@@ -302,7 +317,7 @@ function resolveCopy(phase: RegPhase): PhaseCopy {
   }
 }
 
-export function getPhaseCopy(atMs: number = Date.now()): PhaseCopy {
+export function getPhaseCopy(atMs: number = nowMs()): PhaseCopy {
   return resolveCopy(getRegPhase(atMs))
 }
 
