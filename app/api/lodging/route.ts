@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { planToLodgingDefaults } from '@/lib/lodging-plan'
 import { sendMailWithRetry } from '@/lib/mailer'
 import { quickTestsButtonHtml } from '@/lib/quicktests-email'
+import { getLodgingDeadlineMs, ScheduleConfig } from '@/lib/registration-period'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
@@ -37,9 +38,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ registration: reg, lodging: lodging || null })
 }
 
-// 食宿登記截止時間：2026-06-20 20:00 台北 = 2026-06-20 12:00 UTC
-const LODGING_DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0)
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -49,14 +47,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少 id 或 code' }, { status: 400 })
     }
 
-    // 6/20 截止硬限制（後端擋，前端規避不了）
-    if (Date.now() > LODGING_DEADLINE_MS) {
-      return NextResponse.json({ error: '食宿登記已於 6/20 晚上 8 點截止' }, { status: 403 })
-    }
-
     const { data: reg, error: regErr } = await supabaseAdmin
       .from('registrations')
-      .select('id, random_code, chinese_name, email, member_id, status, payment_plan')
+      .select('id, random_code, chinese_name, email, member_id, status, payment_plan, registration_phase')
       .eq('id', id)
       .eq('random_code', code.toUpperCase())
       .single()
@@ -65,6 +58,15 @@ export async function POST(request: NextRequest) {
     }
     if (reg.status !== 'approved') {
       return NextResponse.json({ error: '尚未錄取，無法填寫食宿登記' }, { status: 403 })
+    }
+
+    // 截止日檢查（從 DB schedule_config 取）
+    const { data: scData } = await supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle()
+    const schedCfg = (scData?.value ?? {}) as ScheduleConfig
+    const phase = (reg.registration_phase === 'late' ? 'late' : 'open') as 'open' | 'late'
+    const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, phase)
+    if (Date.now() > lodgingDeadlineMs) {
+      return NextResponse.json({ error: '食宿登記已截止，無法再送出' }, { status: 403 })
     }
 
     // 允許首次送出 + 一次修改：以 created_at === updated_at 判斷「尚未修改」

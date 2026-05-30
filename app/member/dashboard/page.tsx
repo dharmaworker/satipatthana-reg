@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForCreatedAt } from '@/lib/registration-period'
+import { copyForCreatedAt, buildPhaseDefsFromConfig, getLodgingDeadlineMs } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -16,6 +16,7 @@ type MemberData = {
   residence: string | null
   retreat_format: string | null
   created_at: string
+  registration_phase: string | null
   lodging_status: 'none' | 'submitted_editable' | 'locked'
   tests_uploaded: number
   tests_total: number
@@ -58,6 +59,11 @@ function MemberDashboardContent() {
   const [practicePeriodLabel, setPracticePeriodLabel] = useState('')
   const [practiceEnabled, setPracticeEnabled] = useState(false)
   const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
+  const [schedCfg, setSchedCfg] = useState<Record<string, any>>({})
+
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
 
   type ProfileData = {
     remaining: number
@@ -130,6 +136,19 @@ function MemberDashboardContent() {
   const isOnline = member.retreat_format === 'online'
 
   // 任務狀態
+  // 錄取通知日後才開放繳費/食宿/快篩
+  const phaseDefs = buildPhaseDefsFromConfig(schedCfg)
+  const memberPhase = member.registration_phase === 'late' ? 'late' : 'open'
+  const notifyMs = phaseDefs.find(p => p.key === memberPhase)?.notifyMs ?? 0
+  const notifyPassed = Date.now() >= notifyMs
+  const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
+  const lodgingDeadlineLabel = (() => {
+    const d = new Date(lodgingDeadlineMs)
+    const m = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit' }).replace(/\//g, '')
+    const day = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', day: '2-digit' }).replace(/\//g, '')
+    return `${Number(m)}/${Number(day)} 晚上 8 時前`
+  })()
+
   const paymentDone = member.payment_status === 'verified'
   const paymentPending = member.payment_status === 'paid'
   const lodgingDone = member.lodging_status !== 'none'
@@ -435,8 +454,9 @@ function MemberDashboardContent() {
                     ['方案', member.payment_plan || '尚未選擇'],
                     ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
                   ]}
-                  actionHref={withAuth('/pay')}
-                  actionText={paymentDone ? '查看' : '前往繳費 →'}
+                  actionHref={notifyPassed ? withAuth('/pay') : undefined}
+                  actionText={paymentDone ? '查看' : notifyPassed ? '前往繳費 →' : '尚未開放'}
+                  actionDisabled={!notifyPassed && !paymentDone}
                 />
 
                 {/* 食宿登記 */}
@@ -445,12 +465,13 @@ function MemberDashboardContent() {
                   state={lodgingDone ? (lodgingLocked ? 'done' : 'done') : 'todo'}
                   statusBadge={lodgingLocked ? '已鎖定' : lodgingDone ? '可改 1 次' : '待填寫'}
                   badgeKind={lodgingDone ? 'done' : 'todo'}
-                  deadline="06/20 晚上 8 時前" urgent={!lodgingDone}
+                  deadline={lodgingDeadlineLabel} urgent={!lodgingDone}
                   rows={[
                     ['狀態', lodgingLocked ? '已修改過 1 次（鎖定）' : lodgingDone ? '已送出（還能修改 1 次）' : '尚未送出'],
                   ]}
-                  actionHref={withAuth('/lodging')}
-                  actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : '前往登記 →'}
+                  actionHref={notifyPassed ? withAuth('/lodging') : undefined}
+                  actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : notifyPassed ? '前往登記 →' : '尚未開放'}
+                  actionDisabled={!notifyPassed && !lodgingDone}
                 />
 
                 {/* 快篩 */}
@@ -464,8 +485,9 @@ function MemberDashboardContent() {
                     ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
                     ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
                   ]}
-                  actionHref={withAuth('/quicktests')}
-                  actionText={testsDone ? '查看' : '前往上傳 →'}
+                  actionHref={notifyPassed ? withAuth('/quicktests') : undefined}
+                  actionText={testsDone ? '查看' : notifyPassed ? '前往上傳 →' : '尚未開放'}
+                  actionDisabled={!notifyPassed && !testsDone}
                 />
 
                 {/* 互動報名（開始時間到才顯示；截止後可查看但不能送出） */}
