@@ -1,6 +1,6 @@
 import { sendMail } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
-import { copyForCreatedAt } from './registration-period'
+import { copyForCreatedAt, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, ScheduleConfig } from './registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -15,7 +15,7 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
 
 type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null; created_at?: string | null }
 
-export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）') {
+export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）', schedCfg?: ScheduleConfig | null) {
   const payCopy = copyForCreatedAt(reg.created_at)
   if (reg.retreat_format === 'online') {
     const onlineBody = `
@@ -70,7 +70,7 @@ export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（�
     <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">③ 快篩檢測上傳</strong>　依各時段截止：</p>
     ${emailButton(`${baseUrl}/quicktests?id=${reg.id}&code=${reg.random_code}`, '前往上傳快篩', 'gold')}
     <p style="font-size:13px;color:${C.inkMute};margin:6px 0 0;line-height:1.85;">
-      ・8/17 上午 8 點至晚上 8 點前　・8/19 上午 12 點前<br>
+      ・${msToDayLabel(getQuicktestDeadline1Ms(schedCfg))} 上午 8 點至晚上 8 點前　・${msToDayLabel(getQuicktestDeadline2Ms(schedCfg))} 上午 12 點前<br>
       （課程期間 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需線上上傳）<br>
       檢測結果需載明日期、報名序號、姓名；快篩試劑請自備。
     </p>

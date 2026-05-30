@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { buildApprovalEmailPayload } from '@/lib/approval-email'
 import { sendMailBatch } from '@/lib/mailer'
+import { ScheduleConfig } from '@/lib/registration-period'
 
 export async function POST(request: NextRequest) {
   const role = request.cookies.get('admin_role')?.value
@@ -11,10 +12,12 @@ export async function POST(request: NextRequest) {
 
   const { ids } = await request.json()
 
-  const [{ data: registrations, error }, { data: practiceConfig }] = await Promise.all([
+  const [{ data: registrations, error }, { data: practiceConfig }, { data: scData }] = await Promise.all([
     supabaseAdmin.from('registrations').select('*').in('id', ids).eq('status', 'approved'),
     supabaseAdmin.from('practice_config').select('zoom_meeting_id, period_label').eq('id', 1).single(),
+    supabaseAdmin.from('site_config').select('value').eq('key', 'schedule_config').maybeSingle(),
   ])
+  const schedCfg = (scData?.value ?? {}) as ScheduleConfig
 
   if (error || !registrations) {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const periodLabel = practiceConfig?.period_label || '（共修期間）'
-  const payloads = registrations.map(reg => buildApprovalEmailPayload(reg, periodLabel))
+  const payloads = registrations.map(reg => buildApprovalEmailPayload(reg, periodLabel, schedCfg))
 
   try {
     await sendMailBatch(payloads, {
