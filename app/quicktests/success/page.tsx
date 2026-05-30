@@ -1,13 +1,26 @@
 'use client'
-import { Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 function QuickTestsSuccessContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
+
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
+
+  const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
+  const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
+  const qt1Day = msToDayLabel(qt1Ms)
+  const qt2Day = msToDayLabel(qt2Ms)
+  const qt1Time = msToTimeLabel(qt1Ms)
+  const qt2Time = msToTimeLabel(qt2Ms)
 
   return (
     <>
@@ -37,8 +50,8 @@ function QuickTestsSuccessContent() {
           <div className="success-next">
             <h5>快篩時程提醒</h5>
             <ol>
-              <li><strong>8/17（日）</strong>上午 8 點 ～ 晚上 8 點前上傳</li>
-              <li><strong>8/19（二）</strong>上午 12 點前上傳</li>
+              <li><strong>{qt1Day}</strong>上午 8 點 ～ {qt1Time}前上傳</li>
+              <li><strong>{qt2Day}</strong> {qt2Time}前上傳</li>
               <li><strong>8/20、8/22 課程期間</strong>快篩請於現場繳交，毋須線上上傳</li>
             </ol>
           </div>
