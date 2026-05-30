@@ -334,7 +334,12 @@ export default function DashboardPage() {
                       onChange={() => toggleSelect(reg.id)} />
                   </td>
                   <td className="muted" style={{ whiteSpace: 'nowrap' }}>{new Date(reg.created_at).toLocaleDateString('zh-TW')}</td>
-                  <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{reg.chinese_name}</td>
+                  <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+                    {reg.chinese_name}
+                    {reg.registration_phase === 'late' && (
+                      <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'rgba(180,147,88,0.18)', color: 'var(--gold-deep)', letterSpacing: '0.05em', verticalAlign: 'middle' }}>補</span>
+                    )}
+                  </td>
                   <td style={{ whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{reg.email}</td>
                   <td className="muted" style={{ whiteSpace: 'nowrap' }}>{reg.residence}</td>
                   <td className="mono" style={{ whiteSpace: 'nowrap' }}>{reg.random_code}</td>
