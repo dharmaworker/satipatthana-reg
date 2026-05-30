@@ -349,6 +349,20 @@ export function msToDotLabel(ms: number): string {
   return `${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
+/** UTC ms → "上午/下午/晚上/中午 X 點" in TPE time，整點不顯示分鐘 */
+export function msToTimeLabel(ms: number): string {
+  const d = new Date(ms + 8 * 3600 * 1000)
+  const h = d.getUTCHours()
+  const m = d.getUTCMinutes()
+  const hDisplay = h > 12 ? h - 12 : h === 0 ? 12 : h
+  const mStr = m === 0 ? '' : `:${String(m).padStart(2, '0')}`
+  if (h === 0)  return `午夜 12${mStr} 點`
+  if (h === 12 && m === 0) return '中午 12 點'
+  if (h < 12)  return `上午 ${hDisplay}${mStr} 點`
+  if (h < 18)  return `下午 ${hDisplay}${mStr} 點`
+  return `晚上 ${hDisplay}${mStr} 點`
+}
+
 export function getLodgingDeadlineMs(cfg: ScheduleConfig | null | undefined, phase: 'open' | 'late'): number {
   const iso = phase === 'late' ? cfg?.late_lodging_deadline : cfg?.open_lodging_deadline
   if (iso) return new Date(iso).getTime()
