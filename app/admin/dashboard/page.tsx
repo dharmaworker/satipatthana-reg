@@ -276,8 +276,26 @@ export default function DashboardPage() {
             className="admin-btn-sm">批次拒絕（{selected.length}）</button>
           <button onClick={() => batchAction('delete')} disabled={sending || selected.length === 0}
             className="admin-btn-sm danger">批次刪除（{selected.length}）</button>
-          {message && (
-            <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message}</span>
+          <button disabled={resendingConfirm || selected.length === 0}
+            onClick={async () => {
+              if (!confirm(`確定補寄報名確認信給選取的 ${selected.length} 人？`)) return
+              setResendingConfirm(true); setResendConfirmMsg('')
+              let ok = 0; let fail = 0
+              for (const id of selected) {
+                const res = await fetch('/api/admin/resend-confirm', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id }),
+                })
+                if (res.ok) ok++; else fail++
+              }
+              setResendingConfirm(false)
+              setResendConfirmMsg(fail === 0 ? `✓ 已補寄 ${ok} 封` : `✓ ${ok} 封成功，✗ ${fail} 封失敗`)
+            }}
+            className="admin-btn-sm">
+            {resendingConfirm ? '寄送中…' : `↩ 補寄確認信（${selected.length}）`}
+          </button>
+          {(message || resendConfirmMsg) && (
+            <span style={{ fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{message || resendConfirmMsg}</span>
           )}
         </div>
 
@@ -535,26 +553,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
-              <button
-                disabled={resendingConfirm}
-                onClick={async () => {
-                  if (!confirm(`確定補寄報名確認信給 ${detailReg.chinese_name}（${detailReg.email}）？`)) return
-                  setResendingConfirm(true); setResendConfirmMsg('')
-                  const res = await fetch('/api/admin/resend-confirm', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: detailReg.id }),
-                  })
-                  const d = await res.json()
-                  setResendingConfirm(false)
-                  setResendConfirmMsg(res.ok ? `✓ 已補寄至 ${detailReg.email}（含備存信）` : `✗ ${d.error || '寄送失敗'}`)
-                }}
-                style={{ padding: '7px 20px', background: 'rgba(73,85,52,0.08)', border: '1px solid var(--line-strong)', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', cursor: resendingConfirm ? 'not-allowed' : 'pointer' }}>
-                {resendingConfirm ? '寄送中…' : '↩ 補寄報名確認信'}
-              </button>
-              {resendConfirmMsg && <p style={{ margin: '8px 0 0', fontSize: 13, color: resendConfirmMsg.startsWith('✓') ? 'var(--green)' : '#c0392b' }}>{resendConfirmMsg}</p>}
-            </div>
           </div>
         </div>
       )}
