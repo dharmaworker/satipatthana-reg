@@ -18,6 +18,7 @@ const SETTING_TABS = [
   { path: '/admin/timetable', label: '設課程時間表', hint: '五日禪修課程時程安排' },
   { path: '/admin/practice-records', label: '共修打卡', hint: '學員課前共修打卡記錄總覽' },
   { path: '/admin/practice', label: '設課前共修表', hint: '設定課前共修課表與 Zoom 資訊' },
+  { path: '/admin/schedule-config', label: '時程設定', hint: '重要時程日期設定（補報名、截止等）' },
 ]
 
 export function AdminHeader() {
