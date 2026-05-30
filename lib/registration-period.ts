@@ -488,8 +488,8 @@ export function payDeadlineForWithConfig(cfg: ScheduleConfig | null | undefined,
   const defs = buildPhaseDefsFromConfig(cfg)
   const spans = computeSpansFrom(defs)
   const ms = spanOfFrom(spans, phase).payDeadlineMs
-  if (!ms) return { dot: '', short: '', full: '', cn: '' }
-  return { dot: fmtMonthDay(ms), short: fmtShortDate(ms), full: fmtFullDate(ms), cn: fmtMonthDayCN(ms) }
+  if (!ms) return { ms: undefined, dot: '', short: '', full: '', cn: '' }
+  return { ms, dot: fmtMonthDay(ms), short: fmtShortDate(ms), full: fmtFullDate(ms), cn: fmtMonthDayCN(ms) }
 }
 
 // ─── Per-record stability ───────────────────────────────────────────────────
@@ -500,15 +500,17 @@ export function payDeadlineForWithConfig(cfg: ScheduleConfig | null | undefined,
 // Used by static UI (homepage timeline, generic info page) that must show
 // both the main and late deadlines side-by-side regardless of `now`.
 export interface PayDeadlineLabels {
-  dot: string        // "06.15"
-  short: string      // "6/15"
-  full: string       // "2026/06/15"
-  cn: string         // "6月15日"
+  ms: number | undefined  // UTC ms
+  dot: string             // "06.15"
+  short: string           // "6/15"
+  full: string            // "2026/06/15"
+  cn: string              // "6月15日"
 }
 export function payDeadlineFor(phase: 'open' | 'late'): PayDeadlineLabels {
   const ms = spanOf(phase).payDeadlineMs
-  if (!ms) return { dot: '', short: '', full: '', cn: '' }
+  if (!ms) return { ms: undefined, dot: '', short: '', full: '', cn: '' }
   return {
+    ms,
     dot: fmtMonthDay(ms),
     short: fmtShortDate(ms),
     full: fmtFullDate(ms),

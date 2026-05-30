@@ -1,8 +1,8 @@
 'use client'
-import { Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { payDeadlineFor, isLateRegOpen } from '@/lib/registration-period'
+import { payDeadlineForWithConfig, getLodgingDeadlineMs, msToDayLabel, msToTimeLabel, isLateRegOpen, ScheduleConfig } from '@/lib/registration-period'
 
 function LodgingSuccessContent() {
   const searchParams = useSearchParams()
@@ -10,9 +10,20 @@ function LodgingSuccessContent() {
   const code = searchParams.get('code') || ''
   const edited = searchParams.get('edited') === '1'
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
-  const mainPay = payDeadlineFor('open')
-  const latePay = payDeadlineFor('late')
+
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
+
+  const mainPay = payDeadlineForWithConfig(schedCfg, 'open')
+  const latePay = payDeadlineForWithConfig(schedCfg, 'late')
   const showLatePay = isLateRegOpen()
+  const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, 'open')
+  const lodgingDeadlineDay = msToDayLabel(lodgingDeadlineMs)
+  const lodgingDeadlineTime = msToTimeLabel(lodgingDeadlineMs)
+  const mainPayTime = mainPay.ms ? msToTimeLabel(mainPay.ms) : '晚上 8 點'
+  const latePayTime = latePay.ms ? msToTimeLabel(latePay.ms) : '晚上 8 點'
 
   return (
     <>
@@ -38,14 +49,14 @@ function LodgingSuccessContent() {
             系統已寄出確認信至您的 Email，請注意查收（含垃圾郵件）。<br />
             {edited
               ? '本表單已修改過一次，無法再修改。若需更動請聯絡學會。'
-              : '如需修改僅能再修改一次（6/20 晚上 8 點前），修改後即無法再動。'}
+              : `如需修改僅能再修改一次（${lodgingDeadlineDay} ${lodgingDeadlineTime}前），修改後即無法再動。`}
           </p>
 
           <div className="success-next">
             <h5>接下來</h5>
             <ol>
               <li>繳費通知將於錄取後透過 E-mail 發送</li>
-              <li>錄取者請於繳費截止前完成繳費：主報名 <strong>{mainPay.full} 晚上 8 點前</strong>{showLatePay && <>；補報名 <strong>{latePay.full} 晚上 8 點前</strong></>}</li>
+              <li>錄取者請於繳費截止前完成繳費：主報名 <strong>{mainPay.full} {mainPayTime}前</strong>{showLatePay && <>；補報名 <strong>{latePay.full} {latePayTime}前</strong></>}</li>
               <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
             </ol>
           </div>
