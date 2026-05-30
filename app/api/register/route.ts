@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
         attended_courses: body.attended_courses || [],
         status: 'pending',
         payment_status: 'unpaid',
+        registration_phase: copy.phase,
       })
       .select()
       .single()

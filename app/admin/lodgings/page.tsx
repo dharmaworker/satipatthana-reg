@@ -40,7 +40,7 @@ export default function LodgingsPage() {
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance' | 'group_join'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
-  const [filter, setFilter] = useState<'all' | 'with_student_id' | 'not_notified' | 'no_lodging' | 'unpaid'>('all')
+  const [filter, setFilter] = useState<'all' | 'with_student_id' | 'not_notified' | 'no_lodging' | 'unpaid' | 'late'>('all')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [formatFilter, setFormatFilter] = useState<string>('in_person')
   const [queuePending, setQueuePending] = useState(0)
@@ -332,6 +332,7 @@ export default function LodgingsPage() {
     if (filter === 'not_notified' && reg.approval_email_sent_at) return false
     if (filter === 'no_lodging' && r.id) return false
     if (filter === 'unpaid' && reg.payment_status !== 'unpaid') return false
+    if (filter === 'late' && reg.registration_phase !== 'late') return false
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -417,6 +418,7 @@ export default function LodgingsPage() {
             <option value="not_notified">尚未寄錄取通知</option>
             <option value="no_lodging">尚未填食宿登記</option>
             <option value="unpaid">尚未繳費</option>
+            <option value="late">補報名者</option>
           </select>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           <label>
