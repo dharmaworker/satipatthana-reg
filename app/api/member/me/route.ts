@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { fetchInteractiveConfig } from '@/lib/interactive-config'
+import { fetchInteractiveConfig, isInteractiveOpen, resolveDeadlineMs, resolveOpenMs } from '@/lib/interactive-config'
 import { fetchTimetable, isTimetablePublished } from '@/lib/timetable'
 
 export async function GET(request: NextRequest) {
@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
     tests_uploaded: testsUploaded,
     tests_total: 2,
     timetable_published: isTimetablePublished(timetable),
-    interactive_open: interactiveConfig.open || isAdmin,
-    interactive_preview: isAdmin && !interactiveConfig.open,
+    interactive_open: (resolveOpenMs(interactiveConfig) != null) || isAdmin,
+    interactive_accepting: isInteractiveOpen(interactiveConfig) || isAdmin,
     interactive_submitted: interactiveSubmitted,
     interactive_group_status: interactiveGroupStatus,
     interactive_small_status: interactiveSmallStatus,

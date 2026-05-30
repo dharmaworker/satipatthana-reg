@@ -57,7 +57,8 @@ export default function InteractiveAdminPage() {
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
   const [autoDrawOpen, setAutoDrawOpen] = useState(false)
-  const [configOpen, setConfigOpen] = useState(false)
+  const [openMs, setOpenMs] = useState<number | null>(null)
+  const [openInput, setOpenInput] = useState('')
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null)
   const [deadlineInput, setDeadlineInput] = useState('')
   const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
@@ -65,7 +66,6 @@ export default function InteractiveAdminPage() {
   const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
   const [taskDeadlineInput, setTaskDeadlineInput] = useState('')
   const [configSaving, setConfigSaving] = useState(false)
-  const [previewing, setPreviewing] = useState(false)
   const [sessions, setSessions] = useState<DbSession[]>([])
   const [slots, setSlots] = useState<DbSlot[]>([])
 
@@ -89,8 +89,10 @@ export default function InteractiveAdminPage() {
     setPage(1)
     if (cRes.ok) {
       const cfg = await cRes.json()
-      setConfigOpen(!!cfg.open)
       const toLocal = (ms: number | null) => ms ? new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 16) : ''
+      const oMs: number | null = cfg.open_ms ?? null
+      setOpenMs(oMs)
+      setOpenInput(toLocal(oMs))
       const ms: number | null = cfg.deadline_ms ?? null
       setDeadlineMs(ms)
       setDeadlineInput(toLocal(ms))
@@ -105,75 +107,25 @@ export default function InteractiveAdminPage() {
   }
   useEffect(() => { fetchData() }, [])
 
-  const openPreview = async () => {
-    setPreviewing(true)
-    setMessage('')
-    try {
-      // 先讀目前的測試學員 email（給 prompt 預設值用）
-      const cur = await fetch('/api/admin/preview-test-student').then(r => r.ok ? r.json() : null)
-      const defaultEmail = cur?.email && cur.email !== 'preview@test.invalid' ? cur.email : ''
-      const promptMsg = cur?.exists
-        ? `測試學員 email（自動寄送的測試信會寄到這裡，留空保持不變）：`
-        : `請輸入測試學員的 email（自動寄送的測試信會寄到這裡，留空使用預設 preview@test.invalid 不收信）：`
-      const input = window.prompt(promptMsg, defaultEmail)
-      if (input === null) { setPreviewing(false); return } // 使用者取消
-
-      const res = await fetch('/api/admin/preview-test-student', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: input.trim() }),
-      })
-      const d = await res.json()
-      if (!res.ok) throw new Error(d.error || `${res.status}`)
-      const url = `/member/interactive?id=${d.id}&code=${encodeURIComponent(d.code)}`
-      window.open(url, '_blank', 'noopener')
-      const emailLabel = d.email === 'preview@test.invalid' ? '（預設 invalid email，不會收到測試信）' : `（email: ${d.email}）`
-      if (d.created) setMessage(`已建立測試學員「[預覽] 測試學員」${emailLabel}，已開新分頁進入互動報名表單`)
-      else setMessage(`已開新分頁進入互動報名表單${emailLabel}`)
-    } catch (e: any) {
-      setMessage(`預覽失敗：${e.message}`)
-    } finally {
-      setPreviewing(false)
-    }
-  }
-
-  const toggleOpen = async () => {
-    const next = !configOpen
-    if (!confirm(next
-      ? '確定開放互動報名？學員 dashboard 將出現「互動報名」task card。'
-      : '確定關閉互動報名？學員無法繼續送出，dashboard 不再顯示 task card。已送出的資料不受影響。'
-    )) return
-    setConfigSaving(true)
-    setMessage('')
-    const res = await fetch('/api/admin/interactive-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ open: next }),
-    })
-    if (res.ok) {
-      setConfigOpen(next)
-      setMessage(next ? '互動報名已開放' : '互動報名已關閉')
-    } else {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`切換失敗：${d.error || res.status}`)
-    }
-    setConfigSaving(false)
-  }
-
-  const saveDeadline = async () => {
+  const saveInteractiveRange = async () => {
+    if (!openInput) { setMessage('請輸入開始時間'); return }
     if (!deadlineInput) { setMessage('請輸入截止時間'); return }
-    const ms = new Date(deadlineInput + '+08:00').getTime()
-    if (isNaN(ms) || ms <= 0) { setMessage('截止時間格式錯誤'); return }
+    const oMs = new Date(openInput + '+08:00').getTime()
+    const dMs = new Date(deadlineInput + '+08:00').getTime()
+    if (isNaN(oMs) || oMs <= 0) { setMessage('開始時間格式錯誤'); return }
+    if (isNaN(dMs) || dMs <= 0) { setMessage('截止時間格式錯誤'); return }
+    if (dMs <= oMs) { setMessage('截止時間必須晚於開始時間'); return }
     setConfigSaving(true)
     setMessage('')
     const res = await fetch('/api/admin/interactive-config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deadline_ms: ms }),
+      body: JSON.stringify({ open_ms: oMs, deadline_ms: dMs }),
     })
     if (res.ok) {
-      setDeadlineMs(ms)
-      setMessage('截止時間已儲存')
+      setOpenMs(oMs)
+      setDeadlineMs(dMs)
+      setMessage('互動報名時間區間已儲存')
     } else {
       const d = await res.json().catch(() => ({}))
       setMessage(`儲存失敗：${d.error || res.status}`)
@@ -381,63 +333,47 @@ export default function InteractiveAdminPage() {
           <p>📧 勾選後按「批次寄中簽通知信」會寄結果信給中簽者；<strong>中簽但場次／組別未指定者會自動跳過</strong>，請補完再按一次。中簽信內含填寫互動作業的連結。</p>
         </div>
 
-        <div className="admin-table-card" style={{
-          padding: '14px 18px',
-          marginBottom: 14,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          flexWrap: 'wrap',
-          background: configOpen ? 'rgba(73, 85, 52, 0.04)' : 'rgba(216, 194, 154, 0.10)',
-          borderLeft: `4px solid ${configOpen ? 'var(--green)' : 'var(--gold-deep)'}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              fontFamily: 'var(--font-noto-serif-tc), serif',
-              fontWeight: 700,
-              fontSize: 14,
-              letterSpacing: '0.06em',
-              color: 'var(--ink)',
+        {(() => {
+          const now = Date.now()
+          const isOpen = openMs != null && now >= openMs && (deadlineMs == null || now < deadlineMs)
+          const isPast = deadlineMs != null && now >= deadlineMs
+          const statusLabel = isOpen ? '✓ 開放中' : isPast ? '已截止' : '○ 未開始'
+          const statusCls = isOpen ? 'ok' : isPast ? 'error' : 'warn'
+          return (
+            <div className="admin-table-card" style={{
+              padding: '14px 18px', marginBottom: 14,
+              background: isOpen ? 'rgba(73, 85, 52, 0.04)' : 'rgba(216, 194, 154, 0.10)',
+              borderLeft: `4px solid ${isOpen ? 'var(--green)' : 'var(--gold-deep)'}`,
             }}>
-              互動報名開放狀態
-            </span>
-            <span className={`admin-status-badge ${configOpen ? 'ok' : 'warn'}`}>
-              {configOpen ? '✓ 已開放' : '○ 未開放'}
-            </span>
-          </div>
-          <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0, flex: 1, minWidth: 220 }}>
-            {configOpen
-              ? '會員專區 dashboard 顯示「互動報名」task card，學員可填寫送出。'
-              : '會員專區 dashboard 不顯示「互動報名」task card；學員無法送出。已送出資料不受影響。'}
-          </p>
-          <button
-            onClick={openPreview}
-            disabled={previewing}
-            className="admin-btn-sm"
-            title="用測試學員身分開啟互動報名表單，學員不會看到"
-          >
-            {previewing ? '開啟中⋯' : '🔧 預覽表單（測試學員）'}
-          </button>
-          <button
-            onClick={toggleOpen}
-            disabled={configSaving}
-            className={`admin-btn-sm ${configOpen ? '' : 'primary'}`}
-          >
-            {configSaving ? '儲存中⋯' : configOpen ? '關閉互動報名' : '開放互動報名'}
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-            <label style={{ fontSize: 13, color: 'var(--ink-mute)', whiteSpace: 'nowrap' }}>報名截止（台北）</label>
-            <input
-              type="datetime-local"
-              value={deadlineInput}
-              onChange={e => setDeadlineInput(e.target.value)}
-              style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)' }}
-            />
-            <button onClick={saveDeadline} disabled={configSaving} className="admin-btn-sm">
-              儲存
-            </button>
-          </div>
-        </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <span style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontWeight: 700, fontSize: 14, letterSpacing: '0.06em', color: 'var(--ink)' }}>
+                  互動報名開放狀態
+                </span>
+                <span className={`admin-status-badge ${statusCls}`}>{statusLabel}</span>
+                <span style={{ fontSize: 12, color: 'var(--ink-mute)', marginLeft: 4 }}>
+                  時間內可填寫送出；區間前 task card 不顯示；區間結束後可查看但不能送出
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>開始時間（台北）</label>
+                  <input type="datetime-local" value={openInput} onChange={e => setOpenInput(e.target.value)}
+                    style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
+                  {openMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(openMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>截止時間（台北）</label>
+                  <input type="datetime-local" value={deadlineInput} onChange={e => setDeadlineInput(e.target.value)}
+                    style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
+                  {deadlineMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(deadlineMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
+                </div>
+                <button onClick={saveInteractiveRange} disabled={configSaving} className="admin-btn-sm primary">
+                  {configSaving ? '儲存中⋯' : '儲存'}
+                </button>
+              </div>
+            </div>
+          )
+        })()}
 
         <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 18px', marginBottom: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--green-deep)', letterSpacing: '0.05em', marginBottom: 12 }}>⏱ 互動作業填寫時間</div>
