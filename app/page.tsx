@@ -116,7 +116,7 @@ export default function HomePage() {
   const copy = getPhaseCopyWithConfig(schedCfg)
   const mainPay = payDeadlineForWithConfig(schedCfg, 'open')
   const latePay = payDeadlineForWithConfig(schedCfg, 'late')
-  const showLatePay = getPhaseCopyWithConfig(schedCfg, Date.now()).phase === 'late' || getPhaseCopyWithConfig(schedCfg, Date.now()).phase === 'closed'
+  const showLatePay = copy.phase === 'late' || copy.phase === 'closed'
 
   useEffect(() => {
     if (modal) {
