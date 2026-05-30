@@ -6,10 +6,12 @@ type ScheduleConfig = {
   open_start?: string | null
   open_notify?: string | null
   open_pay_deadline?: string | null
+  open_lodging_deadline?: string | null
   late_start?: string | null
   late_end?: string | null
   late_notify?: string | null
   late_pay_deadline?: string | null
+  late_lodging_deadline?: string | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -169,6 +171,7 @@ export default function ScheduleConfigPage() {
                   ['開始時間', 'open_start'],
                   ['錄取通知時間', 'open_notify'],
                   ['繳費截止時間', 'open_pay_deadline'],
+                  ['食宿截止時間', 'open_lodging_deadline'],
                 ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
                   <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {label}（台灣時間）
@@ -186,6 +189,7 @@ export default function ScheduleConfigPage() {
               <DisplayRow label="結束時間" value="= 補報名開始時間" />
               <DisplayRow label="錄取通知" value={formatDisplay(config.open_notify)} fallback="2026/06/06 中午 12:00" />
               <DisplayRow label="繳費截止" value={formatDisplay(config.open_pay_deadline)} fallback="2026/06/15 晚上 08:00" />
+              <DisplayRow label="食宿截止" value={formatDisplay(config.open_lodging_deadline)} fallback="2026/06/20 晚上 08:00" />
             </div>
           )}
         </section>
@@ -205,6 +209,7 @@ export default function ScheduleConfigPage() {
                   ['結束時間', 'late_end'],
                   ['錄取通知時間', 'late_notify'],
                   ['繳費截止時間', 'late_pay_deadline'],
+                  ['食宿截止時間', 'late_lodging_deadline'],
                 ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
                   <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {label}（台灣時間）
@@ -222,6 +227,7 @@ export default function ScheduleConfigPage() {
               <DisplayRow label="結束時間" value={formatDisplay(config.late_end)} fallback="2026/06/07 晚上 24:00" />
               <DisplayRow label="錄取通知" value={formatDisplay(config.late_notify)} fallback="2026/06/10 中午 12:00" />
               <DisplayRow label="繳費截止" value={formatDisplay(config.late_pay_deadline)} fallback="2026/06/20 晚上 08:00" />
+              <DisplayRow label="食宿截止" value={formatDisplay(config.late_lodging_deadline)} fallback="2026/06/20 晚上 08:00" />
             </div>
           )}
         </section>

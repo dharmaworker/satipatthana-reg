@@ -327,10 +327,19 @@ export interface ScheduleConfig {
   open_start?: string | null
   open_notify?: string | null
   open_pay_deadline?: string | null
+  open_lodging_deadline?: string | null
   late_start?: string | null   // 同時也是主報名結束時間
   late_end?: string | null
   late_notify?: string | null
   late_pay_deadline?: string | null
+  late_lodging_deadline?: string | null
+}
+
+export function getLodgingDeadlineMs(cfg: ScheduleConfig | null | undefined, phase: 'open' | 'late'): number {
+  const iso = phase === 'late' ? cfg?.late_lodging_deadline : cfg?.open_lodging_deadline
+  if (iso) return new Date(iso).getTime()
+  // fallback hardcode: 2026-06-20 20:00 TPE
+  return Date.UTC(2026, 5, 20, 12, 0, 0)
 }
 
 export function buildPhaseDefsFromConfig(cfg?: ScheduleConfig | null): PhaseDef[] {

@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForCreatedAt, buildPhaseDefsFromConfig } from '@/lib/registration-period'
+import { copyForCreatedAt, buildPhaseDefsFromConfig, getLodgingDeadlineMs } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -141,6 +141,13 @@ function MemberDashboardContent() {
   const memberPhase = member.registration_phase === 'late' ? 'late' : 'open'
   const notifyMs = phaseDefs.find(p => p.key === memberPhase)?.notifyMs ?? 0
   const notifyPassed = Date.now() >= notifyMs
+  const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
+  const lodgingDeadlineLabel = (() => {
+    const d = new Date(lodgingDeadlineMs)
+    const m = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit' }).replace(/\//g, '')
+    const day = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', day: '2-digit' }).replace(/\//g, '')
+    return `${Number(m)}/${Number(day)} 晚上 8 時前`
+  })()
 
   const paymentDone = member.payment_status === 'verified'
   const paymentPending = member.payment_status === 'paid'
@@ -458,7 +465,7 @@ function MemberDashboardContent() {
                   state={lodgingDone ? (lodgingLocked ? 'done' : 'done') : 'todo'}
                   statusBadge={lodgingLocked ? '已鎖定' : lodgingDone ? '可改 1 次' : '待填寫'}
                   badgeKind={lodgingDone ? 'done' : 'todo'}
-                  deadline="06/20 晚上 8 時前" urgent={!lodgingDone}
+                  deadline={lodgingDeadlineLabel} urgent={!lodgingDone}
                   rows={[
                     ['狀態', lodgingLocked ? '已修改過 1 次（鎖定）' : lodgingDone ? '已送出（還能修改 1 次）' : '尚未送出'],
                   ]}
