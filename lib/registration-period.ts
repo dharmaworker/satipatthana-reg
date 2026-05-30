@@ -308,7 +308,10 @@ export function getPhaseCopy(atMs: number = Date.now()): PhaseCopy {
 
 // ─── DB config override support ─────────────────────────────────────────────
 export interface ScheduleConfig {
-  late_start?: string | null
+  open_start?: string | null
+  open_notify?: string | null
+  open_pay_deadline?: string | null
+  late_start?: string | null   // 同時也是主報名結束時間
   late_end?: string | null
   late_notify?: string | null
   late_pay_deadline?: string | null
@@ -317,8 +320,15 @@ export interface ScheduleConfig {
 export function buildPhaseDefsFromConfig(cfg?: ScheduleConfig | null): PhaseDef[] {
   if (!cfg) return PHASE_DEFS
   const defs: PhaseDef[] = PHASE_DEFS.map(p => ({ ...p }))
+  const openIdx = defs.findIndex(p => p.key === 'open')
   const lateIdx = defs.findIndex(p => p.key === 'late')
   const closedIdx = defs.findIndex(p => p.key === 'closed')
+  if (cfg.open_start && openIdx >= 0)
+    defs[openIdx].startMs = new Date(cfg.open_start).getTime()
+  if (cfg.open_notify && openIdx >= 0)
+    defs[openIdx].notifyMs = new Date(cfg.open_notify).getTime()
+  if (cfg.open_pay_deadline && openIdx >= 0)
+    defs[openIdx].payDeadlineMs = new Date(cfg.open_pay_deadline).getTime()
   if (cfg.late_start && lateIdx >= 0)
     defs[lateIdx].startMs = new Date(cfg.late_start).getTime()
   if (cfg.late_notify && lateIdx >= 0)
