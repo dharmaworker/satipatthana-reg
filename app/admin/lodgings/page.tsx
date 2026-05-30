@@ -40,8 +40,7 @@ export default function LodgingsPage() {
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
   const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance' | 'group_join'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
-  const [onlyWithStudentId, setOnlyWithStudentId] = useState(false)
-  const [onlyNotNotified, setOnlyNotNotified] = useState(false)
+  const [filter, setFilter] = useState<'all' | 'with_student_id' | 'not_notified' | 'no_lodging' | 'unpaid'>('all')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [formatFilter, setFormatFilter] = useState<string>('in_person')
   const [queuePending, setQueuePending] = useState(0)
@@ -329,8 +328,10 @@ export default function LodgingsPage() {
 
   const filtered = rows.filter(r => {
     const reg = r.registration || {}
-    if (onlyWithStudentId && !reg.student_id) return false
-    if (onlyNotNotified && reg.approval_email_sent_at) return false
+    if (filter === 'with_student_id' && !reg.student_id) return false
+    if (filter === 'not_notified' && reg.approval_email_sent_at) return false
+    if (filter === 'no_lodging' && r.id) return false
+    if (filter === 'unpaid' && reg.payment_status !== 'unpaid') return false
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -410,16 +411,13 @@ export default function LodgingsPage() {
             placeholder="搜尋姓名 / Email / 專屬碼 / 報名序號 / 學號"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: 280 }} />
-          <label style={{ background: 'rgba(216, 194, 154, 0.18)', border: '1px solid rgba(180, 147, 88, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
-            <input type="checkbox" checked={onlyWithStudentId}
-              onChange={e => { setOnlyWithStudentId(e.target.checked); setPage(1) }} />
-            只顯示已分配學號者
-          </label>
-          <label style={{ background: 'rgba(184, 82, 58, 0.07)', border: '1px solid rgba(184, 82, 58, 0.3)', borderRadius: 8, padding: '6px 12px' }}>
-            <input type="checkbox" checked={onlyNotNotified}
-              onChange={e => { setOnlyNotNotified(e.target.checked); setPage(1) }} />
-            只顯示尚未寄錄取通知者
-          </label>
+          <select value={filter} onChange={e => { setFilter(e.target.value as any); setPage(1) }}>
+            <option value="all">全部錄取者</option>
+            <option value="with_student_id">已分配學號</option>
+            <option value="not_notified">尚未寄錄取通知</option>
+            <option value="no_lodging">尚未填食宿登記</option>
+            <option value="unpaid">尚未繳費</option>
+          </select>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           <label>
             <input type="checkbox" checked={bulkSelected.length > 0 && bulkSelected.length === filtered.length}
