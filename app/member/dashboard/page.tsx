@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForCreatedAt, buildPhaseDefsFromConfig, getLodgingDeadlineMs } from '@/lib/registration-period'
+import { copyForCreatedAt, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -56,6 +56,7 @@ function MemberDashboardContent() {
   const [teacherLabel, setTeacherLabel] = useState<LabelMap>({})
   const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
   const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
+  const [interactiveDeadlineMs, setInteractiveDeadlineMs] = useState<number | null>(null)
   const [practicePeriodLabel, setPracticePeriodLabel] = useState('')
   const [practiceEnabled, setPracticeEnabled] = useState(false)
   const [practiceOpenAt, setPracticeOpenAt] = useState<string | null>(null)
@@ -92,6 +93,7 @@ function MemberDashboardContent() {
         setTeacherLabel(tLabel)
         if (d.task_open_ms) setTaskOpenMs(d.task_open_ms)
         if (d.task_deadline_ms) setTaskDeadlineMs(d.task_deadline_ms)
+        if (d.deadline_ms) setInteractiveDeadlineMs(d.deadline_ms)
       })
       .catch(() => {})
   }, [])
@@ -142,10 +144,11 @@ function MemberDashboardContent() {
   const notifyMs = phaseDefs.find(p => p.key === memberPhase)?.notifyMs ?? 0
   const notifyPassed = Date.now() >= notifyMs
   const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
-  const lodgingDeadlineLabel = (() => {
-    const d = new Date(lodgingDeadlineMs + 8 * 3600 * 1000)
-    return `${d.getUTCMonth() + 1}/${d.getUTCDate()} 晚上 8 時前`
-  })()
+  const lodgingDeadlineLabel = `${msToDayLabel(lodgingDeadlineMs)} 晚上 8 時前`
+  const payDeadline = payDeadlineForWithConfig(schedCfg, memberPhase)
+  const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
+  const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
+  const interactiveDeadlineLabel = interactiveDeadlineMs ? `${msToDayLabel(interactiveDeadlineMs)} 晚上 8 點前` : '07/15 晚上 8 點前'
 
   const paymentDone = member.payment_status === 'verified'
   const paymentPending = member.payment_status === 'paid'
@@ -410,8 +413,8 @@ function MemberDashboardContent() {
               <div className="announce-card">
                 <div className="announce-card-title">最新公告</div>
                 <p>
-                  錄取通知已發送，請於 <strong>{memberCopy.payDeadlineShort} 晚上 8 時前</strong>完成{' '}
-                  <a href={withAuth('/pay')}>繳費</a>，並於 <strong>6/20 晚上 8 時前</strong>完成{' '}
+                  錄取通知已發送，請於 <strong>{payDeadline.short} 晚上 8 時前</strong>完成{' '}
+                  <a href={withAuth('/pay')}>繳費</a>，並於 <strong>{lodgingDeadlineLabel}</strong>完成{' '}
                   <a href={withAuth('/lodging')}>食宿登記</a>，才算正式錄取。
                 </p>
               </div>
@@ -447,7 +450,7 @@ function MemberDashboardContent() {
                   state={paymentDone ? 'done' : paymentPending ? 'todo' : 'todo'}
                   statusBadge={paymentDone ? '已完成' : paymentPending ? '待確認' : '待繳費'}
                   badgeKind={paymentDone ? 'done' : paymentPending ? 'todo' : 'urgent'}
-                  deadline={`${memberCopy.payDeadlineShort} 晚上 8 時前`} urgent={!paymentDone}
+                  deadline={`${payDeadline.short} 晚上 8 時前`} urgent={!paymentDone}
                   rows={[
                     ['方案', member.payment_plan || '尚未選擇'],
                     ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
@@ -478,7 +481,7 @@ function MemberDashboardContent() {
                   state={testsDone ? 'done' : 'todo'}
                   statusBadge={`${member.tests_uploaded}／${member.tests_total}`}
                   badgeKind={testsDone ? 'done' : 'todo'}
-                  deadline="8/17 晚上 8 點 ／ 8/19 中午 12 點前" urgent={false}
+                  deadline={`${msToDayLabel(qt1Ms)} 晚上 8 點 ／ ${msToDayLabel(qt2Ms)} 中午 12 點前`} urgent={false}
                   rows={[
                     ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
                     ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
@@ -495,7 +498,7 @@ function MemberDashboardContent() {
                     state={member.interactive_submitted ? 'done' : 'todo'}
                     statusBadge={member.interactive_submitted ? '已送出' : member.interactive_accepting ? '待填寫' : '已截止'}
                     badgeKind={member.interactive_submitted ? 'done' : member.interactive_accepting ? 'todo' : 'done'}
-                    deadline="07/15 晚上 8 點前"
+                    deadline={interactiveDeadlineLabel}
                     urgent={!member.interactive_submitted && member.interactive_accepting}
                     rows={[
                       ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'waitlist' ? '✦ 候補' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : member.interactive_group_status === 'abstain' ? '— 棄權' : '⏳ 未定'],
@@ -620,8 +623,8 @@ function MemberDashboardContent() {
                   <div className="schedule-grid">
                     <div className="schedule-cell done"><div className="date">{sched.periodStartDot}–{sched.sidebarDeadlineDate}</div><div className="label">{sched.phase === 'late' ? '補報名期間' : '報名期間'}</div></div>
                     <div className="schedule-cell done"><div className="date">{sched.sidebarNotifyDate}</div><div className="label">錄取通知</div></div>
-                    {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">{memberCopy.payDeadlineDot}</div><div className="label">繳費截止</div></div>}
-                    {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">06.20</div><div className="label">食宿登記</div></div>}
+                    {!isOnline && <div className={`schedule-cell ${paymentDone ? 'done' : 'urgent'}`}><div className="date">{payDeadline.dot}</div><div className="label">繳費截止</div></div>}
+                    {!isOnline && <div className={`schedule-cell ${lodgingDone ? 'done' : 'urgent'}`}><div className="date">{msToDotLabel(lodgingDeadlineMs)}</div><div className="label">食宿登記</div></div>}
                     <div className="schedule-cell"><div className="date">08.20–08.24</div><div className="label">禪修課程</div></div>
                   </div>
                 </div>

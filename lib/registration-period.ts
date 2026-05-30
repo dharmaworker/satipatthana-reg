@@ -333,13 +333,36 @@ export interface ScheduleConfig {
   late_notify?: string | null
   late_pay_deadline?: string | null
   late_lodging_deadline?: string | null
+  quicktest_1_deadline?: string | null   // 8/17 快篩截止
+  quicktest_2_deadline?: string | null   // 8/19 快篩截止
+}
+
+/** UTC ms → "M/D" label in TPE time */
+export function msToDayLabel(ms: number): string {
+  const d = new Date(ms + 8 * 3600 * 1000)
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+}
+
+/** UTC ms → "MM.DD" label in TPE time */
+export function msToDotLabel(ms: number): string {
+  const d = new Date(ms + 8 * 3600 * 1000)
+  return `${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
 export function getLodgingDeadlineMs(cfg: ScheduleConfig | null | undefined, phase: 'open' | 'late'): number {
   const iso = phase === 'late' ? cfg?.late_lodging_deadline : cfg?.open_lodging_deadline
   if (iso) return new Date(iso).getTime()
-  // fallback hardcode: 2026-06-20 20:00 TPE
-  return Date.UTC(2026, 5, 20, 12, 0, 0)
+  return Date.UTC(2026, 5, 20, 12, 0, 0) // fallback: 2026-06-20 20:00 TPE
+}
+
+export function getQuicktestDeadline1Ms(cfg: ScheduleConfig | null | undefined): number {
+  if (cfg?.quicktest_1_deadline) return new Date(cfg.quicktest_1_deadline).getTime()
+  return Date.UTC(2026, 7, 17, 12, 0, 0) // fallback: 2026-08-17 20:00 TPE
+}
+
+export function getQuicktestDeadline2Ms(cfg: ScheduleConfig | null | undefined): number {
+  if (cfg?.quicktest_2_deadline) return new Date(cfg.quicktest_2_deadline).getTime()
+  return Date.UTC(2026, 7, 19, 4, 0, 0) // fallback: 2026-08-19 12:00 TPE
 }
 
 export function buildPhaseDefsFromConfig(cfg?: ScheduleConfig | null): PhaseDef[] {

@@ -12,6 +12,8 @@ type ScheduleConfig = {
   late_notify?: string | null
   late_pay_deadline?: string | null
   late_lodging_deadline?: string | null
+  quicktest_1_deadline?: string | null
+  quicktest_2_deadline?: string | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -52,7 +54,7 @@ const fromLocal = (s: string) => s ? new Date(s + '+08:00').getTime() : null
 export default function ScheduleConfigPage() {
   const [config, setConfig] = useState<ScheduleConfig>({})
   const [draft, setDraft] = useState<ScheduleConfig>({})
-  const [editing, setEditing] = useState<'open' | 'late' | null>(null)
+  const [editing, setEditing] = useState<'open' | 'late' | 'quicktest' | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -276,6 +278,48 @@ export default function ScheduleConfigPage() {
               {practicePubSaving ? '儲存中…' : '儲存'}
             </button>
           </div>
+        </section>
+
+        {/* 快篩截止時間 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>快篩截止時間</h2>
+          {editing === 'quicktest' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {([
+                ['8/17 快篩截止時間', 'quicktest_1_deadline'],
+                ['8/19 快篩截止時間', 'quicktest_2_deadline'],
+              ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
+                <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {label}（台灣時間）
+                  <input type="datetime-local" style={inputStyle}
+                    value={toDatetimeLocal(draft[field])}
+                    onChange={e => setDraft({ ...draft, [field]: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+                </label>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: 14 }}>
+              <DisplayRow label="8/17 快篩" value={formatDisplay(config.quicktest_1_deadline)} fallback="2026/08/17 晚上 08:00" />
+              <DisplayRow label="8/19 快篩" value={formatDisplay(config.quicktest_2_deadline)} fallback="2026/08/19 中午 12:00" />
+            </div>
+          )}
+          {editing === 'quicktest' && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button onClick={save} disabled={saving}
+                style={{ padding: '8px 22px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
+                {saving ? '儲存中…' : '儲存'}
+              </button>
+              <button onClick={() => { setEditing(null); setMsg('') }}
+                style={{ padding: '8px 16px', background: 'transparent', border: '1.5px solid var(--line-strong)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
+                取消
+              </button>
+            </div>
+          )}
+          {editing !== 'quicktest' && (
+            <div style={{ marginTop: 12 }}>
+              {editBtn('quicktest' as any)}
+            </div>
+          )}
         </section>
 
         {/* 互動報名期間 */}
