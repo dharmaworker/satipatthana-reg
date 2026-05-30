@@ -1,6 +1,6 @@
 import { sendMail } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
-import { copyForCreatedAt, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, ScheduleConfig } from './registration-period'
+import { copyForRegistration, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, ScheduleConfig } from './registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -16,7 +16,7 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
 type ApprovalReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null; retreat_format?: string | null; created_at?: string | null; registration_phase?: string | null }
 
 export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）', schedCfg?: ScheduleConfig | null) {
-  const payCopy = copyForCreatedAt(reg.created_at)
+  const payCopy = copyForRegistration(reg, schedCfg)
   if (reg.retreat_format === 'online') {
     const onlineBody = `
       ${emailKicker('Approval Notice')}

@@ -499,7 +499,7 @@ export function payDeadlineFor(phase: 'open' | 'late'): PayDeadlineLabels {
   }
 }
 
-export function copyForCreatedAt(createdAt: string | number | Date | null | undefined): PhaseCopy {
+function copyForCreatedAt(createdAt: string | number | Date | null | undefined): PhaseCopy {
   if (createdAt == null) return resolveCopy('open')
   const ms = typeof createdAt === 'string' ? Date.parse(createdAt)
     : createdAt instanceof Date ? createdAt.getTime()
