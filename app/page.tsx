@@ -192,10 +192,12 @@ export default function HomePage() {
                 <span className="author">隆波帕默尊者</span>
               </div>
 
-              <div className="hero-actions">
-                <a className="btn btn-primary" href="/register">立即報名 <span className="arrow">→</span></a>
-                <a className="btn btn-secondary" href="/member">查詢報名狀態｜學員專區 →</a>
-              </div>
+              {!copy.highlightCard && (
+                <div className="hero-actions">
+                  <a className="btn btn-primary" href="/register">立即報名 <span className="arrow">→</span></a>
+                  <a className="btn btn-secondary" href="/member">查詢報名狀態｜學員專區 →</a>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -219,9 +221,14 @@ export default function HomePage() {
               <div style={{ marginTop: 18, fontSize: 13, color: '#9C5A26' }}>
                 <strong>報名資格</strong>：曾參加隆波帕默尊者體系任意一屆課程；或承諾於 2026/08/16 前聆聽或觀看隆波帕默尊者至少 30 個法談。
               </div>
-              <a href="/register" className="btn btn-primary" style={{ marginTop: 22, background: copy.badgeColor, borderColor: copy.badgeColor }}>
-                立即補報名 <span className="arrow">→</span>
-              </a>
+              <div style={{ marginTop: 22, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a href="/register" className="btn btn-primary" style={{ background: copy.badgeColor, borderColor: copy.badgeColor }}>
+                  立即補報名 <span className="arrow">→</span>
+                </a>
+                <a href="/member" className="btn btn-secondary">
+                  查詢報名狀態｜學員專區 →
+                </a>
+              </div>
             </div>
           </section>
         )}
