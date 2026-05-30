@@ -31,6 +31,7 @@ export async function PUT(request: NextRequest) {
     const current = await fetchInteractiveConfig()
     const merged = { ...current }
     if (body.open !== undefined) merged.open = body.open
+    if (body.open_ms !== undefined) merged.open_ms = body.open_ms
     if (body.deadline_ms !== undefined) merged.deadline_ms = body.deadline_ms
     if (body.task_open_ms !== undefined) merged.task_open_ms = body.task_open_ms
     if (body.task_deadline_ms !== undefined) merged.task_deadline_ms = body.task_deadline_ms

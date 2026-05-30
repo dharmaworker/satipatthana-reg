@@ -8,11 +8,24 @@ import { INTERACTIVE_DEADLINE_MS } from './interactive'
 
 export type InteractiveConfig = {
   open: boolean
+  open_ms?: number           // 互動報名開始（UTC epoch ms）
   deadline_ms?: number       // 互動報名截止（UTC epoch ms）
   task_open_ms?: number      // 互動作業開放（UTC epoch ms）
   task_deadline_ms?: number  // 互動作業截止（UTC epoch ms）
 }
 const DEFAULT: InteractiveConfig = { open: false }
+
+export function resolveOpenMs(config: InteractiveConfig): number | null {
+  return config.open_ms ?? null
+}
+
+/** 依時間區間判斷互動報名是否開放（open_ms 到 deadline_ms 之間） */
+export function isInteractiveOpen(config: InteractiveConfig, atMs: number = Date.now()): boolean {
+  const openMs = resolveOpenMs(config)
+  const deadlineMs = resolveDeadlineMs(config)
+  if (openMs === null) return config.open  // 未設定時間則走舊邏輯
+  return atMs >= openMs && atMs < deadlineMs
+}
 
 export async function fetchInteractiveConfig(): Promise<InteractiveConfig> {
   const { data } = await supabaseAdmin

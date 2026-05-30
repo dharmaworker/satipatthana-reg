@@ -20,6 +20,7 @@ type MemberData = {
   tests_uploaded: number
   tests_total: number
   interactive_open: boolean
+  interactive_accepting: boolean
   interactive_preview?: boolean
   interactive_submitted: boolean
   interactive_group_status: 'pending' | 'won' | 'waitlist' | 'lost' | 'abstain'
@@ -468,15 +469,15 @@ function MemberDashboardContent() {
                   actionText={testsDone ? '查看' : '前往上傳 →'}
                 />
 
-                {/* 互動報名（admin 開啟才顯示；admin preview 模式也會看到，title 加 🔧 提示） */}
+                {/* 互動報名（開始時間到才顯示；截止後可查看但不能送出） */}
                 {member.interactive_open && (
                   <TaskCard
                     idLabel="互" label="Interactive" title={member.interactive_preview ? '互動報名 🔧 預覽' : '互動報名'}
                     state={member.interactive_submitted ? 'done' : 'todo'}
-                    statusBadge={member.interactive_preview ? '預覽' : member.interactive_submitted ? '已送出' : '待填寫'}
-                    badgeKind={member.interactive_submitted ? 'done' : 'todo'}
+                    statusBadge={member.interactive_preview ? '預覽' : member.interactive_submitted ? '已送出' : member.interactive_accepting ? '待填寫' : '已截止'}
+                    badgeKind={member.interactive_submitted ? 'done' : member.interactive_accepting ? 'todo' : 'done'}
                     deadline={member.interactive_preview ? '對學員未開放（admin 預覽中）' : '07/15 晚上 8 點前'}
-                    urgent={!member.interactive_preview && !member.interactive_submitted}
+                    urgent={!member.interactive_preview && !member.interactive_submitted && member.interactive_accepting}
                     rows={[
                       ['集體互動', member.interactive_group_status === 'won' ? '✓ 中簽' : member.interactive_group_status === 'waitlist' ? '✦ 候補' : member.interactive_group_status === 'lost' ? '✗ 沒中簽' : member.interactive_group_status === 'abstain' ? '— 棄權' : '⏳ 未定'],
                       ['分組互動', member.interactive_small_status === 'won' ? '✓ 中簽' : member.interactive_small_status === 'waitlist' ? '✦ 候補' : member.interactive_small_status === 'lost' ? '✗ 沒中簽' : member.interactive_small_status === 'abstain' ? '— 棄權' : '⏳ 未定'],
