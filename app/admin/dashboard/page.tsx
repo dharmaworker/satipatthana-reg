@@ -81,7 +81,6 @@ export default function DashboardPage() {
           member_id: editReg.member_id || null,
           line_qr_url: editReg.line_qr_url ?? null,
           wechat_qr_url: editReg.wechat_qr_url ?? null,
-          registration_phase: editReg.registration_phase,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -439,15 +438,6 @@ export default function DashboardPage() {
                 <input className="form-input uppercase" placeholder="例：T-001"
                   value={editReg.member_id || ''}
                   onChange={e => setEditReg({ ...editReg, member_id: e.target.value })} />
-              </div>
-
-              <div>
-                <label className="form-label">報名階段</label>
-                <select className="form-select" value={editReg.registration_phase || 'open'}
-                  onChange={e => setEditReg({ ...editReg, registration_phase: e.target.value })}>
-                  <option value="open">主報名（open）</option>
-                  <option value="late">補報名（late）</option>
-                </select>
               </div>
 
               <QrEditField label="LINE QR" kind="line"
