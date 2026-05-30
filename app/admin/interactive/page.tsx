@@ -57,15 +57,7 @@ export default function InteractiveAdminPage() {
   const [message, setMessage] = useState('')
   const [editing, setEditing] = useState<Row | null>(null)
   const [autoDrawOpen, setAutoDrawOpen] = useState(false)
-  const [openMs, setOpenMs] = useState<number | null>(null)
-  const [openInput, setOpenInput] = useState('')
-  const [deadlineMs, setDeadlineMs] = useState<number | null>(null)
-  const [deadlineInput, setDeadlineInput] = useState('')
-  const [taskOpenMs, setTaskOpenMs] = useState<number | null>(null)
-  const [taskOpenInput, setTaskOpenInput] = useState('')
-  const [taskDeadlineMs, setTaskDeadlineMs] = useState<number | null>(null)
-  const [taskDeadlineInput, setTaskDeadlineInput] = useState('')
-  const [configSaving, setConfigSaving] = useState(false)
+  const [configSaving] = useState(false)
   const [sessions, setSessions] = useState<DbSession[]>([])
   const [slots, setSlots] = useState<DbSlot[]>([])
 
@@ -88,78 +80,13 @@ export default function InteractiveAdminPage() {
     setSlots(slotD.data || [])
     setPage(1)
     if (cRes.ok) {
-      const cfg = await cRes.json()
-      const toLocal = (ms: number | null) => ms ? new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 16) : ''
-      const oMs: number | null = cfg.open_ms ?? null
-      setOpenMs(oMs)
-      setOpenInput(toLocal(oMs))
-      const ms: number | null = cfg.deadline_ms ?? null
-      setDeadlineMs(ms)
-      setDeadlineInput(toLocal(ms))
-      const tOpen: number | null = cfg.task_open_ms ?? null
-      setTaskOpenMs(tOpen)
-      setTaskOpenInput(toLocal(tOpen))
-      const tDead: number | null = cfg.task_deadline_ms ?? null
-      setTaskDeadlineMs(tDead)
-      setTaskDeadlineInput(toLocal(tDead))
+      // 時程設定由「時程設定」tab 管理
     }
     setLoading(false)
   }
   useEffect(() => { fetchData() }, [])
 
-  const saveInteractiveRange = async () => {
-    if (!openInput) { setMessage('請輸入開始時間'); return }
-    if (!deadlineInput) { setMessage('請輸入截止時間'); return }
-    const oMs = new Date(openInput + '+08:00').getTime()
-    const dMs = new Date(deadlineInput + '+08:00').getTime()
-    if (isNaN(oMs) || oMs <= 0) { setMessage('開始時間格式錯誤'); return }
-    if (isNaN(dMs) || dMs <= 0) { setMessage('截止時間格式錯誤'); return }
-    if (dMs <= oMs) { setMessage('截止時間必須晚於開始時間'); return }
-    setConfigSaving(true)
-    setMessage('')
-    const res = await fetch('/api/admin/interactive-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ open_ms: oMs, deadline_ms: dMs }),
-    })
-    if (res.ok) {
-      setOpenMs(oMs)
-      setDeadlineMs(dMs)
-      setMessage('互動報名時間區間已儲存')
-    } else {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`儲存失敗：${d.error || res.status}`)
-    }
-    setConfigSaving(false)
-  }
 
-  const saveTaskTimes = async () => {
-    const toMs = (s: string) => s ? new Date(s + '+08:00').getTime() : null
-    const openMs = toMs(taskOpenInput)
-    const deadMs = toMs(taskDeadlineInput)
-    if (taskOpenInput && (isNaN(openMs!) || openMs! <= 0)) { setMessage('作業開放時間格式錯誤'); return }
-    if (taskDeadlineInput && (isNaN(deadMs!) || deadMs! <= 0)) { setMessage('作業截止時間格式錯誤'); return }
-    if (openMs && deadMs && openMs >= deadMs) { setMessage('作業截止時間必須晚於開放時間'); return }
-    setConfigSaving(true)
-    setMessage('')
-    const body: Record<string, number> = {}
-    if (openMs) body.task_open_ms = openMs
-    if (deadMs) body.task_deadline_ms = deadMs
-    const res = await fetch('/api/admin/interactive-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (res.ok) {
-      if (openMs) setTaskOpenMs(openMs)
-      if (deadMs) setTaskDeadlineMs(deadMs)
-      setMessage('作業時間已儲存')
-    } else {
-      const d = await res.json().catch(() => ({}))
-      setMessage(`儲存失敗：${d.error || res.status}`)
-    }
-    setConfigSaving(false)
-  }
 
   // 容量統計：各集體場次與各分組（老師 × 日期）已分配的人數
   const sessionCounts = (() => {
@@ -331,69 +258,6 @@ export default function InteractiveAdminPage() {
           <p>🎲 列出所有錄取學員。<strong>已送出互動報名</strong>者會顯示「想要的場次／排序」。</p>
           <p>👇 「集體狀態」「分組狀態」可獨立切換 <strong>未定 / 中簽 / 沒中簽</strong>，可先標中簽再用「編輯指定」補場次／組別／日期，順序自由。</p>
           <p>📧 勾選後按「批次寄中簽通知信」會寄結果信給中簽者；<strong>中簽但場次／組別未指定者會自動跳過</strong>，請補完再按一次。中簽信內含填寫互動作業的連結。</p>
-        </div>
-
-        {(() => {
-          const now = Date.now()
-          const isOpen = openMs != null && now >= openMs && (deadlineMs == null || now < deadlineMs)
-          const isPast = deadlineMs != null && now >= deadlineMs
-          const statusLabel = isOpen ? '✓ 開放中' : isPast ? '已截止' : '○ 未開始'
-          const statusCls = isOpen ? 'ok' : isPast ? 'error' : 'warn'
-          return (
-            <div className="admin-table-card" style={{
-              padding: '14px 18px', marginBottom: 14,
-              background: isOpen ? 'rgba(73, 85, 52, 0.04)' : 'rgba(216, 194, 154, 0.10)',
-              borderLeft: `4px solid ${isOpen ? 'var(--green)' : 'var(--gold-deep)'}`,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <span style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontWeight: 700, fontSize: 14, letterSpacing: '0.06em', color: 'var(--ink)' }}>
-                  互動報名開放狀態
-                </span>
-                <span className={`admin-status-badge ${statusCls}`}>{statusLabel}</span>
-                <span style={{ fontSize: 12, color: 'var(--ink-mute)', marginLeft: 4 }}>
-                  時間內可填寫送出；區間前 task card 不顯示；區間結束後可查看但不能送出
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>開始時間（台北）</label>
-                  <input type="datetime-local" value={openInput} onChange={e => setOpenInput(e.target.value)}
-                    style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
-                  {openMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(openMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>截止時間（台北）</label>
-                  <input type="datetime-local" value={deadlineInput} onChange={e => setDeadlineInput(e.target.value)}
-                    style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
-                  {deadlineMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(deadlineMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-                </div>
-                <button onClick={saveInteractiveRange} disabled={configSaving} className="admin-btn-sm primary">
-                  {configSaving ? '儲存中⋯' : '儲存'}
-                </button>
-              </div>
-            </div>
-          )
-        })()}
-
-        <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 18px', marginBottom: 14 }}>
-          <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--green-deep)', letterSpacing: '0.05em', marginBottom: 12 }}>⏱ 互動作業填寫時間</div>
-          <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>開放填寫（台北）</label>
-              <input type="datetime-local" value={taskOpenInput} onChange={e => setTaskOpenInput(e.target.value)}
-                style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
-              {taskOpenMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(taskOpenMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 5 }}>填寫截止（台北）</label>
-              <input type="datetime-local" value={taskDeadlineInput} onChange={e => setTaskDeadlineInput(e.target.value)}
-                style={{ fontSize: 13, padding: '5px 8px', border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg)' }} />
-              {taskDeadlineMs && <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>目前：{new Date(taskDeadlineMs).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</div>}
-            </div>
-            <button onClick={saveTaskTimes} disabled={configSaving} className="admin-btn-sm">
-              {configSaving ? '儲存中⋯' : '儲存'}
-            </button>
-          </div>
         </div>
 
         <SessionManagePanel sessions={sessions} slots={slots} onRefresh={fetchData} />
