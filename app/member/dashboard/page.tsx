@@ -143,10 +143,8 @@ function MemberDashboardContent() {
   const notifyPassed = Date.now() >= notifyMs
   const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
   const lodgingDeadlineLabel = (() => {
-    const d = new Date(lodgingDeadlineMs)
-    const m = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit' }).replace(/\//g, '')
-    const day = d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', day: '2-digit' }).replace(/\//g, '')
-    return `${Number(m)}/${Number(day)} 晚上 8 時前`
+    const d = new Date(lodgingDeadlineMs + 8 * 3600 * 1000)
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()} 晚上 8 時前`
   })()
 
   const paymentDone = member.payment_status === 'verified'
