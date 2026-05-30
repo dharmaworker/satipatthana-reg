@@ -40,6 +40,8 @@ export default function DashboardPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [editUploading, setEditUploading] = useState<'line' | 'wechat' | null>(null)
+  const [resendingConfirm, setResendingConfirm] = useState(false)
+  const [resendConfirmMsg, setResendConfirmMsg] = useState('')
 
   const handleEditQrUpload = async (kind: 'line' | 'wechat', file: File) => {
     setEditUploading(kind)
@@ -532,6 +534,27 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
+              <button
+                disabled={resendingConfirm}
+                onClick={async () => {
+                  if (!confirm(`確定補寄報名確認信給 ${detailReg.chinese_name}（${detailReg.email}）？`)) return
+                  setResendingConfirm(true); setResendConfirmMsg('')
+                  const res = await fetch('/api/admin/resend-confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: detailReg.id }),
+                  })
+                  const d = await res.json()
+                  setResendingConfirm(false)
+                  setResendConfirmMsg(res.ok ? `✓ 已補寄至 ${detailReg.email}（含備存信）` : `✗ ${d.error || '寄送失敗'}`)
+                }}
+                style={{ padding: '7px 20px', background: 'rgba(73,85,52,0.08)', border: '1px solid var(--line-strong)', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', cursor: resendingConfirm ? 'not-allowed' : 'pointer' }}>
+                {resendingConfirm ? '寄送中…' : '↩ 補寄報名確認信'}
+              </button>
+              {resendConfirmMsg && <p style={{ margin: '8px 0 0', fontSize: 13, color: resendConfirmMsg.startsWith('✓') ? 'var(--green)' : '#c0392b' }}>{resendConfirmMsg}</p>}
+            </div>
           </div>
         </div>
       )}
