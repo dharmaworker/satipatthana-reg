@@ -245,6 +245,7 @@ export interface PhaseCopy {
   recruitFlowNotifyLine: string
   highlightCard: { title: string; subtitle: string; lines: string[] } | null
   // ── Payment deadline (per phase) ──
+  payDeadlineMs: number | undefined     // UTC ms
   payDeadlineDot: string                // "06.15"
   payDeadlineShort: string              // "6/15"
   payDeadlineFull: string               // "2026/06/15"
@@ -311,6 +312,7 @@ function resolveCopy(phase: RegPhase): PhaseCopy {
       subtitle: tmpl.highlightCard.subtitle,
       lines: tmpl.highlightCard.lineTemplates.map(l => sub(l, vars)),
     } : null,
+    payDeadlineMs: (phase === 'not-yet' ? spanOf('open').payDeadlineMs : phase === 'closed' ? spanOf('late').payDeadlineMs : spanOf(phase).payDeadlineMs),
     payDeadlineDot: vars.payDeadlineDot,
     payDeadlineShort: vars.payDeadlineShort,
     payDeadlineFull: vars.payDeadlineFull,
@@ -458,6 +460,7 @@ function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
       title: tmpl.highlightCard.title, subtitle: tmpl.highlightCard.subtitle,
       lines: tmpl.highlightCard.lineTemplates.map(l => sub(l, vars)),
     } : null,
+    payDeadlineMs: (phase === 'not-yet' ? spanOfFrom(spans, 'open').payDeadlineMs : phase === 'closed' ? spanOfFrom(spans, 'late').payDeadlineMs : spanOfFrom(spans, phase).payDeadlineMs),
     payDeadlineDot: vars.payDeadlineDot, payDeadlineShort: vars.payDeadlineShort,
     payDeadlineFull: vars.payDeadlineFull, payDeadlineCN: vars.payDeadlineCN,
   }

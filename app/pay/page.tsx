@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForRegistration, ScheduleConfig } from '@/lib/registration-period'
+import { copyForRegistration, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 type PlanRow = { id: string; label: string; date: string; amount: number; method: 'transfer' | 'card'; test?: boolean }
 const PLANS: PlanRow[] = [
@@ -159,6 +159,7 @@ function PayContent() {
   const initial = reg?.chinese_name?.charAt(0) || '$'
   const paidStatus = reg?.payment_status
   const payCopy = copyForRegistration(reg, schedCfg)
+  const payTimeLabel = payCopy.payDeadlineMs ? msToTimeLabel(payCopy.payDeadlineMs) : '晚上 8 點'
 
   return (
     <>
@@ -188,7 +189,7 @@ function PayContent() {
           <p className="page-kicker">Payment</p>
           <h1 className="page-title">食宿費用繳費</h1>
           <p className="page-subtitle">
-            請於 <strong>{payCopy.payDeadlineCN}台北時間晚上 8 點前</strong>完成繳費。<br />
+            請於 <strong>{payCopy.payDeadlineCN}台北時間{payTimeLabel}前</strong>完成繳費。<br />
             繳費完成後系統會寄信邀請您完成食宿登記，方案內容會自動帶入食宿登記表。
           </p>
         </div>
@@ -233,7 +234,7 @@ function PayContent() {
             <div className="alert-card">
               <div className="alert-card-title">繳費前請務必確認</div>
               <ul>
-                <li>請於 <strong>{payCopy.payDeadlineFull} 晚上 8 點前</strong>（台北時間）完成繳費。</li>
+                <li>請於 <strong>{payCopy.payDeadlineFull} {payTimeLabel}前</strong>（台北時間）完成繳費。</li>
                 <li>一旦繳費後取消報名，<strong>已付費用恕無法退款或轉讓</strong>。</li>
                 <li>方案內容會自動帶入食宿登記表，請選擇對應的入住天數。</li>
               </ul>
@@ -353,7 +354,7 @@ function PayContent() {
                   <ul>
                     <li>匯款時請備注您的姓名及專屬碼：<strong style={{ letterSpacing: '0.12em' }}>{random_code}</strong></li>
                     <li>匯款完成後請填寫下方匯款資訊回報，並截圖上傳至學會 LINE 官方帳號。</li>
-                    <li>請於 <strong>{payCopy.payDeadlineFull} 晚上 8 點前</strong>完成匯款。</li>
+                    <li>請於 <strong>{payCopy.payDeadlineFull} {payTimeLabel}前</strong>完成匯款。</li>
                   </ul>
                 </div>
 
@@ -422,7 +423,7 @@ function PayContent() {
               <div className="deadline-label">Deadline</div>
               <div className="deadline-date">{payCopy.payDeadlineDot}</div>
               <div className="deadline-text">
-                台北時間晚上 <strong>8:00</strong> 前完成<br />
+                台北時間{payTimeLabel}前完成<br />
                 逾期視同放棄錄取
               </div>
             </div>
