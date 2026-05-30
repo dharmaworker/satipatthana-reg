@@ -27,13 +27,14 @@ function tpeToUtcMs(year: number, monthIdx0: number, day: number, hour: number, 
   return Date.UTC(year, monthIdx0, day, hour - TPE_OFFSET_HOURS, minute, 0)
 }
 
-// ─── 僅限開發環境的時間覆蓋 ─────────────────────────────────────────────────
-// 在 .env.local 設定 NEXT_PUBLIC_MOCK_NOW_TPE 以模擬不同的報名階段。
+// ─── 時間覆蓋（僅限測試用途）────────────────────────────────────────────────
+// 在 .env.local 或 Vercel Preview 設定 NEXT_PUBLIC_MOCK_NOW_TPE 以模擬不同的報名階段。
 // 格式："YYYY-MM-DD" 或 "YYYY-MM-DDTHH:mm"（台北時間，UTC+8）。
 // 範例：NEXT_PUBLIC_MOCK_NOW_TPE=2026-06-02T09:00
+// 注意：以 NEXT_PUBLIC_VERCEL_ENV 判斷，正式環境（production）即使設定此變數亦無效。
 function nowMs(): number {
   const mock = process.env.NEXT_PUBLIC_MOCK_NOW_TPE
-  if (process.env.NODE_ENV !== 'production' && mock) {
+  if (mock && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production') {
     const [datePart, timePart = '00:00'] = mock.trim().split('T')
     const [y, mo, d] = datePart.split('-').map(Number)
     const [h, mi] = timePart.split(':').map(Number)
