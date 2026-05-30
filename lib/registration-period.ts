@@ -417,7 +417,7 @@ function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
   }
 }
 
-export function getPhaseCopyWithConfig(cfg: ScheduleConfig | null | undefined, atMs: number = Date.now()): PhaseCopy {
+export function getPhaseCopyWithConfig(cfg: ScheduleConfig | null | undefined, atMs: number = nowMs()): PhaseCopy {
   const defs = buildPhaseDefsFromConfig(cfg)
   const spans = computeSpansFrom(defs)
   const phase = getRegPhaseFrom(defs, atMs)
