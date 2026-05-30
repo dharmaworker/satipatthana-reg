@@ -456,7 +456,7 @@ export function getPhaseCopyWithConfig(cfg: ScheduleConfig | null | undefined, a
   return resolveCopyFrom(spans, phase)
 }
 
-export function copyForCreatedAtWithConfig(cfg: ScheduleConfig | null | undefined, createdAt: string | number | Date | null | undefined): PhaseCopy {
+function copyForCreatedAtWithConfig(cfg: ScheduleConfig | null | undefined, createdAt: string | number | Date | null | undefined): PhaseCopy {
   if (createdAt == null) return getPhaseCopyWithConfig(cfg)
   const ms = typeof createdAt === 'string' ? Date.parse(createdAt)
     : createdAt instanceof Date ? createdAt.getTime() : createdAt as number

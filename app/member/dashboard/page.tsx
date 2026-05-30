@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForCreatedAt, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel } from '@/lib/registration-period'
+import { copyForCreatedAt, copyForRegistration, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -614,9 +614,9 @@ function MemberDashboardContent() {
               }
             </div>
 
-            {/* 重要時程 — period/notify dates derive from applicant's batch (created_at) */}
+            {/* 重要時程 — period/notify dates derive from DB schedule config + applicant's batch */}
             {(() => {
-              const sched = copyForCreatedAt(member.created_at)
+              const sched = copyForRegistration(member, schedCfg)
               return (
                 <div className="schedule-strip">
                   <h3>重要時程 <small>Schedule</small></h3>
