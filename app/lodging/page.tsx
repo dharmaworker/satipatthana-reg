@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
+import { getLodgingDeadlineMs, msToDotLabel, msToDayLabel, ScheduleConfig } from '@/lib/registration-period'
 
 const STEPS = [
   { num: 1, label: '行程安排', en: 'Travel' },
@@ -62,6 +63,7 @@ function LodgingContent() {
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
 
   const [reg, setReg] = useState<any>(null)
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
   const [existingLodging, setExistingLodging] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -139,6 +141,10 @@ function LodgingContent() {
       setUploadingKind(null)
     }
   }
+
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!id || !code) {
@@ -249,6 +255,9 @@ function LodgingContent() {
     return true // step 4 純 review
   }
 
+  const lodgingPhase = (reg?.registration_phase === 'late' ? 'late' : 'open') as 'open' | 'late'
+  const deadlineMs = getLodgingDeadlineMs(schedCfg, lodgingPhase)
+
   const goToStep = (target: number) => {
     if (target === step) return
     if (target < step) {
@@ -270,8 +279,8 @@ function LodgingContent() {
   }
 
   const handleSubmit = async () => {
-    if (Date.now() > Date.UTC(2026, 5, 20, 12, 0, 0)) {
-      setError('食宿登記已於 6/20 晚上 8 點截止，請聯絡學會。')
+    if (Date.now() > deadlineMs) {
+      setError(`食宿登記已於 ${msToDayLabel(deadlineMs)} 晚上 8 點截止，請聯絡學會。`)
       return
     }
     if (!validateStep1()) { setStep(1); return }
@@ -327,8 +336,9 @@ function LodgingContent() {
   }
 
   const isDomestic = reg?.residence === '台灣'
-  const DEADLINE_MS = Date.UTC(2026, 5, 20, 12, 0, 0)
-  const pastDeadline = Date.now() > DEADLINE_MS
+  const pastDeadline = Date.now() > deadlineMs
+  const deadlineDot = msToDotLabel(deadlineMs)
+  const deadlineDay = msToDayLabel(deadlineMs)
 
   if (loading) {
     return (
@@ -400,7 +410,7 @@ function LodgingContent() {
           <p className="page-kicker">Food &amp; Lodging Registration</p>
           <h1 className="page-title">食宿登記表</h1>
           <p className="page-subtitle">
-            請於 6 月 20 日台北時間晚上 8 點前完成。<br />
+            請於 {deadlineDay.replace('/', ' 月 ')} 日台北時間晚上 8 點前完成。<br />
             送出後僅能再修改一次（共 2 次送出機會）。
           </p>
 
@@ -454,7 +464,7 @@ function LodgingContent() {
                     系統已寄出確認信至您的 Email。
                     {hasEdited
                       ? <> 本表單已修改過一次，無法再修改。若需更動請聯絡學會。</>
-                      : <> 如需修改僅能再修改一次（6/20 晚上 8 點前），修改後即無法再動。</>}
+                      : <> 如需修改僅能再修改一次（{deadlineDay} 晚上 8 點前），修改後即無法再動。</>}
                   </p>
                 </div>
               </div>
@@ -485,7 +495,7 @@ function LodgingContent() {
                 <div className="submit-status-icon" style={{ background: 'var(--error)' }}>!</div>
                 <div className="submit-status-text">
                   <h4>食宿登記已截止</h4>
-                  <p>食宿登記已於 <strong>6/20 晚上 8 點</strong>（台北時間）截止，無法再提交。{existingLodging ? '以下為您送出的內容，僅供參考。' : ''}如有特殊狀況請聯絡學會。</p>
+                  <p>食宿登記已於 <strong>{deadlineDay} 晚上 8 點</strong>（台北時間）截止，無法再提交。{existingLodging ? '以下為您送出的內容，僅供參考。' : ''}如有特殊狀況請聯絡學會。</p>
                 </div>
               </div>
             )}
@@ -972,7 +982,7 @@ function LodgingContent() {
               <p style={{ textAlign: 'center', marginTop: 12, fontSize: 12.5, color: 'var(--ink-mute)' }}>
                 {existingLodging
                   ? '本次為最後 1 次修改機會，送出後即鎖定。'
-                  : '送出後可於 6/20 晚上 8 點前再修改 1 次，系統會寄出確認信。'}
+                  : `送出後可於 ${deadlineDay} 晚上 8 點前再修改 1 次，系統會寄出確認信。`}
               </p>
             )}
           </div>
@@ -981,7 +991,7 @@ function LodgingContent() {
           <aside>
             <div className="deadline-card">
               <div className="deadline-label">Deadline</div>
-              <div className="deadline-date">06.20</div>
+              <div className="deadline-date">{deadlineDot}</div>
               <div className="deadline-text">
                 台北時間晚上 <strong>8:00</strong> 前完成<br />
                 逾期將無法提交
