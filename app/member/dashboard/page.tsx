@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForRegistration, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel } from '@/lib/registration-period'
+import { copyForRegistration, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel, msToTimeLabel } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -144,11 +144,12 @@ function MemberDashboardContent() {
   const notifyMs = phaseDefs.find(p => p.key === memberPhase)?.notifyMs ?? 0
   const notifyPassed = Date.now() >= notifyMs
   const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
-  const lodgingDeadlineLabel = `${msToDayLabel(lodgingDeadlineMs)} 晚上 8 時前`
+  const lodgingDeadlineLabel = `${msToDayLabel(lodgingDeadlineMs)} ${msToTimeLabel(lodgingDeadlineMs)}前`
   const payDeadline = payDeadlineForWithConfig(schedCfg, memberPhase)
+  const payTimeLabel = payDeadline.ms ? msToTimeLabel(payDeadline.ms) : '晚上 8 時'
   const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
   const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
-  const interactiveDeadlineLabel = interactiveDeadlineMs ? `${msToDayLabel(interactiveDeadlineMs)} 晚上 8 點前` : '07/15 晚上 8 點前'
+  const interactiveDeadlineLabel = interactiveDeadlineMs ? `${msToDayLabel(interactiveDeadlineMs)} ${msToTimeLabel(interactiveDeadlineMs)}前` : '07/15 晚上 8 點前'
 
   const paymentDone = member.payment_status === 'verified'
   const paymentPending = member.payment_status === 'paid'
@@ -413,7 +414,7 @@ function MemberDashboardContent() {
               <div className="announce-card">
                 <div className="announce-card-title">最新公告</div>
                 <p>
-                  錄取通知已發送，請於 <strong>{payDeadline.short} 晚上 8 時前</strong>完成{' '}
+                  錄取通知已發送，請於 <strong>{payDeadline.short} {payTimeLabel}前</strong>完成{' '}
                   <a href={withAuth('/pay')}>繳費</a>，並於 <strong>{lodgingDeadlineLabel}</strong>完成{' '}
                   <a href={withAuth('/lodging')}>食宿登記</a>，才算正式錄取。
                 </p>
@@ -450,7 +451,7 @@ function MemberDashboardContent() {
                   state={paymentDone ? 'done' : paymentPending ? 'todo' : 'todo'}
                   statusBadge={paymentDone ? '已完成' : paymentPending ? '待確認' : '待繳費'}
                   badgeKind={paymentDone ? 'done' : paymentPending ? 'todo' : 'urgent'}
-                  deadline={`${payDeadline.short} 晚上 8 時前`} urgent={!paymentDone}
+                  deadline={`${payDeadline.short} ${payTimeLabel}前`} urgent={!paymentDone}
                   rows={[
                     ['方案', member.payment_plan || '尚未選擇'],
                     ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
@@ -481,7 +482,7 @@ function MemberDashboardContent() {
                   state={testsDone ? 'done' : 'todo'}
                   statusBadge={`${member.tests_uploaded}／${member.tests_total}`}
                   badgeKind={testsDone ? 'done' : 'todo'}
-                  deadline={`${msToDayLabel(qt1Ms)} 晚上 8 點 ／ ${msToDayLabel(qt2Ms)} 中午 12 點前`} urgent={false}
+                  deadline={`${msToDayLabel(qt1Ms)} ${msToTimeLabel(qt1Ms)} ／ ${msToDayLabel(qt2Ms)} ${msToTimeLabel(qt2Ms)}前`} urgent={false}
                   rows={[
                     ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
                     ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
