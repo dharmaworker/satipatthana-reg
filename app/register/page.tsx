@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getPhaseCopyWithConfig, ScheduleConfig } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 const THAILAND_COURSES = [
   '第一屆泰國四念處課程（2014年）',
@@ -483,7 +483,7 @@ export default function RegisterPage() {
               <div className="info-section">
                 <h3>錄取流程</h3>
                 <p>1. {copy.recruitFlowNotifyLine}</p>
-                <p>2. 收到錄取通知後，須於 <strong>{copy.payDeadlineCN}（台北時間）晚上 8 時前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
+                <p>2. 收到錄取通知後，須於 <strong>{copy.payDeadlineCN}（台北時間）{copy.payDeadlineMs ? msToTimeLabel(copy.payDeadlineMs) : '晚上 8 時'}前</strong>完成繳費並至學員專區填寫繳費資料，才算正式錄取。</p>
                 <p>3. 正式錄取者，將建立 LINE 及微信群組。</p>
                 <p>4. 實體禪修場地條件有限，最終錄取結果由課程組決定。</p>
               </div>
