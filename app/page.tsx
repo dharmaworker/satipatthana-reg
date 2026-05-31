@@ -180,7 +180,7 @@ export default function HomePage() {
                 <span><span className="icon">📍</span>地點：南投・日月潭</span>
                 <span className="reg-period" style={copy.highlightCard ? { background: copy.badgeColor, color: '#fff', padding: '4px 12px', borderRadius: 999 } : undefined}>
                   <span className="icon">{copy.highlightCard ? '🔔' : '📝'}</span>
-                  {copy.highlightCard ? `補報名 ${copy.sidebarDeadlineDate} 截止` : '報名期間：2026/05/11 — 06/01'}
+                  {copy.highlightCard ? `補報名 ${copy.sidebarDeadlineDate} 截止` : `報名期間：${copy.periodStartDot} — ${copy.sidebarDeadlineDate}`}
                 </span>
               </div>
 
@@ -333,7 +333,7 @@ export default function HomePage() {
               <p>請留意以下關鍵日期。</p>
             </div>
             <div className="timeline">
-              <TimelineItem side="left" date="05.11 — 06.01" title="報名期間" desc="線上填寫報名表，提交個人資料與修學歷程。" />
+              <TimelineItem side="left" date={`${copy.periodStartDot} — ${copy.sidebarDeadlineDate}`} title="報名期間" desc="線上填寫報名表，提交個人資料與修學歷程。" />
               <TimelineItem side="right" date="06.06　錄取通知" title="錄取通知發送" desc="錄取者將於 6 月 6 日收到 E-mail 通知。提交報名表單不代表已錄取。" />
               {copy.highlightCard && <>
                 <TimelineItem side="left" date={`06.01 — 06.07　${copy.highlightCard.title}`} title="補報名期間" desc="實體 60 名（額滿候補），線上不限名額。詳見上方補報名簡章。" />
