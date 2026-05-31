@@ -1,8 +1,8 @@
 'use client'
-import { Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getPhaseCopy } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
@@ -10,8 +10,13 @@ function SuccessContent() {
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
   const dashboardUrl = id && code ? `/member/dashboard?id=${id}&code=${encodeURIComponent(code)}` : '/member'
-  // Just-submitted — current phase's notify date applies.
-  const copy = getPhaseCopy()
+
+  const [schedCfg, setSchedCfg] = useState<ScheduleConfig | null>(null)
+  useEffect(() => {
+    fetch('/api/phase-config').then(r => r.json()).then(d => setSchedCfg(d)).catch(() => {})
+  }, [])
+
+  const copy = getPhaseCopyWithConfig(schedCfg)
 
   return (
     <>
@@ -55,7 +60,7 @@ function SuccessContent() {
             ) : (
               <ol>
                 <li>錄取通知將於 <strong>{copy.notifyLabel}</strong> 透過 E-mail 發送</li>
-                <li>錄取者請於 <strong>{copy.payDeadlineFull} 晚上 8 點前</strong>完成繳費</li>
+                <li>錄取者請於 <strong>{copy.payDeadlineFull} {copy.payDeadlineMs ? msToTimeLabel(copy.payDeadlineMs) : '晚上 8 點'}前</strong>完成繳費</li>
                 <li>課程日期：<strong>2026/08/20 ～ 08/24</strong>（南投・日月潭）</li>
                 <li>可隨時至 <a href={dashboardUrl} style={{ color: 'var(--green)', fontWeight: 700 }}>學員專區</a> 查詢審核狀態</li>
               </ol>
