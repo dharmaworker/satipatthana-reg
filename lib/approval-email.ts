@@ -1,6 +1,6 @@
 import { sendMail } from './mailer'
 import { C, emailWrap, emailKicker, emailH1, emailH3, emailH4, emailButton, emailWarning, emailHighlight, emailCodeBox, emailSignoff } from './email-style'
-import { copyForRegistration, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, msToDayLabel, ScheduleConfig } from './registration-period'
+import { copyForRegistration, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, getLodgingDeadlineMs, msToDayLabel, msToTimeLabel, ScheduleConfig } from './registration-period'
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://satipatthana-reg-eihf.vercel.app'
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
@@ -17,6 +17,15 @@ type ApprovalReg = { id: string; email: string; chinese_name: string; random_cod
 
 export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（共修期間）', schedCfg?: ScheduleConfig | null) {
   const payCopy = copyForRegistration(reg, schedCfg)
+  const lodgingPhase = (reg.registration_phase === 'late' ? 'late' : 'open') as 'open' | 'late'
+  const lodgingMs = getLodgingDeadlineMs(schedCfg, lodgingPhase)
+  const lodgingDay = msToDayLabel(lodgingMs)
+  const lodgingTime = msToTimeLabel(lodgingMs)
+  const payTime = payCopy.payDeadlineMs ? msToTimeLabel(payCopy.payDeadlineMs) : '晚上 8 點'
+  const qt1Ms = getQuicktestDeadline1Ms(schedCfg)
+  const qt2Ms = getQuicktestDeadline2Ms(schedCfg)
+  const qt1Time = msToTimeLabel(qt1Ms)
+  const qt2Time = msToTimeLabel(qt2Ms)
   if (reg.retreat_format === 'online') {
     const onlineBody = `
       ${emailKicker('Approval Notice')}
@@ -59,18 +68,18 @@ export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（�
     ${emailH3('二、繳費 / 食宿登記 / 快篩 / 承諾書')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">以下流程<strong style="color:${C.ink};">可獨立進行、不需依序</strong>。前三項為線上完成，第四項為下載列印後<strong style="color:${C.ink};">現場繳交</strong>。<strong style="color:${C.ink};">互動報名</strong>將另行寄信通知開放時間。</p>
 
-    <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>${payCopy.payDeadlineCN}台北時間晚上 8 時前</strong></p>
+    <p style="margin:14px 0 4px;font-size:14px;"><strong style="color:${C.green};">① 繳費</strong>　截止：<strong>${payCopy.payDeadlineCN}台北時間${payTime}前</strong></p>
     ${emailButton(`${baseUrl}/pay?id=${reg.id}&code=${reg.random_code}`, '前往繳費', 'green')}
     ${emailWarning('匯款／轉帳前請慎重考慮！由於飯店條款限制，學會已先代墊食宿等費用，一旦繳費後取消報名，已付的食宿等費用皆無法退款、轉讓。感謝您的諒解及配合！')}
 
-    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">② 食宿登記</strong>　截止：<strong>6 月 20 日晚上 8 點前</strong></p>
+    <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">② 食宿登記</strong>　截止：<strong>${lodgingDay.replace('/', ' 月 ')} 日${lodgingTime}前</strong></p>
     ${emailButton(`${baseUrl}/lodging?id=${reg.id}&code=${reg.random_code}`, '前往食宿登記', 'green')}
     ${emailWarning('填寫緊急聯絡人、飲食、交通、證件等資料。<strong>本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong>')}
 
     <p style="margin:18px 0 4px;font-size:14px;"><strong style="color:${C.green};">③ 快篩檢測上傳</strong>　依各時段截止：</p>
     ${emailButton(`${baseUrl}/quicktests?id=${reg.id}&code=${reg.random_code}`, '前往上傳快篩', 'gold')}
     <p style="font-size:13px;color:${C.inkMute};margin:6px 0 0;line-height:1.85;">
-      ・${msToDayLabel(getQuicktestDeadline1Ms(schedCfg))} 上午 8 點至晚上 8 點前　・${msToDayLabel(getQuicktestDeadline2Ms(schedCfg))} 上午 12 點前<br>
+      ・${msToDayLabel(qt1Ms)} 上午 8 點至${qt1Time}前　・${msToDayLabel(qt2Ms)} ${qt2Time}前<br>
       （課程期間 8/20、8/22 快篩結果<strong>現場繳交</strong>，不需線上上傳）<br>
       檢測結果需載明日期、報名序號、姓名；快篩試劑請自備。
     </p>
@@ -141,7 +150,7 @@ export function buildApprovalEmailPayload(reg: ApprovalReg, periodLabel = '（�
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">2026年8月24日下午5點30分（可選擇當日離營或25日上午9點30分前離營）</p>
 
     ${emailH3('八、食宿登記')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請從本信第二段「② 食宿登記」連結進入填寫，截止時間為 6/20 晚上 8 點。<strong style="color:${C.ink};">本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">請從本信第二段「② 食宿登記」連結進入填寫，截止時間為 ${lodgingDay} ${lodgingTime}。<strong style="color:${C.ink};">本表單送出後僅能再修改 1 次（共計 2 次送出機會），請務必確認後再送出。</strong></p>
 
     ${emailH3('九、禪修課程群組')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0;">資料經確認無誤後，學會將會以學員所提供之 LINE 或微信進入學會 <strong style="color:${C.ink};">8 月禪修課程群組</strong>。</p>
