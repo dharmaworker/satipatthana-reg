@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { getPhaseCopyWithConfig, payDeadlineForWithConfig, ScheduleConfig } from '@/lib/registration-period'
+import { getPhaseCopyWithConfig, payDeadlineForWithConfig, msToTimeLabel, ScheduleConfig } from '@/lib/registration-period'
 
 const TEACHERS = {
   'luangpu-pramote': {
@@ -117,6 +117,8 @@ export default function HomePage() {
   const mainPay = payDeadlineForWithConfig(schedCfg, 'open')
   const latePay = payDeadlineForWithConfig(schedCfg, 'late')
   const showLatePay = copy.phase === 'late' || copy.phase === 'closed'
+  const mainPayTime = mainPay.ms ? msToTimeLabel(mainPay.ms) : '晚上 8 時'
+  const latePayTime = latePay.ms ? msToTimeLabel(latePay.ms) : '晚上 8 時'
 
   useEffect(() => {
     if (modal) {
@@ -337,9 +339,9 @@ export default function HomePage() {
                 <TimelineItem side="left" date={`06.01 — 06.07　${copy.highlightCard.title}`} title="補報名期間" desc="實體 60 名（額滿候補），線上不限名額。詳見上方補報名簡章。" />
                 <TimelineItem side="right" date={`${copy.sidebarNotifyDate}　補報名錄取通知`} title="補報名批次錄取通知" desc={`補報名批次將於 ${copy.notifyLabel} 前統一以 Email 通知。`} />
               </>}
-              <TimelineItem side="left" date={`${mainPay.dot}　繳費截止`} title="完成繳費以正式錄取（主報名）" desc={`主報名錄取者須於 ${mainPay.cn}（台北時間）晚上 8 時前完成繳費，才算正式錄取。`} />
+              <TimelineItem side="left" date={`${mainPay.dot}　繳費截止`} title="完成繳費以正式錄取（主報名）" desc={`主報名錄取者須於 ${mainPay.cn}（台北時間）${mainPayTime}前完成繳費，才算正式錄取。`} />
               {showLatePay && (
-                <TimelineItem side="right" date={`${latePay.dot}　補報名繳費截止`} title="補報名繳費截止" desc={`補報名錄取者須於 ${latePay.cn}（台北時間）晚上 8 時前完成繳費，才算正式錄取。`} />
+                <TimelineItem side="right" date={`${latePay.dot}　補報名繳費截止`} title="補報名繳費截止" desc={`補報名錄取者須於 ${latePay.cn}（台北時間）${latePayTime}前完成繳費，才算正式錄取。`} />
               )}
               <TimelineItem side="right" date="08.20 — 08.24" title="報到、入住後" desc="展開為期五日四夜的四念處禪修" />
             </div>
@@ -365,7 +367,7 @@ export default function HomePage() {
                 <summary>錄取流程是怎樣的？</summary>
                 <p>提交報名表單<strong>不代表已錄取</strong>。錄取通知將於 <strong>{copy.notifyLabel}</strong> 以 Email 發送，請留意收件匣與垃圾信箱。<br />
                 收到錄取通知後，須於繳費截止前匯款／刷卡繳交食宿、場地及交通等費用，並至學員專區填寫繳費資料，才算完成正式錄取。<br />
-                <strong>繳費截止：</strong>主報名 <strong>{mainPay.cn}</strong>（台北時間）晚上 8 時前{showLatePay && <>；補報名 <strong>{latePay.cn}</strong>（台北時間）晚上 8 時前</>}。<br />
+                <strong>繳費截止：</strong>主報名 <strong>{mainPay.cn}</strong>（台北時間）{mainPayTime}前{showLatePay && <>；補報名 <strong>{latePay.cn}</strong>（台北時間）{latePayTime}前</>}。<br />
                 正式錄取者將建立 LINE 及微信群組聯繫。<strong style={{ color: 'var(--gold-deep)' }}>請勿在錄取確認前購買機票或安排行程。</strong></p>
               </details>
               <details>
