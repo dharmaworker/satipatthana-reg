@@ -178,6 +178,7 @@ export async function sendMailBatch(
     .insert({
       triggered_from: opts?.triggeredFrom ?? null,
       recipient_count: mails.length,
+      recipients: mails.map(m => m.to),
       description: opts?.description ?? null,
     })
     .select('id')

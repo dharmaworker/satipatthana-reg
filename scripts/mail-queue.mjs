@@ -189,6 +189,63 @@ async function listBatches() {
   }
 }
 
+// ─── --validateBatch ────────────────────────────────────────────────────────
+async function validateBatch(inputs) {
+  const ids = await resolveIds(inputs, 'email_batches')
+  if (!ids.length) { console.log('No matching batches.'); return }
+
+  for (const batchId of ids) {
+    const { data: batch, error: batchErr } = await supabase
+      .from('email_batches')
+      .select('id, triggered_from, recipient_count, recipients, created_at')
+      .eq('id', batchId)
+      .maybeSingle()
+    if (batchErr || !batch) { console.error(`Batch ${batchId} not found`); continue }
+
+    const { data: qrows, error: qErr } = await supabase
+      .from('email_queue')
+      .select('id, to_email, status, provider, attempt_count, parent_id')
+      .eq('batch_id', batchId)
+      .order('created_at', { ascending: true })
+    if (qErr) { console.error('Query failed:', qErr.message); continue }
+
+    const expected = batch.recipients ?? []
+    const expectedSet = new Set(expected.map(e => e.toLowerCase()))
+
+    // Only original rows (no retries) count as "present" — retries have parent_id set
+    const origRows = (qrows ?? []).filter(r => !r.parent_id)
+    const foundSet = new Set(origRows.map(r => r.to_email.toLowerCase()))
+
+    const missing = expected.filter(e => !foundSet.has(e.toLowerCase()))
+    const orphans = origRows.filter(r => !expectedSet.has(r.to_email.toLowerCase()))
+
+    console.log('\n' + '═'.repeat(80))
+    console.log(`Batch ${shortId(batch.id)}  ${fmtDate(batch.created_at)}  ${batch.triggered_from ?? '—'}`)
+    console.log('─'.repeat(80))
+    console.log(`  Expected (recipients[]):  ${expected.length}`)
+    console.log(`  recipient_count field:    ${batch.recipient_count}`)
+    console.log(`  Queue rows (originals):   ${origRows.length}`)
+    console.log(`  Queue rows (all incl. retries): ${(qrows ?? []).length}`)
+    console.log()
+
+    if (!expected.length) {
+      console.log('  ⚠️  recipients[] is empty — batch was created before this column was added.')
+      console.log(`  Queue rows present: ${origRows.length}`)
+    } else if (missing.length === 0 && orphans.length === 0) {
+      console.log('  ✓ All recipients accounted for. No missing or orphan rows.')
+    } else {
+      if (missing.length) {
+        console.log(`  Missing (${missing.length}) — in recipients[] but no queue row:`)
+        for (const e of missing) console.log(`    ${e}`)
+      }
+      if (orphans.length) {
+        console.log(`  Orphan rows (${orphans.length}) — in queue but not in recipients[]:`)
+        for (const r of orphans) console.log(`    ${r.id.slice(0, 8)}  ${r.to_email}  ${statusColor(r.status)}`)
+      }
+    }
+  }
+}
+
 // ─── --detail ───────────────────────────────────────────────────────────────
 async function showDetail(inputs) {
   const ids = await resolveIds(inputs)
@@ -353,6 +410,7 @@ function help() {
   --help                          顯示此說明
   --list                          列出郵件佇列（可加下方篩選條件）
   --listBatches                   列出所有寄送批次
+  --validateBatch uuid,...        驗證批次：比對 recipients[] 與實際 email_queue 紀錄
   --reconcile                     對帳：同步 Resend 已寄送郵件的最新狀態
   --detail uuid,...               顯示郵件鏈樹狀圖與完整欄位內容
   --retry uuid,... --provider P   重新加入佇列以待寄送（P: ${VALID_PROVIDERS.join('|')}）
@@ -407,6 +465,9 @@ async function main() {
   if (flag('--help') || args.length === 0) { help(); return }
   if (flag('--reconcile')) { await reconcile(); return }
   if (flag('--listBatches')) { await listBatches(); return }
+
+  const validateBatchIds = argList('--validateBatch')
+  if (validateBatchIds) { await validateBatch(validateBatchIds); return }
 
   const detail = argList('--detail')
   if (detail) { await showDetail(detail); return }

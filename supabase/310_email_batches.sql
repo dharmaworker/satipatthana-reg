@@ -13,3 +13,6 @@ ALTER TABLE public.email_batches ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all" ON public.email_batches;
 CREATE POLICY "service_role_all" ON public.email_batches
   FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+ALTER TABLE public.email_batches
+  ADD COLUMN IF NOT EXISTS recipients TEXT[] NOT NULL DEFAULT '{}';
