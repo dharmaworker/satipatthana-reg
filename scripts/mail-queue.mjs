@@ -62,7 +62,10 @@ function pad(str, len) {
   return w >= len ? s : s + ' '.repeat(len - w)
 }
 function fmtDate(iso) {
-  return iso ? iso.replace('T', ' ').slice(0, 19) : '—'
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
 }
 function shortId(id) {
   return id ? id.slice(0, 8) : '—'
@@ -74,8 +77,36 @@ const MAIL_TYPE_LABEL = {
   timetable_notify:     '課表發佈通知',
   formal_notification:  '正式學員通知',
   attendance_notify:    '出席通知',
+  register_confirm:     '報名確認',
+  lodging_confirm:      '食宿確認',
+  resend_code:          '重寄驗證碼',
+  interactive_invite:   '互動報名通知',
+  interactive_notify:   '互動結果通知',
+  quicktest_confirm:    '快篩確認',
 }
-const fmtMailType = (t) => MAIL_TYPE_LABEL[t] ?? t ?? '—'
+
+function inferMailTypeFromSubject(subject) {
+  if (!subject) return null
+  if (subject.includes('錄取')) return '錄取通知'
+  if (subject.includes('學號分配')) return '學號分配通知'
+  if (subject.includes('課程時間表')) return '課表發佈通知'
+  if (subject.includes('正式學員')) return '正式學員通知'
+  if (subject.includes('打卡')) return '出席通知'
+  if (subject.includes('食宿')) return '食宿確認'
+  if (subject.includes('專屬代碼')) return '重寄驗證碼'
+  if (subject.includes('互動作業') || subject.includes('互動報名結果')) return '互動結果通知'
+  if (subject.includes('互動報名')) return '互動報名通知'
+  if (subject.includes('快篩')) return '快篩確認'
+  if (subject.includes('報名確認')) return '報名確認'
+  return null
+}
+
+const fmtMailType = (t, subject) => {
+  if (MAIL_TYPE_LABEL[t]) return MAIL_TYPE_LABEL[t]
+  const inferred = inferMailTypeFromSubject(subject)
+  if (inferred) return inferred + '?'
+  return t ?? '—'
+}
 
 function statusColor(s) {
   const colors = {
@@ -104,7 +135,7 @@ async function listRows() {
   const limit = Number(arg('--limit')) || 200
   let query = supabase
     .from('email_queue')
-    .select('id, to_email, mail_type, provider, status, attempt_count, created_at, error, parent_id')
+    .select('id, to_email, subject, mail_type, provider, status, attempt_count, created_at, error, parent_id')
     .order('created_at', { ascending: false })
     .limit(limit)
 
@@ -152,7 +183,7 @@ function printTable(rows) {
       pad(shortId(r.id), 9),
       pad(fmtDate(r.created_at), 20),
       pad(r.to_email, 24),
-      pad(fmtMailType(r.mail_type), 14),
+      pad(fmtMailType(r.mail_type, r.subject), 14),
       pad(r.provider, 10),
       statusColor(r.status),
       r.error ? r.error.slice(0, 50) : ''
@@ -165,7 +196,7 @@ function printTable(rows) {
         ' '.repeat(9 - branch.length) + branch,
         pad(fmtDate(c.created_at), 20),
         pad(c.to_email, 24),
-        pad(fmtMailType(c.mail_type), 14),
+        pad(fmtMailType(c.mail_type, c.subject), 14),
         pad(c.provider, 10),
         statusColor(c.status),
         c.error ? c.error.slice(0, 50) : ''

@@ -13,6 +13,13 @@ import { readFileSync, writeFileSync } from 'fs'
 const PAGE_LIMIT = 100
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
+function fmtDate(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+}
+
 // ─── arg parsing ──────────────────────────────────────────────────────────────
 const args = process.argv.slice(2)
 const flag = name => args.includes(name)
@@ -129,7 +136,7 @@ async function listEmails() {
   console.log('-'.repeat(130))
   for (const e of results) {
     const to = (Array.isArray(e.to) ? e.to.join(', ') : (e.to ?? '—')).slice(0, 32)
-    const ts = e.created_at.replace('T', ' ').slice(0, 19)
+    const ts = fmtDate(e.created_at)
     console.log(`${e.id.padEnd(38)} ${ts.padEnd(20)} ${(e.status ?? '—').padEnd(12)} ${to.padEnd(32)} ${e.subject ?? ''}`)
   }
   console.log(`\nTotal: ${results.length}`)
