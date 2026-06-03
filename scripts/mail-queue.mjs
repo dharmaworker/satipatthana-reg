@@ -124,6 +124,7 @@ async function listRows() {
     const since = new Date(Date.now() - Number(hours) * 3600_000).toISOString()
     query = query.gte('created_at', since)
   }
+  if (flag('--solo')) query = query.is('batch_id', null)
 
   const { data, error } = await query
   if (error) { console.error('Error:', error.message); process.exit(1) }
@@ -422,6 +423,7 @@ function help() {
   --batch uuid,...                批次 ID
   --hours N                       最近 N 小時內
   --limit N                       筆數上限（預設 200）
+  --solo                          只顯示非批次郵件（batch_id 為空）
 
 uuid 參數可使用 8 字元短前綴。
 

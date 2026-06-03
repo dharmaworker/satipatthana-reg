@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
           ? '【第二屆台灣四念處禪修】線上課程報名確認'
           : '【第二屆台灣四念處禪修】實體課程報名確認',
         html: emailWrap(confirmBody),
-      }),
+      }, { mailType: 'register_confirm' }),
       sendMail({
         to: archiveEmail,
         subject: `【補寄備存】${isOnline ? '線上' : '實體'} ${reg.chinese_name} / ${reg.random_code}`,

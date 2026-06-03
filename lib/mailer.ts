@@ -38,14 +38,16 @@ async function logEmailSend(row: {
   mail_type?: string | null
   parent_id?: string | null
   batch_id?: string | null
-}) {
-  const { error } = await supabaseAdmin.from('email_queue').insert({
+}): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('email_queue').insert({
     ...row,
     sent_at: row.status === 'sent' ? new Date().toISOString() : null,
-  })
+  }).select('id').single()
   if (error) {
     console.error('[mailer] logEmailSend failed:', error.message)
+    return null
   }
+  return data.id
 }
 
 async function sendOnce(params: MailParams) {
@@ -114,21 +116,50 @@ export async function sendMail(params: MailParams) {
 
 // 有 retry 版本，只在全部失敗才寄警告信
 // gmailFallback=true（預設）：最後一次改用 Gmail 備援；false：全程用 Resend
-export async function sendMailWithRetry(params: MailParams, maxAttempts = 3, baseDelayMs = 600, gmailFallback = true) {
+export async function sendMailWithRetry(
+  params: MailParams,
+  opts?: { mailType?: string; maxAttempts?: number; baseDelayMs?: number; gmailFallback?: boolean }
+) {
+  const maxAttempts = opts?.maxAttempts ?? 3
+  const baseDelayMs = opts?.baseDelayMs ?? 600
+  const gmailFallback = opts?.gmailFallback ?? true
+  const mailType = opts?.mailType ?? null
+  const toEmail = Array.isArray(params.to) ? params.to[0] : params.to
+  const bccEmail = Array.isArray(params.bcc) ? params.bcc[0] : (params.bcc ?? null)
+
+  const baseLog = {
+    to_email: toEmail, subject: params.subject, html: params.html,
+    bcc: bccEmail, mail_type: mailType,
+  }
+
   let lastErr: unknown
+  let rootId: string | null = null
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const isGmailAttempt = gmailFallback && attempt === maxAttempts
+    let attemptErr: unknown = null
+    let result: any = null
+
     try {
-      if (gmailFallback && attempt === maxAttempts) {
-        return await sendOnceViaGmail(params)
-      }
-      return await sendOnce(params)
+      result = isGmailAttempt ? await sendOnceViaGmail(params) : await sendOnce(params)
     } catch (err) {
+      attemptErr = err
       lastErr = err
       console.error(`sendMailWithRetry attempt ${attempt}/${maxAttempts} failed:`, err, '| to:', params.to)
-      if (attempt < maxAttempts) {
-        await new Promise(r => setTimeout(r, baseDelayMs * attempt))
-      }
+    } finally {
+      const insertedId = await logEmailSend({
+        ...baseLog,
+        provider: isGmailAttempt ? 'gmail' : 'resend',
+        provider_message_id: result?.data?.id ?? null,
+        status: attemptErr ? 'failed' : 'sent',
+        error: attemptErr instanceof Error ? attemptErr.message : attemptErr ? String(attemptErr) : null,
+        parent_id: rootId,
+      })
+      if (attempt === 1 && attemptErr) rootId = insertedId
     }
+
+    if (!attemptErr) return isGmailAttempt ? undefined : result
+    if (attempt < maxAttempts) await new Promise(r => setTimeout(r, baseDelayMs * attempt))
   }
   sendAlert(params, lastErr, maxAttempts)
   throw lastErr
