@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+// Resend GET /emails/:id last_event values → our status column
 const STATUS_MAP: Record<string, string> = {
-  delivered: 'delivered',
-  bounced: 'bounced',
-  failed: 'failed',
+  delivered:        'delivered',
+  bounced:          'bounced',
+  complained:       'complained',
+  failed:           'failed',
+  suppressed:       'suppressed',
+  clicked:          'clicked',
+  opened:           'opened',
+  sent:             'sent',
+  scheduled:        'scheduled',
+  delivery_delayed: 'delivery_delayed',
 }
+
+// transient states — keep reconciling until a final state is reached
+const TRANSIENT_STATUSES = ['sent', 'scheduled', 'delivery_delayed']
 
 const BATCH_SIZE = 8
 const BATCH_DELAY_MS = 1100
@@ -24,7 +35,7 @@ export async function POST(request: NextRequest) {
     .from('email_queue')
     .select('id, provider_message_id, status')
     .eq('provider', 'resend')
-    .eq('status', 'sent')
+    .in('status', TRANSIENT_STATUSES)
     .not('provider_message_id', 'is', null)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
