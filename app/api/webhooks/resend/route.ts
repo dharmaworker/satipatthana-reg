@@ -44,6 +44,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing email_id' }, { status: 400 })
   }
 
+  // Build error message from webhook payload
+  function buildErrorMsg(type: string, data: any): string | null {
+    if (type === 'email.failed') {
+      return data?.failed?.reason ?? null
+    }
+    if (type === 'email.bounced') {
+      const b = data?.bounce
+      if (!b) return null
+      const parts: string[] = []
+      if (b.type) parts.push(b.type)
+      if (b.subType) parts.push(b.subType)
+      if (b.message) parts.push(b.message)
+      if (b.diagnosticCode?.length) parts.push(b.diagnosticCode.join('; '))
+      return parts.join(' · ') || null
+    }
+    return null
+  }
+
   // Update email_queue row status for terminal events
   const newStatus = STATUS_MAP[type]
   let sourceRow: any = null
@@ -52,7 +70,7 @@ export async function POST(request: NextRequest) {
       .from('email_queue')
       .update({
         status: newStatus,
-        error: event.data?.bounce?.message || null,
+        error: buildErrorMsg(type, event.data),
       })
       .eq('provider', 'resend')
       .eq('provider_message_id', emailId)
