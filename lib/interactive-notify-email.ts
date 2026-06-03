@@ -167,5 +167,5 @@ export async function sendInteractiveTaskConfirmEmail(opts: {
     bcc: archiveEmail,
     subject: '【第二屆台灣四念處禪修】互動作業確認',
     html: emailWrap(body),
-  }, 3, 600, true)
+  }, { mailType: 'interactive_notify' })
 }
