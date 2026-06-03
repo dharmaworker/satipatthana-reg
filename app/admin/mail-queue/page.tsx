@@ -108,10 +108,12 @@ function QueueTable({
   rows,
   selected,
   onToggle,
+  onPreview,
 }: {
   rows: TreeRow[]
   selected: Set<string>
   onToggle: (id: string) => void
+  onPreview: (id: string) => void
 }) {
   if (!rows.length) {
     return <div style={{ color: '#6b7280', padding: '24px 0', textAlign: 'center' }}>無資料</div>
@@ -160,18 +162,38 @@ function QueueTable({
           </span>
         </td>
         <td style={{ ...tdStyle, width: 160, color: '#6b7280' }}>{fmtDate(r.created_at)}</td>
-        <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <td style={{ ...tdStyle, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {r.to_email}
         </td>
-        <td style={{ ...tdStyle, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', color: '#374151' }}>
+        <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#374151' }} title={r.subject ?? ''}>
+          {r.subject ?? '—'}
+        </td>
+        <td style={{ ...tdStyle, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', color: '#6b7280' }}>
           {fmtMailType(r.mail_type, r.subject)}
         </td>
         <td style={{ ...tdStyle, width: 80, color: '#6b7280' }}>{r.provider}</td>
         <td style={{ ...tdStyle, width: 100 }}>
           <StatusBadge status={r.status} />
         </td>
-        <td style={{ ...tdStyle, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', color: '#ef4444', fontSize: 11 }}>
-          {r.error ? r.error.slice(0, 80) : ''}
+        <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#ef4444', fontSize: 11 }}>
+          {r.error ? r.error.slice(0, 60) : ''}
+        </td>
+        <td style={{ ...tdStyle, width: 44, textAlign: 'center' }}>
+          <button
+            onClick={() => onPreview(r.id)}
+            title="預覽郵件內容"
+            style={{
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              background: '#f9fafb',
+              cursor: 'pointer',
+              fontSize: 13,
+              padding: '1px 6px',
+              color: '#374151',
+            }}
+          >
+            👁
+          </button>
         </td>
       </tr>
     )
@@ -186,10 +208,12 @@ function QueueTable({
             <th style={thStyle}>id</th>
             <th style={thStyle}>created_at</th>
             <th style={thStyle}>to_email</th>
+            <th style={thStyle}>subject</th>
             <th style={thStyle}>mail_type</th>
             <th style={thStyle}>provider</th>
             <th style={thStyle}>status</th>
             <th style={thStyle}>error</th>
+            <th style={{ ...thStyle, width: 44 }} />
           </tr>
         </thead>
         <tbody>
@@ -307,6 +331,10 @@ export default function MailQueuePage() {
   // reconcile
   const [reconciling, setReconciling] = useState(false)
 
+  // preview
+  const [preview, setPreview] = useState<{ id: string; subject: string | null; to_email: string; html: string } | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+
   // auto-poll
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
@@ -400,6 +428,15 @@ export default function MailQueuePage() {
     if (!res.ok) { setMessage('對帳失敗：' + json.error); return }
     setMessage(`對帳完成：檢查 ${json.checked} 筆，更新 ${json.updated} 筆狀態。`)
     if (json.updated > 0) loadQueue()
+  }
+
+  const handlePreview = async (id: string) => {
+    setPreviewLoading(true)
+    const res = await fetch(`/api/admin/mail-queue/row/${id}`)
+    const json = await res.json()
+    setPreviewLoading(false)
+    if (!res.ok) { setMessage('預覽失敗：' + json.error); return }
+    setPreview({ id, subject: json.row.subject, to_email: json.row.to_email, html: json.row.html ?? '' })
   }
 
   const handleBatchSelect = (batchId: string) => {
@@ -606,7 +643,7 @@ export default function MailQueuePage() {
             </div>
           )}
 
-          <QueueTable rows={rows} selected={selected} onToggle={toggleSelect} />
+          <QueueTable rows={rows} selected={selected} onToggle={toggleSelect} onPreview={handlePreview} />
         </>
       )}
 
@@ -630,6 +667,68 @@ export default function MailQueuePage() {
           )}
           <BatchTable batches={batches} onSelect={handleBatchSelect} />
         </>
+      )}
+
+      {/* preview loading overlay */}
+      {previewLoading && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
+        }}>
+          <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: 16 }}>載入預覽…</span>
+        </div>
+      )}
+
+      {/* preview modal */}
+      {preview && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60,
+          }}
+          onClick={() => setPreview(null)}
+        >
+          <div
+            style={{
+              background: '#fff', borderRadius: 8, overflow: 'hidden',
+              width: '90vw', maxWidth: 900, height: '85vh',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* modal header */}
+            <div style={{
+              padding: '12px 16px', borderBottom: '1px solid #e5e7eb',
+              display: 'flex', alignItems: 'flex-start', gap: 12,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                  {shortId(preview.id)} · {preview.to_email}
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 600, color: '#111827', wordBreak: 'break-all' }}>
+                  {preview.subject ?? '（無主旨）'}
+                </div>
+              </div>
+              <button
+                onClick={() => setPreview(null)}
+                style={{
+                  border: 'none', background: 'none', cursor: 'pointer',
+                  fontSize: 20, color: '#6b7280', lineHeight: 1, padding: 4, flexShrink: 0,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            {/* iframe */}
+            <iframe
+              srcDoc={preview.html}
+              style={{ flex: 1, border: 'none', width: '100%' }}
+              sandbox="allow-same-origin"
+              title="mail preview"
+            />
+          </div>
+        </div>
       )}
     </div>
   )
