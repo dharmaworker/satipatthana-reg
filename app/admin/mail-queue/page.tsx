@@ -1,7 +1,9 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fmtMailType } from '@/lib/mail-labels'
+
+const POLL_INTERVAL = 30_000
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -302,6 +304,14 @@ export default function MailQueuePage() {
   const [retryProvider, setRetryProvider] = useState('resend')
   const [retrying, setRetrying] = useState(false)
 
+  // reconcile
+  const [reconciling, setReconciling] = useState(false)
+
+  // auto-poll
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   useEffect(() => {
     fetch('/api/admin/me').then(r => {
       if (!r.ok) router.push('/admin/login')
@@ -327,6 +337,7 @@ export default function MailQueuePage() {
     if (json.warning) setMessage(json.warning)
     setRows(buildTree(json.rows ?? []))
     setSelected(new Set())
+    setLastRefresh(new Date())
   }, [statusFilter, hoursFilter, searchText, soloFilter, batchFilter, providerFilter])
 
   const loadBatches = useCallback(async () => {
@@ -343,6 +354,16 @@ export default function MailQueuePage() {
     if (tab === 'queue') loadQueue()
     else loadBatches()
   }, [authChecked, tab, loadQueue, loadBatches])
+
+  // auto-poll: only on queue tab
+  useEffect(() => {
+    if (!authChecked || tab !== 'queue') return
+    if (pollRef.current) clearInterval(pollRef.current)
+    if (autoRefresh) {
+      pollRef.current = setInterval(loadQueue, POLL_INTERVAL)
+    }
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [authChecked, tab, autoRefresh, loadQueue])
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -368,6 +389,17 @@ export default function MailQueuePage() {
     setMessage(`已插入 ${json.inserted} 筆待寄佇列，Cron 一分鐘內處理。`)
     setSelected(new Set())
     loadQueue()
+  }
+
+  const handleReconcile = async () => {
+    setReconciling(true)
+    setMessage('')
+    const res = await fetch('/api/admin/mail-queue/reconcile', { method: 'POST' })
+    const json = await res.json()
+    setReconciling(false)
+    if (!res.ok) { setMessage('對帳失敗：' + json.error); return }
+    setMessage(`對帳完成：檢查 ${json.checked} 筆，更新 ${json.updated} 筆狀態。`)
+    if (json.updated > 0) loadQueue()
   }
 
   const handleBatchSelect = (batchId: string) => {
@@ -505,6 +537,31 @@ export default function MailQueuePage() {
             </button>
 
             <span style={{ fontSize: 12, color: '#9ca3af' }}>{rows.length} rows</span>
+
+            {/* auto-refresh toggle */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: '#6b7280' }}>
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={e => setAutoRefresh(e.target.checked)}
+              />
+              自動更新 30s
+            </label>
+
+            {lastRefresh && (
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                上次更新 {lastRefresh.toLocaleTimeString()}
+              </span>
+            )}
+
+            {/* reconcile */}
+            <button
+              onClick={handleReconcile}
+              disabled={reconciling}
+              style={{ ...btnStyle(false), background: '#fffbeb', borderColor: '#fbbf24', color: '#92400e' }}
+            >
+              {reconciling ? '對帳中…' : 'Resend 對帳'}
+            </button>
           </div>
 
           {/* retry bar */}
