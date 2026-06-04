@@ -965,7 +965,7 @@ export default function RegisterPage() {
             <div className="alert-card" style={{ marginTop: 18, position: 'sticky', bottom: 16, zIndex: 10 }}>
               <div className="alert-card-title">{error}</div>
               <p>
-                <button onClick={() => { setError(''); setErrorField(null) }}
+                <button type="button" onClick={() => { setError(''); setErrorField(null) }}
                   className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 12 }}>
                   我知道了
                 </button>
@@ -975,18 +975,18 @@ export default function RegisterPage() {
 
           <div className="form-actions">
             {step > 1 ? (
-              <button onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
+              <button type="button" onClick={() => goToStep(step - 1)} className="btn btn-ghost">← 上一步</button>
             ) : (
               <a href="/" className="btn btn-ghost">← 返回首頁</a>
             )}
             {step < STEPS.length ? (
-              <button onClick={() => goToStep(step + 1)}
+              <button type="button" onClick={() => goToStep(step + 1)}
                 disabled={step === 4 && form.honest_confirm === 'no'}
                 className="btn btn-primary">
                 下一步 <span className="arrow">→</span>
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={loading} className="btn btn-primary">
+              <button type="button" onClick={handleSubmit} disabled={loading} className="btn btn-primary">
                 {loading ? '提交中⋯' : '提交報名表'} <span className="arrow">→</span>
               </button>
             )}
