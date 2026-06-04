@@ -7,11 +7,17 @@ type ScheduleConfig = {
   open_notify?: string | null
   open_pay_deadline?: string | null
   open_lodging_deadline?: string | null
+  open_payment_open?: string | null
+  open_lodging_open?: string | null
+  open_quicktest_open?: string | null
   late_start?: string | null
   late_end?: string | null
   late_notify?: string | null
   late_pay_deadline?: string | null
   late_lodging_deadline?: string | null
+  late_payment_open?: string | null
+  late_lodging_open?: string | null
+  late_quicktest_open?: string | null
   quicktest_1_deadline?: string | null
   quicktest_2_deadline?: string | null
 }
@@ -174,6 +180,9 @@ export default function ScheduleConfigPage() {
                   ['錄取通知時間', 'open_notify'],
                   ['繳費截止時間', 'open_pay_deadline'],
                   ['食宿截止時間', 'open_lodging_deadline'],
+                  ['繳費功能公開時間', 'open_payment_open'],
+                  ['食宿功能公開時間', 'open_lodging_open'],
+                  ['快篩功能公開時間', 'open_quicktest_open'],
                 ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
                   <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {label}（台灣時間）
@@ -192,6 +201,9 @@ export default function ScheduleConfigPage() {
               <DisplayRow label="錄取通知" value={formatDisplay(config.open_notify)} fallback="2026/06/06 中午 12:00" />
               <DisplayRow label="繳費截止" value={formatDisplay(config.open_pay_deadline)} fallback="2026/06/15 晚上 08:00" />
               <DisplayRow label="食宿截止" value={formatDisplay(config.open_lodging_deadline)} fallback="2026/06/20 晚上 08:00" />
+              <DisplayRow label="繳費功能公開" value={formatDisplay(config.open_payment_open)} fallback="同錄取通知時間" />
+              <DisplayRow label="食宿功能公開" value={formatDisplay(config.open_lodging_open)} fallback="同錄取通知時間" />
+              <DisplayRow label="快篩功能公開" value={formatDisplay(config.open_quicktest_open)} fallback="同錄取通知時間" />
             </div>
           )}
         </section>
@@ -212,6 +224,9 @@ export default function ScheduleConfigPage() {
                   ['錄取通知時間', 'late_notify'],
                   ['繳費截止時間', 'late_pay_deadline'],
                   ['食宿截止時間', 'late_lodging_deadline'],
+                  ['繳費功能公開時間', 'late_payment_open'],
+                  ['食宿功能公開時間', 'late_lodging_open'],
+                  ['快篩功能公開時間', 'late_quicktest_open'],
                 ] as [string, keyof ScheduleConfig][]).map(([label, field]) => (
                   <label key={field} style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {label}（台灣時間）
@@ -230,6 +245,9 @@ export default function ScheduleConfigPage() {
               <DisplayRow label="錄取通知" value={formatDisplay(config.late_notify)} fallback="2026/06/10 中午 12:00" />
               <DisplayRow label="繳費截止" value={formatDisplay(config.late_pay_deadline)} fallback="2026/06/20 晚上 08:00" />
               <DisplayRow label="食宿截止" value={formatDisplay(config.late_lodging_deadline)} fallback="2026/06/20 晚上 08:00" />
+              <DisplayRow label="繳費功能公開" value={formatDisplay(config.late_payment_open)} fallback="同錄取通知時間" />
+              <DisplayRow label="食宿功能公開" value={formatDisplay(config.late_lodging_open)} fallback="同錄取通知時間" />
+              <DisplayRow label="快篩功能公開" value={formatDisplay(config.late_quicktest_open)} fallback="同錄取通知時間" />
             </div>
           )}
         </section>

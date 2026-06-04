@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
-import { copyForRegistration, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, payDeadlineForWithConfig, msToDayLabel, msToDotLabel, msToTimeLabel } from '@/lib/registration-period'
+import { copyForRegistration, buildPhaseDefsFromConfig, getLodgingDeadlineMs, getQuicktestDeadline1Ms, getQuicktestDeadline2Ms, getFeatureOpenMs, payDeadlineForWithConfig, msToDayLabel, msToDotLabel, msToTimeLabel } from '@/lib/registration-period'
 
 type MemberData = {
   id: string
@@ -141,8 +141,9 @@ function MemberDashboardContent() {
   // 錄取通知日後才開放繳費/食宿/快篩
   const phaseDefs = buildPhaseDefsFromConfig(schedCfg)
   const memberPhase = member.registration_phase === 'late' ? 'late' : 'open'
-  const notifyMs = phaseDefs.find(p => p.key === memberPhase)?.notifyMs ?? 0
-  const notifyPassed = Date.now() >= notifyMs
+  const paymentOpen = Date.now() >= getFeatureOpenMs(schedCfg, memberPhase, 'payment')
+  const lodgingOpen = Date.now() >= getFeatureOpenMs(schedCfg, memberPhase, 'lodging')
+  const quicktestOpen = Date.now() >= getFeatureOpenMs(schedCfg, memberPhase, 'quicktest')
   const lodgingDeadlineMs = getLodgingDeadlineMs(schedCfg, memberPhase)
   const lodgingDeadlineLabel = `${msToDayLabel(lodgingDeadlineMs)} ${msToTimeLabel(lodgingDeadlineMs)}前`
   const payDeadline = payDeadlineForWithConfig(schedCfg, memberPhase)
@@ -456,9 +457,9 @@ function MemberDashboardContent() {
                     ['方案', member.payment_plan || '尚未選擇'],
                     ['狀態', paymentDone ? '繳費已確認' : paymentPending ? '已回報，待確認' : '尚未繳費'],
                   ]}
-                  actionHref={notifyPassed ? withAuth('/pay') : undefined}
-                  actionText={paymentDone ? '查看' : notifyPassed ? '前往繳費 →' : '尚未開放'}
-                  actionDisabled={!notifyPassed && !paymentDone}
+                  actionHref={paymentOpen ? withAuth('/pay') : undefined}
+                  actionText={paymentDone ? '查看' : paymentOpen ? '前往繳費 →' : '尚未開放'}
+                  actionDisabled={!paymentOpen && !paymentDone}
                 />
 
                 {/* 食宿登記 */}
@@ -471,9 +472,9 @@ function MemberDashboardContent() {
                   rows={[
                     ['狀態', lodgingLocked ? '已修改過 1 次（鎖定）' : lodgingDone ? '已送出（還能修改 1 次）' : '尚未送出'],
                   ]}
-                  actionHref={notifyPassed ? withAuth('/lodging') : undefined}
-                  actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : notifyPassed ? '前往登記 →' : '尚未開放'}
-                  actionDisabled={!notifyPassed && !lodgingDone}
+                  actionHref={lodgingOpen ? withAuth('/lodging') : undefined}
+                  actionText={lodgingLocked ? '查看' : lodgingDone ? '修改一次' : lodgingOpen ? '前往登記 →' : '尚未開放'}
+                  actionDisabled={!lodgingOpen && !lodgingDone}
                 />
 
                 {/* 快篩 */}
@@ -487,9 +488,9 @@ function MemberDashboardContent() {
                     ['8/17 快篩', member.tests_uploaded >= 1 ? '✅ 已上傳' : '⏳ 未上傳'],
                     ['8/19 快篩', member.tests_uploaded >= 2 ? '✅ 已上傳' : '⏳ 未上傳'],
                   ]}
-                  actionHref={notifyPassed ? withAuth('/quicktests') : undefined}
-                  actionText={testsDone ? '查看' : notifyPassed ? '前往上傳 →' : '尚未開放'}
-                  actionDisabled={!notifyPassed && !testsDone}
+                  actionHref={quicktestOpen ? withAuth('/quicktests') : undefined}
+                  actionText={testsDone ? '查看' : quicktestOpen ? '前往上傳 →' : '尚未開放'}
+                  actionDisabled={!quicktestOpen && !testsDone}
                 />
 
                 {/* 互動報名（開始時間到才顯示；截止後可查看但不能送出） */}

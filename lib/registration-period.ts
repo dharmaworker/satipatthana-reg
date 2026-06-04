@@ -330,11 +330,17 @@ export interface ScheduleConfig {
   open_notify?: string | null
   open_pay_deadline?: string | null
   open_lodging_deadline?: string | null
+  open_payment_open?: string | null    // 繳費功能公開時間（主報名）
+  open_lodging_open?: string | null    // 食宿功能公開時間（主報名）
+  open_quicktest_open?: string | null  // 快篩功能公開時間（主報名）
   late_start?: string | null   // 同時也是主報名結束時間
   late_end?: string | null
   late_notify?: string | null
   late_pay_deadline?: string | null
   late_lodging_deadline?: string | null
+  late_payment_open?: string | null    // 繳費功能公開時間（補報名）
+  late_lodging_open?: string | null    // 食宿功能公開時間（補報名）
+  late_quicktest_open?: string | null  // 快篩功能公開時間（補報名）
   quicktest_1_deadline?: string | null   // 8/17 快篩截止
   quicktest_2_deadline?: string | null   // 8/19 快篩截止
 }
@@ -369,6 +375,22 @@ export function getLodgingDeadlineMs(cfg: ScheduleConfig | null | undefined, pha
   const iso = phase === 'late' ? cfg?.late_lodging_deadline : cfg?.open_lodging_deadline
   if (iso) return new Date(iso).getTime()
   return Date.UTC(2026, 5, 20, 12, 0, 0) // fallback: 2026-06-20 20:00 TPE
+}
+
+/**
+ * 各功能（繳費/食宿/快篩）在學員 dashboard 的「公開時間」
+ * 未設定時 fallback 到該 phase 的 notifyMs（錄取通知時間）
+ */
+export function getFeatureOpenMs(
+  cfg: ScheduleConfig | null | undefined,
+  phase: 'open' | 'late',
+  feature: 'payment' | 'lodging' | 'quicktest'
+): number {
+  const key = `${phase}_${feature}_open` as keyof ScheduleConfig
+  const iso = cfg?.[key] as string | null | undefined
+  if (iso) return new Date(iso).getTime()
+  const defs = buildPhaseDefsFromConfig(cfg)
+  return defs.find(p => p.key === phase)?.notifyMs ?? 0
 }
 
 export function getQuicktestDeadline1Ms(cfg: ScheduleConfig | null | undefined): number {
