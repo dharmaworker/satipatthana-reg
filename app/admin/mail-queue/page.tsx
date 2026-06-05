@@ -163,6 +163,21 @@ function QueueTable({
         </td>
         <td style={{ ...tdStyle, width: 160, color: '#6b7280' }}>{fmtDate(r.created_at)}</td>
         <td style={{ ...tdStyle, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <button
+            onClick={() => onPreview(r.id)}
+            title="預覽郵件內容"
+            style={{
+              border: '1px solid #d1d5db',
+              borderRadius: 4,
+              background: '#f9fafb',
+              cursor: 'pointer',
+              fontSize: 13,
+              padding: '1px 6px',
+              color: '#374151',
+              marginRight: 4,
+              verticalAlign: 'middle',
+            }}
+          >👁</button>
           {r.to_email}
         </td>
         <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#374151' }} title={r.subject ?? ''}>
@@ -177,23 +192,6 @@ function QueueTable({
         </td>
         <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#ef4444', fontSize: 11 }}>
           {r.error ? r.error.slice(0, 60) : ''}
-        </td>
-        <td style={{ ...tdStyle, width: 44, textAlign: 'center' }}>
-          <button
-            onClick={() => onPreview(r.id)}
-            title="預覽郵件內容"
-            style={{
-              border: '1px solid #d1d5db',
-              borderRadius: 4,
-              background: '#f9fafb',
-              cursor: 'pointer',
-              fontSize: 13,
-              padding: '1px 6px',
-              color: '#374151',
-            }}
-          >
-            👁
-          </button>
         </td>
       </tr>
     )
@@ -213,7 +211,6 @@ function QueueTable({
             <th style={thStyle}>provider</th>
             <th style={thStyle}>status</th>
             <th style={thStyle}>error</th>
-            <th style={{ ...thStyle, width: 44 }} />
           </tr>
         </thead>
         <tbody>
@@ -426,8 +423,13 @@ export default function MailQueuePage() {
     const json = await res.json()
     setReconciling(false)
     if (!res.ok) { setMessage('對帳失敗：' + json.error); return }
-    setMessage(`對帳完成：檢查 ${json.checked} 筆，更新 ${json.updated} 筆狀態。`)
-    if (json.updated > 0) loadQueue()
+    const resendChecked = json.resend?.checked ?? 0
+    const resendUpdated = json.resend?.updated ?? 0
+    const aliUpdated    = json.alicloud?.updated ?? 0
+    const aliUnmatched  = json.alicloud?.unmatched ?? 0
+    const totalUpdated  = resendUpdated + aliUpdated
+    setMessage(`對帳完成：Resend 檢查 ${resendChecked} 筆，更新 ${resendUpdated} 筆；AliCloud 更新 ${aliUpdated} 筆，未匹配 ${aliUnmatched} 筆。`)
+    if (totalUpdated > 0) loadQueue()
   }
 
   const handlePreview = async (id: string) => {
@@ -597,7 +599,7 @@ export default function MailQueuePage() {
               disabled={reconciling}
               style={{ ...btnStyle(false), background: '#fffbeb', borderColor: '#fbbf24', color: '#92400e' }}
             >
-              {reconciling ? '對帳中…' : 'Resend 對帳'}
+              {reconciling ? '同步中…' : '同步寄送狀態'}
             </button>
           </div>
 
