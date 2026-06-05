@@ -428,8 +428,8 @@ export default function MailQueuePage() {
     const aliUpdated    = json.alicloud?.updated ?? 0
     const aliUnmatched  = json.alicloud?.unmatched ?? 0
     const totalUpdated  = resendUpdated + aliUpdated
+    if (totalUpdated > 0) await loadQueue()
     setMessage(`對帳完成：Resend 檢查 ${resendChecked} 筆，更新 ${resendUpdated} 筆；AliCloud 更新 ${aliUpdated} 筆，未匹配 ${aliUnmatched} 筆。`)
-    if (totalUpdated > 0) loadQueue()
   }
 
   const handlePreview = async (id: string) => {
