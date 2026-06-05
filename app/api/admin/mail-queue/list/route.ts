@@ -69,5 +69,21 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ rows: data ?? [] })
+  const rows = data ?? []
+
+  // if any child rows are in the result but their parent isn't, fetch the missing parents
+  const returnedIds = new Set(rows.map(r => r.id))
+  const missingParentIds = [...new Set(
+    rows.map(r => r.parent_id).filter((id): id is string => !!id && !returnedIds.has(id))
+  )]
+
+  if (missingParentIds.length) {
+    const { data: parents } = await supabaseAdmin
+      .from('email_queue')
+      .select('id, to_email, subject, mail_type, provider, status, attempt_count, created_at, error, parent_id, batch_id')
+      .in('id', missingParentIds)
+    if (parents?.length) rows.push(...parents)
+  }
+
+  return NextResponse.json({ rows })
 }

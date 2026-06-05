@@ -162,7 +162,7 @@ function QueueTable({
           </span>
         </td>
         <td style={{ ...tdStyle, width: 160, color: '#6b7280' }}>{fmtDate(r.created_at)}</td>
-        <td style={{ ...tdStyle, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <td style={{ ...tdStyle, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }} title={r.to_email}>
           <button
             onClick={() => onPreview(r.id)}
             title="預覽郵件內容"
@@ -190,8 +190,8 @@ function QueueTable({
         <td style={{ ...tdStyle, width: 100 }}>
           <StatusBadge status={r.status} />
         </td>
-        <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#ef4444', fontSize: 11 }}>
-          {r.error ? r.error.slice(0, 60) : ''}
+        <td style={{ ...tdStyle, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', color: '#ef4444', fontSize: 11 }} title={r.error ?? ''}>
+          {r.error ?? ''}
         </td>
       </tr>
     )
