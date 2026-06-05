@@ -21,16 +21,16 @@ export interface MailRecord {
   ConfigSetName?: string
 }
 
-export interface ReconcileRow {
+export interface MatchRow {
   sentAt: string  // parseable datetime string, e.g. "2026-06-01 19:49:11"
   email: string
 }
 
-export interface ReconcileOpts {
+export interface MatchOpts {
   windowMs?: number                                         // buffer on fetch range edges, default 1 min
   onChunk?: (start: Date, end: Date) => void
-  onMatch: (row: ReconcileRow, record: MailRecord) => void
-  onUnmatched: (row: ReconcileRow) => void
+  onMatch: (row: MatchRow, record: MailRecord) => void
+  onUnmatched: (row: MatchRow) => void
 }
 
 /**
@@ -38,10 +38,10 @@ export interface ReconcileOpts {
  * then matches each row to API records by email address.
  * `rows` must be sorted descending by sentAt.
  */
-export async function reconcile(
+export async function matchRecords(
   client: DirectMailClient,
-  rows: ReconcileRow[],
-  opts: ReconcileOpts,
+  rows: MatchRow[],
+  opts: MatchOpts,
 ): Promise<void> {
   const { windowMs = 60 * 1000, onChunk, onMatch, onUnmatched } = opts
   if (rows.length === 0) return
@@ -124,7 +124,8 @@ export function createDirectMailClient({ keyId, keySecret, region = 'ap-southeas
     return data
   }
 
-  const fmt = (d: Date) => d.toISOString().slice(0, 16).replace('T', ' ')
+  // DirectMail API time params are CST (UTC+8)
+  const fmt = (d: Date) => new Date(d.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ')
 
   async function fetchStatisticsRange(start: Date, end: Date, extraParams: Record<string, string> = {}): Promise<MailRecord[]> {
     const records: MailRecord[] = []

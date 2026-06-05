@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { createDirectMailClient, reconcile, MailRecord } from '@/lib/alibaba-dm'
+import { createDirectMailClient, matchRecords, MailRecord } from '@/lib/alibaba-dm'
 
 // 郵件佇列對帳 API
 // 一次查詢同時涵蓋 Resend 與 AliCloud 兩個供應商的暫態列，
@@ -96,7 +96,7 @@ async function reconcileAlicloud(rows: QueueRow[]) {
     region: process.env.ALIBABA_REGION,
   })
 
-  const reconcileRows = rows.map(r => ({ sentAt: r.sent_at, email: r.to_email.toLowerCase() }))
+  const matchRows = rows.map(r => ({ sentAt: r.sent_at, email: r.to_email.toLowerCase() }))
 
   // 以 email 為鍵，將 DB 列分組，供 onMatch 做模糊時間比對
   const byEmail = new Map<string, QueueRow[]>()
@@ -111,7 +111,7 @@ async function reconcileAlicloud(rows: QueueRow[]) {
   const matchBuffer = new Map<string, MailRecord>()
   const unmatchedIds = new Set<string>(rows.map(r => r.id))
 
-  await reconcile(dmClient, reconcileRows, {
+  await matchRecords(dmClient, matchRows, {
     onMatch: (row, record) => {
       const t2 = Number(record.LastUpdateTime)
       const candidates = byEmail.get(row.email) ?? []
