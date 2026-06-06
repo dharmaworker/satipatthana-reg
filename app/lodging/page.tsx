@@ -16,7 +16,7 @@ const TRANSPORT_LABEL: Record<string, string> = {
   taipei_bus: '主辦專車：8/19 上午 8:30 台北車站東 3 門集合',
   wuri_bus: '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口',
   airport_bus_0819: '主辦專車：8/19 下午 2:30 桃園機場第一航廈',
-  self_0820: '8/20 上午 7 點前自行抵達日月潭湖畔會館',
+  self_0820: '8/20 上午 8:00 前自行抵達日月潭湖畔會館',
 }
 
 const BUS_DEST_LABEL: Record<string, string> = {
@@ -610,7 +610,7 @@ function LodgingContent() {
                               onPreview={setPreviewUrl} />
                           </div>
                         )}
-                        {radio('arrival_transport', 'self_0820', '8/20 上午 7 點前自行抵達日月潭湖畔會館')}
+                        {radio('arrival_transport', 'self_0820', '8/20 上午 8:00 前自行抵達日月潭湖畔會館')}
                       </div>
                       {!isDomestic && (form.arrival_transport === 'self' || form.arrival_transport === 'self_0820') && (
                         <div className="alert-card" style={{ marginTop: 12 }}>
