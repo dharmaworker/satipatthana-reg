@@ -19,12 +19,6 @@ type MailParams = {
 
 type BatchMail = { to: string; subject: string; html: string; bcc?: string }
 
-const THROTTLED_DOMAINS = ['qq.com', '163.com']
-
-function isThrottled(email: string) {
-  const domain = email.split('@')[1]?.toLowerCase()
-  return THROTTLED_DOMAINS.includes(domain)
-}
 
 async function logEmailSend(row: {
   to_email: string
@@ -220,35 +214,9 @@ export async function sendMailBatch(
     batchId = batch.id
   }
 
-  const direct = mails.filter(m => !isThrottled(m.to))
-  const queued = mails.filter(m => isThrottled(m.to))
-
-  // QQ/163 → queue (cron drains via AliCloud SMTP)
-  if (queued.length > 0) {
-    const { error } = await supabaseAdmin.from('email_queue').insert(
-      queued.map(m => ({
-        to_email: m.to,
-        subject: m.subject,
-        html: m.html,
-        bcc: m.bcc ?? null,
-        status: 'pending',
-        provider: 'alicloud',
-        mail_type: opts?.mailType ?? null,
-        batch_id: batchId,
-      }))
-    )
-    if (error) {
-      console.error('sendMailBatch: 寫入 email_queue 失敗', error.message)
-    } else {
-      console.log(`sendMailBatch: ${queued.length} 封 QQ/163 寫入 queue`)
-    }
-  }
-
-  // Other recipients → Resend batch
-  if (direct.length === 0) return { batchId, results: [] }
   const batches: BatchMail[][] = []
-  for (let i = 0; i < direct.length; i += 100) {
-    batches.push(direct.slice(i, i + 100))
+  for (let i = 0; i < mails.length; i += 100) {
+    batches.push(mails.slice(i, i + 100))
   }
   const results = []
   for (const batch of batches) {
