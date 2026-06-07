@@ -23,6 +23,13 @@ export function buildTimetableNotifyPayload(reg: TimetableReg) {
     </p>
     ${emailButton(`${baseUrl}/info/schedule?id=${reg.id}&code=${reg.random_code}`, '查看課程時間表 →', 'green')}
 
+    <hr style="border:none;border-top:1px solid #e8e0d4;margin:20px 0;" />
+    ${emailH3('Zoom 使用指南')}
+    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">
+      課前共修及五日課程均透過 Zoom 進行，請提前完成下載安裝，並熟悉加入步驟與同聲傳譯設定。
+    </p>
+    ${emailButton(`${baseUrl}/info/zoom-guide?id=${reg.id}&code=${reg.random_code}`, '查看 Zoom 使用指南 →', 'gold')}
+
     <p style="font-size:13.5px;color:${C.inkSoft};margin:16px 0 14px;">或從學員專區進入：</p>
     ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'gold')}
 
