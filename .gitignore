@@ -48,3 +48,6 @@ next-env.d.ts
 # webpage reference (not part of build)
 /webpage/
 *.docx
+*.pptx
+/photo/
+/docs/
