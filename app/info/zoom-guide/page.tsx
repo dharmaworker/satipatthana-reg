@@ -126,11 +126,23 @@ function ZoomGuideContent() {
               {tab === 1 && (
                 <div>
                   <SubTitle>電腦版（Windows / Mac）</SubTitle>
-                  <p style={textStyle}>在瀏覽器輸入以下網址，點擊「下載」安裝 Zoom Workplace：</p>
-                  <p style={{ ...textStyle, fontWeight: 700, color: 'var(--gold)', margin: '6px 0 4px' }}>
-                    https://zoom.us/zh-tw/download
-                  </p>
-                  <p style={{ ...textStyle, fontSize: 13, color: 'var(--ink-mute)' }}>（請勿下載網頁版 Zoom 客戶端）</p>
+                  <p style={textStyle}>在瀏覽器輸入以下網址，點擊「下載」安裝 Zoom Workplace（請勿下載網頁版）：</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '8px 0 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-mute)', whiteSpace: 'nowrap' }}>台灣／港澳</span>
+                      <a href="https://zoom.us/zh-tw/download" target="_blank" rel="noopener noreferrer"
+                        style={{ fontWeight: 700, color: 'var(--gold)', fontSize: 14, wordBreak: 'break-all' }}>
+                        https://zoom.us/zh-tw/download
+                      </a>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-mute)', whiteSpace: 'nowrap' }}>大陸</span>
+                      <a href="https://zoom.us/zh-cn/download" target="_blank" rel="noopener noreferrer"
+                        style={{ fontWeight: 700, color: 'var(--gold)', fontSize: 14, wordBreak: 'break-all' }}>
+                        https://zoom.us/zh-cn/download
+                      </a>
+                    </div>
+                  </div>
                   <GuideImg src={img('guide-01.jpg')} alt="電腦版 Zoom 下載" />
 
                   <SubTitle>手機 / 平板 — iOS（iPhone / iPad）</SubTitle>
