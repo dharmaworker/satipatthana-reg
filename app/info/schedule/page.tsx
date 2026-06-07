@@ -88,6 +88,9 @@ function ScheduleContent() {
                     <strong>{state.data.zoom_password}</strong>
                   </span>
                 )}
+                <span style={{ fontSize: 13, color: 'var(--ink)' }}>
+                  登錄名　學號 + 英文姓名／姓名拼音
+                </span>
                 {state.data.zoom_link && (
                   <div>
                     <a href={state.data.zoom_link} target="_blank" rel="noopener noreferrer"
@@ -102,9 +105,6 @@ function ScheduleContent() {
                     </a>
                   </div>
                 )}
-                <span style={{ fontSize: 13, color: 'var(--ink)' }}>
-                  登錄名　學號 + 英文姓名／姓名拼音
-                </span>
               </div>
             )}
             <div className="schedule-tabs">
