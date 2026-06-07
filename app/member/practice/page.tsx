@@ -201,6 +201,12 @@ function PracticeContent() {
                       </a>
                     </div>
                   )}
+                  <div style={{ marginTop: 10, borderTop: '1px solid rgba(73,85,52,0.15)', paddingTop: 10 }}>
+                    <a href={`/info/zoom-guide?id=${id}&code=${encodeURIComponent(code)}`}
+                      style={{ color: 'var(--gold)', fontWeight: 600, fontSize: 13 }}>
+                      📋 Zoom 使用指南 →
+                    </a>
+                  </div>
                 </div>
               </div>
             )}

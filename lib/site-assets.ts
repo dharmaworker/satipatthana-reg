@@ -13,4 +13,5 @@ export const SITE_ASSETS = {
   groupQrWechat: asset('group-qr-wechat.jpg'),
   // 承諾書改放 private bucket，下載走 /api/pledge gate（要 id+code+approved）
   // 本欄位刻意不放 public URL，避免外洩
+  zoomGuide: (file: string) => asset(`zoom-guide/${file}`),
 }

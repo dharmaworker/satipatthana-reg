@@ -111,6 +111,14 @@ function ScheduleContent() {
                         </td>
                       </tr>
                     )}
+                    <tr>
+                      <td colSpan={2} style={{ paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+                        <a href={`/info/zoom-guide?id=${id}&code=${encodeURIComponent(code)}`}
+                          style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>
+                          📋 Zoom 使用指南（設備準備、下載、加入步驟、同聲傳譯）→
+                        </a>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
