@@ -72,39 +72,47 @@ function ScheduleContent() {
         {state.kind === 'ok' && (
           <div className="schedule-card">
             {(state.data.zoom_link || state.data.zoom_meeting_id) && (
-              <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>
+              <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--line)' }}>
+                <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--ink-soft)' }}>
                   本次課程提供線上 Zoom 連線{state.data.is_online && '（全員不開鏡）'}
-                </span>
-                {state.data.zoom_meeting_id && (
-                  <span style={{ fontSize: 13, color: 'var(--ink)' }}>
-                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>會議編號</span>
-                    <strong style={{ letterSpacing: '0.08em' }}>{state.data.zoom_meeting_id}</strong>
-                  </span>
-                )}
-                {state.data.zoom_password && (
-                  <span style={{ fontSize: 13, color: 'var(--ink)' }}>
-                    <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>密碼</span>
-                    <strong>{state.data.zoom_password}</strong>
-                  </span>
-                )}
-                <span style={{ fontSize: 13, color: 'var(--ink)' }}>
-                  登錄名　學號 + 英文姓名／姓名拼音
-                </span>
-                {state.data.zoom_link && (
-                  <div>
-                    <a href={state.data.zoom_link} target="_blank" rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        padding: '5px 14px',
-                        background: 'rgba(35, 130, 244, 0.1)', border: '1px solid rgba(35, 130, 244, 0.3)',
-                        borderRadius: 6, color: '#1d6fcc', fontSize: 13, fontWeight: 600,
-                        textDecoration: 'none',
-                      }}>
-                      📹 加入 Zoom
-                    </a>
-                  </div>
-                )}
+                </p>
+                <table style={{ borderCollapse: 'collapse', fontSize: 13 }}>
+                  <tbody>
+                    {state.data.zoom_meeting_id && (
+                      <tr>
+                        <td style={{ color: 'var(--ink-mute)', paddingRight: 20, paddingBottom: 6, whiteSpace: 'nowrap', verticalAlign: 'top' }}>會議編號</td>
+                        <td style={{ color: 'var(--ink)', paddingBottom: 6 }}><strong style={{ letterSpacing: '0.08em' }}>{state.data.zoom_meeting_id}</strong></td>
+                      </tr>
+                    )}
+                    {state.data.zoom_password && (
+                      <tr>
+                        <td style={{ color: 'var(--ink-mute)', paddingRight: 20, paddingBottom: 6, whiteSpace: 'nowrap', verticalAlign: 'top' }}>密碼</td>
+                        <td style={{ color: 'var(--ink)', paddingBottom: 6 }}><strong>{state.data.zoom_password}</strong></td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td style={{ color: 'var(--ink-mute)', paddingRight: 20, paddingBottom: 6, whiteSpace: 'nowrap', verticalAlign: 'top' }}>登錄名</td>
+                      <td style={{ color: 'var(--ink)', paddingBottom: 6 }}>學號 + 英文姓名／姓名拼音</td>
+                    </tr>
+                    {state.data.zoom_link && (
+                      <tr>
+                        <td style={{ color: 'var(--ink-mute)', paddingRight: 20, paddingBottom: 2, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>Zoom 連結</td>
+                        <td style={{ paddingBottom: 2 }}>
+                          <a href={state.data.zoom_link} target="_blank" rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              padding: '4px 12px',
+                              background: 'rgba(35, 130, 244, 0.1)', border: '1px solid rgba(35, 130, 244, 0.3)',
+                              borderRadius: 6, color: '#1d6fcc', fontSize: 13, fontWeight: 600,
+                              textDecoration: 'none',
+                            }}>
+                            📹 加入 Zoom
+                          </a>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
             <div className="schedule-tabs">
