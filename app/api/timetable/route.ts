@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   const { data: reg, error } = await supabaseAdmin
     .from('registrations')
-    .select('status')
+    .select('status, retreat_format')
     .eq('id', id)
     .eq('random_code', code.toUpperCase().trim())
     .single()
@@ -30,5 +30,5 @@ export async function GET(request: NextRequest) {
   if (!isTimetablePublished(t)) {
     return NextResponse.json({ published: false, days: [] })
   }
-  return NextResponse.json({ ...t, published: true })
+  return NextResponse.json({ ...t, published: true, is_online: reg.retreat_format === 'online' })
 }
