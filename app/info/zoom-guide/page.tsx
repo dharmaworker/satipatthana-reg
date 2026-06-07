@@ -9,7 +9,7 @@ type AuthState =
   | { kind: 'loading' }
   | { kind: 'need_login' }
   | { kind: 'not_approved' }
-  | { kind: 'ok'; isOnline: boolean }
+  | { kind: 'ok' }
 
 function ZoomGuideContent() {
   const searchParams = useSearchParams()
@@ -24,7 +24,7 @@ function ZoomGuideContent() {
         if (!r.ok) { setAuth({ kind: 'need_login' }); return }
         const d = await r.json()
         if (d.status !== 'approved') { setAuth({ kind: 'not_approved' }); return }
-        setAuth({ kind: 'ok', isOnline: d.retreat_format === 'online' })
+        setAuth({ kind: 'ok' })
       })
       .catch(() => setAuth({ kind: 'need_login' }))
   }, [id, code])
@@ -52,7 +52,7 @@ function ZoomGuideContent() {
         <div className="container">
           <p className="page-kicker">Zoom Guide</p>
           <h1 className="page-title">Zoom 使用指南</h1>
-          <p className="page-subtitle">線上課程 Zoom 準備說明，請於課程開始前詳閱。</p>
+          <p className="page-subtitle">Zoom 下載、加入步驟與同聲傳譯設定，請於課程開始前詳閱。</p>
         </div>
       </div>
 
@@ -76,13 +76,7 @@ function ZoomGuideContent() {
           </div>
         )}
 
-        {auth.kind === 'ok' && !auth.isOnline && (
-          <div className="schedule-card" style={{ padding: '32px 28px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--ink-soft)' }}>本指南僅供線上學員參考，您報名的是實體課程。</p>
-          </div>
-        )}
-
-        {auth.kind === 'ok' && auth.isOnline && (
+        {auth.kind === 'ok' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
 
             {/* ── Section 1: 設備準備 ── */}
