@@ -73,7 +73,9 @@ function ScheduleContent() {
           <div className="schedule-card">
             {(state.data.zoom_link || state.data.zoom_meeting_id) && (
               <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>本次課程提供線上 Zoom 連線</span>
+                <span style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>
+                  本次課程提供線上 Zoom 連線{state.data.is_online && '（全員不開鏡）'}
+                </span>
                 {state.data.zoom_meeting_id && (
                   <span style={{ fontSize: 13, color: 'var(--ink)' }}>
                     <span style={{ color: 'var(--ink-mute)', marginRight: 5 }}>會議編號</span>
@@ -103,9 +105,6 @@ function ScheduleContent() {
                 <span style={{ fontSize: 13, color: 'var(--ink)' }}>
                   登錄名　學號 + 英文姓名／姓名拼音
                 </span>
-                {state.data.is_online && (
-                  <span style={{ fontSize: 13, color: 'var(--ink)' }}>全員不開鏡</span>
-                )}
               </div>
             )}
             <div className="schedule-tabs">
