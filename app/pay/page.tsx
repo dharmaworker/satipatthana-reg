@@ -244,7 +244,11 @@ function PayContent() {
               <div className="step-header">
                 <p className="step-header-kicker">Step 01</p>
                 <h2 className="step-header-title">選擇費用方案</h2>
-                <p className="step-header-desc">請依您預計入住的天數選擇方案，並選擇匯款或刷卡支付方式。</p>
+                <ol className="step-header-desc" style={{paddingLeft: "1.2em", margin: 0, listStyleType: "decimal"}}>
+                  <li>請依您預計入住的天數選擇方案，並選擇匯款或刷卡支付方式。</li>
+                  <li>請依食宿登記內的專車接駁方式為主。</li>
+                  <li>8/20 上午 8:00 前必須抵達日月潭會館，必須自行前往，無安排專車接駁。</li>
+                </ol>
               </div>
 
               <div className="opt-group">
