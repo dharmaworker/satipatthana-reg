@@ -19,7 +19,7 @@ export function buildTimetableNotifyPayload(reg: TimetableReg) {
 
     ${emailH3('課程時間表')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">
-      包含每日禪坐、法談、互動時段的完整安排，建議提前了解以便準備。
+      包含每日禪坐、法談、互動時段的完整安排，內含 Zoom 連結相關資訊，建議提前了解以便準備。
     </p>
     ${emailButton(`${baseUrl}/info/schedule?id=${reg.id}&code=${reg.random_code}`, '查看課程時間表 →', 'green')}
 
