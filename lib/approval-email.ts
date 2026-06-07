@@ -10,6 +10,11 @@ function practiceBlock(reg: { id: string; random_code: string }, sectionLabel: s
     ${emailH3(`${sectionLabel}課前共修`)}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">禪修開始前（<strong style="color:${C.ink};">${periodLabel}</strong>）將安排課前共修。<br>請點擊下方按鈕查看課表、完成打卡，以及取得共修 Zoom 連線資訊。</p>
     ${emailButton(`${baseUrl}/member/practice?id=${reg.id}&code=${reg.random_code}`, '查看課前共修課表＆打卡', 'green')}
+    <p style="font-size:13px;color:${C.inkMute};margin:10px 0 0;">
+      初次使用 Zoom 請參閱 →
+      <a href="${baseUrl}/info/zoom-guide?id=${reg.id}&code=${reg.random_code}" style="color:${C.gold};font-weight:600;">Zoom 使用指南</a>
+      （下載安裝、加入步驟、同聲傳譯）
+    </p>
   `
 }
 
