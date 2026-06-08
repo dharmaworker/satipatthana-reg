@@ -76,8 +76,9 @@ function buildTree(rows: QueueRow[]): TreeRow[] {
 const STATUS_STYLE: Record<string, string> = {
   sent:        'background:#d1fae5;color:#065f46',
   delivered:   'background:#d1fae5;color:#065f46',
-  pending:     'background:#fef3c7;color:#92400e',
-  processing:  'background:#fef3c7;color:#92400e',
+  pending:          'background:#fef3c7;color:#92400e',
+  processing:       'background:#fef3c7;color:#92400e',
+  delivery_delayed: 'background:#fef3c7;color:#92400e',
   failed:      'background:#fee2e2;color:#991b1b',
   bounced:     'background:#fee2e2;color:#991b1b',
 }
@@ -293,7 +294,108 @@ const HOURS_OPTIONS = [
   { label: 'all', value: 'all' },
 ]
 
-const STATUS_OPTIONS = ['all', 'pending', 'processing', 'sent', 'delivered', 'failed', 'bounced']
+const STATUS_OPTIONS = ['pending', 'processing', 'sent', 'delivered', 'delivery_delayed', 'failed', 'bounced']
+
+const STATUS_DOT: Record<string, string> = {
+  sent:             '#10b981',
+  delivered:        '#10b981',
+  pending:          '#f59e0b',
+  processing:       '#f59e0b',
+  delivery_delayed: '#f59e0b',
+  failed:           '#ef4444',
+  bounced:          '#ef4444',
+}
+
+function StatusDropdown({
+  selected,
+  onChange,
+}: {
+  selected: Set<string>
+  onChange: (next: Set<string>) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const toggle = (s: string) => {
+    const next = new Set(selected)
+    if (next.has(s)) next.delete(s)
+    else next.add(s)
+    onChange(next)
+  }
+
+  const label = selected.size === 0
+    ? '全部狀態'
+    : selected.size === 1
+      ? Array.from(selected)[0]
+      : `${selected.size} 個狀態`
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          border: '1px solid #d1d5db', borderRadius: 4,
+          padding: '4px 10px', fontSize: 13, fontFamily: 'monospace',
+          background: '#fff', color: '#111827', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+        <span style={{ fontSize: 10, color: '#9ca3af' }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 100,
+          background: '#fff', border: '1px solid #e5e7eb', borderRadius: 6,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 180, padding: '4px 0',
+        }}>
+          {/* All option */}
+          <div
+            onClick={() => onChange(new Set())}
+            style={{
+              padding: '7px 14px', cursor: 'pointer', fontSize: 13, fontFamily: 'monospace',
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: selected.size === 0 ? '#f0f9ff' : 'transparent',
+              color: '#374151',
+            }}
+          >
+            <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #9ca3af', display: 'inline-block', flexShrink: 0 }} />
+            全部狀態
+            {selected.size === 0 && <span style={{ marginLeft: 'auto', color: '#2563eb' }}>✓</span>}
+          </div>
+          <div style={{ borderTop: '1px solid #f3f4f6', margin: '2px 0' }} />
+          {STATUS_OPTIONS.map(s => (
+            <div
+              key={s}
+              onClick={() => toggle(s)}
+              style={{
+                padding: '7px 14px', cursor: 'pointer', fontSize: 13, fontFamily: 'monospace',
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: selected.has(s) ? '#f0f9ff' : 'transparent',
+                color: '#374151',
+              }}
+            >
+              <span style={{
+                width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                background: STATUS_DOT[s] ?? '#9ca3af', display: 'inline-block',
+              }} />
+              {s}
+              {selected.has(s) && <span style={{ marginLeft: 'auto', color: '#2563eb' }}>✓</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 const PROVIDER_OPTIONS = ['all', 'alicloud', 'resend', 'gmail']
 const RETRY_PROVIDERS = ['alicloud', 'resend', 'gmail']
 
@@ -307,7 +409,7 @@ export default function MailQueuePage() {
   const [tab, setTab] = useState<'queue' | 'batches'>('queue')
 
   // filters
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set())
   const [hoursFilter, setHoursFilter] = useState('24')
   const [searchText, setSearchText] = useState('')
   const [soloFilter, setSoloFilter] = useState(false)
@@ -348,7 +450,7 @@ export default function MailQueuePage() {
     setLoading(true)
     setMessage('')
     const params = new URLSearchParams()
-    if (statusFilter !== 'all') params.set('status', statusFilter)
+    if (statusFilter.size > 0) params.set('status', Array.from(statusFilter).join(','))
     params.set('hours', hoursFilter)
     if (searchText.trim()) params.set('search', searchText.trim())
     if (soloFilter) params.set('solo', 'true')
@@ -506,15 +608,7 @@ export default function MailQueuePage() {
           {/* filters */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
             {/* status */}
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              style={inputStyle}
-            >
-              {STATUS_OPTIONS.map(s => (
-                <option key={s} value={s}>{s === 'all' ? '全部狀態' : s}</option>
-              ))}
-            </select>
+            <StatusDropdown selected={statusFilter} onChange={setStatusFilter} />
 
             {/* hours */}
             <div style={{ display: 'flex', gap: 2 }}>
