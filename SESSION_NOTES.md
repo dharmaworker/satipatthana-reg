@@ -6,7 +6,7 @@
 
 ## 一句話專案概述
 
-第二屆台灣四念處禪修報名系統。學員：報名→錄取→繳費+食宿+快篩。後台：審核、管理、自動匯出 Excel。架構 Next.js 16 App Router + Supabase + Vercel + Gmail SMTP + ECPay。
+第二屆台灣四念處禪修報名系統。學員：報名→錄取→繳費+食宿+快篩+共修+互動。後台：審核、管理、郵件佇列、自動匯出 Excel。架構 Next.js 16 App Router + Supabase + Vercel + Resend（主線）+ 阿里雲 SMTP（QQ/163）+ ECPay。
 
 ---
 
@@ -39,66 +39,77 @@
 
 ```
 lib/
-  approval-email.ts       錄取信（to: 學員, bcc: 學會，帶 PDF 附件）
-  approval-pdf.tsx        錄取信 PDF 組版（@react-pdf/renderer，中文用 Noto Sans TC CDN）
+  mailer.ts               sendMail / sendMailWithRetry / sendMailBatch（Resend 主；QQ/163→DB queue；Gmail 備援）
+  alibaba-dm.ts           阿里雲 SMTP 送信（email_queue cron 用）
+  mail-labels.ts          mail_type 中文標籤
+  approval-email.ts       錄取信（to: 學員, bcc: 學會）
   archive-email.ts        食宿備存信（繳費事件觸發）
-  quicktests-email.ts     快篩確認信 + 按鈕 HTML snippet
-  mailer.ts               sendMail() 包裝 nodemailer
+  quicktests-email.ts     快篩確認信
+  student-id-email.ts     學號通知信
+  formal-notification-email.ts  正式報名通知
+  attendance-notify-email.ts    出席率通知
+  interactive-invite-email.ts   互動邀請信
+  interactive-notify-email.ts   互動中籤通知
+  timetable-notify-email.ts     時間表更新通知
+  group-join-email.ts           加入群組通知
+  email-style.ts          共用信件 CSS
   export-excel.ts         產 6-sheet xlsx（exceljs）
+  timetable.ts            時間表解析 + syncCourseSessions
   lodging-plan.ts         方案 <-> 日期/方式 推導
+  registration-period.ts  報名/繳費階段設定（PHASE_DEFS）
+  site-assets.ts          site-assets bucket 圖片 URL
+  interactive.ts / interactive-db.ts / interactive-config.ts  互動邏輯
+  member-id.ts            member_id 自動編號
+  preview-test-student.ts 測試學員產生器
   supabase.ts             supabaseAdmin client
 
 app/
   page.tsx                    報名首頁
-  register/success/page.tsx   報名成功頁
-  query/page.tsx              查詢狀態
   pay/page.tsx                繳費頁（選方案 + 匯款/刷卡）
   lodging/page.tsx            食宿登記頁
   quicktests/page.tsx         快篩上傳頁
-  admin/_components/AdminHeader.tsx   後台共用 header（tab 切換）
-  admin/login/page.tsx
+  member/dashboard/page.tsx   學員儀表板
+  member/practice/page.tsx    課前共修打卡
+  member/interactive/page.tsx 互動意願登記
+  member/course-checkin/page.tsx  課程逐場次打卡
+  info/zoom-guide / schedule / payment  公開資訊頁
   admin/dashboard/page.tsx    報名管理
   admin/lodgings/page.tsx     食宿管理
+  admin/timetable/page.tsx    課程時間表
   admin/schedules/page.tsx    自動匯出排程
-  api/register/route.ts
-  api/upload-qr/route.ts
-  api/upload-lodging/route.ts
-  api/query/route.ts
-  api/member/login+me
-  api/payment/create + transfer + callback
-  api/lodging/route.ts        GET + POST（upsert）
-  api/quicktests/route.ts     GET + POST（upsert, 創 row if missing）
-  api/admin/registrations     GET/PATCH/DELETE
-  api/admin/lodgings          GET/PATCH
-  api/admin/schedules         CRUD
-  api/admin/cron/run-exports  Vercel Cron 觸發點
-  api/admin/batch             批次錄取/拒絕/刪除
-  api/admin/send-notifications 批次寄錄取信
-  api/admin/export            匯出 CSV（另一條 endpoint，少用）
+  admin/practice/page.tsx     共修課表設定
+  admin/practice-records/page.tsx  共修打卡紀錄
+  admin/interactive/page.tsx  互動分組管理
+  admin/interactive-tasks/page.tsx  互動作業
+  admin/attendance-records/page.tsx  出席紀錄
+  admin/quicktests/page.tsx   快篩狀況
+  admin/documents/page.tsx    文件總覽
+  admin/mail-queue/page.tsx   郵件佇列管理
+  api/admin/mail-queue/*      郵件佇列 CRUD（list / status / retry / reconcile / batches）
+  api/admin/cron/process-mail-queue  Vercel Cron 每分鐘送 30 封 QQ/163
+  api/admin/cron/run-exports  Vercel Cron 每日排程匯出
+  api/webhooks/resend/route.ts  Resend 退信補寄（阿里雲）
 
 proxy.ts                    Next.js 16 middleware 替代（僅 /admin/*）
 vercel.json                 cron 設定
-supabase/schema.sql         DB schema 文件
-
+supabase/schema.sql + practice.sql + interactive.sql + attendance_checkins.sql + site_config.sql
 scripts/                    診斷/操作腳本（見 HANDOVER）
 ```
 
 ---
 
-## 最近 git 歷史（倒序）
+## 最近重大功能里程碑（倒序，非完整 git log）
 
-```
-e7367ae feat(email): 錄取信加入快篩上傳按鈕並更新流程說明
-3e20826 refactor: 解除繳費/食宿/快篩三者的順序依賴，可平行進行
-54688e3 feat(quicktests): 快篩檢測獨立頁面與 API，食宿確認信附連結
-1e7a0d1 refactor: 取消食宿邀請信，改為錄取信直接附兩個按鈕
-d9f6c00 feat(lodging): 學員食宿表支援重複更新並顯示「上次填寫」提示
-85ba8ca feat(admin): 報名表後台新增「詳細」按鈕，預覽完整學員資料
-64ce53f chore(export): 食宿 sheet 通訊欄合併為 2 欄
-a6130cd feat(export): 食宿登記 sheet 加 LINE/WeChat ID 與 QR 連結
-8e44719 feat(admin): 操作欄改用「編輯 + ⋯ 下拉」減少擁擠
-7f008e1 feat(admin): /admin/dashboard 與 /admin/lodgings 共用 tab 樣式 header
-```
+- `mail-queue`：QQ/163 節流佇列（`email_queue` table）+ Vercel Cron 每分鐘 30 封 + 後台管理頁
+- 阿里雲 SMTP 補寄：Resend webhook `bounced/failed/delivery_delayed` → 自動補寄
+- `scripts/mail-queue.mjs`：統一查詢、對帳、重送工具（`--list/--reconcile/--retry`）
+- 互動系統：報名意願 → 抽籤分組 → 通知 → 學員填作業
+- 課程打卡：`course_sessions` + `course_session_checkins` 自動同步時間表
+- 課前共修：`practice_schedule` + 打卡（限改 3 次規則）
+- 學員 dashboard：`/member` portal，登入後看個人資訊 / 共修 / 互動 / 打卡
+- Resend 取代 Gmail SMTP 成為主線（commit 50095c6）
+- 先繳費再食宿（2026-04-19 流程倒轉）
+- 三流程平行（/pay /lodging /quicktests 不互相阻擋）
 
 主線在 `main`，開發在 `dev/dharmaworker`，流程：改 → commit/push dev → merge --ff-only → push main。
 

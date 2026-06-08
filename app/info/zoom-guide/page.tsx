@@ -98,23 +98,27 @@ function ZoomGuideContent() {
               {tab === 0 && (
                 <div>
                   <p style={textStyle}>參與課程前，請依照以下清單確認設備準備是否完善。</p>
-                  <div style={{ overflowX: 'auto', margin: '16px 0' }}>
-                    <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13, minWidth: 480 }}>
-                      <thead>
-                        <tr style={{ background: 'var(--bg-warm)' }}>
-                          <th style={thStyle}>項目</th>
-                          <th style={thStyle}>說明</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <Tr label="網路" content="建議準備 2 條網路線路（手機流量 + Wi-Fi），設備盡量不開其他應用程式。電腦建議以有線（網路線）連接路由器，最為穩定。" />
-                        <Tr label="電源" content="線上時間較長，手機／平板請提前充飽電並備好行動電源、充電線；筆記型電腦建議全程接電源，不用電池。請注意電費繳納，避免中途斷電。" />
-                        <Tr label="軟體" content="請提前下載並安裝 Zoom 客戶端（勿使用網頁版），詳見「下載安裝」頁籤。" />
-                        <Tr label="鏡頭" content="保持與螢幕平視，以示對老師的尊重；不俯視、不仰視（長時間仰視頸部容易不舒服）。手機／平板請橫屏擺放。建議準備支架或可墊高的物品，避免鏡頭晃動。" />
-                        <Tr label="散熱" content="長時間使用設備容易過熱，導致訊號下降或黑屏退出 Zoom。建議提前準備散熱器、散熱支架或小風扇。" />
-                        <Tr label="儀容坐姿" content="以示尊重，請勿穿著無袖背心，女生不穿低胸衣服。活動每日在線時間較長，建議選擇舒適坐姿，讓身心放鬆。" />
-                      </tbody>
-                    </table>
+                  <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {[
+                      { label: '網路', content: '建議準備 2 條網路線路（手機流量 + Wi-Fi），設備盡量不開其他應用程式。電腦建議以有線（網路線）連接路由器，最為穩定。' },
+                      { label: '電源', content: '線上時間較長，手機／平板請提前充飽電並備好行動電源、充電線；筆記型電腦建議全程接電源，不用電池。請注意電費繳納，避免中途斷電。' },
+                      { label: '軟體', content: '請提前下載並安裝 Zoom 客戶端（勿使用網頁版），詳見「下載安裝」頁籤。' },
+                      { label: '鏡頭', content: '保持與螢幕平視，以示對老師的尊重；不俯視、不仰視（長時間仰視頸部容易不舒服）。手機／平板請橫屏擺放。建議準備支架或可墊高的物品，避免鏡頭晃動。' },
+                      { label: '散熱', content: '長時間使用設備容易過熱，導致訊號下降或黑屏退出 Zoom。建議提前準備散熱器、散熱支架或小風扇。' },
+                      { label: '儀容坐姿', content: '以示尊重，請勿穿著無袖背心，女生不穿低胸衣服。活動每日在線時間較長，建議選擇舒適坐姿，讓身心放鬆。' },
+                    ].map((row, i) => (
+                      <div key={i} style={{
+                        borderTop: i === 0 ? '1px solid var(--line)' : undefined,
+                        borderBottom: '1px solid var(--line)',
+                        borderLeft: '1px solid var(--line)',
+                        borderRight: '1px solid var(--line)',
+                        padding: '10px 14px',
+                        background: i % 2 === 0 ? 'var(--bg-warm)' : undefined,
+                      }}>
+                        <p style={{ margin: '0 0 4px', fontWeight: 700, color: 'var(--ink)', fontSize: 13 }}>{row.label}</p>
+                        <p style={{ margin: 0, color: 'var(--ink-soft)', fontSize: 13, lineHeight: 1.7 }}>{row.content}</p>
+                      </div>
+                    ))}
                   </div>
                   <p style={{ ...textStyle, marginTop: 8, color: 'var(--ink-mute)', fontSize: 13 }}>下圖為詳細圖文說明：</p>
                   <GuideImg src={img('equip-2.jpg')} alt="網路與電源準備說明" />
@@ -214,7 +218,6 @@ function ZoomGuideContent() {
 // ── helpers ──
 
 const textStyle: React.CSSProperties = { margin: '0 0 10px', color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.75 }
-const thStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid var(--line)', textAlign: 'left', fontWeight: 600, color: 'var(--ink)', fontSize: 13 }
 
 function SubTitle({ children }: { children: React.ReactNode }) {
   return <p style={{ margin: '18px 0 6px', fontWeight: 700, color: 'var(--ink)', fontSize: 14 }}>{children}</p>
@@ -233,14 +236,6 @@ function Step({ n, text }: { n: number; text: string }) {
   )
 }
 
-function Tr({ label, content }: { label: string; content: string }) {
-  return (
-    <tr>
-      <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 600, color: 'var(--ink)', fontSize: 13, whiteSpace: 'nowrap', verticalAlign: 'top' }}>{label}</td>
-      <td style={{ padding: '8px 12px', border: '1px solid var(--line)', color: 'var(--ink-soft)', fontSize: 13, lineHeight: 1.7 }}>{content}</td>
-    </tr>
-  )
-}
 
 function GuideImg({ src, alt }: { src: string; alt: string }) {
   return (

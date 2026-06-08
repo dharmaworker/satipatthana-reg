@@ -13,10 +13,11 @@
 | Cloudflare | 反向代理／DNS（中國可訪問） | 域名 `tw-satipatthana-2026-reg.org`，免費方案 |
 | 正式域名 | 對外網址 | `https://tw-satipatthana-2026-reg.org` |
 | Supabase | DB + Storage + Auth | `https://stjghujtfuhbbskgbjau.supabase.co` |
-| Gmail SMTP | 寄信 | `satipatthana.tw@gmail.com`（寄件者） |
-| Gmail 學會 | 備存 | `satipatthana.taipei@gmail.com`（BCC 收件） |
+| Resend | 寄信主線（非 QQ/163） | 域名 `tw-satipatthana-2026-reg.org`，`RESEND_API_KEY` |
+| 阿里雲 SMTP | QQ / 163 queue 送出；Resend 失敗補寄 | `ALIBABA_SMTP_*` 環境變數 |
+| Gmail SMTP | Resend 單封重試最後備援 | `GMAIL_USER`、`GMAIL_APP_PASSWORD` |
+| Gmail 學會 | 備存 BCC | `satipatthana.taipei@gmail.com`（`ARCHIVE_EMAIL`） |
 | ECPay 綠界 | 信用卡金流 | 商家 ID 存於 env |
-| Resend | 寄信主線（SMTP 替代） | 域名 `tw-satipatthana-2026-reg.org`，API Key 存於 env |
 
 ---
 
@@ -37,7 +38,17 @@
 | `/admin/login` | 登入 |
 | `/admin/dashboard` | 報名管理（統計、搜尋、篩選、下拉改狀態、批次操作、編輯、詳細、⋯選單） |
 | `/admin/lodgings` | 食宿登記管理（列表、詳細、編輯、檔案重傳） |
+| `/admin/timetable` | 課程時間表編輯（存 `site_config`，自動同步 `course_sessions`） |
+| `/admin/schedule-config` | 共修場次 / 互動場次設定 |
 | `/admin/schedules` | 自動匯出排程 |
+| `/admin/practice` | 課前共修課表設定 |
+| `/admin/practice-records` | 共修打卡紀錄查詢 |
+| `/admin/interactive` | 互動分組分配 / 批次抽籤 / 寄通知 |
+| `/admin/interactive-tasks` | 互動學員作業檢視 |
+| `/admin/attendance-records` | 課程簽到 / 完成度紀錄 |
+| `/admin/quicktests` | 快篩繳交狀況 |
+| `/admin/documents` | 學員文件總覽（QR / 證件 / 機票 / 快篩） |
+| `/admin/mail-queue` | 郵件佇列管理（狀態篩選、重試、對帳） |
 
 > `/admin/*` 經 `proxy.ts`（Next.js 16 的 middleware）擋下未登入者。
 
@@ -56,7 +67,7 @@
 | `/lodging` 提交 | 食宿確認信（附快篩上傳連結） | to: 學員, bcc: 學會 |
 | `/quicktests` 提交 | 快篩確認信 | to: 學員, bcc: 學會 |
 
-寄件者固定 `台灣四念處學會 <${GMAIL_USER}>`。郵件代碼路徑：`lib/approval-email.ts`、`lib/archive-email.ts`、`lib/quicktests-email.ts`、`app/api/lodging/route.ts`（食宿確認信 inline）、`app/api/register/route.ts`（報名兩封 inline）。
+寄件者為 `台灣四念處學會 <noreply@tw-satipatthana-2026-reg.org>`（`RESEND_FROM` 覆寫）。郵件代碼路徑：`lib/approval-email.ts`、`lib/archive-email.ts`、`lib/quicktests-email.ts`、`app/api/lodging/route.ts`（食宿確認信 inline）、`app/api/register/route.ts`（報名兩封 inline）。詳細架構見 `docs/mail-system-for-devs.md`。
 
 ---
 
@@ -96,16 +107,20 @@ node scripts/add-admin.mjs <username> <password> <name> <role>
 ### `scheduled_exports`
 自動匯出排程。`scheduled_at` (timestamptz), `recipients` (text[]), `enabled`, `last_run_at`, `last_error`。最多 10 筆。
 
-完整 schema 見 [supabase/schema.sql](supabase/schema.sql)。
+完整 schema 見 [supabase/schema.sql](supabase/schema.sql) + 分檔 `supabase/practice.sql` / `supabase/interactive.sql` / `supabase/attendance_checkins.sql` / `supabase/site_config.sql`。
+
+**主要 tables**：`registrations`（主表）、`lodging_registrations`（食宿 1:1）、`admin_users`、`scheduled_exports`、`practice_config`、`practice_schedule`、`practice_checkins`、`interactive_registrations`、`interactive_tasks`、`course_sessions`、`course_session_checkins`、`attendance_checkins`、`email_queue`、`email_batches`、`site_config`。
 
 ---
 
 ## Storage Buckets
 
-| Bucket | Public | 大小 | 用途 |
-|---|---|---|---|
-| `qr-codes` | ✅ | 500KB | 報名時 LINE/WeChat QR |
-| `lodging-docs` | ✅ | 5MB | 食宿登記檔（身分證、護照、機票、照片、快篩，支援 PDF） |
+| Bucket | Public | 用途 |
+|---|---|---|
+| `qr-codes` | ✅ | 報名時 LINE/WeChat QR（500KB） |
+| `lodging-docs` | ✅ | 食宿登記檔（身分證、護照、機票、照片、快篩，5MB） |
+| `site-assets` | ✅ | 海報、教師照、LINE 圖等靜態資源 |
+| `pledge` | ❌ 私有 | 承諾書 PDF（走 `/api/pledge` gate，需 id+code+approved） |
 
 ---
 
@@ -116,13 +131,16 @@ node scripts/add-admin.mjs <username> <password> <name> <role>
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`（新版 `sb_publishable_...`）
 - `SUPABASE_SERVICE_ROLE_KEY`（新版 `sb_secret_...`）
 - `PASSWORD_SALT`（後台密碼 hash，**本機/Vercel 必須一致**）
-- `GMAIL_USER` / `GMAIL_APP_PASSWORD`（Gmail 兩步驟下的應用程式密碼，16 字）
+- `RESEND_API_KEY`（寄信主通道）
 - `ECPAY_MERCHANT_ID` / `ECPAY_HASH_KEY` / `ECPAY_HASH_IV` / `ECPAY_PAYMENT_URL`
 - `CRON_SECRET`（Vercel Cron 呼叫時的 Bearer token）
 
 ### 建議設
-- `NEXT_PUBLIC_BASE_URL` = `https://satipatthana-reg-eihf.vercel.app`
+- `NEXT_PUBLIC_BASE_URL` = `https://tw-satipatthana-2026-reg.org`
+- `RESEND_FROM` — 自訂寄件者（預設 `台灣四念處學會 <noreply@tw-satipatthana-2026-reg.org>`）
 - `ARCHIVE_EMAIL` = `satipatthana.taipei@gmail.com`
+- `ALIBABA_SMTP_HOST` / `ALIBABA_SMTP_PORT` / `ALIBABA_SMTP_USER` / `ALIBABA_SMTP_PASSWORD` / `ALIBABA_SMTP_FROM`（QQ/163 queue 送出）
+- `GMAIL_USER` / `GMAIL_APP_PASSWORD`（Resend 單封最後備援）
 
 改 env 後**必須 Redeploy**才生效。
 
@@ -260,7 +278,13 @@ dig resend._domainkey.satipatthana.org.tw TXT
 
 ### 補寄失敗郵件
 
-使用 `scripts/resend-fetch-failed.mjs` 和 `scripts/resend-catchup.mjs`，搭配對應帳號的 Resend API Key 執行。
+使用 `scripts/mail-queue.mjs`（統一查詢、對帳、重送工具）：
+
+```bash
+node scripts/mail-queue.mjs --list --status failed   # 列出失敗郵件
+node scripts/mail-queue.mjs --reconcile              # 拉取 Resend 狀態同步
+node scripts/mail-queue.mjs --retry <uuid> --provider resend
+```
 
 **補寄前請先人工確認**：
 - 在 Resend Dashboard 逐筆查看失敗原因（退信？域名未驗證？收件人不存在？）
@@ -287,14 +311,21 @@ Vercel Cron 僅在 production 執行。
 | Script | 做什麼 |
 |---|---|
 | `check-supabase.mjs` | 連線 + RLS 檢查 |
-| `check-admin-users.mjs` | 列出管理員（看 hash 前綴） |
 | `check-lodging.mjs` | registrations 是否有 payment_plan 殘留 |
 | `check-lodging-setup.mjs` | 驗證 bucket + 14 檔案欄位是否就位 |
 | `check-lodging-nullable.mjs` | 驗證 lodging 欄位是否 nullable |
+| `check-test-columns-dropped.mjs` | 驗證測試欄位已下架 |
 | `add-admin.mjs` | upsert 單一管理員 |
 | `setup-admin.mjs` | ⚠️ 清空重建管理員 |
 | `test-role.mjs` | 自動驗證角色權限 |
-| `test-mail.mjs` | 寄測試信驗 Gmail credentials |
+| `test-mail.mjs` | 寄測試信驗 Resend + Gmail credentials |
+| `mail-queue.mjs` | 查詢 / 對帳 / 重送 email_queue 佇列（`--list` `--reconcile` `--retry`） |
+| `resend-cli.mjs` | 直接操作 Resend API 查詢 |
+| `upload-site-assets.mjs` | 上傳靜態資源到 `site-assets` bucket |
+| `upload-location-maps.mjs` | 上傳地圖資源 |
+| `upload-pledge.mjs` | 上傳承諾書到 `pledge` bucket |
+| `copy-data.js` | 跨環境複製資料 |
+| `generate-content-xlsx.js` | 產內容 xlsx |
 
 ---
 
