@@ -2716,6 +2716,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .schedule-tab { padding: 16px 18px; font-size: 15px; }
   .day-header .day-no { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+@media (max-width: 480px) {
+  .schedule-tab { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: normal; }
+  .schedule-tab small { font-size: 9px; letter-spacing: 0.05em; margin-bottom: 2px; }
+}
 
 /* ============================================================
    Interactive registration（集體場次選擇 + 分組排序）
