@@ -2713,11 +2713,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .schedule-row { grid-template-columns: 100px 1fr; gap: 16px; }
   .schedule-time { font-size: 17px; }
   .schedule-activity h4 { font-size: 16px; flex-wrap: wrap; }
-  .schedule-tab { padding: 16px 18px; font-size: 15px; }
+  .schedule-tab { flex: 1; flex-shrink: 1; padding: 14px 6px; font-size: 13px; text-align: center; white-space: normal; }
+  .schedule-tab small { font-size: 10px; letter-spacing: 0.08em; }
   .day-header .day-no { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (max-width: 480px) {
-  .schedule-tab { flex: 1; padding: 10px 4px; font-size: 11px; text-align: center; white-space: normal; }
+  .schedule-tab { padding: 10px 4px; font-size: 11px; }
   .schedule-tab small { font-size: 9px; letter-spacing: 0.05em; margin-bottom: 2px; }
 }
 
