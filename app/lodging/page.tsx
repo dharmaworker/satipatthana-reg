@@ -23,7 +23,7 @@ const BUS_DEST_LABEL: Record<string, string> = {
   taipei_824_pm: '8/24 下午 6:00–6:30 專車到台北車站',
   taipei_825_am: '8/25 上午 9:00 專車到台北車站',
   wuri_825_am: '8/25 上午 9:00 專車到烏日高鐵',
-  taoyuan_824_pm: '搭乘8/24 晚上的班機，請於台中高鐵站自行搭乘高鐵前往桃園機場。',
+  taoyuan_824_pm: '8/24 下午 5:30–6:00 專車接送至台中高鐵站。搭乘8/24晚上飛機返程的學員，請自行由台中高鐵站搭乘高鐵前往桃園機場。',
   taoyuan_825_am: '8/25 上午 9:00 專車到桃園機場第一航廈',
 }
 
@@ -638,7 +638,7 @@ function LodgingContent() {
                             {radio('bus_destination', 'taipei_824_pm', '8/24 下午 6:00–6:30 專車到台北車站')}
                             {radio('bus_destination', 'taipei_825_am', '8/25 上午 9:00 專車到台北車站')}
                             {radio('bus_destination', 'wuri_825_am', '8/25 上午 9:00 專車到烏日高鐵')}
-                            {radio('bus_destination', 'taoyuan_824_pm', '搭乘8/24 晚上的班機，請於台中高鐵站自行搭乘高鐵前往桃園機場。')}
+                            {radio('bus_destination', 'taoyuan_824_pm', <>8/24 下午 5:30–6:00 專車接送至台中高鐵站。<br/>搭乘8/24晚上飛機返程的學員，請自行由台中高鐵站搭乘高鐵前往桃園機場。</>)}
                             {radio('bus_destination', 'taoyuan_825_am', '8/25 上午 9:00 專車到桃園機場第一航廈', '車程約 3 小時')}
                           </div>
                         </div>
