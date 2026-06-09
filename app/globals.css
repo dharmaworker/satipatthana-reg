@@ -1193,6 +1193,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .welcome-status > div:not(.ref) {
   grid-column: 1 / -1;
   justify-self: end;
+  min-width: 0;
 }
 @media (max-width: 720px) {
   .welcome-card { grid-template-columns: auto 1fr; padding: 24px 22px; }

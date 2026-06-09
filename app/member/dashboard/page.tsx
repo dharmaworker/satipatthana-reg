@@ -231,7 +231,7 @@ function MemberDashboardContent() {
             </span>
             {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won' ||
               member.interactive_group_status === 'waitlist' || member.interactive_small_status === 'waitlist') && (
-              <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(216,194,154,0.15)', borderRadius: 8, border: '1px solid var(--gold)', fontSize: 13 }}>
+              <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(216,194,154,0.15)', borderRadius: 8, border: '1px solid var(--gold)', fontSize: 13, overflowWrap: 'break-word' }}>
                 <div style={{ color: 'var(--gold-deep)', fontWeight: 700, marginBottom: 6, letterSpacing: '0.05em' }}>
                   {(member.interactive_group_status === 'won' || member.interactive_small_status === 'won') ? '✦ 互動報名 中簽' : '✦ 互動報名 候補'}
                 </div>
