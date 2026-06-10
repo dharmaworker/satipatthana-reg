@@ -77,6 +77,7 @@ export async function PATCH(request: NextRequest) {
     line_qr_url,
     wechat_qr_url,
     registration_phase,
+    member_password,
   } = body
 
   if ((status !== undefined || member_id !== undefined || student_id !== undefined) && !canEditStatus) {
@@ -87,7 +88,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const adminOnlyFields = {
-    chinese_name, email, residence, payment_plan, line_qr_url, wechat_qr_url,
+    chinese_name, email, residence, payment_plan, line_qr_url, wechat_qr_url, member_password,
   }
   const hasAdminOnlyEdits = Object.values(adminOnlyFields).some(v => v !== undefined)
   if (hasAdminOnlyEdits && role !== 'admin') {
@@ -128,6 +129,7 @@ export async function PATCH(request: NextRequest) {
   if (line_qr_url !== undefined) updateData.line_qr_url = line_qr_url || null
   if (wechat_qr_url !== undefined) updateData.wechat_qr_url = wechat_qr_url || null
   if (registration_phase !== undefined) updateData.registration_phase = registration_phase
+  if (member_password !== undefined) updateData.member_password = member_password || null
 
   // 學號手動填入時防止重複
   if (student_id) {

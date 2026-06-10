@@ -1195,7 +1195,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   justify-self: end;
   min-width: 0;
 }
+.profile-2col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 720px) {
+  .profile-2col { grid-template-columns: 1fr; }
   .welcome-card { grid-template-columns: auto 1fr; padding: 24px 22px; }
   .welcome-status { grid-column: 1 / -1; grid-template-columns: max-content 1fr; justify-content: start; padding-top: 8px; border-top: 1px dotted var(--line); text-align: left; }
   .welcome-status .ref .k { justify-self: start; }

@@ -81,6 +81,7 @@ export default function DashboardPage() {
           member_id: editReg.member_id || null,
           line_qr_url: editReg.line_qr_url ?? null,
           wechat_qr_url: editReg.wechat_qr_url ?? null,
+          member_password: editReg.member_password || null,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -424,6 +425,12 @@ export default function DashboardPage() {
                 <label className="form-label">手機號碼</label>
                 <input className="form-input" value={editReg.phone || ''}
                   onChange={e => setEditReg({ ...editReg, phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="form-label">登入密碼</label>
+                <input className="form-input" value={editReg.member_password || ''}
+                  placeholder={`留空 = 手機末4碼預設（${editReg.phone?.slice(-4) || '未設定'}）`}
+                  onChange={e => setEditReg({ ...editReg, member_password: e.target.value })} />
               </div>
               <div>
                 <label className="form-label">居住地</label>
