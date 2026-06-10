@@ -80,6 +80,9 @@ function MemberDashboardContent() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMsg, setProfileMsg] = useState('')
   const [uploadingQr, setUploadingQr] = useState(false)
+  const [pwForm, setPwForm] = useState({ newPw: '', confirmPw: '' })
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
 
   useEffect(() => {
     fetch('/api/interactive/config')
@@ -393,10 +396,50 @@ function MemberDashboardContent() {
                     style={{ padding: '9px 24px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: profileSaving ? 'not-allowed' : 'pointer' }}>
                     {profileSaving ? '儲存中…' : '確認修改'}
                   </button>
-                  <button onClick={() => { setEditingProfile(false); setProfileMsg('') }}
+                  <button onClick={() => { setEditingProfile(false); setProfileMsg(''); setPwMsg(''); setPwForm({ newPw: '', confirmPw: '' }) }}
                     style={{ padding: '9px 16px', background: 'transparent', border: '1.5px solid var(--line-strong)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
                     取消
                   </button>
+                </div>
+
+                {/* 修改密碼（不消耗修改次數） */}
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed var(--line)' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 10 }}>修改登入密碼</p>
+                  {pwMsg && <p style={{ margin: '0 0 10px', padding: '8px 12px', borderRadius: 8, background: pwMsg.startsWith('✓') ? 'rgba(73,85,52,0.08)' : 'rgba(192,57,43,0.08)', color: pwMsg.startsWith('✓') ? 'var(--green)' : '#c0392b', fontSize: 13 }}>{pwMsg}</p>}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginBottom: 10 }}>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      新密碼
+                      <input type="password" value={pwForm.newPw} onChange={e => setPwForm(f => ({ ...f, newPw: e.target.value }))}
+                        placeholder="留空則回復手機末4碼預設"
+                        style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }} />
+                    </label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      確認新密碼
+                      <input type="password" value={pwForm.confirmPw} onChange={e => setPwForm(f => ({ ...f, confirmPw: e.target.value }))}
+                        placeholder="再輸入一次"
+                        style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }} />
+                    </label>
+                  </div>
+                  <button disabled={pwSaving} onClick={async () => {
+                    if (pwForm.newPw && pwForm.newPw !== pwForm.confirmPw) { setPwMsg('兩次密碼不一致'); return }
+                    setPwSaving(true); setPwMsg('')
+                    const res = await fetch(`/api/member/password?id=${id}&code=${encodeURIComponent(code)}`, {
+                      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ password: pwForm.newPw }),
+                    })
+                    const d = await res.json()
+                    setPwSaving(false)
+                    if (res.ok) {
+                      setPwMsg(pwForm.newPw ? '✓ 密碼已更新' : '✓ 已清除自訂密碼，回復手機末4碼預設')
+                      setPwForm({ newPw: '', confirmPw: '' })
+                    } else {
+                      setPwMsg(d.error || '儲存失敗')
+                    }
+                  }}
+                    style={{ padding: '8px 20px', background: 'var(--gold-deep)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: pwSaving ? 'not-allowed' : 'pointer' }}>
+                    {pwSaving ? '儲存中…' : '更新密碼'}
+                  </button>
+                  <span style={{ fontSize: 12, color: 'var(--ink-mute)', marginLeft: 10 }}>不消耗修改次數</span>
                 </div>
               </div>
             ) : null}

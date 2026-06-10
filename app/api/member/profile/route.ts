@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const MAX_EDITS = 2
+const MAX_EDITS = 3
 
 const EDITABLE_FIELDS = [
   'chinese_name', 'id_number', 'passport_name', 'dharma_name',

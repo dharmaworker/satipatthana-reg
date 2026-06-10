@@ -7,7 +7,8 @@ const STORAGE_KEY = 'member_remember'
 
 export default function MemberLoginPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ email: '', random_code: '' })
+  const [loginMode, setLoginMode] = useState<'password' | 'code'>('password')
+  const [form, setForm] = useState({ email: '', random_code: '', password: '' })
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -42,7 +43,7 @@ export default function MemberLoginPage() {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const { email, code } = JSON.parse(saved)
-        setForm({ email: email || '', random_code: code || '' })
+        setForm({ email: email || '', random_code: code || '', password: '' })
         setRemember(true)
       }
     } catch {}
@@ -52,15 +53,18 @@ export default function MemberLoginPage() {
     setLoading(true)
     setError('')
     try {
+      const body = loginMode === 'password'
+        ? { email: form.email, password: form.password }
+        : { email: form.email, random_code: form.random_code }
       const res = await fetch('/api/member/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       if (remember) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: form.email, code: form.random_code }))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: form.email, code: data.code }))
       } else {
         localStorage.removeItem(STORAGE_KEY)
       }
@@ -94,8 +98,9 @@ export default function MemberLoginPage() {
           <div className="login-kicker">Member Portal · 學員專區</div>
           <h1 className="login-title">學員專區登入</h1>
           <p className="login-subtitle">
-            請輸入您報名時所填寫的 E-mail 與專屬代碼。<br />
-            專屬代碼可於報名確認信／錄取通知信中查找。
+            {loginMode === 'password'
+              ? <>請輸入您報名時所填寫的 E-mail 與登入密碼。<br />預設密碼為手機號碼末4碼。</>
+              : <>請輸入您報名時所填寫的 E-mail 與專屬代碼。<br />專屬代碼可於報名確認信／錄取通知信中查找。</>}
           </p>
 
           {error && <div className="login-error">⚠ {error}</div>}
@@ -109,14 +114,31 @@ export default function MemberLoginPage() {
                   value={form.email}
                   onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} />
               </div>
-              <div className="form-field">
-                <label className="form-label">專屬代碼 <span className="required">*</span><span className="en">Access Code</span></label>
-                <input className="form-input uppercase" required maxLength={12} autoComplete="off"
-                  placeholder="例：MMN85PUN"
-                  value={form.random_code}
-                  onChange={e => setForm(prev => ({ ...prev, random_code: e.target.value.toUpperCase() }))} />
-                <span className="form-hint">請參考錄取通知信中的專屬代碼，不分大小寫。</span>
-              </div>
+              {loginMode === 'password' ? (
+                <div className="form-field">
+                  <label className="form-label">密碼 <span className="required">*</span><span className="en">Password</span></label>
+                  <input type="password" className="form-input" required autoComplete="current-password"
+                    placeholder="預設為手機號碼末4碼"
+                    value={form.password}
+                    onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))} />
+                  <span className="form-hint">尚未設定密碼者，預設密碼為手機號碼末4碼。</span>
+                </div>
+              ) : (
+                <div className="form-field">
+                  <label className="form-label">專屬代碼 <span className="required">*</span><span className="en">Access Code</span></label>
+                  <input className="form-input uppercase" required maxLength={12} autoComplete="off"
+                    placeholder="例：MMN85PUN"
+                    value={form.random_code}
+                    onChange={e => setForm(prev => ({ ...prev, random_code: e.target.value.toUpperCase() }))} />
+                  <span className="form-hint">請參考錄取通知信中的專屬代碼，不分大小寫。</span>
+                </div>
+              )}
+            </div>
+            <div style={{ marginBottom: 4 }}>
+              <button type="button" onClick={() => { setLoginMode(m => m === 'password' ? 'code' : 'password'); setError('') }}
+                style={{ background: 'none', border: 'none', color: 'var(--gold)', cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}>
+                {loginMode === 'password' ? '改用專屬代碼登入' : '改用密碼登入'}
+              </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 4px' }}>
               <input type="checkbox" id="remember" checked={remember} onChange={e => setRemember(e.target.checked)}

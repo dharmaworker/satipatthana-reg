@@ -488,6 +488,7 @@ export default function DashboardPage() {
               <DetailField label="居住地" value={detailReg.residence} />
               <DetailField label="護照頒發地" value={detailReg.passport_country} />
               <DetailField label="手機" value={detailReg.phone} />
+              <DetailField label="登入密碼" value={detailReg.member_password ?? `（手機末4碼：${detailReg.phone?.slice(-4) || '未設定'}）`} mono />
               <DetailField label="Email" value={detailReg.email} />
               <DetailField label="報名時間" value={detailReg.created_at ? new Date(detailReg.created_at).toLocaleString('zh-TW') : '—'} />
             </DetailSection>
