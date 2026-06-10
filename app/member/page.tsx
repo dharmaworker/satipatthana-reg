@@ -7,7 +7,7 @@ const STORAGE_KEY = 'member_remember'
 
 export default function MemberLoginPage() {
   const router = useRouter()
-  const [loginMode, setLoginMode] = useState<'password' | 'code'>('password')
+  const [loginMode, setLoginMode] = useState<'password' | 'code'>('code')
   const [form, setForm] = useState({ email: '', random_code: '', password: '' })
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
