@@ -1197,7 +1197,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 @media (max-width: 720px) {
   .welcome-card { grid-template-columns: auto 1fr; padding: 24px 22px; }
-  .welcome-status { grid-column: 1 / -1; justify-content: start; padding-top: 8px; border-top: 1px dotted var(--line); text-align: left; }
+  .welcome-status { grid-column: 1 / -1; grid-template-columns: max-content 1fr; justify-content: start; padding-top: 8px; border-top: 1px dotted var(--line); text-align: left; }
   .welcome-status .ref .k { justify-self: start; }
   .welcome-status .status-badge, .welcome-status > div:not(.ref) { justify-self: start; }
 }

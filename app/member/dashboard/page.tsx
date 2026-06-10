@@ -285,7 +285,7 @@ function MemberDashboardContent() {
             {editingProfile && profileDraft ? (
               <div style={{ display: 'grid', gap: 12 }}>
                 {profileMsg && <p style={{ margin: 0, padding: '8px 12px', borderRadius: 8, background: profileMsg.startsWith('✓') ? 'rgba(73,85,52,0.08)' : 'rgba(192,57,43,0.08)', color: profileMsg.startsWith('✓') ? 'var(--green)' : '#c0392b', fontSize: 13 }}>{profileMsg}</p>}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
                   {([
                     ['中文姓名', 'chinese_name', 'text', true],
                     ['護照英文姓名', 'passport_name', 'text', true],
@@ -302,7 +302,7 @@ function MemberDashboardContent() {
                     </label>
                   ))}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     性別 <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
                     <select value={profileDraft.gender} onChange={e => setProfileDraft({ ...profileDraft, gender: e.target.value })}
@@ -342,7 +342,7 @@ function MemberDashboardContent() {
                   const qrLabel = isLine ? 'LINE QR Code' : '微信 QR Code'
                   const currentQr = profileDraft[qrField] as string | null
                   return (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {label}
                         <input type="text" value={(profileDraft[idField] as any) ?? ''}
