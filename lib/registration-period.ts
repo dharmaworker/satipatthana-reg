@@ -255,9 +255,10 @@ export interface PhaseCopy {
 function buildVars(phase: RegPhase): Record<string, string> {
   const span = spanOf(phase)
 
-  // For not-yet, "the period" refers to the upcoming open phase, not the
-  // not-yet window itself.
-  const refSpan = phase === 'not-yet' ? spanOf('open') : span
+  // For not-yet/closed, "the period" refers to open phase (what was/will be open).
+  // For closed, deadlineMs uses closed.startMs (= when registration ended).
+  const refSpan = (phase === 'not-yet' || phase === 'closed') ? spanOf('open') : span
+  const deadlineMs = phase === 'closed' ? span.startMs : refSpan.endMs
 
   // Notification reference:
   //  • open / late: this phase's own notify
@@ -303,7 +304,7 @@ function resolveCopy(phase: RegPhase): PhaseCopy {
     closedHeading: tmpl.closedHeading,
     closedDetail: sub(tmpl.closedDetailTemplate, vars),
     sidebarDeadlineLabel: tmpl.sidebarDeadlineLabel,
-    sidebarDeadlineDate: phase === 'closed' ? '—' : vars.deadlineDot,
+    sidebarDeadlineDate: vars.deadlineDot,
     periodStartDot: vars.periodStartDot,
     sidebarNotifyDate: vars.notifyDot,
     recruitFlowNotifyLine: sub(tmpl.recruitFlowNotifyLineTemplate, vars),
@@ -442,7 +443,8 @@ function spanOfFrom(spans: PhaseSpan[], key: RegPhase): PhaseSpan {
 
 function buildVarsFrom(spans: PhaseSpan[], phase: RegPhase): Record<string, string> {
   const span = spanOfFrom(spans, phase)
-  const refSpan = phase === 'not-yet' ? spanOfFrom(spans, 'open') : span
+  const refSpan = (phase === 'not-yet' || phase === 'closed') ? spanOfFrom(spans, 'open') : span
+  const deadlineMs = phase === 'closed' ? span.startMs : refSpan.endMs
   const notifyMs = phase === 'not-yet' ? spanOfFrom(spans, 'open').notifyMs
                  : phase === 'closed'  ? spanOfFrom(spans, 'late').notifyMs
                  : span.notifyMs
@@ -456,7 +458,7 @@ function buildVarsFrom(spans: PhaseSpan[], phase: RegPhase): Record<string, stri
     notifyShort: notifyMs ? fmtShortDate(notifyMs) : '',
     notifyFull: notifyMs ? fmtFullDate(notifyMs) : '',
     notifyDot: notifyMs ? fmtMonthDay(notifyMs) : '',
-    deadlineDot: Number.isFinite(refSpan.endMs) ? fmtMonthDay(refSpan.endMs, true) : '—',
+    deadlineDot: Number.isFinite(deadlineMs) ? fmtMonthDay(deadlineMs, true) : '—',
     periodStartDot: fmtMonthDay(refSpan.startMs),
     payDeadlineDot: payMs ? fmtMonthDay(payMs) : '',
     payDeadlineShort: payMs ? fmtShortDate(payMs) : '',
@@ -475,7 +477,7 @@ function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
     closedIcon: tmpl.closedIcon, closedHeading: tmpl.closedHeading,
     closedDetail: sub(tmpl.closedDetailTemplate, vars),
     sidebarDeadlineLabel: tmpl.sidebarDeadlineLabel,
-    sidebarDeadlineDate: phase === 'closed' ? '—' : vars.deadlineDot,
+    sidebarDeadlineDate: vars.deadlineDot,
     periodStartDot: vars.periodStartDot, sidebarNotifyDate: vars.notifyDot,
     recruitFlowNotifyLine: sub(tmpl.recruitFlowNotifyLineTemplate, vars),
     highlightCard: tmpl.highlightCard ? {

@@ -15,7 +15,7 @@ const TRANSPORT_LABEL: Record<string, string> = {
   self: '8/19 自行抵達日月潭湖畔會館',
   taipei_bus: '主辦專車：8/19 上午 8:30 台北車站東 3 門集合',
   wuri_bus: '主辦專車：8/19 上午 9:30 烏日高鐵站 6 號出口',
-  airport_bus_0819: '主辦專車：8/19 下午 2:30 桃園機場第一航廈',
+  airport_bus_0819: '主辦專車：8/19 下午 02:30～03:00 桃園機場第一航廈',
   self_0820: '8/20 上午 8:00 前自行抵達日月潭湖畔會館',
 }
 
@@ -602,7 +602,7 @@ function LodgingContent() {
                               onPreview={setPreviewUrl} />
                           </div>
                         )}
-                        {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 2:30 桃園機場第一航廈接機大廳右邊集合', '法工人員穿著學會背心')}
+                        {radio('arrival_transport', 'airport_bus_0819', '主辦專車：8/19 下午 02:30～03:00 桃園機場第一航廈接機大廳右邊集合', '法工人員穿著學會背心')}
                         {form.arrival_transport === 'airport_bus_0819' && (
                           <div className="branch active">
                             <LocationMap label="桃園機場第一航廈一樓集合點示意圖"
