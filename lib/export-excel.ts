@@ -144,6 +144,13 @@ function transformLodgingRow(l: any) {
     self_0820: '8/20 自行',
     bus: '專車',
   }
+  const busDestZh: Record<string, string> = {
+    taipei_824_pm: '台北車站 8/24 下午',
+    taipei_825_am: '台北車站 8/25 上午',
+    wuri_825_am: '烏日高鐵 8/25 上午',
+    taoyuan_824_pm: '台中高鐵→桃園機場 8/24 下午',
+    taoyuan_825_am: '桃園機場 8/25 上午',
+  }
   const paymentStatusZh: Record<string, string> = {
     unpaid: '未繳費', paid: '待確認', verified: '已確認',
   }
@@ -168,6 +175,7 @@ function transformLodgingRow(l: any) {
     contact_qr_url: reg.line_qr_url || reg.wechat_qr_url || '',
     arrival_transport: transportZh[l.arrival_transport] || l.arrival_transport,
     departure_transport: transportZh[l.departure_transport] || l.departure_transport,
+    bus_destination: busDestZh[l.bus_destination] || l.bus_destination || '',
     diet: l.diet === 'meat' ? '葷' : '素',
     noon_fasting: l.noon_fasting === 'before_noon' ? '12前吃' : '12後吃',
     snacks: l.snacks === 'snacks_and_drink' ? '茶點+咖啡/茶' : '只咖啡/茶',
