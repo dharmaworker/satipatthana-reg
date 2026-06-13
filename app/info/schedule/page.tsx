@@ -14,75 +14,6 @@ type State =
   | { kind: 'unpublished' }
   | { kind: 'ok'; data: Timetable }
 
-type Cat = 'checkin' | 'dharma' | 'sitting' | 'walking' | 'meal' | 'closing'
-
-const CAT_COLOR: Record<Cat, string> = {
-  checkin: '#93826b', dharma: '#c2592a', sitting: '#a87d3a',
-  walking: '#5f7347', meal: '#93826b', closing: '#5f7347',
-}
-const CAT_BG: Record<Cat, string> = {
-  checkin: 'rgba(147,130,107,.14)', dharma: 'rgba(194,89,42,.12)',
-  sitting: 'rgba(168,125,58,.14)', walking: 'rgba(95,115,71,.14)',
-  meal: 'rgba(147,130,107,.14)', closing: 'rgba(95,115,71,.14)',
-}
-
-function getCat(title: string, badge?: string): Cat {
-  if (badge === 'gold' || /法談|檢查作業/.test(title)) return 'dharma'
-  if (/禪坐|坐禪|坐修|打坐/.test(title)) return 'sitting'
-  if (/行禪|經行/.test(title)) return 'walking'
-  if (/早齋|午齋|晚齋|餐|用餐|自由練習/.test(title)) return 'meal'
-  if (/報到|入住|遷房/.test(title)) return 'checkin'
-  if (/回向|總結|圓滿|結業/.test(title)) return 'closing'
-  return 'sitting'
-}
-
-function CatIcon({ cat, size = 18 }: { cat: Cat; size?: number }) {
-  const c = CAT_COLOR[cat]
-  if (cat === 'dharma') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 5.6h16a1.1 1.1 0 0 1 1.1 1.1v7.4a1.1 1.1 0 0 1-1.1 1.1h-8.2l-3.8 3.2v-3.2H4a1.1 1.1 0 0 1-1.1-1.1V6.7A1.1 1.1 0 0 1 4 5.6z"/>
-      <circle cx="8.6" cy="10.4" r=".75" fill={c} stroke="none"/>
-      <circle cx="12" cy="10.4" r=".75" fill={c} stroke="none"/>
-      <circle cx="15.4" cy="10.4" r=".75" fill={c} stroke="none"/>
-    </svg>
-  )
-  if (cat === 'sitting') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="5.3" r="2"/>
-      <path d="M7.4 16.2C7.4 11.9 9.4 9.1 12 9.1s4.6 2.8 4.6 7.1"/>
-      <path d="M5.8 16.2C9 18.7 15 18.7 18.2 16.2"/>
-    </svg>
-  )
-  if (cat === 'walking') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="13.4" cy="4.6" r="1.8"/>
-      <path d="M13.1 6.5 11.5 12.2M11.5 12.2 8.9 17.2M11.5 12.2 14.3 16.6M12.3 8.6 9.6 10.3M12.3 8.6 15.2 9.6"/>
-    </svg>
-  )
-  if (cat === 'meal') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4.4 11.4h15.2a7.6 7 0 0 1-15.2 0z"/>
-      <path d="M9.4 20.2h5.2"/>
-      <path d="M10 4.6c1 1 1 2.1 0 3.1"/>
-      <path d="M14 4.6c1 1 1 2.1 0 3.1"/>
-    </svg>
-  )
-  if (cat === 'closing') return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 6.4c1.6 2.6 1.6 5.1 0 7.4c-1.6-2.3-1.6-4.8 0-7.4z"/>
-      <path d="M12 13.8C10.1 12.9 7.6 11.5 6.5 9.7c2.5-.3 4.7 1.1 5.5 4.1z"/>
-      <path d="M12 13.8c1.9-.9 4.4-2.3 5.5-4.1c-2.5-.3-4.7 1.1-5.5 4.1z"/>
-      <path d="M5 14.6C8.2 17.1 15.8 17.1 19 14.6"/>
-    </svg>
-  )
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 5.5h12a1 1 0 0 1 1 1v12.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z"/>
-      <path d="M9.3 3.6h5.4a.8.8 0 0 1 .8.8V6.6H8.5V4.4a.8.8 0 0 1 .8-.8z"/>
-      <path d="M8.6 12.8l2.1 2.1 4.6-4.6"/>
-    </svg>
-  )
-}
 
 function getWeekday(dateStr: string): string {
   const DAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -177,46 +108,33 @@ function DayNav({ days }: { days: Day[] }) {
 }
 
 function EventRow({ row }: { row: Row }) {
-  const cat = getCat(row.title, row.badge)
-  const color = CAT_COLOR[cat]
-  const bg = CAT_BG[cat]
   return (
     <div className="cs-event">
       <div style={{
-        width: 38, height: 38, borderRadius: '50%',
-        background: bg, border: `1.5px solid ${color}33`,
-        display: 'grid', placeItems: 'center',
-        flexShrink: 0, alignSelf: 'start', marginTop: 1,
+        fontFamily: 'var(--font-cormorant), serif',
+        fontSize: 18, fontWeight: 600, color: '#a06f31',
+        letterSpacing: '0.03em', lineHeight: 1.2, marginBottom: 3,
+      }}>{row.time}</div>
+      <div style={{
+        fontFamily: 'var(--font-noto-serif-tc), serif',
+        fontSize: 16, fontWeight: 600, color: '#34291f',
+        letterSpacing: '0.04em', lineHeight: 1.35,
       }}>
-        <CatIcon cat={cat} size={18}/>
-      </div>
-      <div style={{ paddingTop: 1 }}>
-        <div style={{
-          fontFamily: 'var(--font-cormorant), serif',
-          fontSize: 18, fontWeight: 600, color: '#a06f31',
-          letterSpacing: '0.03em', lineHeight: 1.2, marginBottom: 3,
-        }}>{row.time}</div>
-        <div style={{
-          fontFamily: 'var(--font-noto-serif-tc), serif',
-          fontSize: 16, fontWeight: 600, color: '#34291f',
-          letterSpacing: '0.04em', lineHeight: 1.35,
-        }}>
-          {row.title}
-          {row.badge === 'gold' && (
-            <mark style={{
-              background: 'rgba(194,89,42,.12)',
-              color: '#c2592a',
-              fontSize: 11, fontWeight: 700,
-              padding: '1px 7px', borderRadius: 4,
-              marginLeft: 8, letterSpacing: '0.06em',
-              fontFamily: 'var(--font-noto-serif-tc), serif',
-            }}>重點</mark>
-          )}
-        </div>
-        {row.desc && (
-          <p style={{ margin: '5px 0 0', fontSize: 13.5, color: '#8d7a66', lineHeight: 1.7 }}>{row.desc}</p>
+        {row.title}
+        {row.badge === 'gold' && (
+          <mark style={{
+            background: 'rgba(194,89,42,.12)',
+            color: '#c2592a',
+            fontSize: 11, fontWeight: 700,
+            padding: '1px 7px', borderRadius: 4,
+            marginLeft: 8, letterSpacing: '0.06em',
+            fontFamily: 'var(--font-noto-serif-tc), serif',
+          }}>重點</mark>
         )}
       </div>
+      {row.desc && (
+        <p style={{ margin: '5px 0 0', fontSize: 13.5, color: '#8d7a66', lineHeight: 1.7 }}>{row.desc}</p>
+      )}
     </div>
   )
 }
