@@ -2933,4 +2933,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   content: "・"; color: var(--gold);
   position: absolute; left: 4px;
 }
+
+/* ─── Zoom Guide ─────────────────────────────────── */
+@keyframes twinkle{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.25);opacity:1}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.zg2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:0}
+.zg2s{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0 0}
+.zg3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 0}
+.zg4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0}
+.zg-art{background:#fdfaf2;border:1px solid #e3d9c6;border-radius:14px;padding:26px;margin:22px 0;box-shadow:0 1px 3px rgba(60,50,40,.05);display:block}
+.zg-art-2col{background:#fdfaf2;border:1px solid #e3d9c6;border-radius:14px;padding:24px 26px;margin:22px 0;box-shadow:0 1px 3px rgba(60,50,40,.05);display:grid;grid-template-columns:1fr 1.25fr;gap:26px;align-items:center}
+.zg-card{position:relative;background:#faf6ec;border:1px solid #e6dcc8;border-radius:14px;padding:20px 14px 16px;text-align:center}
+.zg-badge{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;background:#fff;border:1px solid #d8cbb0;display:grid;place-items:center;font-weight:700;color:#7f8a55;font-size:14px}
+@media(max-width:960px){.zg-art-2col{display:block}}
+@media(max-width:820px){
+  .zg4{grid-template-columns:repeat(2,1fr)}
+  nav.zg-nav button{font-size:14px !important;padding:11px 8px 10px !important}
+}
+@media(max-width:640px){.zg4,.zg3,.zg2,.zg2s{grid-template-columns:1fr}}
+@media(max-width:480px){nav.zg-nav button{font-size:12.5px !important;padding:10px 4px !important}}
 .rules-intro strong { color: var(--ink); }
