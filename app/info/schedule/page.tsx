@@ -190,30 +190,28 @@ function EventRow({ row }: { row: Row }) {
       }}>
         <CatIcon cat={cat} size={18}/>
       </div>
-      <div style={{ paddingTop: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{
-            fontFamily: 'var(--font-cormorant), serif',
-            fontSize: 18, fontWeight: 600, color: '#a06f31',
-            letterSpacing: '0.03em', lineHeight: 1.2, flexShrink: 0,
-          }}>{row.time}</span>
-          <span style={{
-            fontFamily: 'var(--font-noto-serif-tc), serif',
-            fontSize: 16, fontWeight: 600, color: '#34291f',
-            letterSpacing: '0.04em', lineHeight: 1.35,
-          }}>
-            {row.title}
-            {row.badge === 'gold' && (
-              <mark style={{
-                background: 'rgba(194,89,42,.12)',
-                color: '#c2592a',
-                fontSize: 11, fontWeight: 700,
-                padding: '1px 7px', borderRadius: 4,
-                marginLeft: 8, letterSpacing: '0.06em',
-                fontFamily: 'var(--font-noto-serif-tc), serif',
-              }}>重點</mark>
-            )}
-          </span>
+      <div style={{ paddingTop: 1 }}>
+        <div style={{
+          fontFamily: 'var(--font-cormorant), serif',
+          fontSize: 18, fontWeight: 600, color: '#a06f31',
+          letterSpacing: '0.03em', lineHeight: 1.2, marginBottom: 3,
+        }}>{row.time}</div>
+        <div style={{
+          fontFamily: 'var(--font-noto-serif-tc), serif',
+          fontSize: 16, fontWeight: 600, color: '#34291f',
+          letterSpacing: '0.04em', lineHeight: 1.35,
+        }}>
+          {row.title}
+          {row.badge === 'gold' && (
+            <mark style={{
+              background: 'rgba(194,89,42,.12)',
+              color: '#c2592a',
+              fontSize: 11, fontWeight: 700,
+              padding: '1px 7px', borderRadius: 4,
+              marginLeft: 8, letterSpacing: '0.06em',
+              fontFamily: 'var(--font-noto-serif-tc), serif',
+            }}>重點</mark>
+          )}
         </div>
         {row.desc && (
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: '#8d7a66', lineHeight: 1.7 }}>{row.desc}</p>
@@ -314,11 +312,22 @@ function ScheduleContent() {
 
   return (
     <>
-      <div className="page-bg">
-        <div className="page-blob b1" />
-        <div className="page-blob b2" />
-        <div className="page-blob b3" />
-      </div>
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+        background: `
+          radial-gradient(circle at 15% 8%, rgba(255,255,255,.92) 0 10%, transparent 34%),
+          radial-gradient(circle at 78% 20%, rgba(216,163,96,.22) 0 10%, transparent 32%),
+          radial-gradient(circle at 12% 80%, rgba(112,132,86,.13) 0 8%, transparent 30%),
+          linear-gradient(135deg, #fbf5eb, #f7efe3)
+        `,
+      }}/>
+      <div aria-hidden="true" style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: 'linear-gradient(rgba(120,90,54,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(120,90,54,.03) 1px, transparent 1px)',
+        backgroundSize: '42px 42px',
+        WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,.72), transparent 75%)',
+        maskImage: 'linear-gradient(to bottom, rgba(0,0,0,.72), transparent 75%)',
+      }}/>
 
       <header className="site-header">
         <div className="container nav">
@@ -330,7 +339,7 @@ function ScheduleContent() {
       </header>
 
       <div className="page-header">
-        <div className="container">
+        <div className="container" style={{ textAlign: 'center' }}>
           <p className="page-kicker">Daily Schedule</p>
           <h1 className="page-title">完整課程時間表</h1>
           <p className="page-subtitle">五日禪修的詳細課程安排，含所有禪坐、法談、互動時段。</p>
