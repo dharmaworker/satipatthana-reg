@@ -193,7 +193,7 @@ function PracticeContent() {
                   {config.zoom_password && (
                     <div>密碼：<strong style={{ color: 'var(--ink)' }}>{config.zoom_password}</strong></div>
                   )}
-                  <div>登錄名：<strong style={{ color: 'var(--ink)' }}>學號 + 英文姓名／姓名拼音</strong><span style={{ color: 'var(--ink-mute)', fontSize: 12, marginLeft: 6 }}>（若無學號則用報名序號）</span></div>
+                  <div>登錄名：<strong style={{ color: 'var(--ink)' }}>報名序號 + 英文姓名／姓名拼音</strong></div>
                   {config.zoom_url && (
                     <div style={{ marginTop: 6 }}>
                       <a href={config.zoom_url} target="_blank" rel="noopener noreferrer"
