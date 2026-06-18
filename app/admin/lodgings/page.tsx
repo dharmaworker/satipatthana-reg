@@ -38,7 +38,7 @@ export default function LodgingsPage() {
   const [uploadingKind, setUploadingKind] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null)
   const [bulkSelected, setBulkSelected] = useState<string[]>([])
-  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance' | 'group_join'>(null)
+  const [bulkSending, setBulkSending] = useState<null | 'approval' | 'formal' | 'invite' | 'student_id' | 'timetable' | 'attendance' | 'group_join' | 'practice'>(null)
   const [bulkMessage, setBulkMessage] = useState('')
   const [filter, setFilter] = useState<'all' | 'with_student_id' | 'not_notified' | 'no_lodging' | 'unpaid' | 'late'>('all')
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -171,6 +171,22 @@ export default function LodgingsPage() {
     setBulkSending('attendance')
     setBulkMessage('')
     const res = await fetch('/api/admin/send-attendance-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: bulkSelected }),
+    })
+    const data = await res.json()
+    setBulkMessage(data.message || (res.ok ? '寄送完成' : `寄送失敗：${data.error || res.status}`))
+    setBulkSending(null)
+    if (res.ok) setBulkSelected([])
+  }
+
+  const sendPracticeNotification = async () => {
+    if (bulkSelected.length === 0) { alert('請先勾選至少一位學員'); return }
+    if (!confirm(`寄出課前共修通知信給 ${bulkSelected.length} 位學員？`)) return
+    setBulkSending('practice')
+    setBulkMessage('')
+    const res = await fetch('/api/admin/send-practice-notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: bulkSelected }),
@@ -448,6 +464,11 @@ export default function LodgingsPage() {
             disabled={bulkSending !== null || queuePending > 0}
             className="admin-btn-sm primary">
             {bulkSending === 'timetable' ? '寄送中⋯' : `批次寄課表發佈通知（${bulkSelected.length}）`}
+          </button>
+          <button onClick={sendPracticeNotification}
+            disabled={bulkSending !== null || queuePending > 0}
+            className="admin-btn-sm primary">
+            {bulkSending === 'practice' ? '寄送中⋯' : `批次寄課前共修通知（${bulkSelected.length}）`}
           </button>
           <button onClick={sendGroupJoin}
             disabled={bulkSending !== null || queuePending > 0}
