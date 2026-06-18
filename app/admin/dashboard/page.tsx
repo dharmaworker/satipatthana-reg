@@ -205,6 +205,7 @@ export default function DashboardPage() {
     approved: registrations.filter(r => r.status === 'approved').length,
     rejected: registrations.filter(r => r.status === 'rejected').length,
     waitlist: registrations.filter(r => r.status === 'waitlist').length,
+    withdrawn: registrations.filter(r => r.status === 'withdrawn').length,
     paid: registrations.filter(r => r.payment_status === 'verified').length,
   }
 
@@ -214,6 +215,7 @@ export default function DashboardPage() {
     { label: '已錄取', value: stats.approved, accent: 'var(--success)' },
     { label: '候補', value: stats.waitlist, accent: '#2a6fa8' },
     { label: '未錄取', value: stats.rejected, accent: 'var(--error)' },
+    { label: '棄權', value: stats.withdrawn, accent: '#8b7355' },
   ]
 
   return (
@@ -268,6 +270,7 @@ export default function DashboardPage() {
             <option value="approved">已錄取</option>
             <option value="waitlist">候補</option>
             <option value="rejected">未錄取</option>
+            <option value="withdrawn">棄權</option>
           </select>
           <button onClick={() => fetchData()} className="admin-btn-sm">重新整理</button>
           {/* <button onClick={() => window.open('/api/admin/export', '_blank')} className="admin-btn-sm gold">匯出 CSV</button> */}
@@ -347,12 +350,13 @@ export default function DashboardPage() {
                   <td>
                     <select value={reg.status}
                       onChange={e => updateStatus(reg.id, e.target.value)}
-                      className={`admin-status-badge ${reg.status === 'pending' ? 'warn' : reg.status === 'approved' ? 'ok' : reg.status === 'waitlist' ? 'info' : 'error'}`}
+                      className={`admin-status-badge ${reg.status === 'pending' ? 'warn' : reg.status === 'approved' ? 'ok' : reg.status === 'waitlist' ? 'info' : reg.status === 'withdrawn' ? 'error' : 'error'}`}
                       style={{ cursor: 'pointer', appearance: 'none', paddingRight: 10, fontFamily: 'inherit' }}>
                       <option value="pending">審核中</option>
                       <option value="approved">已錄取</option>
                       <option value="waitlist">候補</option>
                       <option value="rejected">未錄取</option>
+                      <option value="withdrawn">棄權</option>
                     </select>
                   </td>
                   <td className="mono">{reg.member_id || '—'}</td>

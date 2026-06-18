@@ -42,6 +42,7 @@ const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   pending: { label: '審核中', cls: 'pending' },
   waitlist: { label: '候補', cls: 'waitlist' },
   rejected: { label: '未錄取', cls: 'rejected' },
+  withdrawn: { label: '棄權', cls: 'rejected' },
 }
 
 function MemberDashboardContent() {
@@ -728,6 +729,17 @@ function MemberDashboardContent() {
             <div className="icon">✗</div>
             <h3>未錄取本次禪修</h3>
             <p>感謝您的報名意願。本次禪修因名額限制，您未能錄取。<br />歡迎下次再報名，或先參加每月 ZOOM 線上指導老師互動。</p>
+            <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>
+              <a href="/" className="btn btn-ghost">返回主站</a>
+            </div>
+          </div>
+        )}
+        {member.status === 'withdrawn' && (
+          <div className="pending-card">
+            <div className="icon">✗</div>
+            <h3>已棄權本次禪修</h3>
+            <p>感謝您的報名。若日後有意參加禪修課程，歡迎重新報名。如有任何疑問，歡迎聯絡學會。</p>
             <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href="mailto:satipatthana.tw@gmail.com" className="btn btn-primary">聯絡學會</a>
               <a href="/" className="btn btn-ghost">返回主站</a>
