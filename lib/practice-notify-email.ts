@@ -52,6 +52,20 @@ export async function buildPracticeNotifyPayload(reg: PracticeReg) {
 
     ${practiceConfig?.zoom_url ? `${emailButton(practiceConfig.zoom_url, '點此加入 Zoom →', 'green')}` : ''}
 
+    ${reg.retreat_format !== 'online' ? `
+    <hr style="border:none;border-top:1px solid #e8e0d4;margin:20px 0;" />
+    ${emailH3('完課打卡提醒')}
+    <table style="border-collapse:collapse;width:100%;font-size:13px;margin:0 0 18px;background:rgba(73,85,52,0.1);border-radius:8px;overflow:hidden;">
+      <tr>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkMute};width:36px;font-size:16px;text-align:center;">📋</td>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;">
+          <span style="color:${C.ink};display:block;margin-bottom:4px;"><strong>每次共修結束後，請進入學員專區完成打卡</strong></span>
+          <span style="color:${C.inkSoft};font-size:12px;">打卡記錄自動儲存，幫助您追蹤共修參與情況。</span>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
     <hr style="border:none;border-top:1px solid #e8e0d4;margin:20px 0;" />
     ${emailH3('Zoom 使用指南')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">
