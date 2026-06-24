@@ -201,12 +201,20 @@ export async function POST(request: NextRequest) {
     try {
       const dietZh = fields.diet === 'meat' ? '葷食' : '素食'
       const noonZh = ({ fasting_yes: '是，過午不食', fasting_no: '否，不是過午不食', before_noon: '需於中午12點前用餐', after_noon: '可於中午12點後用餐' } as Record<string, string>)[fields.noon_fasting as string] || fields.noon_fasting
-      const arrivalZh = { self: '自行抵達', taipei_bus: '搭主辦專車（8/19 上午 8:30 台北車站）', wuri_bus: '搭主辦專車（8/19 上午 9:30 烏日高鐵）' }[fields.arrival_transport as string] || fields.arrival_transport
+      const arrivalZh = ({
+        self: '自行抵達',
+        taipei_bus: '搭主辦專車（8/19 上午 8:30 台北車站）',
+        wuri_bus: '搭主辦專車（8/19 上午 9:30 烏日高鐵）',
+        airport_bus_0819: '搭主辦專車（8/19 下午 02:30～03:00 桃園機場第一航廈）',
+        self_0820: '8/20 上午 8:00 前自行抵達日月潭湖畔會館',
+      } as Record<string, string>)[fields.arrival_transport as string] || fields.arrival_transport
       const departureZh = fields.departure_transport === 'self' ? '自行離開' : '乘坐主辦單位專車'
       const busDestZh = {
         taipei_824_pm: '8/24 下午 6:00–6:30 到台北車站',
         taipei_825_am: '8/25 上午 9:00 到台北車站',
         wuri_825_am: '8/25 上午 9:00 到烏日高鐵',
+        taoyuan_824_pm: '8/24 下午 5:30–6:00 到台中高鐵站',
+        taoyuan_825_am: '8/25 上午 9:00 到桃園機場第一航廈',
       }[fields.bus_destination as string] || ''
 
       await sendMailWithRetry({
