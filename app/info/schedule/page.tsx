@@ -5,7 +5,7 @@ import { SITE_ASSETS } from '@/lib/site-assets'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[]; is_online?: boolean }
+type Timetable = { zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; zoom_login_name?: string; days: Day[]; is_online?: boolean }
 
 type State =
   | { kind: 'loading' }
@@ -61,7 +61,7 @@ function ZoomCard({ data, id, code }: { data: Timetable; id: string; code: strin
           <strong style={{ color: '#34291f' }}>{data.zoom_password}</strong>
         </>}
         <span style={{ color: '#8d7a66', whiteSpace: 'nowrap' }}>登錄名</span>
-        <span style={{ color: '#34291f' }}>學號 + 英文姓名／姓名拼音</span>
+        <span style={{ color: '#34291f' }}>{data.zoom_login_name || '學號 + 英文姓名／姓名拼音'}</span>
         {data.zoom_link && <>
           <span style={{ color: '#8d7a66', whiteSpace: 'nowrap' }}>Zoom 連結</span>
           <a href={data.zoom_link} target="_blank" rel="noopener noreferrer"

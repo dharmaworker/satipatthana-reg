@@ -5,7 +5,7 @@ import { AdminHeader } from '../_components/AdminHeader'
 
 type Row = { time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
-type Timetable = { publish_at?: string | null; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; days: Day[] }
+type Timetable = { publish_at?: string | null; zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; zoom_login_name?: string; days: Day[] }
 
 function toDatetimeLocal(iso: string | null | undefined): string {
   if (!iso) return ''
@@ -145,6 +145,14 @@ export default function TimetableAdminPage() {
               value={data?.zoom_link || ''}
               disabled={loading}
               onChange={e => data && setData({ ...data, zoom_link: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>登錄名</span>
+            <input className="form-input" style={{ width: 220, padding: '5px 10px', fontSize: 13 }}
+              placeholder="學號 + 英文姓名／姓名拼音（選填）"
+              value={data?.zoom_login_name || ''}
+              disabled={loading}
+              onChange={e => data && setData({ ...data, zoom_login_name: e.target.value })} />
           </div>
           <button onClick={addDay} disabled={loading} className="admin-btn-sm">+ 新增日次</button>
           <button onClick={fetchData} disabled={loading || saving} className="admin-btn-sm">重新載入</button>

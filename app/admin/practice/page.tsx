@@ -10,8 +10,11 @@ type PracticeConfig = {
   zoom_meeting_id: string
   zoom_password: string
   zoom_url: string | null
+  zoom_login_name: string | null
   notes: string | null
 }
+
+const DEFAULT_LOGIN_NAME = '報名序號 + 中文姓名'
 
 function toDatetimeLocal(iso: string | null): string {
   if (!iso) return ''
@@ -203,6 +206,12 @@ export default function AdminPracticePage() {
                     </label>
                   </div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    登錄名（留空則顯示「{DEFAULT_LOGIN_NAME}」）
+                    <input style={inputStyle} value={configDraft.zoom_login_name || ''}
+                      onChange={e => setConfigDraft({ ...configDraft, zoom_login_name: e.target.value || null })}
+                      placeholder={DEFAULT_LOGIN_NAME} />
+                  </label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     備註說明（學員可見）
                     <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }}
                       value={configDraft.notes || ''}
@@ -227,6 +236,7 @@ export default function AdminPracticePage() {
                     ['Zoom 會議編號', config.zoom_meeting_id || '（未設定）'],
                     ['Zoom 密碼', config.zoom_password || '（未設定）'],
                     ['Zoom 連結', config.zoom_url || '（未設定）'],
+                    ['登錄名', config.zoom_login_name || `${DEFAULT_LOGIN_NAME}（預設）`],
                     ['備註', config.notes || '（無）'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', gap: 10 }}>
