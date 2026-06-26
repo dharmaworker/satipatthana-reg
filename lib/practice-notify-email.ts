@@ -46,7 +46,7 @@ export async function buildPracticeNotifyPayload(reg: PracticeReg) {
       </tr>
       <tr>
         <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.ink};font-weight:700;">登錄名</td>
-        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkSoft};">報名序號 + 英文姓名／姓名拼音</td>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkSoft};">報名序號 + 中文姓名</td>
       </tr>
     </table>
 
