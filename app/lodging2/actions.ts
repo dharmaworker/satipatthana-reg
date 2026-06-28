@@ -69,6 +69,11 @@ function validateStep2(d: Record<string, string>): string | null {
 }
 
 function validateStep3(d: Record<string, string>): string | null {
+  if (!d.identity_type) return '請選擇「申請人身份」'
+  return null
+}
+
+function validateStep4(d: Record<string, string>): string | null {
   if (!d.photo_url) return '請上傳「個人相片」'
   const itype = d.identity_type || 'id'
   if (itype === 'id') {
@@ -86,7 +91,7 @@ function validateStep3(d: Record<string, string>): string | null {
   return null
 }
 
-function validateStep4(d: Record<string, string>): string | null {
+function validateStep5(d: Record<string, string>): string | null {
   if (!d.agree_covid_rules) return '請勾選「同意防疫與課程規範」'
   return null
 }
@@ -96,12 +101,13 @@ function validateStep(step: number, d: Record<string, string>): string | null {
   if (step === 2) return validateStep2(d)
   if (step === 3) return validateStep3(d)
   if (step === 4) return validateStep4(d)
+  if (step === 5) return validateStep5(d)
   return null
 }
 
 /** Full validation before final DB save */
 function validateAll(d: Record<string, string>): string | null {
-  return validateStep1(d) || validateStep2(d) || validateStep3(d) || validateStep4(d)
+  return validateStep1(d) || validateStep2(d) || validateStep3(d) || validateStep4(d) || validateStep5(d)
 }
 
 // ─── DB save ──────────────────────────────────────────────────────────────────
@@ -279,8 +285,8 @@ export async function handleStep(formData: FormData) {
     redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=${step - 1}`)
   }
 
-  // Upload files from step 3
-  if (step === 3) {
+  // Upload files from step 4
+  if (step === 4) {
     const uploadErrors: string[] = []
     for (const [key, val] of formData.entries()) {
       if (val instanceof File && val.size > 0) {
@@ -296,7 +302,7 @@ export async function handleStep(formData: FormData) {
     }
     if (uploadErrors.length > 0) {
       cs.set('lodging2_draft', JSON.stringify(draft), { maxAge: 3600, httpOnly: true, sameSite: 'lax', path: '/lodging2' })
-      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=3&error=${encodeURIComponent(uploadErrors[0])}`)
+      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=4&error=${encodeURIComponent(uploadErrors[0])}`)
     }
   }
 
@@ -311,7 +317,7 @@ export async function handleStep(formData: FormData) {
   cs.set('lodging2_draft', JSON.stringify(draft), { maxAge: 3600, httpOnly: true, sameSite: 'lax', path: '/lodging2' })
 
   const nextStep = step + 1
-  if (nextStep > 4) {
+  if (nextStep > 5) {
     // Final submit — full validate + DB save
     const fullErr = validateAll(draft)
     if (fullErr) {

@@ -120,17 +120,17 @@ const STEP1_FIELDS = new Set([
   'arrival_transport', 'departure_transport', 'bus_destination',
 ])
 const STEP2_FIELDS = new Set(['diet', 'noon_fasting', 'dinner_need', 'snacks'])
-const STEP3_FIELDS = new Set([
-  'identity_type',
+const STEP3_FIELDS = new Set(['identity_type'])
+const STEP4_FIELDS = new Set([
   'flight_arrival_date', 'flight_arrival_time',
   'flight_departure_date', 'flight_departure_time',
 ])
-const STEP4_FIELDS = new Set(['agree_covid_rules', 'snoring'])
+const STEP5_FIELDS = new Set(['agree_covid_rules', 'snoring'])
 
 // ─── Helper components ────────────────────────────────────────────────────────
 
 function HiddenFields(form: FormData, step: number) {
-  const currentFields = step === 1 ? STEP1_FIELDS : step === 2 ? STEP2_FIELDS : step === 3 ? STEP3_FIELDS : step === 4 ? STEP4_FIELDS : new Set<string>()
+  const currentFields = step === 1 ? STEP1_FIELDS : step === 2 ? STEP2_FIELDS : step === 3 ? STEP3_FIELDS : step === 4 ? STEP4_FIELDS : step === 5 ? STEP5_FIELDS : new Set<string>()
   const keys = Object.keys(form)
   return (
     <>
@@ -318,11 +318,14 @@ export default async function Lodging2Page(props: {
           {/* ===== Step 2: 飲食偏好 ===== */}
           {step === 2 && <Step2Content form={form} locked={locked} />}
 
-          {/* ===== Step 3: 證件上傳 ===== */}
-          {step === 3 && <Step3Content form={form} locked={locked} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />}
+          {/* ===== Step 3: 身份類別 ===== */}
+          {step === 3 && <Step3Content form={form} locked={locked} identityType={identityType} />}
 
-          {/* ===== Step 4: 確認送出 ===== */}
-          {step === 4 && <Step4Content form={form} locked={locked} identityType={identityType} />}
+          {/* ===== Step 4: 證件上傳 ===== */}
+          {step === 4 && <Step4Content form={form} locked={locked} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />}
+
+          {/* ===== Step 5: 確認送出 ===== */}
+          {step === 5 && <Step5Content form={form} locked={locked} identityType={identityType} />}
 
         </div>
 
@@ -546,13 +549,46 @@ function Step2Content({ form, locked }: { form: FormData; locked: boolean }) {
   )
 }
 
-function Step3Content({ form, locked, identityType, qt1Day, qt2Day }: {
+function Step3Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
+  return (
+    <div className="step-content active">
+      <div className="step-header">
+        <p className="step-header-kicker">Step 03</p>
+        <h2 className="step-header-title">身份類別</h2>
+        <p className="step-header-desc">請選擇您的身份，以決定需要上傳的證件類型。</p>
+      </div>
+
+      <div className="field-group">
+        <div className="field-group-title"><span className="num">01</span>申請人身份 <span className="required">*</span></div>
+        <div className="opt-group">
+          <label className={`opt ${identityType === 'id' ? 'selected' : ''}`}>
+            <input type="radio" name="identity_type" value="id" defaultChecked={identityType === 'id'} disabled={locked} />
+            <span className="opt-text"><strong>台灣人</strong>（上傳身分證正反面）</span>
+          </label>
+          <label className={`opt ${identityType === 'passport' ? 'selected' : ''}`}>
+            <input type="radio" name="identity_type" value="passport" defaultChecked={identityType === 'passport'} disabled={locked} />
+            <span className="opt-text">
+              <strong>外籍短期旅客</strong>
+              <small>觀光／免簽／短期簽證入境，上傳護照 + 填寫航班資訊</small>
+            </span>
+          </label>
+          <label className={`opt ${identityType === 'arc' ? 'selected' : ''}`}>
+            <input type="radio" name="identity_type" value="arc" defaultChecked={identityType === 'arc'} disabled={locked} />
+            <span className="opt-text"><strong>在台外籍居民</strong>（上傳 ARC／居留證）</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Step4Content({ form, locked, identityType, qt1Day, qt2Day }: {
   form: FormData; locked: boolean; identityType: string; qt1Day: string; qt2Day: string
 }) {
   return (
     <div className="step-content active">
       <div className="step-header">
-        <p className="step-header-kicker">Step 03</p>
+        <p className="step-header-kicker">Step 04</p>
         <h2 className="step-header-title">證件上傳</h2>
         <p className="step-header-desc">支援 JPG / PNG / WEBP / PDF（5MB 以下）。請依您的身份類別上傳對應證件。</p>
       </div>
@@ -649,11 +685,11 @@ function Step3Content({ form, locked, identityType, qt1Day, qt2Day }: {
   )
 }
 
-function Step4Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
+function Step5Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
   return (
     <div className="step-content active">
       <div className="step-header">
-        <p className="step-header-kicker">Step 04</p>
+        <p className="step-header-kicker">Step 05</p>
         <h2 className="step-header-title">確認資料並送出</h2>
         <p className="step-header-desc">請閱讀並同意防疫規範，確認以下資料無誤後送出。</p>
       </div>
@@ -902,8 +938,9 @@ function PageShell({
               <div className="form-card">
                 <Step1Content form={form} locked={true} isDomestic={isDomestic} />
                 <Step2Content form={form} locked={true} />
-                <Step3Content form={form} locked={true} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />
-                <Step4Content form={form} locked={true} identityType={identityType} />
+                <Step3Content form={form} locked={true} identityType={identityType} />
+                <Step4Content form={form} locked={true} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />
+                <Step5Content form={form} locked={true} identityType={identityType} />
               </div>
             )}
 
