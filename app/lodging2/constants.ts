@@ -66,10 +66,11 @@ export const IDENTITY_LABEL: Record<string, string> = {
 
 export const STEPS = [
   { num: 1, label: '行程安排', en: 'Travel' },
-  { num: 2, label: '飲食偏好', en: 'Diet' },
-  { num: 3, label: '身份類別', en: 'Identity' },
-  { num: 4, label: '證件上傳', en: 'Documents' },
-  { num: 5, label: '確認送出', en: 'Review' },
+  { num: 2, label: '離開方式', en: 'Departure' },
+  { num: 3, label: '飲食偏好', en: 'Diet' },
+  { num: 4, label: '身份類別', en: 'Identity' },
+  { num: 5, label: '證件上傳', en: 'Documents' },
+  { num: 6, label: '確認送出', en: 'Review' },
 ]
 
 /** File input names → storage key prefix */

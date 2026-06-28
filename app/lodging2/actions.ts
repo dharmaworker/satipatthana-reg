@@ -56,11 +56,15 @@ function validateStep1(d: Record<string, string>): string | null {
   if (!d.emergency_phone) return '請填寫「緊急聯絡人電話」'
   if (!d.arrival_transport) return '請選擇「前往日月潭方式」'
   if (!d.departure_transport) return '請選擇「離開日月潭湖畔會館方式」'
-  if (d.departure_transport === 'bus' && !d.bus_destination) return '請選擇「專車目的地」'
   return null
 }
 
 function validateStep2(d: Record<string, string>): string | null {
+  if (d.departure_transport === 'bus' && !d.bus_destination) return '請選擇「專車目的地」'
+  return null
+}
+
+function validateStep3(d: Record<string, string>): string | null {
   if (!d.diet) return '請選擇「飲食」'
   if (!d.noon_fasting) return '請選擇「過午不食」'
   if (!d.dinner_need) return '請選擇「是否需要安排晚餐」'
@@ -68,12 +72,12 @@ function validateStep2(d: Record<string, string>): string | null {
   return null
 }
 
-function validateStep3(d: Record<string, string>): string | null {
+function validateStep4(d: Record<string, string>): string | null {
   if (!d.identity_type) return '請選擇「申請人身份」'
   return null
 }
 
-function validateStep4(d: Record<string, string>): string | null {
+function validateStep5(d: Record<string, string>): string | null {
   if (!d.photo_url) return '請上傳「個人相片」'
   const itype = d.identity_type || 'id'
   if (itype === 'id') {
@@ -91,7 +95,7 @@ function validateStep4(d: Record<string, string>): string | null {
   return null
 }
 
-function validateStep5(d: Record<string, string>): string | null {
+function validateStep6(d: Record<string, string>): string | null {
   if (!d.agree_covid_rules) return '請勾選「同意防疫與課程規範」'
   return null
 }
@@ -102,12 +106,13 @@ function validateStep(step: number, d: Record<string, string>): string | null {
   if (step === 3) return validateStep3(d)
   if (step === 4) return validateStep4(d)
   if (step === 5) return validateStep5(d)
+  if (step === 6) return validateStep6(d)
   return null
 }
 
 /** Full validation before final DB save */
 function validateAll(d: Record<string, string>): string | null {
-  return validateStep1(d) || validateStep2(d) || validateStep3(d) || validateStep4(d) || validateStep5(d)
+  return validateStep1(d) || validateStep2(d) || validateStep3(d) || validateStep4(d) || validateStep5(d) || validateStep6(d)
 }
 
 // ─── DB save ──────────────────────────────────────────────────────────────────
@@ -282,11 +287,14 @@ export async function handleStep(formData: FormData) {
   // Back button — save and redirect
   if (action === 'prev') {
     cs.set('lodging2_draft', JSON.stringify(draft), { maxAge: 3600, httpOnly: true, sameSite: 'lax', path: '/lodging2' })
-    redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=${step - 1}`)
+    const prevStep = step - 1
+    // Skip step 2 going back if departure is not 'bus'
+    const dest = prevStep === 2 && draft.departure_transport !== 'bus' ? 1 : prevStep
+    return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=${dest}`)
   }
 
-  // Upload files from step 4
-  if (step === 4) {
+  // Upload files from step 5
+  if (step === 5) {
     const uploadErrors: string[] = []
     for (const [key, val] of formData.entries()) {
       if (val instanceof File && val.size > 0) {
@@ -302,7 +310,7 @@ export async function handleStep(formData: FormData) {
     }
     if (uploadErrors.length > 0) {
       cs.set('lodging2_draft', JSON.stringify(draft), { maxAge: 3600, httpOnly: true, sameSite: 'lax', path: '/lodging2' })
-      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=4&error=${encodeURIComponent(uploadErrors[0])}`)
+      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=5&error=${encodeURIComponent(uploadErrors[0])}`)
     }
   }
 
@@ -316,16 +324,18 @@ export async function handleStep(formData: FormData) {
   // Save draft to cookie
   cs.set('lodging2_draft', JSON.stringify(draft), { maxAge: 3600, httpOnly: true, sameSite: 'lax', path: '/lodging2' })
 
-  const nextStep = step + 1
-  if (nextStep > 5) {
+  const nextRaw = step + 1
+  // Skip step 2 if departure is not 'bus'
+  const nextStep = step === 1 && nextRaw === 2 && draft.departure_transport !== 'bus' ? 3 : nextRaw
+  if (nextStep > 6) {
     // Final submit — full validate + DB save
     const fullErr = validateAll(draft)
     if (fullErr) {
-      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=4&error=${encodeURIComponent(fullErr)}`)
+      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=6&error=${encodeURIComponent(fullErr)}`)
     }
     const dbErr = await saveToDB(draft, id, code)
     if (dbErr) {
-      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=4&error=${encodeURIComponent(dbErr)}`)
+      return redirect(`/lodging2?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&step=6&error=${encodeURIComponent(dbErr)}`)
     }
     cs.delete('lodging2_draft')
     return redirect(`/lodging2/success?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}`)

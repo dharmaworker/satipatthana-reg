@@ -117,20 +117,21 @@ function deriveIdentityType(reg: any, lodging: any, form: FormData): string {
 
 const STEP1_FIELDS = new Set([
   'checkin_date', 'emergency_name', 'emergency_relation', 'emergency_phone',
-  'arrival_transport', 'departure_transport', 'bus_destination',
+  'arrival_transport', 'departure_transport',
 ])
-const STEP2_FIELDS = new Set(['diet', 'noon_fasting', 'dinner_need', 'snacks'])
-const STEP3_FIELDS = new Set(['identity_type'])
-const STEP4_FIELDS = new Set([
+const STEP2_FIELDS = new Set(['bus_destination'])
+const STEP3_FIELDS = new Set(['diet', 'noon_fasting', 'dinner_need', 'snacks'])
+const STEP4_FIELDS = new Set(['identity_type'])
+const STEP5_FIELDS = new Set([
   'flight_arrival_date', 'flight_arrival_time',
   'flight_departure_date', 'flight_departure_time',
 ])
-const STEP5_FIELDS = new Set(['agree_covid_rules', 'snoring'])
+const STEP6_FIELDS = new Set(['agree_covid_rules', 'snoring'])
 
 // ─── Helper components ────────────────────────────────────────────────────────
 
 function HiddenFields(form: FormData, step: number) {
-  const currentFields = step === 1 ? STEP1_FIELDS : step === 2 ? STEP2_FIELDS : step === 3 ? STEP3_FIELDS : step === 4 ? STEP4_FIELDS : step === 5 ? STEP5_FIELDS : new Set<string>()
+  const currentFields = step === 1 ? STEP1_FIELDS : step === 2 ? STEP2_FIELDS : step === 3 ? STEP3_FIELDS : step === 4 ? STEP4_FIELDS : step === 5 ? STEP5_FIELDS : step === 6 ? STEP6_FIELDS : new Set<string>()
   const keys = Object.keys(form)
   return (
     <>
@@ -185,14 +186,11 @@ function FileFieldInline({
           </div>
         </div>
       ) : null}
-      <label htmlFor={inputId} className={`upload-box ${currentUrl ? 'has-file' : ''}`}
-        style={error ? { borderColor: 'var(--error)', background: 'rgba(184,82,58,0.05)' } : undefined}>
-        <div className="upload-icon">{currentUrl ? '✓' : '📤'}</div>
-        <div className="upload-text">{currentUrl ? '點此重新上傳' : '點此選擇檔案'}</div>
-        <div className="upload-hint">JPG / PNG / WEBP / PDF（5MB 以下）</div>
+      <div className="file-input-wrap" style={error ? { borderColor: 'var(--error)', background: 'rgba(184,82,58,0.05)' } : undefined}>
         <input id={inputId} type="file" name={`${kind}_file`}
           accept="image/jpeg,image/png,image/webp,application/pdf" disabled={disabled} />
-      </label>
+        <div className="file-input-hint">JPG / PNG / WEBP / PDF（5MB 以下）</div>
+      </div>
       <input type="hidden" name={`${kind}_url`} value={currentUrl} />
     </div>
   )
@@ -315,17 +313,20 @@ export default async function Lodging2Page(props: {
           {/* ===== Step 1: 行程安排 ===== */}
           {step === 1 && <Step1Content form={form} locked={locked} isDomestic={isDomestic} />}
 
-          {/* ===== Step 2: 飲食偏好 ===== */}
+          {/* ===== Step 2: 離開方式 ===== */}
           {step === 2 && <Step2Content form={form} locked={locked} />}
 
-          {/* ===== Step 3: 身份類別 ===== */}
-          {step === 3 && <Step3Content form={form} locked={locked} identityType={identityType} />}
+          {/* ===== Step 3: 飲食偏好 ===== */}
+          {step === 3 && <Step3Content form={form} locked={locked} />}
 
-          {/* ===== Step 4: 證件上傳 ===== */}
-          {step === 4 && <Step4Content form={form} locked={locked} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />}
+          {/* ===== Step 4: 身份類別 ===== */}
+          {step === 4 && <Step4Content form={form} locked={locked} identityType={identityType} />}
 
-          {/* ===== Step 5: 確認送出 ===== */}
-          {step === 5 && <Step5Content form={form} locked={locked} identityType={identityType} />}
+          {/* ===== Step 5: 證件上傳 ===== */}
+          {step === 5 && <Step5Content form={form} locked={locked} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />}
+
+          {/* ===== Step 6: 確認送出 ===== */}
+          {step === 6 && <Step6Content form={form} locked={locked} identityType={identityType} />}
 
         </div>
 
@@ -488,24 +489,35 @@ function Step1Content({ form, locked, isDomestic }: { form: FormData; locked: bo
           {Radio({ group: 'departure_transport', value: 'self', label: '自行離開', form, locked })}
           {Radio({ group: 'departure_transport', value: 'bus', label: '乘坐主辦單位安排專車', form, locked })}
         </div>
-        {form.departure_transport === 'bus' && (
-          <div className="branch active" id="field-bus_destination">
-            <label className="form-label">專車目的地 <span className="required">*</span></label>
-            <div className="opt-group">
-              {Radio({ group: 'bus_destination', value: 'taipei_824_pm', label: '8/24 下午 6:00–6:30 專車到台北車站', form, locked })}
-              {Radio({ group: 'bus_destination', value: 'taipei_825_am', label: '8/25 上午 9:00 專車到台北車站', form, locked })}
-              {Radio({ group: 'bus_destination', value: 'wuri_825_am', label: '8/25 上午 9:00 專車到烏日高鐵', form, locked })}
-              {Radio({ group: 'bus_destination', value: 'taoyuan_824_pm', label: <>8/24 下午 5:30–6:00 專車接送至台中高鐵站。<br />搭乘8/24晚上飛機返程的學員，請自行由台中高鐵站搭乘高鐵前往桃園機場。</>, form, locked })}
-              {Radio({ group: 'bus_destination', value: 'taoyuan_825_am', label: '8/25 上午 9:00 專車到桃園機場第一航廈', form, locked, sub: '車程約 3 小時' })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
 function Step2Content({ form, locked }: { form: FormData; locked: boolean }) {
+  return (
+    <div className="step-content active">
+      <div className="step-header">
+        <p className="step-header-kicker">Step 02</p>
+        <h2 className="step-header-title">離開方式</h2>
+        <p className="step-header-desc">請選擇專車目的地。</p>
+      </div>
+
+      <div className="field-group" id="field-bus_destination">
+        <div className="field-group-title"><span className="num">01</span>專車目的地 <span className="required">*</span></div>
+        <div className="opt-group">
+          {Radio({ group: 'bus_destination', value: 'taipei_824_pm', label: '8/24 下午 6:00–6:30 專車到台北車站', form, locked })}
+          {Radio({ group: 'bus_destination', value: 'taipei_825_am', label: '8/25 上午 9:00 專車到台北車站', form, locked })}
+          {Radio({ group: 'bus_destination', value: 'wuri_825_am', label: '8/25 上午 9:00 專車到烏日高鐵', form, locked })}
+          {Radio({ group: 'bus_destination', value: 'taoyuan_824_pm', label: <>8/24 下午 5:30–6:00 專車接送至台中高鐵站。<br />搭乘8/24晚上飛機返程的學員，請自行由台中高鐵站搭乘高鐵前往桃園機場。</>, form, locked })}
+          {Radio({ group: 'bus_destination', value: 'taoyuan_825_am', label: '8/25 上午 9:00 專車到桃園機場第一航廈', form, locked, sub: '車程約 3 小時' })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Step3Content({ form, locked }: { form: FormData; locked: boolean }) {
   return (
     <div className="step-content active">
       <div className="step-header">
@@ -549,7 +561,7 @@ function Step2Content({ form, locked }: { form: FormData; locked: boolean }) {
   )
 }
 
-function Step3Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
+function Step4Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
   return (
     <div className="step-content active">
       <div className="step-header">
@@ -582,7 +594,7 @@ function Step3Content({ form, locked, identityType }: { form: FormData; locked: 
   )
 }
 
-function Step4Content({ form, locked, identityType, qt1Day, qt2Day }: {
+function Step5Content({ form, locked, identityType, qt1Day, qt2Day }: {
   form: FormData; locked: boolean; identityType: string; qt1Day: string; qt2Day: string
 }) {
   return (
@@ -685,7 +697,7 @@ function Step4Content({ form, locked, identityType, qt1Day, qt2Day }: {
   )
 }
 
-function Step5Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
+function Step6Content({ form, locked, identityType }: { form: FormData; locked: boolean; identityType: string }) {
   return (
     <div className="step-content active">
       <div className="step-header">
@@ -867,8 +879,9 @@ function PageShell({
               <div className="stepper-line" />
               <div className="stepper-line-active" style={{ width: `${stepperPctVal}%` }} />
               {STEPS.map(s => {
-                const status = s.num < step ? 'done' : s.num === step ? 'active' : ''
-                const clickable = s.num <= step
+                const isSkipped = s.num === 2 && form.departure_transport !== 'bus'
+                const status = isSkipped ? 'skipped' : s.num < step ? 'done' : s.num === step ? 'active' : ''
+                const clickable = s.num <= step && !isSkipped
                 return (
                   <a key={s.num} href={clickable ? `/lodging2?id=${encodeURIComponent(form.id)}&code=${encodeURIComponent(code)}&step=${s.num}` : undefined}
                     className={`step ${status} ${clickable ? 'clickable' : ''}`}
@@ -876,7 +889,7 @@ function PageShell({
                     <div className="step-num"><span className="n">{s.num}</span></div>
                     <div className="step-label">
                       <small>STEP 0{s.num}</small>
-                      {s.label}
+                      {s.num === 2 && form.departure_transport !== 'bus' ? '—' : s.label}
                     </div>
                   </a>
                 )
@@ -937,10 +950,11 @@ function PageShell({
             {readonly && (
               <div className="form-card">
                 <Step1Content form={form} locked={true} isDomestic={isDomestic} />
-                <Step2Content form={form} locked={true} />
-                <Step3Content form={form} locked={true} identityType={identityType} />
-                <Step4Content form={form} locked={true} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />
-                <Step5Content form={form} locked={true} identityType={identityType} />
+                {form.departure_transport === 'bus' && <Step2Content form={form} locked={true} />}
+                <Step3Content form={form} locked={true} />
+                <Step4Content form={form} locked={true} identityType={identityType} />
+                <Step5Content form={form} locked={true} identityType={identityType} qt1Day={qt1Day} qt2Day={qt2Day} />
+                <Step6Content form={form} locked={true} identityType={identityType} />
               </div>
             )}
 
