@@ -87,10 +87,10 @@ export async function sendLodgingArchiveEmail(reg: {
   }
 
   const body = `
-    ${emailKicker('Food &amp; Lodging Confirmation')}
-    ${emailH1('食宿登記確認 🙏')}
+    ${emailKicker('Payment Summary')}
+    ${emailH1('繳費資訊確認 🙏')}
     <p style="margin:0 0 12px;color:${C.inkSoft};">${reg.chinese_name} 法友您好，</p>
-    <p style="margin:0 0 16px;color:${C.inkSoft};">我們已收到您的食宿登記，以下是您目前選擇的方案與繳費資訊：</p>
+    <p style="margin:0 0 16px;color:${C.inkSoft};">以下是您本次課程的方案與繳費資訊：</p>
 
     ${emailH3('繳費資訊')}
     ${tableWrap([
@@ -115,7 +115,7 @@ export async function sendLodgingArchiveEmail(reg: {
   return sendMail({
     to: reg.email,
     bcc: archiveEmail,
-    subject: `【第二屆台灣四念處禪修】食宿登記確認`,
+    subject: `【第二屆台灣四念處禪修】方案與繳費確認`,
     html: emailWrap(body, { maxWidth: 680 }),
   })
 }
