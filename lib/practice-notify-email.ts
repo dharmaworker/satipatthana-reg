@@ -73,6 +73,8 @@ export async function buildPracticeNotifyPayload(reg: PracticeReg) {
     </p>
     ${emailButton(zoomGuideUrl, '查看 Zoom 使用指南 →', 'gold')}
 
+    ${emailButton('https://www.jietuoyuan.com/schedule/', '📺 隆波帕默尊者假日直播 ↗', 'green')}
+
     <p style="font-size:13.5px;color:${C.inkSoft};margin:16px 0 14px;">或從學員專區進入：</p>
     ${emailButton(dashboardUrl, '進入學員專區 →', 'gold')}
 
