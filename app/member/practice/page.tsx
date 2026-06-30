@@ -208,6 +208,12 @@ function PracticeContent() {
                       style={{ color: 'var(--gold)', fontWeight: 600, fontSize: 13 }}>
                       📋 Zoom 使用指南 →
                     </a>
+                    <div style={{ marginTop: 6 }}>
+                      <a href="https://www.jietuoyuan.com/schedule/" target="_blank" rel="noopener noreferrer"
+                        style={{ color: 'var(--green-deep)', fontWeight: 600, fontSize: 13 }}>
+                        📺 隆波帕默尊者假日直播 ↗
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
