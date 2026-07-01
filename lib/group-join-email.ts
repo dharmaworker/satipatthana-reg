@@ -8,6 +8,7 @@ type GroupJoinReg = {
   id: string
   email: string
   chinese_name: string
+  student_id: string | null
   line_qr_url: string | null
   wechat_qr_url: string | null
 }
@@ -65,7 +66,7 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
 
     <div style="background:#fffbf0;border-left:3px solid ${C.gold};border-radius:6px;padding:12px 16px;margin:18px 0;">
       <p style="margin:0;font-size:13.5px;color:${C.ink};">
-        <strong>加入後請將群組暱稱修改為您的姓名</strong>（即報名時填寫的中文姓名：${reg.chinese_name}），方便學會工作人員識別。
+        <strong>加入後請將群組暱稱修改為學員號碼${reg.student_id || 'C-○○○'}＋${reg.chinese_name}</strong>，方便學會工作人員識別。
       </p>
     </div>
 
