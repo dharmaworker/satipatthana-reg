@@ -509,12 +509,14 @@ export default function RegisterPage() {
                       onChange={() => update('retreat_format', 'in_person')} />
                     <span className="opt-text">參加實體禪修課程</span>
                   </label>
-                  <label className={`opt ${form.retreat_format === 'online' ? 'selected' : ''}`}>
-                    <input type="radio" name="retreat_format" value="online"
-                      checked={form.retreat_format === 'online'}
-                      onChange={() => update('retreat_format', 'online')} />
-                    <span className="opt-text">參加線上禪修課程（Zoom）</span>
-                  </label>
+                  {schedCfg?.online_registration_open && (
+                    <label className={`opt ${form.retreat_format === 'online' ? 'selected' : ''}`}>
+                      <input type="radio" name="retreat_format" value="online"
+                        checked={form.retreat_format === 'online'}
+                        onChange={() => update('retreat_format', 'online')} />
+                      <span className="opt-text">參加線上禪修課程（Zoom）</span>
+                    </label>
+                  )}
                 </div>
                 {errorField === 'retreat_format' && <p className="field-error">請選擇禪修形式</p>}
               </div>

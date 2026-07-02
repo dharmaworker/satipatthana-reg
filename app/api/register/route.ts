@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+    // 若線上 Zoom 關閉，拒絕線上報名
+    if (body.retreat_format === 'online' && !schedCfg.online_registration_open) {
+      return NextResponse.json({ error: '目前未開放線上 Zoom 報名' }, { status: 400 })
+    }
+
     // 驗證通訊軟體：LINE 或 WeChat 擇一，選了就要填 ID + 上傳 QR
     if (body.contact_app === 'line') {
       if (!body.line_id || !body.line_qr_url) {

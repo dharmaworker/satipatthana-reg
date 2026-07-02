@@ -20,6 +20,7 @@ type ScheduleConfig = {
   late_quicktest_open?: string | null
   quicktest_1_deadline?: string | null
   quicktest_2_deadline?: string | null
+  online_registration_open?: string | null
 }
 
 const inputStyle: React.CSSProperties = {
@@ -398,6 +399,33 @@ export default function ScheduleConfigPage() {
               {intSaving ? '儲存中…' : '儲存'}
             </button>
           </div>
+        </section>
+        {/* 線上 Zoom 報名開關 */}
+        <section style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '20px 24px', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: '0 0 14px' }}>線上 Zoom 報名</h2>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--ink)', cursor: 'pointer' }}>
+            <input type="checkbox"
+              checked={!!draft.online_registration_open}
+              onChange={e => {
+                const next = { ...draft }
+                if (e.target.checked) next.online_registration_open = 'true'
+                else { delete next.online_registration_open }
+                setDraft(next)
+                // 直接儲存
+                fetch('/api/admin/schedule-config', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(next),
+                }).then(async res => {
+                  if (res.ok) { setConfig({ ...next }); setMsg('✓ 已儲存') }
+                  else { const d = await res.json(); setMsg(d.error || '儲存失敗') }
+                }).catch(() => setMsg('儲存失敗'))
+              }} />
+            <span>開放線上 Zoom 報名</span>
+          </label>
+          <p style={{ fontSize: 12, color: 'var(--ink-mute)', margin: '8px 0 0' }}>
+            目前：{config.online_registration_open ? '🟢 開放中' : '🔴 關閉中'}
+          </p>
         </section>
       </div>
     </>

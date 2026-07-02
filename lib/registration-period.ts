@@ -344,6 +344,7 @@ export interface ScheduleConfig {
   late_quicktest_open?: string | null  // 快篩功能公開時間（補報名）
   quicktest_1_deadline?: string | null   // 8/17 快篩截止
   quicktest_2_deadline?: string | null   // 8/19 快篩截止
+  online_registration_open?: string | null  // 非 null = 開放線上 Zoom 報名
 }
 
 /** UTC ms → "M/D" label in TPE time */
