@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   const { data: registrations, error } = await supabaseAdmin
     .from('registrations')
-    .select('id, email, chinese_name, student_id, line_qr_url, wechat_qr_url')
+    .select('id, email, chinese_name, member_id, line_qr_url, wechat_qr_url')
     .in('id', ids)
     .eq('status', 'approved')
 
