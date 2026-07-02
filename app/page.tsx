@@ -336,7 +336,7 @@ export default function HomePage() {
               <TimelineItem side="left" date={`${copy.periodStartDot} — ${copy.sidebarDeadlineDate}`} title="報名期間" desc="線上填寫報名表，提交個人資料與修學歷程。" />
               <TimelineItem side="right" date="06.06　錄取通知" title="錄取通知發送" desc="錄取者將於 6 月 6 日收到 E-mail 通知。提交報名表單不代表已錄取。" />
               {copy.highlightCard && <>
-                <TimelineItem side="left" date={`06.01 — 06.07　${copy.highlightCard.title}`} title="補報名期間" desc="實體 60 名（額滿候補），線上不限名額。詳見上方補報名簡章。" />
+                <TimelineItem side="left" date={`06.01 — 06.07　${copy.highlightCard.title}`} title="補報名期間" desc={schedCfg?.online_registration_open ? '實體 60 名（額滿候補），線上不限名額。詳見上方補報名簡章。' : '實體 60 名（額滿候補）。詳見上方補報名簡章。'} />
                 <TimelineItem side="right" date={`${copy.sidebarNotifyDate}　補報名錄取通知`} title="補報名批次錄取通知" desc={`補報名批次將於 ${copy.notifyLabel} 前統一以 Email 通知。`} />
               </>}
               <TimelineItem side="left" date={`${mainPay.dot}　繳費截止`} title="完成繳費以正式錄取（主報名）" desc={`主報名錄取者須於 ${mainPay.cn}（台北時間）${mainPayTime}前完成繳費，才算正式錄取。`} />

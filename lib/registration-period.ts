@@ -468,7 +468,7 @@ function buildVarsFrom(spans: PhaseSpan[], phase: RegPhase): Record<string, stri
   }
 }
 
-function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
+function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase, onlineEnabled = true): PhaseCopy {
   const tmpl = COPY_TEMPLATES[phase]
   const vars = buildVarsFrom(spans, phase)
   return {
@@ -483,7 +483,9 @@ function resolveCopyFrom(spans: PhaseSpan[], phase: RegPhase): PhaseCopy {
     recruitFlowNotifyLine: sub(tmpl.recruitFlowNotifyLineTemplate, vars),
     highlightCard: tmpl.highlightCard ? {
       title: tmpl.highlightCard.title, subtitle: tmpl.highlightCard.subtitle,
-      lines: tmpl.highlightCard.lineTemplates.map(l => sub(l, vars)),
+      lines: tmpl.highlightCard.lineTemplates
+        .filter(l => onlineEnabled || !l.includes('線上禪修'))
+        .map(l => sub(l, vars)),
     } : null,
     payDeadlineMs: (phase === 'not-yet' ? spanOfFrom(spans, 'open').payDeadlineMs : phase === 'closed' ? spanOfFrom(spans, 'late').payDeadlineMs : spanOfFrom(spans, phase).payDeadlineMs),
     payDeadlineDot: vars.payDeadlineDot, payDeadlineShort: vars.payDeadlineShort,
@@ -495,7 +497,7 @@ export function getPhaseCopyWithConfig(cfg: ScheduleConfig | null | undefined, a
   const defs = buildPhaseDefsFromConfig(cfg)
   const spans = computeSpansFrom(defs)
   const phase = getRegPhaseFrom(defs, atMs)
-  return resolveCopyFrom(spans, phase)
+  return resolveCopyFrom(spans, phase, !!cfg?.online_registration_open)
 }
 
 function copyForCreatedAtWithConfig(cfg: ScheduleConfig | null | undefined, createdAt: string | number | Date | null | undefined): PhaseCopy {
@@ -506,7 +508,7 @@ function copyForCreatedAtWithConfig(cfg: ScheduleConfig | null | undefined, crea
   const defs = buildPhaseDefsFromConfig(cfg)
   const spans = computeSpansFrom(defs)
   const phase = getRegPhaseFrom(defs, ms)
-  return resolveCopyFrom(spans, phase)
+  return resolveCopyFrom(spans, phase, !!cfg?.online_registration_open)
 }
 
 export function payDeadlineForWithConfig(cfg: ScheduleConfig | null | undefined, phase: 'open' | 'late'): PayDeadlineLabels {

@@ -209,7 +209,7 @@ export default function RegisterPage() {
       if (!form.health_confirm) return fail('health_confirm', '請回答 Q17：是否身體健康能全程參與')
       if (form.health_confirm !== 'yes') return fail('health_confirm', '需確認身體健康能全程參與（Q17 須選「是」）')
     }
-    if (!form.retreat_format) return fail('retreat_format', '請選擇 Q1：禪修形式（實體或線上）')
+    if (!form.retreat_format) return fail('retreat_format', schedCfg?.online_registration_open ? '請選擇 Q1：禪修形式（實體或線上）' : '請選擇 Q1：禪修形式（實體）')
     return true
   }
 
