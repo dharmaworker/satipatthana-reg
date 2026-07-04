@@ -15,6 +15,8 @@ export const SITE_ASSETS = {
   lineOfficial: asset('LINE_NOTE.jpg'),
   groupQrLine: qrAsset('group-qr-line.jpg'),
   groupQrWechat: qrAsset('group-qr-wechat.jpg'),
+  // 微信群額滿時的備援：主辦人 QR Code，由法工手動拉入群組
+  organizerWechatQr: qrAsset('organizer-wechat.jpg'),
   // 承諾書改放 private bucket，下載走 /api/pledge gate（要 id+code+approved）
   // 本欄位刻意不放 public URL，避免外洩
   zoomGuide: (file: string) => asset(`zoom-guide/${file}`),

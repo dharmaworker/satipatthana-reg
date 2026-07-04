@@ -17,7 +17,7 @@ type GroupJoinReg = {
   wechat_qr_url: string | null
 }
 
-function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string): string {
+function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string, extra?: string): string {
   const color = platform === 'LINE' ? '#06C755' : '#07C160'
   const instruction =
     platform === 'LINE'
@@ -36,6 +36,20 @@ function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: stri
       <img src="${groupQrUrl}" alt="${platform} 群組 QR Code"
         style="width:220px;height:220px;object-fit:contain;border-radius:8px;border:1px solid ${C.line};" />
       ${linkButton}
+      ${extra || ''}
+    </div>
+  `
+}
+
+// 微信群有人數上限，額滿時改掃主辦人 QR Code，由法工手動拉入群組
+function wechatOverflowBlock(): string {
+  return `
+    <div style="border-top:1px dashed ${C.line};margin:18px 0 0;padding-top:16px;">
+      <p style="margin:0 0 12px;color:${C.inkSoft};font-size:13.5px;">
+        <strong style="color:${C.ink};">若因群組人數已滿而無法加入</strong>，請改掃描下方主辦人 QR Code，由法工協助拉您入群。
+      </p>
+      <img src="${SITE_ASSETS.organizerWechatQr}" alt="主辦人微信 QR Code"
+        style="width:220px;height:220px;object-fit:contain;border-radius:8px;border:1px solid ${C.line};" />
     </div>
   `
 }
@@ -46,7 +60,7 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
 
   const qrBlocks = [
     hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL) : '',
-    hasWechat ? qrBlock('WeChat', SITE_ASSETS.groupQrWechat) : '',
+    hasWechat ? qrBlock('WeChat', SITE_ASSETS.groupQrWechat, undefined, wechatOverflowBlock()) : '',
   ].join('')
 
   const platformNote =
