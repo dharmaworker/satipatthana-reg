@@ -52,3 +52,6 @@ next-env.d.ts
 *.pptx
 /photo/
 /docs/
+
+# 本機 Claude Code 設定，不進版控
+.claude/
