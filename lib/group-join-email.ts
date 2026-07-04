@@ -4,6 +4,10 @@ import { SITE_ASSETS } from './site-assets'
 
 const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com'
 
+// LINE 群組邀請連結（點擊即可加入，供無法掃 QR Code 者使用）
+const LINE_GROUP_URL =
+  'https://line.me/ti/g2/SnKbjlJeqmrB_1xuv9WI59C_WWXp30V0HLrqFg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default'
+
 type GroupJoinReg = {
   id: string
   email: string
@@ -13,18 +17,25 @@ type GroupJoinReg = {
   wechat_qr_url: string | null
 }
 
-function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string): string {
+function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string): string {
   const color = platform === 'LINE' ? '#06C755' : '#07C160'
   const instruction =
     platform === 'LINE'
       ? '使用 LINE App 掃描以下 QR Code，即可加入本屆學員群組。'
       : '使用微信掃描以下 QR Code，即可加入本屆學員群組。'
+  const linkButton = joinUrl
+    ? `
+      <p style="margin:14px 0 6px;color:${C.inkSoft};font-size:13.5px;">或直接點擊下方按鈕加入：</p>
+      <a href="${joinUrl}"
+        style="display:inline-block;background:${color};color:#fff;font-weight:700;font-size:14px;text-decoration:none;padding:10px 26px;border-radius:999px;">加入 ${platform} 群組</a>`
+    : ''
   return `
     <div style="background:${C.bgPure};border:1px solid ${C.line};border-radius:12px;padding:18px 22px;margin:14px 0;text-align:center;">
       <div style="display:inline-block;background:${color};color:#fff;font-weight:700;font-size:13px;padding:3px 14px;border-radius:999px;margin-bottom:12px;">${platform} 群組</div>
       <p style="margin:0 0 14px;color:${C.inkSoft};font-size:13.5px;">${instruction}</p>
       <img src="${groupQrUrl}" alt="${platform} 群組 QR Code"
         style="width:220px;height:220px;object-fit:contain;border-radius:8px;border:1px solid ${C.line};" />
+      ${linkButton}
     </div>
   `
 }
@@ -34,7 +45,7 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
   const hasWechat = !!reg.wechat_qr_url
 
   const qrBlocks = [
-    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine) : '',
+    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL) : '',
     hasWechat ? qrBlock('WeChat', SITE_ASSETS.groupQrWechat) : '',
   ].join('')
 
