@@ -19,15 +19,16 @@ type GroupJoinReg = {
 
 function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string, extra?: string): string {
   const color = platform === 'LINE' ? '#06C755' : '#07C160'
+  const colorDark = platform === 'LINE' ? '#04A144' : '#059a4c'
   const instruction =
     platform === 'LINE'
       ? '使用 LINE App 掃描以下 QR Code，即可加入本屆學員群組。'
       : '使用微信掃描以下 QR Code，即可加入本屆學員群組。'
   const linkButton = joinUrl
     ? `
-      <p style="margin:14px 0 6px;color:${C.inkSoft};font-size:13.5px;">或直接點擊下方按鈕加入：</p>
+      <p style="margin:16px 0 10px;color:${C.inkSoft};font-size:13.5px;">若無法掃描 QR Code，可直接點擊下方按鈕加入 ${platform} 群組：</p>
       <a href="${joinUrl}"
-        style="display:inline-block;background:${color};color:#fff;font-weight:700;font-size:14px;text-decoration:none;padding:10px 26px;border-radius:999px;">加入 ${platform} 群組</a>`
+        style="display:inline-block;background:${color};color:#fff;font-weight:800;font-size:15.5px;text-decoration:none;padding:14px 40px;border-radius:999px;border-bottom:4px solid ${colorDark};box-shadow:0 6px 14px rgba(0,0,0,0.18);">👉 點此加入 ${platform} 群組</a>`
     : ''
   return `
     <div style="background:${C.bgPure};border:1px solid ${C.line};border-radius:12px;padding:18px 22px;margin:14px 0;text-align:center;">
