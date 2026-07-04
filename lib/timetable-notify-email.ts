@@ -21,6 +21,18 @@ export function buildTimetableNotifyPayload(reg: TimetableReg) {
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 14px;">
       包含每日禪坐、法談、互動時段的完整安排，內含 Zoom 連結相關資訊${isOnline ? '；線上學員可於時間表中標示「需打卡」的場次直接記錄出席／缺席' : ''}，建議提前了解以便準備。
     </p>
+    ${isOnline ? `
+    <table style="border-collapse:collapse;width:100%;font-size:13px;margin:0 0 16px;background:rgba(216,194,154,0.1);border-radius:8px;overflow:hidden;">
+      <tr>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkMute};width:36px;font-size:16px;text-align:center;">📋</td>
+        <td style="padding:10px 14px;border:1px solid #e8e0d4;">
+          <strong style="color:${C.ink};display:block;margin-bottom:4px;">打卡提醒（線上學員）</strong>
+          <span style="color:${C.inkSoft};">・請於每節課程結束後，在標示「需打卡」的場次記錄出席／缺席。</span><br/>
+          <span style="color:${C.inkSoft};">・須<strong style="color:${C.ink};">全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</span>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
     ${emailButton(scheduleUrl, isOnline ? '查看課程時間表與打卡 →' : '查看課程時間表 →', 'green')}
 
     <hr style="border:none;border-top:1px solid #e8e0d4;margin:20px 0;" />
@@ -32,24 +44,6 @@ export function buildTimetableNotifyPayload(reg: TimetableReg) {
 
     <p style="font-size:13.5px;color:${C.inkSoft};margin:16px 0 14px;">或從學員專區進入：</p>
     ${emailButton(`${baseUrl}/member/dashboard?id=${reg.id}&code=${reg.random_code}`, '進入學員專區', 'gold')}
-
-    ${isOnline ? `
-    <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
-    ${emailH3('課程打卡提醒（線上學員）')}
-    <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">
-      本屆課程設有線上打卡功能，請於每節課程結束後，至上方「課程時間表與打卡」頁面，於標示「需打卡」的場次記錄出席或缺席。
-    </p>
-    <table style="border-collapse:collapse;width:100%;font-size:13px;margin:0 0 18px;background:rgba(216,194,154,0.1);border-radius:8px;overflow:hidden;">
-      <tr>
-        <td style="padding:10px 14px;border:1px solid #e8e0d4;color:${C.inkMute};width:36px;font-size:16px;text-align:center;">📋</td>
-        <td style="padding:10px 14px;border:1px solid #e8e0d4;">
-          <strong style="color:${C.ink};display:block;margin-bottom:4px;">打卡注意事項</strong>
-          <span style="color:${C.inkSoft};">・須<strong style="color:${C.ink};">全程出席（零缺席）</strong>方可取得完課資格；有任何缺席記錄將不計入參課。</span>
-        </td>
-      </tr>
-    </table>
-    ${emailButton(scheduleUrl, '前往課程時間表與打卡 →', 'gold')}
-    ` : ''}
 
     <p style="color:${C.inkMute};font-size:13px;margin-top:18px;">如有任何問題請聯絡學會。</p>
     ${emailSignoff()}
