@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase'
 
 export type TimetableRow = {
+  rid?: string        // 穩定列 id（打卡對應鍵）；一次產生後永不變動，reorder/改字都不影響
   time: string
   title: string
   desc: string
@@ -151,7 +152,24 @@ export async function fetchTimetable(): Promise<Timetable> {
   return { ...DEFAULT_TIMETABLE, ...(data.value as Partial<Timetable>) }
 }
 
+// 為每一列補上穩定 rid（缺者才補）。回傳是否有異動。
+export function ensureRowIds(t: Timetable): boolean {
+  let changed = false
+  for (const day of t.days || []) {
+    for (const row of day.rows || []) {
+      if (!row.rid) {
+        row.rid = `r_${globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`
+        changed = true
+      }
+    }
+  }
+  return changed
+}
+
 export async function saveTimetable(t: Timetable): Promise<void> {
+  // 確保每列都有穩定 rid（打卡對應鍵），並隨時間表一起持久化
+  ensureRowIds(t)
+
   const { error } = await supabaseAdmin
     .from('site_config')
     .upsert(
@@ -187,8 +205,10 @@ async function syncCourseSessions(t: Timetable): Promise<void> {
     for (let ri = 0; ri < day.rows.length; ri++) {
       const row = day.rows[ri]
       if (!row.title && !row.time) continue
+      // sync_key 用穩定 rid（非位置），故 reorder/插入/刪除都不會錯位。
+      // rid 由 ensureRowIds() 於 saveTimetable 保證存在；萬一缺漏則退回舊位置鍵。
       sessionList.push({
-        sync_key: `day${dayNumber}_row${ri + 1}`,
+        sync_key: row.rid || `day${dayNumber}_row${ri + 1}`,
         day_number: dayNumber,
         session_date: sessionDate,
         time_label: row.time,

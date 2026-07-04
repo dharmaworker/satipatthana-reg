@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const [sessionsRes, checkinsRes] = await Promise.all([
     supabaseAdmin
       .from('course_sessions')
-      .select('id, day_number, session_date, time_label, title, sort_order')
+      .select('id, sync_key, day_number, session_date, time_label, title, sort_order')
       .eq('requires_checkin', true)
       .order('sort_order', { ascending: true }),
     supabaseAdmin

@@ -3,9 +3,19 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SITE_ASSETS } from '@/lib/site-assets'
 
-type Row = { time: string; title: string; desc: string; badge?: string }
+type Row = { rid?: string; time: string; title: string; desc: string; badge?: string }
 type Day = { tabLabel: string; tabDate: string; title: string; date: string; desc: string; rows: Row[] }
 type Timetable = { zoom_link?: string; zoom_meeting_id?: string; zoom_password?: string; zoom_login_name?: string; days: Day[]; is_online?: boolean }
+
+// 打卡：rid → 該場次的打卡狀態
+type CheckinInfo = { session_id: string; status: 'present' | 'absent' | null }
+type CheckinMap = Map<string, CheckinInfo>
+
+type CheckinCtx = {
+  map: CheckinMap
+  saving: string | null           // 正在存的 session_id
+  onToggle: (rid: string, next: 'present' | 'absent') => void
+}
 
 type State =
   | { kind: 'loading' }
@@ -85,6 +95,36 @@ function ZoomCard({ data, id, code }: { data: Timetable; id: string; code: strin
   )
 }
 
+function CheckinSummary({ present, absent, total }: { present: number; absent: number; total: number }) {
+  const rate = total > 0 ? Math.round((present / total) * 100) : 0
+  const cell = (label: string, value: string | number, color: string) => (
+    <div style={{ flex: 1, textAlign: 'center', padding: '4px 8px' }}>
+      <div style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 30, fontWeight: 700, color, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 12, color: '#8d7a66', marginTop: 4, letterSpacing: '0.06em' }}>{label}</div>
+    </div>
+  )
+  return (
+    <div style={{
+      background: '#fffdf7', border: '1px solid rgba(120,90,54,.18)', borderRadius: 20,
+      boxShadow: '0 6px 18px rgba(65,45,25,.07)', padding: '18px 20px', marginBottom: 28,
+    }}>
+      <p style={{
+        margin: '0 0 12px', fontFamily: 'var(--font-cormorant), serif',
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', color: '#a06f31', textTransform: 'uppercase',
+      }}>Course Attendance · 課程打卡</p>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+        {cell('已出席', present, '#52613f')}
+        {cell('缺席', absent, '#c2592a')}
+        {cell('需打卡場次', total, '#34291f')}
+        {cell('出席率', `${rate}%`, '#a06f31')}
+      </div>
+      <p style={{ margin: '12px 0 0', fontSize: 12.5, color: '#8d7a66', lineHeight: 1.7, textAlign: 'center' }}>
+        於下方時間表中標示「需打卡」的場次記錄出席／缺席，記錄自動儲存。須全程出席（零缺席）方可取得完課資格。
+      </p>
+    </div>
+  )
+}
+
 function DayNav({ days }: { days: Day[] }) {
   return (
     <nav className="cs-nav" style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
@@ -107,7 +147,30 @@ function DayNav({ days }: { days: Day[] }) {
   )
 }
 
-function EventRow({ row }: { row: Row }) {
+function CheckinControl({ info, saving, onToggle }: { info: CheckinInfo; saving: boolean; onToggle: (next: 'present' | 'absent') => void }) {
+  const btn = (active: boolean, kind: 'present' | 'absent') => {
+    const color = kind === 'present' ? '#52613f' : '#c2592a'
+    return {
+      flex: '1 1 auto', minWidth: 76, padding: '8px 14px', borderRadius: 999,
+      fontSize: 13.5, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
+      border: `1.5px solid ${active ? color : 'rgba(120,90,54,.28)'}`,
+      background: active ? color : '#fff',
+      color: active ? '#fff' : '#8d7a66',
+      transition: 'all .15s', letterSpacing: '0.04em',
+    } as React.CSSProperties
+  }
+  return (
+    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.1em', color: '#a06f31', textTransform: 'uppercase', marginRight: 2 }}>打卡</span>
+      <button disabled={saving} style={btn(info.status === 'present', 'present')} onClick={() => onToggle('present')}>出席</button>
+      <button disabled={saving} style={btn(info.status === 'absent', 'absent')} onClick={() => onToggle('absent')}>缺席</button>
+      {info.status && <span style={{ fontSize: 12, color: '#8d7a66' }}>{info.status === 'present' ? '已記錄出席' : '已記錄缺席'}</span>}
+    </div>
+  )
+}
+
+function EventRow({ row, checkin }: { row: Row; checkin?: CheckinCtx }) {
+  const info = row.rid && checkin ? checkin.map.get(row.rid) : undefined
   return (
     <div className="cs-event">
       <div style={{
@@ -131,15 +194,27 @@ function EventRow({ row }: { row: Row }) {
             fontFamily: 'var(--font-noto-serif-tc), serif',
           }}>重點</mark>
         )}
+        {info && (
+          <mark style={{
+            background: 'rgba(82,97,63,.12)', color: '#52613f',
+            fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 4,
+            marginLeft: 8, letterSpacing: '0.06em',
+            fontFamily: 'var(--font-noto-serif-tc), serif',
+          }}>需打卡</mark>
+        )}
       </div>
       {row.desc && (
         <p style={{ margin: '5px 0 0', fontSize: 13.5, color: '#8d7a66', lineHeight: 1.7 }}>{row.desc}</p>
+      )}
+      {info && checkin && (
+        <CheckinControl info={info} saving={checkin.saving === info.session_id}
+          onToggle={(next) => checkin.onToggle(row.rid!, next)} />
       )}
     </div>
   )
 }
 
-function DayArticle({ day, idx }: { day: Day; idx: number }) {
+function DayArticle({ day, idx, checkin }: { day: Day; idx: number; checkin?: CheckinCtx }) {
   const weekday = getWeekday(day.date)
   return (
     <article id={`day-${idx}`} className="cs-dayart">
@@ -201,7 +276,7 @@ function DayArticle({ day, idx }: { day: Day; idx: number }) {
             )}
           </div>
           <div className="cs-events">
-            {day.rows.map((r, i) => <EventRow key={i} row={r}/>)}
+            {day.rows.map((r, i) => <EventRow key={r.rid || i} row={r} checkin={checkin}/>)}
           </div>
         </div>
       </div>
@@ -214,6 +289,15 @@ function ScheduleContent() {
   const id = searchParams.get('id') || ''
   const code = searchParams.get('code') || ''
   const [state, setState] = useState<State>({ kind: 'loading' })
+  const [checkins, setCheckins] = useState<CheckinMap>(new Map())
+  const [hasCheckin, setHasCheckin] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; ok: boolean } | null>(null)
+
+  const showToast = (message: string, ok: boolean) => {
+    setToast({ message, ok })
+    setTimeout(() => setToast(null), 2000)
+  }
 
   useEffect(() => {
     if (!id || !code) { setState({ kind: 'need_login' }); return }
@@ -224,9 +308,69 @@ function ScheduleContent() {
         if (r.status === 403) { setState({ kind: 'not_approved' }); return }
         if (!d.published) { setState({ kind: 'unpublished' }); return }
         setState({ kind: 'ok', data: d })
+        // 線上學員：載入打卡場次（依 rid 對應到時間表列）
+        if (d.is_online) {
+          fetch(`/api/member/course-checkin?id=${id}&code=${encodeURIComponent(code)}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(cd => {
+              if (!cd?.sessions) return
+              const m: CheckinMap = new Map()
+              for (const s of cd.sessions) {
+                if (s.sync_key) m.set(s.sync_key, { session_id: s.id, status: s.status })
+              }
+              setCheckins(m)
+              setHasCheckin(m.size > 0)
+            })
+            .catch(() => {})
+        }
       })
       .catch(() => setState({ kind: 'need_login' }))
   }, [id, code])
+
+  const toggleCheckin = async (rid: string, next: 'present' | 'absent') => {
+    const info = checkins.get(rid)
+    if (!info) return
+    const newStatus = info.status === next ? null : next   // 再點同一個 → 清除
+    setSaving(info.session_id)
+    // 樂觀更新
+    setCheckins(prev => {
+      const m = new Map(prev)
+      m.set(rid, { ...info, status: newStatus })
+      return m
+    })
+    try {
+      const res = await fetch('/api/member/course-checkin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, code, session_id: info.session_id, status: newStatus }),
+      })
+      if (res.status === 409) {
+        showToast('課表已更新，請重新整理頁面', false)
+      } else if (!res.ok) {
+        throw new Error()
+      } else {
+        showToast(newStatus === 'present' ? '已記錄出席' : newStatus === 'absent' ? '已記錄缺席' : '已清除', true)
+      }
+    } catch {
+      // 還原
+      setCheckins(prev => {
+        const m = new Map(prev)
+        m.set(rid, { ...info })
+        return m
+      })
+      showToast('儲存失敗，請再試一次', false)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const checkinCtx: CheckinCtx = { map: checkins, saving, onToggle: toggleCheckin }
+
+  // 出席摘要
+  const summary = (() => {
+    let present = 0, absent = 0
+    checkins.forEach(c => { if (c.status === 'present') present++; else if (c.status === 'absent') absent++ })
+    return { present, absent, total: checkins.size }
+  })()
 
   return (
     <>
@@ -276,9 +420,10 @@ function ScheduleContent() {
         {state.kind === 'ok' && (
           <>
             <ZoomCard data={state.data} id={id} code={code}/>
+            {hasCheckin && <CheckinSummary present={summary.present} absent={summary.absent} total={summary.total} />}
             <DayNav days={state.data.days}/>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-              {state.data.days.map((d, i) => <DayArticle key={i} day={d} idx={i}/>)}
+              {state.data.days.map((d, i) => <DayArticle key={i} day={d} idx={i} checkin={hasCheckin ? checkinCtx : undefined}/>)}
             </div>
           </>
         )}
@@ -287,6 +432,15 @@ function ScheduleContent() {
             className="btn btn-ghost">← 返回學員專區</a>
         </div>
       </main>
+
+      {toast && (
+        <div style={{
+          position: 'fixed', left: '50%', bottom: 28, transform: 'translateX(-50%)',
+          zIndex: 50, padding: '10px 22px', borderRadius: 999,
+          background: toast.ok ? '#52613f' : '#c2592a', color: '#fff',
+          fontSize: 14, fontWeight: 600, boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+        }}>{toast.message}</div>
+      )}
 
       <footer className="footer">
         <div className="container footer-inner">

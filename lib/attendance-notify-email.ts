@@ -7,7 +7,7 @@ const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com
 type AttendanceReg = { id: string; email: string; chinese_name: string; random_code: string; member_id: string | null }
 
 export function buildAttendanceNotifyPayload(reg: AttendanceReg) {
-  const checkinUrl = `${baseUrl}/member/course-checkin?id=${reg.id}&code=${reg.random_code}`
+  const checkinUrl = `${baseUrl}/info/schedule?id=${reg.id}&code=${reg.random_code}`
   const body = `
     ${emailKicker('Course Attendance Reminder')}
     ${emailH1('第二屆台灣四念處禪修・課程打卡提醒')}
@@ -17,12 +17,12 @@ export function buildAttendanceNotifyPayload(reg: AttendanceReg) {
     </p>
     ${emailH3('課程打卡')}
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 12px;">
-      請至學員專區的「課程打卡」，為今日參與的課程記錄出席或缺席狀態。
+      請至「課程時間表與打卡」頁面，於標示「需打卡」的場次記錄今日參與課程的出席或缺席狀態。
     </p>
     <p style="font-size:13.5px;color:${C.inkSoft};margin:0 0 20px;">
       打卡紀錄將作為您本屆完課的憑證，請勿遺漏。
     </p>
-    ${emailButton(checkinUrl, '前往課程打卡 →', 'green')}
+    ${emailButton(checkinUrl, '前往課程時間表與打卡 →', 'green')}
     <p style="color:${C.inkMute};font-size:13px;margin-top:24px;">
       感恩您的護持，祝您修學進步，法喜充滿。🙏
     </p>
