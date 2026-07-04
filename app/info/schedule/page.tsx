@@ -151,7 +151,7 @@ function CheckinControl({ info, saving, onToggle }: { info: CheckinInfo; saving:
   const btn = (active: boolean, kind: 'present' | 'absent') => {
     const color = kind === 'present' ? '#52613f' : '#c2592a'
     return {
-      flex: '1 1 auto', minWidth: 76, padding: '8px 14px', borderRadius: 999,
+      flex: '0 0 auto', minWidth: 92, padding: '8px 22px', borderRadius: 999,
       fontSize: 13.5, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
       border: `1.5px solid ${active ? color : 'rgba(120,90,54,.28)'}`,
       background: active ? color : '#fff',
