@@ -80,6 +80,10 @@ function MemberDashboardContent() {
   const [profileDraft, setProfileDraft] = useState<ProfileData | null>(null)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMsg, setProfileMsg] = useState('')
+  const [convertOpen, setConvertOpen] = useState(false)
+  const [convertSaving, setConvertSaving] = useState(false)
+  const [convertMsg, setConvertMsg] = useState('')
+  const [convForm, setConvForm] = useState({ pay_confirm: '', health_confirm: '', mental_health_note: '' })
   const [uploadingQr, setUploadingQr] = useState(false)
   const [pwForm, setPwForm] = useState({ newPw: '', confirmPw: '' })
   const [pwSaving, setPwSaving] = useState(false)
@@ -446,6 +450,105 @@ function MemberDashboardContent() {
             ) : null}
           </div>
         )}
+
+        {/* 課程形式轉換（所有狀態皆可自助切換） */}
+        <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '18px 22px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: convertOpen ? 16 : 0 }}>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--ink-mute)', textTransform: 'uppercase', marginBottom: 2 }}>Course Format</p>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>課程形式</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', margin: '4px 0 0' }}>目前為 <strong>{isOnline ? '線上 Zoom' : '實體課程'}</strong></p>
+            </div>
+            {!convertOpen && (
+              <button onClick={() => { setConvertOpen(true); setConvertMsg(''); setConvForm({ pay_confirm: '', health_confirm: '', mental_health_note: '' }) }}
+                style={{ padding: '6px 18px', background: 'var(--gold-deep)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                轉為{isOnline ? '實體' : '線上'}課程
+              </button>
+            )}
+          </div>
+
+          {convertOpen && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              {convertMsg && <p style={{ margin: 0, padding: '8px 12px', borderRadius: 8, background: convertMsg.startsWith('✓') ? 'rgba(73,85,52,0.08)' : 'rgba(192,57,43,0.08)', color: convertMsg.startsWith('✓') ? 'var(--green)' : '#c0392b', fontSize: 13 }}>{convertMsg}</p>}
+              <div style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.85, background: 'rgba(216,194,154,0.14)', borderRadius: 8, padding: '10px 14px' }}>
+                您將把課程形式從 <strong>{isOnline ? '線上 Zoom' : '實體課程'}</strong> 轉換為 <strong>{isOnline ? '實體課程' : '線上 Zoom'}</strong>。轉換後<strong>報名序號會重新編配</strong>
+                {isOnline
+                  ? '，實體學號將由學會另行編配；食宿、繳費及互動報名等事項需另行完成（繳費將由學會人員與您聯繫）。'
+                  : '；實體相關的食宿／繳費／互動報名將不再適用，網頁待辦以線上為準。'}
+              </div>
+
+              {/* 線 → 實：強制補填 Q16 / Q17 / Q18 */}
+              {isOnline && (
+                <>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    16. 實體課程之食宿、場地及交通費用需由學員自行負擔，並請於期限內完成繳費。您是否可於期限內完成付款？ <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
+                    <select value={convForm.pay_confirm} onChange={e => setConvForm(f => ({ ...f, pay_confirm: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }}>
+                      <option value="">請選擇</option>
+                      <option value="yes">是，我願意按時全額支付</option>
+                      <option value="no">否，我不願意支付</option>
+                    </select>
+                  </label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    17. 您是否身體健康，能夠全程獨立參與實體禪修課程？ <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
+                    <select value={convForm.health_confirm} onChange={e => setConvForm(f => ({ ...f, health_confirm: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)' }}>
+                      <option value="">請選擇</option>
+                      <option value="yes">是</option>
+                      <option value="no">否</option>
+                    </select>
+                  </label>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>
+                    18. 您是否有心理或精神疾病史？ <span style={{ color: 'var(--red,#c0392b)' }}>*</span>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 500, cursor: 'pointer' }}>
+                        <input type="radio" name="conv_mental" checked={convForm.mental_health_note === 'no'}
+                          onChange={() => setConvForm(f => ({ ...f, mental_health_note: 'no' }))} />
+                        否，無心理或精神疾病史
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 500, cursor: 'pointer' }}>
+                        <input type="radio" name="conv_mental" checked={convForm.mental_health_note.startsWith('yes')}
+                          onChange={() => setConvForm(f => ({ ...f, mental_health_note: 'yes:' }))} />
+                        是，請詳細說明
+                      </label>
+                    </div>
+                    {convForm.mental_health_note.startsWith('yes') && (
+                      <textarea rows={3} placeholder="請詳細說明您的狀況"
+                        value={convForm.mental_health_note.replace('yes:', '')}
+                        onChange={e => setConvForm(f => ({ ...f, mental_health_note: 'yes:' + e.target.value }))}
+                        style={{ marginTop: 8, width: '100%', padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--line-strong)', fontSize: 14, background: 'var(--bg-pure)', color: 'var(--ink)', fontFamily: 'inherit' }} />
+                    )}
+                  </div>
+                </>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button disabled={convertSaving} onClick={async () => {
+                  setConvertSaving(true); setConvertMsg('')
+                  const res = await fetch(`/api/member/convert-format?id=${id}&code=${encodeURIComponent(code)}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(isOnline ? convForm : {}),
+                  })
+                  const d = await res.json()
+                  setConvertSaving(false)
+                  if (res.ok) {
+                    setConvertMsg('✓ 轉換成功，頁面即將更新…')
+                    setTimeout(() => window.location.reload(), 1400)
+                  } else {
+                    setConvertMsg(d.error || '轉換失敗，請稍後再試')
+                  }
+                }}
+                  style={{ padding: '9px 24px', background: 'var(--green)', color: '#f8f2e8', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: convertSaving ? 'not-allowed' : 'pointer' }}>
+                  {convertSaving ? '轉換中…' : '確認轉換'}
+                </button>
+                <button onClick={() => { setConvertOpen(false); setConvertMsg('') }}
+                  style={{ padding: '9px 16px', background: 'transparent', border: '1.5px solid var(--line-strong)', borderRadius: 8, fontSize: 14, cursor: 'pointer' }}>
+                  取消
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {member.status === 'approved' && (
           <>
