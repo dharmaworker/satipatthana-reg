@@ -37,6 +37,9 @@ type MemberData = {
 // SESSION_LABEL / TEACHER_LABEL 改從 /api/interactive/config 動態載入（見 useEffect）
 type LabelMap = Record<string, string>
 
+// 課程形式轉換（實體↔線上）自助功能：暫時隱藏，改 true 即可重新開放
+const SHOW_FORMAT_CONVERSION = false
+
 const STATUS_INFO: Record<string, { label: string; cls: string }> = {
   approved: { label: '已錄取', cls: 'accepted' },
   pending: { label: '審核中', cls: 'pending' },
@@ -451,7 +454,8 @@ function MemberDashboardContent() {
           </div>
         )}
 
-        {/* 課程形式轉換（所有狀態皆可自助切換） */}
+        {/* 課程形式轉換（所有狀態皆可自助切換）— 由 SHOW_FORMAT_CONVERSION 控制顯示，目前隱藏 */}
+        {SHOW_FORMAT_CONVERSION && (
         <div style={{ background: 'var(--bg-pure)', border: '1px solid var(--line-strong)', borderRadius: 14, padding: '18px 22px', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: convertOpen ? 16 : 0 }}>
             <div>
@@ -549,6 +553,7 @@ function MemberDashboardContent() {
             </div>
           )}
         </div>
+        )}
 
         {member.status === 'approved' && (
           <>
