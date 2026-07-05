@@ -8,6 +8,9 @@ const archiveEmail = process.env.ARCHIVE_EMAIL || 'satipatthana.taipei@gmail.com
 const LINE_GROUP_URL =
   'https://line.me/ti/g2/SnKbjlJeqmrB_1xuv9WI59C_WWXp30V0HLrqFg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default'
 
+// LINE 群組加入密碼
+const LINE_GROUP_PASSWORD = '0918'
+
 type GroupJoinReg = {
   id: string
   email: string
@@ -17,13 +20,21 @@ type GroupJoinReg = {
   wechat_qr_url: string | null
 }
 
-function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string, extra?: string): string {
+function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: string, extra?: string, password?: string): string {
   const color = platform === 'LINE' ? '#06C755' : '#07C160'
   const colorDark = platform === 'LINE' ? '#04A144' : '#059a4c'
   const instruction =
     platform === 'LINE'
       ? '使用 LINE App 掃描以下 QR Code，即可加入本屆學員群組。'
       : '使用微信掃描以下 QR Code，即可加入本屆學員群組。'
+  const passwordBox = password
+    ? `
+      <div style="background:#fff8ee;border:1px dashed ${color};border-radius:10px;padding:10px 16px;margin:0 0 14px;display:inline-block;">
+        <span style="color:${C.inkSoft};font-size:13px;">加入密碼　</span>
+        <strong style="color:${C.ink};font-size:20px;letter-spacing:0.22em;">${password}</strong>
+      </div>
+      <p style="margin:0 0 14px;color:${C.inkSoft};font-size:12.5px;">加入時如需輸入密碼，請填上方號碼。</p>`
+    : ''
   const linkButton = joinUrl
     ? `
       <p style="margin:16px 0 10px;color:${C.inkSoft};font-size:13.5px;">若無法掃描 QR Code，可直接點擊下方按鈕加入 ${platform} 群組：</p>
@@ -34,6 +45,7 @@ function qrBlock(platform: 'LINE' | 'WeChat', groupQrUrl: string, joinUrl?: stri
     <div style="background:${C.bgPure};border:1px solid ${C.line};border-radius:12px;padding:18px 22px;margin:14px 0;text-align:center;">
       <div style="display:inline-block;background:${color};color:#fff;font-weight:700;font-size:13px;padding:3px 14px;border-radius:999px;margin-bottom:12px;">${platform} 群組</div>
       <p style="margin:0 0 14px;color:${C.inkSoft};font-size:13.5px;">${instruction}</p>
+      ${passwordBox}
       <img src="${groupQrUrl}" alt="${platform} 群組 QR Code"
         style="width:220px;height:220px;object-fit:contain;border-radius:8px;border:1px solid ${C.line};" />
       ${linkButton}
@@ -60,7 +72,7 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
   const hasWechat = !!reg.wechat_qr_url
 
   const qrBlocks = [
-    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL) : '',
+    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL, undefined, LINE_GROUP_PASSWORD) : '',
     hasWechat ? qrBlock('WeChat', SITE_ASSETS.groupQrWechat, undefined, wechatOverflowBlock()) : '',
   ].join('')
 
