@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [message, setMessage] = useState('')
   const [qrPreview, setQrPreview] = useState<{ url: string; title: string } | null>(null)
   const [detailReg, setDetailReg] = useState<any | null>(null)
+  const [converting, setConverting] = useState(false)
   const [editReg, setEditReg] = useState<any | null>(null)
 
   const [editSaving, setEditSaving] = useState(false)
@@ -503,6 +504,39 @@ export default function DashboardPage() {
               <DetailField label="Email" value={detailReg.email} />
               <DetailField label="報名時間" value={detailReg.created_at ? new Date(detailReg.created_at).toLocaleString('zh-TW') : '—'} />
             </DetailSection>
+
+            <DetailSection title="課程形式">
+              <DetailField label="目前形式" value={detailReg.retreat_format === 'online' ? '線上 Zoom' : '實體課程'} />
+              <DetailField label="學號" value={detailReg.student_id} />
+            </DetailSection>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
+              <button disabled={converting}
+                onClick={async () => {
+                  const toOnline = detailReg.retreat_format !== 'online'
+                  const label = toOnline ? '線上課程' : '實體課程'
+                  const extra = toOnline
+                    ? '報名序號會重新編配；若原有學號將自動配發線上學號（C）。'
+                    : '報名序號會重新編配；原線上學號將清空（實體學號 R 由學會另編）。系統會自動填入「同意繳費／身體健康／無精神疾病史」的答案。'
+                  if (!confirm(`確定將「${detailReg.chinese_name}」由${toOnline ? '實體' : '線上'}轉為${label}？\n\n${extra}\n轉換後將寄出通知信，頁面會重新載入。`)) return
+                  setConverting(true)
+                  const res = await fetch('/api/admin/convert-format', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: detailReg.id }),
+                  })
+                  const d = await res.json().catch(() => ({}))
+                  if (res.ok) {
+                    alert(`已轉為${label}，新報名序號：${d.member_id}${d.student_id ? '，學號：' + d.student_id : ''}`)
+                    window.location.reload()
+                  } else {
+                    setConverting(false)
+                    alert(d.error || '轉換失敗')
+                  }
+                }}
+                className="admin-btn-sm gold">
+                {converting ? '轉換中…' : (detailReg.retreat_format === 'online' ? '轉為實體課程 →' : '轉為線上課程 →')}
+              </button>
+              <span style={{ fontSize: 12, color: 'var(--ink-mute)' }}>轉換後自動重新載入頁面</span>
+            </div>
 
             <DetailSection title="通訊軟體">
               <DetailField label="LINE ID" value={detailReg.line_id} />
