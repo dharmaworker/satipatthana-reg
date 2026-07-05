@@ -19,8 +19,8 @@ export function buildFormatConversionPayload(m: ConvertMail) {
   // 學號說明
   let studentRow = ''
   if (m.toOnline) {
-    // 實 → 線：若原本已有學號，會自動配發線上學號 C-XXX
-    if (m.hadStudentId) studentRow = tableRow('學號', m.newStudentId || '（處理中）')
+    // 實 → 線：錄取者已自動配發線上學號 C-XXX
+    if (m.newStudentId) studentRow = tableRow('學號', m.newStudentId)
   } else {
     // 線 → 實：原線上學號已移除，實體學號由學會另行編配
     if (m.hadStudentId) studentRow = tableRow('學號', '待學會編配')

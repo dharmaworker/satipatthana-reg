@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   const { data: reg } = await supabaseAdmin
     .from('registrations')
-    .select('id, email, chinese_name, member_id, student_id, retreat_format')
+    .select('id, email, chinese_name, member_id, student_id, retreat_format, status')
     .eq('id', id)
     .eq('random_code', code.toUpperCase().trim())
     .single()

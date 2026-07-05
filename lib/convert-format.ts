@@ -9,6 +9,7 @@ export type ConvReg = {
   member_id: string | null
   student_id: string | null
   retreat_format: string | null
+  status: string | null
 }
 
 // 線→實 需寫入的三題答案（實→線 不需要，傳 undefined）
@@ -35,11 +36,16 @@ export async function performFormatConversion(reg: ConvReg, answers?: ForcedAnsw
 
   update.retreat_format = targetOnline ? 'online' : 'in_person'
 
-  // 學號：有才動、沒有不補
+  // 學號規則：
+  //  實→線：錄取者自動配發線上學號 C（不論原本有無實體學號）；未錄取則不給。
+  //  線→實：清空線上學號（實體學號 R 由學會手動編）。
   const oldStudentId: string | null = reg.student_id
-  let newStudentId: string | null = oldStudentId
-  if (oldStudentId) {
-    newStudentId = targetOnline ? await nextAvailableOnlineStudentId() : null
+  const isApproved = reg.status === 'approved'
+  let newStudentId: string | null
+  if (targetOnline) {
+    newStudentId = isApproved ? await nextAvailableOnlineStudentId() : null
+  } else {
+    newStudentId = null
   }
   update.student_id = newStudentId
 
