@@ -11,6 +11,25 @@ const LINE_GROUP_URL =
 // LINE 群組加入密碼
 const LINE_GROUP_PASSWORD = '0918'
 
+// 學會官方 LINE（報名首頁亦提供），供無法加入群組者洽詢
+const OFFICIAL_LINE_URL = 'https://lin.ee/SGjiKlv'
+
+// LINE 區塊底部：無法加入群組時洽詢官方 LINE
+function officialLineBlock(): string {
+  return `
+    <div style="border-top:1px dashed ${C.line};margin:18px 0 0;padding-top:16px;">
+      <p style="margin:0 0 12px;color:${C.inkSoft};font-size:13.5px;">
+        若仍無法加入群組，請洽詢學會<strong style="color:${C.ink};">官方 LINE</strong>。
+      </p>
+      <img src="${SITE_ASSETS.lineOfficial}" alt="學會官方 LINE"
+        style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid ${C.line};margin:0 0 12px;" />
+      <br/>
+      <a href="${OFFICIAL_LINE_URL}"
+        style="display:inline-block;background:#06C755;color:#fff;font-weight:700;font-size:14px;text-decoration:none;padding:10px 26px;border-radius:999px;">加入官方 LINE 洽詢</a>
+    </div>
+  `
+}
+
 type GroupJoinReg = {
   id: string
   email: string
@@ -72,7 +91,7 @@ export function buildGroupJoinPayload(reg: GroupJoinReg) {
   const hasWechat = !!reg.wechat_qr_url
 
   const qrBlocks = [
-    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL, undefined, LINE_GROUP_PASSWORD) : '',
+    hasLine ? qrBlock('LINE', SITE_ASSETS.groupQrLine, LINE_GROUP_URL, officialLineBlock(), LINE_GROUP_PASSWORD) : '',
     hasWechat ? qrBlock('WeChat', SITE_ASSETS.groupQrWechat, undefined, wechatOverflowBlock()) : '',
   ].join('')
 
