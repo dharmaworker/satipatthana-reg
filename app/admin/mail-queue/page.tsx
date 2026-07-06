@@ -415,6 +415,7 @@ export default function MailQueuePage() {
   const [soloFilter, setSoloFilter] = useState(false)
   const [batchFilter, setBatchFilter] = useState('')
   const [providerFilter, setProviderFilter] = useState('all')
+  const [limitFilter, setLimitFilter] = useState('200')
 
   // data
   const [rows, setRows] = useState<TreeRow[]>([])
@@ -456,6 +457,7 @@ export default function MailQueuePage() {
     if (soloFilter) params.set('solo', 'true')
     if (batchFilter.trim()) params.set('batch', batchFilter.trim())
     if (providerFilter !== 'all') params.set('provider', providerFilter)
+    params.set('limit', limitFilter)
 
     const res = await fetch(`/api/admin/mail-queue/list?${params}`)
     const json = await res.json()
@@ -659,6 +661,19 @@ export default function MailQueuePage() {
               />
               solo only
             </label>
+
+            {/* limit */}
+            <select
+              value={limitFilter}
+              onChange={e => setLimitFilter(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="100">100 筆</option>
+              <option value="200">200 筆</option>
+              <option value="300">300 筆</option>
+              <option value="400">400 筆</option>
+              <option value="500">500 筆</option>
+            </select>
 
             {/* load */}
             <button
