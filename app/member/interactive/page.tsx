@@ -318,23 +318,19 @@ function InteractiveContent() {
                     <p className="step-header-desc">請仔細閱讀互動規則，確認後進入下一步。</p>
                   </div>
                   <div className="rules-intro">
-                    <p>本次活動期間的互動分為集體互動與小組互動。每位學員皆可報名集體互動和小組互動。</p>
+                    <p>互動說明：</p>
 
-                    <h3>1. 集體互動說明</h3>
-                    <ol style={{ listStyleType: 'lower-alpha', paddingLeft: '1.5em' }}>
-                      <li>集體互動名額有限，並非每位學員都有集體互動的機會。</li>
-                      <li>將根據在報名期間內實際接收到的有效報名表，按照課表中「互動場次」的順序，按場次順序進行「抽籤」，最終生成集體互動名單及順序、候補名單及順序。</li>
-                      <li>學員可自願報名多個集體互動場次，但最多只能享有 1 次互動機會。在您報名的多場互動的順場次抽籤中，若其中一場您被抽中，則餘下場次您將不會再參與抽籤。</li>
-                    </ol>
+                    <h3>▎集體互動</h3>
+                    <ul>
+                      <li>所有學員均可自願報名參加集體互動。</li>
+                      <li>但集體互動名額有限，最終互動及候補名單將按場次順序，通過隨機抽籤產生。</li>
+                    </ul>
 
-                    <h3>2. 分組互動說明</h3>
-                    <ol style={{ listStyleType: 'lower-alpha', paddingLeft: '1.5em' }}>
-                      <li>每位學員有且僅有一次分組互動的機會。</li>
-                      <li>所有學員依照自己分組互動意願的優先順序進行排序。</li>
-                      <li>依學員的互動意願排序次第進行隨機抽籤。</li>
-                      <li>若某一位指導老師的第一意願互動報名人數超出既定的互動名額，則啟動抽籤程序；若某一位指導老師的第一意願互動報名人數少於或等於既定的互動名額，則該第一意願報名人員均為互動人員，以此產生互動名單並抽籤依此類推，直至所有互動名額分配完畢。</li>
-                      <li>每位學員最多享有 1 次分組互動機會，如果您被其中一場抽中，則您報名的其他指導老師或其餘場次自動失效，以前抽中的場次為準。</li>
-                    </ol>
+                    <h3>▎分組互動</h3>
+                    <ul>
+                      <li>每位學員均有一次分組互動的機會，請根據自身的互動與學習意願，對三個小組進行優先順序排序。</li>
+                      <li>各組名額有限，優先按學員的第一意願進行分配。若報名人數超出該組名額，則在第一意願申請者中進行抽籤；未能中簽的學員，將依次按其第二意願、第三意願參與抽籤，以此類推。</li>
+                    </ul>
                   </div>
                 </div>
               )}
@@ -344,7 +340,7 @@ function InteractiveContent() {
                   <div className="step-header">
                     <p className="step-header-kicker">Step 02</p>
                     <h2 className="step-header-title">集體互動</h2>
-                    <p className="step-header-desc">請選擇您希望報名互動的場次（可多選）。最終以隨機抽籤產生名單。</p>
+                    <p className="step-header-desc">請選擇您希望報名的集體互動場次（可多選/非必選題）</p>
                   </div>
                   <div id="field-sessions" className="session-grid">
                     <label className={`session-cell ${noSession ? 'selected' : ''}`} style={{ gridColumn: '1 / -1' }}>
@@ -382,7 +378,7 @@ function InteractiveContent() {
                   <div className="step-header">
                     <p className="step-header-kicker">Step 03</p>
                     <h2 className="step-header-title">分組互動</h2>
-                    <p className="step-header-desc">點選每位老師的意願順序（1 = 最希望）。每位老師給不同數字，需連號不可跳號，空白代表不選該老師。</p>
+                    <p className="step-header-desc">請按您的互動及學習意願進行排序（必選題）</p>
                   </div>
                   <div className="alert-card">
                     <div className="alert-card-title">填寫說明</div>
