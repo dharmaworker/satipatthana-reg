@@ -16,5 +16,7 @@ export async function GET() {
     deadline_ms: resolveDeadlineMs(config),
     task_open_ms: config.task_open_ms ?? null,
     task_deadline_ms: config.task_deadline_ms ?? null,
+    group_allow_optout: config.group_allow_optout !== false,  // 預設允許不報名集體
+    small_required: config.small_required === true,           // 預設分組非必選
   })
 }

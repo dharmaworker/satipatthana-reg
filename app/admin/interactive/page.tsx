@@ -1292,6 +1292,25 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // ── 報名規則（集體是否允許不報名 / 分組是否必選）──
+  const [rules, setRules] = useState({ group_allow_optout: true, small_required: false })
+  useEffect(() => {
+    fetch('/api/admin/interactive-config')
+      .then(r => r.ok ? r.json() : null)
+      .then(c => { if (c) setRules({ group_allow_optout: c.group_allow_optout !== false, small_required: c.small_required === true }) })
+      .catch(() => {})
+  }, [])
+  const saveRule = async (patch: Partial<typeof rules>) => {
+    const next = { ...rules, ...patch }
+    setRules(next)   // 樂觀更新
+    setMsg('')
+    const res = await fetch('/api/admin/interactive-config', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+    })
+    if (res.ok) setMsg('報名規則已更新')
+    else { setMsg('報名規則儲存失敗'); setRules(rules) }  // 還原
+  }
+
   // ── 集體場次 form ──
   const blankSession = { id: '', teacher: '', date: '', time: '', cap: 20, waitlist_cap: 5, is_active: true, sort_order: 1 }
   const [editingSession, setEditingSession] = useState<DbSession | null>(null)
@@ -1507,6 +1526,27 @@ function SessionManagePanel({ sessions, slots, onRefresh }: {
       {open && (
         <div style={{ padding: '14px 18px 20px', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 24 }}>
           {msg && <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(73,85,52,0.08)', fontSize: 13, color: 'var(--green-deep)', fontWeight: 600 }}>{msg}</div>}
+
+          {/* ── 報名規則 ── */}
+          <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '14px 16px', background: 'rgba(180,147,88,0.04)' }}>
+            <h5 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 13, color: 'var(--green-deep)', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10 }}>
+              報名規則
+            </h5>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10, cursor: 'pointer', fontSize: 13, color: 'var(--ink)' }}>
+              <input type="checkbox" checked={rules.group_allow_optout}
+                onChange={e => saveRule({ group_allow_optout: e.target.checked })} style={{ marginTop: 2 }} />
+              <span><strong>集體互動</strong>：允許學員選擇「不報名集體互動」<br />
+                <span style={{ fontSize: 12, color: 'var(--ink-mute)' }}>取消勾選 → 學員看不到「不報名」選項，且必須至少選一個集體場次。</span>
+              </span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--ink)' }}>
+              <input type="checkbox" checked={rules.small_required}
+                onChange={e => saveRule({ small_required: e.target.checked })} style={{ marginTop: 2 }} />
+              <span><strong>分組互動</strong>：設為必選（學員一定要選，不能不選）<br />
+                <span style={{ fontSize: 12, color: 'var(--ink-mute)' }}>勾選 → 學員必須至少為一位老師排序意願，不能全部留空。</span>
+              </span>
+            </label>
+          </div>
 
           {/* ── 集體互動場次 ── */}
           <div>

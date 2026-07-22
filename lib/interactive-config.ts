@@ -12,8 +12,10 @@ export type InteractiveConfig = {
   deadline_ms?: number       // 互動報名截止（UTC epoch ms）
   task_open_ms?: number      // 互動作業開放（UTC epoch ms）
   task_deadline_ms?: number  // 互動作業截止（UTC epoch ms）
+  group_allow_optout?: boolean  // 集體互動：是否允許學員「不報名集體互動」（預設允許）
+  small_required?: boolean      // 分組互動：是否為必選（學員一定要選，預設否）
 }
-const DEFAULT: InteractiveConfig = { open: false }
+const DEFAULT: InteractiveConfig = { open: false, group_allow_optout: true, small_required: false }
 
 export function resolveOpenMs(config: InteractiveConfig): number | null {
   return config.open_ms ?? null

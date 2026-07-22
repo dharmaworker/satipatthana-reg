@@ -27,6 +27,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: `${f} 必須是正整數（UTC epoch ms）` }, { status: 400 })
     }
   }
+  const boolFields = ['group_allow_optout', 'small_required'] as const
+  for (const f of boolFields) {
+    if (body[f] !== undefined && typeof body[f] !== 'boolean') {
+      return NextResponse.json({ error: `${f} 必須是 boolean` }, { status: 400 })
+    }
+  }
   try {
     const current = await fetchInteractiveConfig()
     const merged = { ...current }
@@ -35,6 +41,8 @@ export async function PUT(request: NextRequest) {
     if (body.deadline_ms !== undefined) merged.deadline_ms = body.deadline_ms
     if (body.task_open_ms !== undefined) merged.task_open_ms = body.task_open_ms
     if (body.task_deadline_ms !== undefined) merged.task_deadline_ms = body.task_deadline_ms
+    if (body.group_allow_optout !== undefined) merged.group_allow_optout = body.group_allow_optout
+    if (body.small_required !== undefined) merged.small_required = body.small_required
     await saveInteractiveConfig(merged)
     return NextResponse.json({ success: true, deadline_ms: resolveDeadlineMs(merged), task_open_ms: merged.task_open_ms, task_deadline_ms: merged.task_deadline_ms })
   } catch (e: any) {

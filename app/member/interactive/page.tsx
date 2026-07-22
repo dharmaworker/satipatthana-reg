@@ -43,6 +43,8 @@ function InteractiveContent() {
   const [selectedSessions, setSelectedSessions] = useState<string[]>([])
   const [noSession, setNoSession] = useState(false)
   const [ranking, setRanking] = useState<Record<string, string>>({})
+  const [groupAllowOptout, setGroupAllowOptout] = useState(true)  // 集體是否允許不報名
+  const [smallRequired, setSmallRequired] = useState(false)       // 分組是否必選
 
   // 載入場次、老師設定
   useEffect(() => {
@@ -51,6 +53,8 @@ function InteractiveContent() {
       .then(d => {
         setSessions(d.sessions || [])
         setTeachers(d.teachers || [])
+        setGroupAllowOptout(d.group_allow_optout !== false)
+        setSmallRequired(d.small_required === true)
       })
       .catch(() => {})
       .finally(() => setConfigLoaded(true))
@@ -137,9 +141,16 @@ function InteractiveContent() {
   const goToStep = (target: number) => {
     if (target === step) return
     if (target < step) { setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return }
-    if (step === 2 && target > 2 && !noSession && selectedSessions.length === 0) {
-      fail('sessions', '若參加集體互動，請至少選擇一個場次（或勾選「不報名參與本次課程的集體互動」）')
-      return
+    if (step === 2 && target > 2) {
+      if (groupAllowOptout) {
+        if (!noSession && selectedSessions.length === 0) {
+          fail('sessions', '若參加集體互動，請至少選擇一個場次（或勾選「不報名參與本次課程的集體互動」）')
+          return
+        }
+      } else if (selectedSessions.length === 0) {
+        fail('sessions', '請至少選擇一個集體互動場次')
+        return
+      }
     }
     if (target <= maxReached) {
       setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return
@@ -161,6 +172,14 @@ function InteractiveContent() {
       .filter(t => ranking[t.key])
       .sort((a, b) => parseInt(ranking[a.key] || '99') - parseInt(ranking[b.key] || '99'))
       .map(t => t.key)
+
+    // 後台規則：集體不可不報名 → 至少一場；分組必選 → 至少一位老師
+    if (!groupAllowOptout && selectedSessions.length === 0) {
+      setStep(2); fail('sessions', '請至少選擇一個集體互動場次'); return
+    }
+    if (smallRequired && filled.length === 0) {
+      fail('ranking', '請至少為一位老師排序分組互動意願'); return
+    }
 
     setSubmitting(true)
     try {
@@ -322,13 +341,13 @@ function InteractiveContent() {
 
                     <h3>▎集體互動</h3>
                     <ul>
-                      <li>所有學員均可自願報名參加集體互動。</li>
+                      <li>{groupAllowOptout ? '所有學員均可自願報名參加集體互動。' : '本次集體互動為必選，請至少選擇一個場次。'}</li>
                       <li>但集體互動名額有限，最終互動及候補名單將按場次順序，通過隨機抽籤產生。</li>
                     </ul>
 
                     <h3>▎分組互動</h3>
                     <ul>
-                      <li>每位學員均有一次分組互動的機會，請根據自身的互動與學習意願，對三個小組進行優先順序排序。</li>
+                      <li>{smallRequired ? '每位學員均須報名分組互動，請根據自身的互動與學習意願，對各小組進行優先順序排序。' : '每位學員均有一次分組互動的機會，請根據自身的互動與學習意願，對三個小組進行優先順序排序。'}</li>
                       <li>各組名額有限，優先按學員的第一意願進行分配。若報名人數超出該組名額，則在第一意願申請者中進行抽籤；未能中簽的學員，將依次按其第二意願、第三意願參與抽籤，以此類推。</li>
                     </ul>
                   </div>
@@ -340,15 +359,17 @@ function InteractiveContent() {
                   <div className="step-header">
                     <p className="step-header-kicker">Step 02</p>
                     <h2 className="step-header-title">集體互動</h2>
-                    <p className="step-header-desc">請選擇您希望報名的集體互動場次（可多選/非必選題）</p>
+                    <p className="step-header-desc">請選擇您希望報名的集體互動場次（可多選{groupAllowOptout ? '，非必選' : '，必選'}）</p>
                   </div>
                   <div id="field-sessions" className="session-grid">
-                    <label className={`session-cell ${noSession ? 'selected' : ''}`} style={{ gridColumn: '1 / -1' }}>
-                      <input type="checkbox" checked={noSession} onChange={toggleNoSession} />
-                      <div className="session-check" />
-                      <div className="session-teacher" style={{ fontWeight: 600 }}>不報名參與本次課程的集體互動</div>
-                    </label>
-                    {!noSession && sessions.map(s => {
+                    {groupAllowOptout && (
+                      <label className={`session-cell ${noSession ? 'selected' : ''}`} style={{ gridColumn: '1 / -1' }}>
+                        <input type="checkbox" checked={noSession} onChange={toggleNoSession} />
+                        <div className="session-check" />
+                        <div className="session-teacher" style={{ fontWeight: 600 }}>不報名參與本次課程的集體互動</div>
+                      </label>
+                    )}
+                    {(!groupAllowOptout || !noSession) && sessions.map(s => {
                       const checked = selectedSessions.includes(s.id)
                       return (
                         <label key={s.id} className={`session-cell ${checked ? 'selected' : ''}`}>
@@ -364,11 +385,11 @@ function InteractiveContent() {
                     })}
                   </div>
                   <div className="selection-summary">
-                    {noSession
+                    {groupAllowOptout && noSession
                       ? <>已選擇：不報名集體互動</>
                       : selectedSessions.length > 0
                         ? <>已選 <span className="count">{selectedSessions.length}</span> 個場次　·　可繼續勾選多個場次</>
-                        : <span style={{ color: 'var(--error)' }}>請至少選一個場次，或勾選「不報名參與本次課程的集體互動」</span>}
+                        : <span style={{ color: 'var(--error)' }}>{groupAllowOptout ? '請至少選一個場次，或勾選「不報名參與本次課程的集體互動」' : '請至少選擇一個集體互動場次（本次集體互動為必選）'}</span>}
                   </div>
                 </div>
               )}
@@ -378,11 +399,11 @@ function InteractiveContent() {
                   <div className="step-header">
                     <p className="step-header-kicker">Step 03</p>
                     <h2 className="step-header-title">分組互動</h2>
-                    <p className="step-header-desc">請按您的互動及學習意願進行排序（必選題）</p>
+                    <p className="step-header-desc">請按您的互動及學習意願進行排序（{smallRequired ? '必選' : '可棄權'}）</p>
                   </div>
                   <div className="alert-card">
                     <div className="alert-card-title">填寫說明</div>
-                    <p>點選數字按鈕依序設定意願順序（1 = 最希望）；再點同一按鈕可取消，取消後後續順序一併清除。每位老師的數字不可重複，且需連號。全空白代表不報名分組互動。</p>
+                    <p>點選數字按鈕依序設定意願順序（1 = 最希望）；再點同一按鈕可取消，取消後後續順序一併清除。每位老師的數字不可重複，且需連號。{smallRequired ? '本次分組互動為必選，請至少為一位老師排序意願。' : '全空白代表不報名分組互動。'}</p>
                   </div>
 
                   <div id="field-ranking" style={{ marginTop: 20 }}>
@@ -434,7 +455,9 @@ function InteractiveContent() {
 
                   <div className="selection-summary" style={{ marginTop: 16 }}>
                     {Object.values(ranking).every(v => !v)
-                      ? <>尚未選擇　·　<strong style={{ fontSize: '1.05em' }}>不選代表不報名分組互動</strong></>
+                      ? (smallRequired
+                          ? <span style={{ color: 'var(--error)' }}>請至少為一位老師排序分組互動意願（本次分組互動為必選）</span>
+                          : <>尚未選擇　·　<strong style={{ fontSize: '1.05em' }}>不選代表不報名分組互動</strong></>)
                       : <>已選：{teachers.filter(t => ranking[t.key]).map(t => `${t.label} 第${ranking[t.key]}意願`).join('、')}</>}
                   </div>
                 </div>
@@ -470,8 +493,12 @@ function InteractiveContent() {
 
             <div className="sidebar-card" style={{ background: 'rgba(216, 194, 154, 0.18)', borderColor: 'rgba(180, 147, 88, 0.3)' }}>
               <h4 style={{ color: 'var(--gold-deep)' }}>※ 貼心提醒 <small>Tips</small></h4>
-              <p>集體互動請至少選一個場次；若不想參加，請勾選「不報名參與本次課程的集體互動」。</p>
-              <p style={{ marginTop: 10 }}>分組互動可棄權；如要報名，請依 1、2、3… 順序為老師排列意願，不可跳號，未填寫代表不報名。</p>
+              <p>{groupAllowOptout
+                ? '集體互動請至少選一個場次；若不想參加，請勾選「不報名參與本次課程的集體互動」。'
+                : '集體互動為必選，請至少選擇一個場次。'}</p>
+              <p style={{ marginTop: 10 }}>{smallRequired
+                ? '分組互動為必選，請依 1、2、3… 順序為老師排列意願，不可跳號，至少選擇一位。'
+                : '分組互動可棄權；如要報名，請依 1、2、3… 順序為老師排列意願，不可跳號，未填寫代表不報名。'}</p>
               <p style={{ marginTop: 10 }}>抽籤結果由學會於互動報名截止後寄信通知。</p>
             </div>
 

@@ -62,6 +62,15 @@ export async function POST(request: NextRequest) {
   // 靜默過濾：已停用/刪除的場次 ID 不拒絕，而是直接去除（避免學員無法重新送出舊資料）
   const filteredSessions = wanted_sessions.filter(s => validSessions.has(s))
 
+  // 後台開關：集體不允許不報名時，須至少選一個場次
+  if (postConfig.group_allow_optout === false && filteredSessions.length === 0) {
+    return NextResponse.json({ error: '請至少選擇一個集體互動場次' }, { status: 400 })
+  }
+  // 後台開關：分組為必選時，須至少排序一位老師
+  if (postConfig.small_required === true && wanted_ranking.length === 0) {
+    return NextResponse.json({ error: '請至少為一位老師排序分組互動意願' }, { status: 400 })
+  }
+
   const validTeachers = new Set(teachers.map(t => t.key))
   if (wanted_ranking.length > teachers.length) {
     return NextResponse.json({ error: `分組互動最多選 ${teachers.length} 個` }, { status: 400 })
