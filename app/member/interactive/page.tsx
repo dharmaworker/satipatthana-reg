@@ -153,11 +153,12 @@ function InteractiveContent() {
       }
     }
     if (target <= maxReached) {
-      setStep(target); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return
+      setStep(target); setError(''); setErrorField(null); window.scrollTo({ top: 0, behavior: 'smooth' }); return
     }
     if (target === step + 1) {
       setStep(target)
       setMaxReached(prev => Math.max(prev, target))
+      setError('')
       setErrorField(null)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
