@@ -416,7 +416,7 @@ function InteractiveContent() {
                           <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: selected ? 'rgba(73,85,52,0.06)' : 'rgba(255,255,255,0.6)', borderRadius: 10, border: `1px solid ${selected ? 'rgba(73,85,52,0.35)' : 'var(--line)'}` }}>
                             <div style={{ flex: 1 }}>
                               <div style={{ fontWeight: 600, fontSize: 15 }}>{t.label}</div>
-                              <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>{t.total_cap} 個名額</div>
+                              {/* <div style={{ fontSize: 12, color: 'var(--ink-mute)' }}>{t.total_cap} 個名額</div> */}
                             </div>
                             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                               {Array.from({ length: teachers.length }, (_, i) => i + 1).map(n => {
