@@ -99,10 +99,12 @@ function InteractiveContent() {
     const hour = d.getUTCHours()
     const min = d.getUTCMinutes()
     const monthDay = `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`
+    const mdSlash = `${month}/${day}`
+    const weekday = '日一二三四五六'[d.getUTCDay()]
     const period = hour < 6 ? '凌晨' : hour < 12 ? '早上' : hour === 12 ? '中午' : hour < 18 ? '下午' : '晚上'
     const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
     const timeStr = min === 0 ? `${h12}:00` : `${h12}:${String(min).padStart(2, '0')}`
-    return { monthDay, period, timeStr }
+    return { monthDay, mdSlash, weekday, period, timeStr }
   })() : null
 
   const toggleSession = (sid: string) => {
@@ -293,7 +295,7 @@ function InteractiveContent() {
                 <div className="submit-status-icon" style={{ background: 'var(--gold-deep)' }}>⏳</div>
                 <div className="submit-status-text">
                   <h4>互動報名尚未開放</h4>
-                  <p>互動報名尚未開放，學會將另行寄信通知開放時間，請留意您的 Email。如有疑問請聯絡學會。</p>
+                  <p>{deadlineTaipei ? `互動報名已開放至 ${deadlineTaipei.mdSlash}（${deadlineTaipei.weekday}）${deadlineTaipei.period} ${deadlineTaipei.timeStr} 截止。` : '互動報名尚未開放，學會將另行寄信通知開放時間，'}請留意您的 Email。如有疑問請聯絡學會。</p>
                 </div>
               </div>
             )}
