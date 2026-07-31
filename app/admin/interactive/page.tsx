@@ -416,7 +416,7 @@ export default function InteractiveAdminPage() {
                         : '—'}
                     </td>
                     <td>
-                      <button onClick={() => setEditing(r)} disabled={!it || (groupAbstained && smallAbstained)} className="admin-btn-sm gold">編輯指定</button>
+                      <button onClick={() => setEditing(r)} className="admin-btn-sm gold">編輯指定</button>
                     </td>
                   </tr>
                 )
@@ -439,10 +439,7 @@ export default function InteractiveAdminPage() {
         <EditModal row={editing}
           sessions={sessions} slots={slots} teachers={teachers}
           onClose={() => setEditing(null)}
-          onSave={async patch => {
-            const ok = await updateStatus(editing.registration.id, patch)
-            if (ok) setEditing(null)
-          }} />
+          onSaved={() => { setEditing(null); setMessage('已儲存'); fetchData() }} />
       )}
 
       {autoDrawOpen && (
@@ -460,17 +457,83 @@ function statusCls(s: string) {
   return s === 'won' ? 'ok' : s === 'lost' ? 'error' : s === 'waitlist' ? 'info' : s === 'abstain' ? '' : 'warn'
 }
 
-function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: Row; sessions: DbSession[]; slots: DbSlot[]; teachers: DbTeacher[]; onClose: () => void; onSave: (patch: any) => void }) {
-  const it = row.interactive!
-  const groupAbstained = (it.wanted_sessions || []).length === 0
-  const smallAbstained = (it.wanted_ranking || []).length === 0
-  const [groupStatus, setGroupStatus] = useState(it.group_status)
-  const [smallStatus, setSmallStatus] = useState(it.small_status)
-  const [assignedSession, setAssignedSession] = useState(it.assigned_session || '')
-  const [assignedGroup, setAssignedGroup] = useState(it.assigned_group || '')
-  const [assignedDate, setAssignedDate] = useState(it.assigned_date || '')
-  const [groupSerial, setGroupSerial] = useState<string>(it.group_serial !== null && it.group_serial !== undefined ? String(it.group_serial) : '')
-  const [smallSerial, setSmallSerial] = useState<string>(it.small_serial !== null && it.small_serial !== undefined ? String(it.small_serial) : '')
+// 編輯指定：後台可直接改學員的「報名志願」（集體場次 + 分組排序）與抽籤指定結果
+function EditModal({ row, sessions, slots, teachers, onClose, onSaved }: { row: Row; sessions: DbSession[]; slots: DbSlot[]; teachers: DbTeacher[]; onClose: () => void; onSaved: () => void }) {
+  const it = row.interactive
+  // 報名志願（可代填/修改）
+  const [selectedSessions, setSelectedSessions] = useState<string[]>(it?.wanted_sessions || [])
+  const [ranking, setRanking] = useState<Record<string, string>>(() => {
+    const r: Record<string, string> = {}
+    ;(it?.wanted_ranking || []).forEach((tid, idx) => { if (!r[tid]) r[tid] = String(idx + 1) })
+    return r
+  })
+  // 抽籤指定結果
+  const [groupStatus, setGroupStatus] = useState(it?.group_status || 'pending')
+  const [smallStatus, setSmallStatus] = useState(it?.small_status || 'pending')
+  const [assignedSession, setAssignedSession] = useState(it?.assigned_session || '')
+  const [assignedGroup, setAssignedGroup] = useState(it?.assigned_group || '')
+  const [assignedDate, setAssignedDate] = useState(it?.assigned_date || '')
+  const [groupSerial, setGroupSerial] = useState<string>(it?.group_serial != null ? String(it.group_serial) : '')
+  const [smallSerial, setSmallSerial] = useState<string>(it?.small_serial != null ? String(it.small_serial) : '')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+
+  const rankedTeachers = teachers.filter(t => ranking[t.key]).sort((a, b) => parseInt(ranking[a.key]) - parseInt(ranking[b.key]))
+  const hasGroup = selectedSessions.length > 0
+  const hasSmall = rankedTeachers.length > 0
+
+  const toggleSession = (sid: string) =>
+    setSelectedSessions(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid])
+  const toggleRank = (key: string, n: number) => {
+    setRanking(prev => {
+      const current = prev[key]
+      if (current === String(n)) {
+        const nr: Record<string, string> = {}
+        for (const [tid, rank] of Object.entries(prev)) if (parseInt(rank) < n) nr[tid] = rank
+        return nr
+      }
+      const count = Object.values(prev).filter(Boolean).length
+      if (!current && n === count + 1) return { ...prev, [key]: String(n) }
+      return prev
+    })
+  }
+
+  const save = async () => {
+    setSaving(true); setErr('')
+    const wanted_ranking = rankedTeachers.map(t => t.key)
+    // 1) 先存志願（未送出者會自動建立互動報名列）
+    const fillRes = await fetch('/api/admin/interactive/fill', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registration_id: row.registration.id, wanted_sessions: selectedSessions, wanted_ranking }),
+    })
+    if (!fillRes.ok) { const d = await fillRes.json().catch(() => ({})); setErr(d.error || '志願儲存失敗'); setSaving(false); return }
+    // 2) 再存抽籤指定結果
+    const patch = {
+      registration_id: row.registration.id,
+      group_status: hasGroup ? groupStatus : 'pending',
+      small_status: hasSmall ? smallStatus : 'pending',
+      assigned_session: (hasGroup && (groupStatus === 'won' || groupStatus === 'waitlist')) ? (assignedSession || null) : null,
+      group_serial: (hasGroup && (groupStatus === 'won' || groupStatus === 'waitlist')) ? (groupSerial === '' ? null : Number(groupSerial)) : null,
+      assigned_group: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (assignedGroup || null) : null,
+      assigned_date: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (assignedDate || null) : null,
+      small_serial: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (smallSerial === '' ? null : Number(smallSerial)) : null,
+    }
+    const patchRes = await fetch('/api/admin/interactive', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+    })
+    if (!patchRes.ok) { const d = await patchRes.json().catch(() => ({})); setErr(d.error || '指定儲存失敗'); setSaving(false); return }
+    onSaved()
+  }
+
+  const statusOptions = (
+    <>
+      <option value="pending">未定</option>
+      <option value="won">中簽</option>
+      <option value="waitlist">候補</option>
+      <option value="lost">沒中簽</option>
+      <option value="abstain">棄權</option>
+    </>
+  )
 
   return (
     <div className="admin-modal-overlay" onClick={onClose}>
@@ -481,8 +544,10 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
         </h3>
 
         <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', marginTop: 6, marginBottom: 18 }}>
-          可先編場次與互動序號（狀態維持「未定」），全部分配妥當後再批次改成「中簽」並寄通知信。「沒中簽」會清空場次與序號。
+          上半部可直接勾選/修改學員的報名志願（未送出者也可代填）；下半部為抽籤指定結果。志願留空＝不報名該項。
         </p>
+
+        {err && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(192,57,43,0.08)', color: '#c0392b', fontSize: 13, marginBottom: 12 }}>{err}</div>}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
 
@@ -491,19 +556,23 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
             <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--green-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
               集體互動
             </h4>
-            {groupAbstained ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>學員已棄權，無法設定狀態。</p>
+            <label className="form-label">報名場次（可多選）</label>
+            <div style={{ display: 'grid', gap: 6, margin: '4px 0 12px' }}>
+              {sessions.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0 }}>尚無場次</p>}
+              {sessions.slice().sort((a, b) => a.sort_order - b.sort_order).map(s => (
+                <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={selectedSessions.includes(s.id)} onChange={() => toggleSession(s.id)} />
+                  <span>{s.date} {s.time}　{s.teacher}</span>
+                </label>
+              ))}
+            </div>
+            {!hasGroup ? (
+              <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0 }}>未選場次＝不報名集體互動。</p>
             ) : (
-              <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ display: 'grid', gap: 10, borderTop: '1px dashed var(--line)', paddingTop: 12 }}>
                 <div>
                   <label className="form-label">狀態</label>
-                  <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>
-                    <option value="pending">未定</option>
-                    <option value="won">中簽</option>
-                    <option value="waitlist">候補</option>
-                    <option value="lost">沒中簽</option>
-                    <option value="abstain">棄權</option>
-                  </select>
+                  <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>{statusOptions}</select>
                 </div>
                 {(groupStatus === 'won' || groupStatus === 'waitlist') && (
                   <>
@@ -511,7 +580,7 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
                       <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedSession} onChange={e => setAssignedSession(e.target.value)}>
                         <option value="">（未指定）</option>
-                        {(it.wanted_sessions || []).map(sid => {
+                        {selectedSessions.map(sid => {
                           const s = sessions.find(x => x.id === sid)
                           const label = s ? `${s.date} ${s.time}　${s.teacher}` : `（已移除：${sid}）`
                           return <option key={sid} value={sid}>{label}</option>
@@ -537,19 +606,36 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
             <h4 style={{ fontFamily: 'var(--font-noto-serif-tc), serif', fontSize: 14, fontWeight: 700, color: 'var(--gold-deep)', letterSpacing: '0.08em', marginBottom: 12 }}>
               分組互動
             </h4>
-            {smallAbstained ? (
-              <p style={{ fontSize: 13, color: 'var(--ink-mute)', margin: 0 }}>學員已棄權，無法設定狀態。</p>
+            <label className="form-label">意願排序（1 = 最希望）</label>
+            <div style={{ display: 'grid', gap: 6, margin: '4px 0 12px' }}>
+              {teachers.length === 0 && <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0 }}>尚無老師</p>}
+              {teachers.map(t => {
+                const selected = ranking[t.key] || ''
+                const nextRank = Object.values(ranking).filter(Boolean).length + 1
+                return (
+                  <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5 }}>
+                    <span style={{ flex: 1, fontWeight: 600 }}>{t.label}</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {Array.from({ length: teachers.length }, (_, i) => i + 1).map(n => {
+                        const active = selected === String(n)
+                        const disabled = selected ? !active : n !== nextRank
+                        return (
+                          <button key={n} type="button" onClick={() => toggleRank(t.key, n)} disabled={disabled}
+                            style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, background: active ? 'var(--green-deep)' : 'rgba(0,0,0,0.06)', color: active ? '#fff' : 'var(--ink-soft)', opacity: disabled ? 0.3 : 1 }}>{n}</button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {!hasSmall ? (
+              <p style={{ fontSize: 12.5, color: 'var(--ink-mute)', margin: 0 }}>未排序＝不報名分組互動。</p>
             ) : (
-              <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ display: 'grid', gap: 10, borderTop: '1px dashed var(--line)', paddingTop: 12 }}>
                 <div>
                   <label className="form-label">狀態</label>
-                  <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>
-                    <option value="pending">未定</option>
-                    <option value="won">中簽</option>
-                    <option value="waitlist">候補</option>
-                    <option value="lost">沒中簽</option>
-                    <option value="abstain">棄權</option>
-                  </select>
+                  <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>{statusOptions}</select>
                 </div>
                 {(smallStatus === 'won' || smallStatus === 'waitlist') && (
                   <>
@@ -557,10 +643,9 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
                       <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
                       <select className="form-select" value={assignedGroup} onChange={e => { setAssignedGroup(e.target.value); setAssignedDate('') }}>
                         <option value="">（未指定）</option>
-                        {(it.wanted_ranking || []).map((tid, i) => {
-                          const t = teachers.find(x => x.key === tid)
-                          return <option key={tid} value={tid}>第{i + 1}意願　{t?.label || tid} 組</option>
-                        })}
+                        {rankedTeachers.map((t, i) => (
+                          <option key={t.key} value={t.key}>第{i + 1}意願　{t.label} 組</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -590,18 +675,7 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSave }: { row: R
 
         <div style={{ marginTop: 22, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button onClick={onClose} className="admin-btn-sm">取消</button>
-          <button
-            onClick={() => onSave({
-              group_status: groupStatus,
-              small_status: smallStatus,
-              // 'pending'/'lost' 清空；'won'/'waitlist' 保留 admin 填的值
-              assigned_session: (groupStatus === 'won' || groupStatus === 'waitlist') ? (assignedSession || null) : null,
-              group_serial: (groupStatus === 'won' || groupStatus === 'waitlist') ? (groupSerial === '' ? null : Number(groupSerial)) : null,
-              assigned_group: (smallStatus === 'won' || smallStatus === 'waitlist') ? (assignedGroup || null) : null,
-              assigned_date: (smallStatus === 'won' || smallStatus === 'waitlist') ? (assignedDate || null) : null,
-              small_serial: (smallStatus === 'won' || smallStatus === 'waitlist') ? (smallSerial === '' ? null : Number(smallSerial)) : null,
-            })}
-            className="admin-btn-sm primary">儲存</button>
+          <button onClick={save} disabled={saving} className="admin-btn-sm primary">{saving ? '儲存中…' : '儲存'}</button>
         </div>
       </div>
     </div>
