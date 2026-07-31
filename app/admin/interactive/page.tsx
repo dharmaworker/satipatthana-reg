@@ -481,6 +481,9 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSaved }: { row: 
   const rankedTeachers = teachers.filter(t => ranking[t.key]).sort((a, b) => parseInt(ranking[a.key]) - parseInt(ranking[b.key]))
   const hasGroup = selectedSessions.length > 0
   const hasSmall = rankedTeachers.length > 0
+  // 指定老師/場次只在「中簽/候補」時顯示（指定＝宣告中簽，語意一致）
+  const showGroupAssign = hasGroup && (groupStatus === 'won' || groupStatus === 'waitlist')
+  const showSmallAssign = hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')
 
   const toggleSession = (sid: string) =>
     setSelectedSessions(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid])
@@ -512,11 +515,11 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSaved }: { row: 
       registration_id: row.registration.id,
       group_status: hasGroup ? groupStatus : 'pending',
       small_status: hasSmall ? smallStatus : 'pending',
-      assigned_session: (hasGroup && (groupStatus === 'won' || groupStatus === 'waitlist')) ? (assignedSession || null) : null,
-      group_serial: (hasGroup && (groupStatus === 'won' || groupStatus === 'waitlist')) ? (groupSerial === '' ? null : Number(groupSerial)) : null,
-      assigned_group: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (assignedGroup || null) : null,
-      assigned_date: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (assignedDate || null) : null,
-      small_serial: (hasSmall && (smallStatus === 'won' || smallStatus === 'waitlist')) ? (smallSerial === '' ? null : Number(smallSerial)) : null,
+      assigned_session: showGroupAssign ? (assignedSession || null) : null,
+      group_serial: showGroupAssign ? (groupSerial === '' ? null : Number(groupSerial)) : null,
+      assigned_group: showSmallAssign ? (assignedGroup || null) : null,
+      assigned_date: showSmallAssign ? (assignedDate || null) : null,
+      small_serial: showSmallAssign ? (smallSerial === '' ? null : Number(smallSerial)) : null,
     }
     const patchRes = await fetch('/api/admin/interactive', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
@@ -574,7 +577,7 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSaved }: { row: 
                   <label className="form-label">狀態</label>
                   <select className="form-select" value={groupStatus} onChange={e => setGroupStatus(e.target.value as any)}>{statusOptions}</select>
                 </div>
-                {(groupStatus === 'won' || groupStatus === 'waitlist') && (
+                {showGroupAssign && (
                   <>
                     <div>
                       <label className="form-label">指定場次{groupStatus === 'won' && <span className="required">*</span>}</label>
@@ -637,7 +640,7 @@ function EditModal({ row, sessions, slots, teachers, onClose, onSaved }: { row: 
                   <label className="form-label">狀態</label>
                   <select className="form-select" value={smallStatus} onChange={e => setSmallStatus(e.target.value as any)}>{statusOptions}</select>
                 </div>
-                {(smallStatus === 'won' || smallStatus === 'waitlist') && (
+                {showSmallAssign && (
                   <>
                     <div>
                       <label className="form-label">指定分組{smallStatus === 'won' && <span className="required">*</span>}</label>
