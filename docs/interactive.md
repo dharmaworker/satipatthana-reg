@@ -24,12 +24,25 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 
 ## 二、互動報名開關與截止時間
 
-- 存在 `site_config` 表，key 為 `interactive_config`，value 為 `{ open: boolean, deadline_ms?: number }`
+- 存在 `site_config` 表，key 為 `interactive_config`，value 為 `{ open, deadline_ms?, open_ms?, task_open_ms?, task_deadline_ms?, group_allow_optout?, small_required? }`（皆存於同一 JSON，加欄位不需 migration）
 - **開放時**：學員 Dashboard 顯示「互動報名」task card，可進入填寫
 - **關閉時**：task card 消失，學員無法送出，但已送出的資料不受影響
 - **截止時間（`deadline_ms`）**：UTC epoch ms；未設定則 fallback 至 `INTERACTIVE_DEADLINE_MS`（`lib/interactive.ts` 硬寫常數）
 - Admin 後台：`/admin/interactive` → 上方卡片「開放互動報名 / 關閉互動報名」按鈕；同一卡片可設定截止時間（台北時間 datetime-local 輸入）
 - API：`GET/PUT /api/admin/interactive-config`
+
+### 報名規則開關（2026 新增）
+
+於 `/admin/interactive` →「場次 / 分組設定」面板最上方「報名規則」兩個勾選項，控制學員端行為，存於同一份 `interactive_config`：
+
+| 設定 | 預設 | 勾選/取消的效果 |
+|------|------|------|
+| `group_allow_optout`（集體互動：允許不報名） | `true`（允許） | **取消** → 學員端隱藏「不報名集體互動」選項，且**必須至少選一個集體場次** |
+| `small_required`（分組互動：設為必選） | `false`（可棄權） | **勾選** → 學員**必須至少為一位老師排序**，不能全部留空 |
+
+- 學員端 UI 與說明文字會依此**連動**（Step 2/3 標題、提示、側欄說明、送出驗證）
+- 會員端與伺服端 `POST /api/interactive` **雙重驗證**
+- 預設值＝原行為（集體可不報名、分組可棄權），未勾選前一切照舊
 
 ---
 
@@ -46,8 +59,8 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 | Step | 內容 |
 |------|------|
 | 1 | 規則說明（閱讀後繼續） |
-| 2 | 集體互動：勾選想參加的場次（可多選），或勾選「不報名」 |
-| 3 | 分組互動：將老師依意願排序（不填代表不報名） |
+| 2 | 集體互動：勾選想參加的場次（可多選）。`group_allow_optout=true` 時可勾「不報名」；`false` 時隱藏該選項且必選 |
+| 3 | 分組互動：將老師依意願排序。`small_required=false` 時不填＝不報名；`true` 時必選至少一位 |
 
 ### 集體互動場次（動態，由 DB 讀取）
 
@@ -145,7 +158,10 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 ### 操作說明
 
 1. **直接下拉修改狀態**：表格每行的「集體狀態」「分組狀態」欄是 `<select>`，直接切換即時存入 DB
-2. **編輯指定**（金色按鈕）：開 Modal，可設定狀態 + 指定場次／組別／日期／序號；「指定場次」下拉依學員 `wanted_sessions` 志願順序排列
+2. **編輯指定**（金色按鈕，**永遠可點**，未送出者也可開）：開 Modal，分上下兩層 —
+   - **上層＝報名志願（可代填/修改）**：集體場次用勾選、分組老師用數字排序。**未送出的學員也能由後台代填**（適用「原本希望送單但沒送」的人），存檔後自動建立互動報名列（狀態 pending），即可進抽簽。
+   - **下層＝抽籤指定結果**：狀態 + 指定場次／組別／日期／序號。**指定場次／指定分組（選老師）只有在狀態設為「中簽/候補」時才顯示**（語意：指定＝宣告中簽），且下拉**連動**上層剛填的志願（只列勾選的場次／排序的老師）。
+   - 儲存流程：先 `POST /api/admin/interactive/fill`（建立/更新志願）→ 再 `PATCH /api/admin/interactive`（存指定結果）。已送出者代填只更新志願、**保留既有抽籤狀態/指定**。
 3. **容量統計**：可展開，顯示各集體場次與各老師已分配人數 vs 名額上限，超額會標紅
 4. **批次寄報名互動通知**：勾選學員後點按，寄 `sendInteractiveInviteEmail`（邀請信）
 5. **批次寄中簽通知信**：勾選學員後點按，寄 `sendInteractiveNotificationEmail`（僅中簽者）
@@ -157,7 +173,7 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 
 ## 六、場次設定面板（Admin 後台）
 
-在 `/admin/interactive` 頁面的「場次設定」區塊，Admin 可動態管理集體場次與分組老師。
+在 `/admin/interactive` 頁面的「場次 / 分組設定」區塊，Admin 可動態管理集體場次與分組老師。面板最上方為「報名規則」兩個勾選項（`group_allow_optout` / `small_required`，見「二、報名規則開關」）。
 
 ### 集體場次管理
 
@@ -281,7 +297,7 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 | 檔案 | 用途 |
 |------|------|
 | `lib/interactive.ts` | 共用常數（狀態常數、截止日 fallback） |
-| `lib/interactive-config.ts` | 讀寫開放狀態與截止時間（`open` + `deadline_ms`） |
+| `lib/interactive-config.ts` | 讀寫開放狀態、截止時間與報名規則（`open`、`deadline_ms`、`group_allow_optout`、`small_required`…） |
 | `lib/interactive-db.ts` | DB 查詢函式（fetch sessions/slots，active or all） |
 | `lib/interactive-invite-email.ts` | 邀請信 + 提交確認信 |
 | `lib/interactive-notify-email.ts` | 結果通知信（中簽 / 候補） |
@@ -291,7 +307,8 @@ Admin 批次寄結果通知信（中簽 / 候補 分別寄）
 | `app/api/interactive/route.ts` | 學員讀取 / 送出互動報名 |
 | `app/api/interactive/config/route.ts` | 公開端點：回傳 active 場次、老師、截止時間 |
 | `app/api/interactive/task/route.ts` | 學員讀取 / 送出互動作業 |
-| `app/api/admin/interactive/route.ts` | Admin 讀取清單 / 單筆更新 |
+| `app/api/admin/interactive/route.ts` | Admin 讀取清單 / 單筆更新（指定結果） |
+| `app/api/admin/interactive/fill/route.ts` | Admin 代填學員志願（`wanted_sessions` / `wanted_ranking` upsert）（2026 新增） |
 | `app/api/admin/interactive/batch-assign/route.ts` | 自動抽簽結果批次寫入 |
 | `app/api/admin/interactive/notify/route.ts` | 批次寄中簽結果通知信 |
 | `app/api/admin/interactive/notify-waitlist/route.ts` | 批次寄候補通知信 |
