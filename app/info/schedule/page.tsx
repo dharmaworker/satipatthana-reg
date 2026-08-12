@@ -71,7 +71,7 @@ function ZoomCard({ data, id, code }: { data: Timetable; id: string; code: strin
           <strong style={{ color: '#34291f' }}>{data.zoom_password}</strong>
         </>}
         <span style={{ color: '#8d7a66', whiteSpace: 'nowrap' }}>登錄名</span>
-        <span style={{ color: '#34291f' }}>{data.zoom_login_name || '學號 + 英文姓名／姓名拼音'}</span>
+        <span style={{ color: '#34291f' }}>{data.zoom_login_name || '學號 + 中文姓名'}</span>
         {data.zoom_link && <>
           <span style={{ color: '#8d7a66', whiteSpace: 'nowrap' }}>Zoom 連結</span>
           <a href={data.zoom_link} target="_blank" rel="noopener noreferrer"

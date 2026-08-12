@@ -149,7 +149,7 @@ export default function TimetableAdminPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 13, color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>登錄名</span>
             <input className="form-input" style={{ width: 220, padding: '5px 10px', fontSize: 13 }}
-              placeholder="學號 + 英文姓名／姓名拼音（選填）"
+              placeholder="學號 + 中文姓名（選填）"
               value={data?.zoom_login_name || ''}
               disabled={loading}
               onChange={e => data && setData({ ...data, zoom_login_name: e.target.value })} />
