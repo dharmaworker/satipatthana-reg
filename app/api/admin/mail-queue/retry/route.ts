@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchRowsByIds } from '@/lib/supabase'
 
 const VALID_PROVIDERS = ['alicloud', 'resend', 'gmail'] as const
 
@@ -17,13 +17,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `provider must be one of: ${VALID_PROVIDERS.join(', ')}` }, { status: 400 })
   }
 
-  const { data: rows, error: fetchErr } = await supabaseAdmin
-    .from('email_queue')
-    .select('id, to_email, subject, html, bcc, mail_type, batch_id, parent_id, attempt_count')
-    .in('id', ids)
-
-  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
-  if (!rows?.length) return NextResponse.json({ error: 'No matching rows' }, { status: 404 })
+  // 依 id 分批查詢：清單一次最多 500 筆，全串進查詢字串會逼近 URL／header 長度上限
+  let rows: any[]
+  try {
+    rows = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
+      .from('email_queue')
+      .select('id, to_email, subject, html, bcc, mail_type, batch_id, parent_id, attempt_count')
+      .in('id', chunk))
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+  if (!rows.length) return NextResponse.json({ error: 'No matching rows' }, { status: 404 })
 
   const inserts = rows.map(r => ({
     to_email: r.to_email,

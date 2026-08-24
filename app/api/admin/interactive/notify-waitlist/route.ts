@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchRowsByIds } from '@/lib/supabase'
 import { sendInteractiveNotificationEmail } from '@/lib/interactive-notify-email'
 
 function checkAuth(request: NextRequest) {
@@ -13,19 +13,20 @@ export async function POST(request: NextRequest) {
   const ids: string[] = Array.isArray(body.ids) ? body.ids : []
   if (ids.length === 0) return NextResponse.json({ error: '未選擇對象' }, { status: 400 })
 
-  const { data: ints } = await supabaseAdmin
+  const ints = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
     .from('interactive_registrations')
     .select('*')
-    .in('registration_id', ids)
-  const intMap = new Map((ints || []).map(i => [i.registration_id, i]))
+    .in('registration_id', chunk))
+  const intMap = new Map(ints.map(i => [i.registration_id, i]))
 
-  const { data: regs } = await supabaseAdmin
+  // 依 id 分批查詢：uuid 全塞進查詢字串會超過長度上限，單次查詢也只回 1000 筆
+  const regs = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
     .from('registrations')
     .select('id, email, chinese_name, random_code')
-    .in('id', ids)
+    .in('id', chunk))
 
   let ok = 0, failed = 0, skipped = 0
-  for (const r of regs || []) {
+  for (const r of regs) {
     const i = intMap.get(r.id)
     if (!i) { failed++; continue }
     // 已中簽 → 跳過（應用中簽信按鈕）

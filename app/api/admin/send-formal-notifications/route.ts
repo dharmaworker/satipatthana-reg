@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchRowsByIds } from '@/lib/supabase'
 import { buildFormalNotificationPayload } from '@/lib/formal-notification-email'
 import { sendMailBatch } from '@/lib/mailer'
 
@@ -14,26 +14,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '未選取任何筆' }, { status: 400 })
   }
 
-  const { data: regs, error } = await supabaseAdmin
-    .from('registrations')
-    .select('*')
-    .in('id', ids)
-    .eq('status', 'approved')
+  // 依 id 分批查詢：uuid 全塞進查詢字串會超過長度上限，單次查詢也只回 1000 筆
+  let regs: any[]
+  let lodgings: any[]
+  let inPersonRegs: any[]
+  try {
+    regs = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
+      .from('registrations')
+      .select('*')
+      .in('id', chunk)
+      .eq('status', 'approved'))
 
-  if (error || !regs) {
+    inPersonRegs = regs.filter(r => r.retreat_format !== 'online')
+
+    // 每位學員最多一筆食宿登記，故以 id 分批查詢即可
+    lodgings = await fetchRowsByIds<any>(inPersonRegs.map(r => r.id), chunk => supabaseAdmin
+      .from('lodging_registrations')
+      .select('*')
+      .in('registration_id', chunk))
+  } catch {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
   }
 
-  const inPersonRegs = regs.filter(r => r.retreat_format !== 'online')
-
-  const regIds = inPersonRegs.map(r => r.id)
-  const { data: lodgings } = await supabaseAdmin
-    .from('lodging_registrations')
-    .select('*')
-    .in('registration_id', regIds)
-
   const lodgingByReg = new Map<string, any>()
-  for (const l of lodgings || []) lodgingByReg.set(l.registration_id, l)
+  for (const l of lodgings) lodgingByReg.set(l.registration_id, l)
 
   const payloads = inPersonRegs.map(reg => buildFormalNotificationPayload({
     chinese_name: reg.chinese_name,

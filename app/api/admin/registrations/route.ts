@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 import { sendLodgingArchiveEmail } from '@/lib/archive-email'
 import { nextAvailableMemberId, nextAvailableOnlineStudentId } from '@/lib/member-id'
 
@@ -21,28 +21,34 @@ export async function GET(request: NextRequest) {
   const format = searchParams.get('format')
   const search = searchParams.get('search')
 
-  let query = supabaseAdmin
-    .from('registrations')
-    .select('*')
-    .order('created_at', { ascending: false })
+  // 分頁全撈：單次查詢上限 1000 筆，報名數破千後名單會靜默漏人
+  let data: any[]
+  try {
+    data = await fetchAllRows<any>((from, to) => {
+      let query = supabaseAdmin
+        .from('registrations')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to)
 
-  if (status && status !== 'all') {
-    query = query.eq('status', status)
-  }
+      if (status && status !== 'all') {
+        query = query.eq('status', status)
+      }
 
-  if (format && format !== 'all') {
-    query = query.eq('retreat_format', format)
-  }
+      if (format && format !== 'all') {
+        query = query.eq('retreat_format', format)
+      }
 
-  if (search) {
-    query = query.or(
-      `chinese_name.ilike.%${search}%,email.ilike.%${search}%,random_code.ilike.%${search}%`
-    )
-  }
+      if (search) {
+        query = query.or(
+          `chinese_name.ilike.%${search}%,email.ilike.%${search}%,random_code.ilike.%${search}%`
+        )
+      }
 
-  const { data, error } = await query
-
-  if (error) {
+      return query
+    })
+  } catch {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
   }
 

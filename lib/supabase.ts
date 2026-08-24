@@ -38,3 +38,22 @@ export async function fetchAllRows<T>(
     if (batch.length < PAGE_SIZE) return rows
   }
 }
+
+// .in('id', ids) 會把所有 uuid 串進查詢字串：數量一多會超過 URL／header 長度上限，
+// 單次查詢也一樣受 1000 筆限制。改為分批查詢後合併。
+// 僅適用於「以唯一鍵查詢」（每個 id 最多一列）；若是一對多的外鍵欄位，
+// 單批就可能超過 1000 筆，請改用 fetchAllRows 全撈後於記憶體過濾。
+const ID_CHUNK_SIZE = 200
+
+export async function fetchRowsByIds<T>(
+  ids: string[],
+  page: (chunk: string[]) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const rows: T[] = []
+  for (let i = 0; i < ids.length; i += ID_CHUNK_SIZE) {
+    const { data, error } = await page(ids.slice(i, i + ID_CHUNK_SIZE))
+    if (error) throw new Error(error.message)
+    rows.push(...(data || []))
+  }
+  return rows
+}

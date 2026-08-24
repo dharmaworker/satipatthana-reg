@@ -407,21 +407,29 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   // 排除後台預覽測試學員
   const previewId = await getPreviewRegistrationId()
 
-  let query = supabaseAdmin.from('registrations').select('*').order('created_at', { ascending: true })
-  if (previewId) query = query.neq('id', previewId)
-  if (cutoff) query = query.lte('created_at', cutoff.toISOString())
-  const { data, error } = await query
-  if (error) throw new Error(`DB query failed: ${error.message}`)
-  const all = data || []
+  // 以下皆分頁全撈：單次查詢上限 1000 筆，破千後匯出會靜默漏人
+  const all = await fetchAllRows<any>((from, to) => {
+    let query = supabaseAdmin.from('registrations').select('*')
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+    if (previewId) query = query.neq('id', previewId)
+    if (cutoff) query = query.lte('created_at', cutoff.toISOString())
+    return query
+  })
 
   // Lodging 另外撈
-  let lodgingQuery = supabaseAdmin
-    .from('lodging_registrations')
-    .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at, line_id, wechat_id, line_qr_url, wechat_qr_url)')
-    .order('updated_at', { ascending: true })
-  if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
-  if (previewId) lodgingQuery = lodgingQuery.neq('registration_id', previewId)
-  const { data: lodgingData } = await lodgingQuery
+  const lodgingData = await fetchAllRows<any>((from, to) => {
+    let lodgingQuery = supabaseAdmin
+      .from('lodging_registrations')
+      .select('*, registration:registrations (chinese_name, member_id, random_code, residence, payment_plan, payment_status, payment_note, payment_confirmed_at, line_id, wechat_id, line_qr_url, wechat_qr_url)')
+      .order('updated_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+    if (cutoff) lodgingQuery = lodgingQuery.lte('updated_at', cutoff.toISOString())
+    if (previewId) lodgingQuery = lodgingQuery.neq('registration_id', previewId)
+    return lodgingQuery
+  })
 
   // 互動場次、老師 label（從 DB 取，不用 hardcode）
   const [allSessions, allSlots] = await Promise.all([fetchAllSessions(), fetchAllSmallSlots()])
@@ -430,25 +438,33 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
   const teacherLabel = buildTeacherLabelMap(allTeachers)
 
   // 互動報名 + 互動作業
-  let interactiveQuery = supabaseAdmin
-    .from('interactive_registrations')
-    .select('*, registration:registrations (chinese_name, member_id, student_id, random_code)')
-    .order('updated_at', { ascending: true })
-  if (cutoff) interactiveQuery = interactiveQuery.lte('updated_at', cutoff.toISOString())
-  if (previewId) interactiveQuery = interactiveQuery.neq('registration_id', previewId)
-  const { data: interactiveData } = await interactiveQuery
+  const interactiveData = await fetchAllRows<any>((from, to) => {
+    let interactiveQuery = supabaseAdmin
+      .from('interactive_registrations')
+      .select('*, registration:registrations (chinese_name, member_id, student_id, random_code)')
+      .order('updated_at', { ascending: true })
+      .order('registration_id', { ascending: true })
+      .range(from, to)
+    if (cutoff) interactiveQuery = interactiveQuery.lte('updated_at', cutoff.toISOString())
+    if (previewId) interactiveQuery = interactiveQuery.neq('registration_id', previewId)
+    return interactiveQuery
+  })
 
-  let taskQuery = supabaseAdmin
-    .from('interactive_tasks')
-    .select('*, registration:registrations (chinese_name, member_id, student_id, email)')
-    .order('updated_at', { ascending: true })
-  if (cutoff) taskQuery = taskQuery.lte('updated_at', cutoff.toISOString())
-  if (previewId) taskQuery = taskQuery.neq('registration_id', previewId)
-  const { data: taskData } = await taskQuery
+  const taskData = await fetchAllRows<any>((from, to) => {
+    let taskQuery = supabaseAdmin
+      .from('interactive_tasks')
+      .select('*, registration:registrations (chinese_name, member_id, student_id, email)')
+      .order('updated_at', { ascending: true })
+      .order('registration_id', { ascending: true })
+      .range(from, to)
+    if (cutoff) taskQuery = taskQuery.lte('updated_at', cutoff.toISOString())
+    if (previewId) taskQuery = taskQuery.neq('registration_id', previewId)
+    return taskQuery
+  })
 
   // Task 需要 assigned_* 從 interactive_registrations 帶入；建 map
-  const intMap = new Map((interactiveData || []).map((i: any) => [i.registration_id, i]))
-  const tasksWithInteractive = (taskData || []).map((t: any) => ({
+  const intMap = new Map(interactiveData.map((i: any) => [i.registration_id, i]))
+  const tasksWithInteractive = taskData.map((t: any) => ({
     ...t,
     interactive: intMap.get(t.registration_id) || null,
   }))

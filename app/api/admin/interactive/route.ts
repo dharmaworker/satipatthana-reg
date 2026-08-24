@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots } from '@/lib/interactive-db'
 import type { StatusValue } from '@/lib/interactive'
 
@@ -12,21 +12,34 @@ const validStatus: StatusValue[] = ['pending', 'won', 'waitlist', 'lost', 'absta
 export async function GET(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
 
-  const { data: regs, error: e1 } = await supabaseAdmin
-    .from('registrations')
-    .select('id, chinese_name, member_id, student_id, random_code, email, residence, status')
-    .eq('status', 'approved')
-    .neq('retreat_format', 'online')
-    .order('member_id', { ascending: true, nullsFirst: false })
-  if (e1) return NextResponse.json({ error: e1.message }, { status: 500 })
+  let regs: any[]
+  try {
+    regs = await fetchAllRows<any>((from, to) => supabaseAdmin
+      .from('registrations')
+      .select('id, chinese_name, member_id, student_id, random_code, email, residence, status')
+      .eq('status', 'approved')
+      .neq('retreat_format', 'online')
+      .order('member_id', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true })
+      .range(from, to))
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 
-  const { data: ints, error: e2 } = await supabaseAdmin
-    .from('interactive_registrations')
-    .select('*')
-  if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
+  // 分頁全撈：單次查詢上限 1000 筆
+  let ints: any[]
+  try {
+    ints = await fetchAllRows<any>((from, to) => supabaseAdmin
+      .from('interactive_registrations')
+      .select('*')
+      .order('registration_id', { ascending: true })
+      .range(from, to))
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 
-  const intMap = new Map((ints || []).map(i => [i.registration_id, i]))
-  const data = (regs || []).map(r => ({
+  const intMap = new Map(ints.map(i => [i.registration_id, i]))
+  const data = regs.map(r => ({
     registration: r,
     interactive: intMap.get(r.id) || null,
   }))

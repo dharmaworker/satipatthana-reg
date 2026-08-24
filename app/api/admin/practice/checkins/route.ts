@@ -8,25 +8,29 @@ export async function GET(request: NextRequest) {
 
   const format = new URL(request.url).searchParams.get('format') || 'in_person'
 
-  const [scheduleRes, regsRes] = await Promise.all([
+  const [scheduleRes, regs] = await Promise.all([
     supabaseAdmin
       .from('practice_schedule')
       .select('id, sort_order, session_date, time_label, title, is_live')
       .eq('enabled', true)
       .order('sort_order'),
-    supabaseAdmin
-      .from('registrations')
-      .select('id, chinese_name, member_id, student_id, retreat_format')
-      .eq('status', 'approved')
-      .eq('retreat_format', format)
-      .order('member_id', { ascending: true, nullsFirst: false }),
+    fetchAllRows<{ id: string; chinese_name: string; member_id: string | null; student_id: string | null; retreat_format: string }>(
+      (from, to) => supabaseAdmin
+        .from('registrations')
+        .select('id, chinese_name, member_id, student_id, retreat_format')
+        .eq('status', 'approved')
+        .eq('retreat_format', format)
+        .order('member_id', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
   ])
 
-  if (!regsRes.data || !scheduleRes.data) {
+  if (!scheduleRes.data) {
     return NextResponse.json({ items: [], rows: [] })
   }
 
-  const regIdSet = new Set(regsRes.data.map((r: { id: string }) => r.id))
+  const regIdSet = new Set(regs.map(r => r.id))
 
   // 打卡記錄已破萬筆：分頁全撈再於記憶體過濾。
   // 不用 .in(regIds)——一來單次查詢仍受 1000 筆上限截斷，二來數百組 uuid 會撐爆查詢字串。
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
     checkinMap[c.registration_id].add(c.schedule_item_id)
   }
 
-  const rows = regsRes.data.map((r: { id: string; chinese_name: string; member_id: string | null; student_id: string | null; retreat_format: string }) => ({
+  const rows = regs.map(r => ({
     registration_id: r.id,
     chinese_name: r.chinese_name,
     member_id: r.member_id,

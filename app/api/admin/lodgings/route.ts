@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows, fetchRowsByIds } from '@/lib/supabase'
 import { derivePaymentPlan } from '@/lib/lodging-plan'
 
 function checkAuth(request: NextRequest) {
@@ -16,42 +16,50 @@ export async function GET(request: NextRequest) {
   const format = request.nextUrl.searchParams.get('format')
 
   // 取所有已錄取學員（含尚未填食宿者），LEFT JOIN 食宿登記
-  let query = supabaseAdmin
-    .from('registrations')
-    .select(`
-      id, chinese_name, id_number, passport_name, member_id, student_id, email, phone, random_code,
-      residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
-      retreat_format, created_at, approval_email_sent_at, registration_phase,
-      age, identity, passport_country, line_id, wechat_id, line_qr_url, wechat_qr_url,
-      attended_formal, watched_recordings, zoom_guidance, watched_30_talks, keep_precepts,
-      practice_years, practice_frequency, mental_health_note, attended_courses
-    `)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
+  // 分頁全撈：單次查詢上限 1000 筆，報名數破千後名單會靜默漏人
+  let regs: any[]
+  let lodgings: any[]
+  try {
+    regs = await fetchAllRows<any>((from, to) => {
+      let query = supabaseAdmin
+        .from('registrations')
+        .select(`
+          id, chinese_name, id_number, passport_name, member_id, student_id, email, phone, random_code,
+          residence, gender, dharma_name, payment_plan, payment_status, payment_note, payment_confirmed_at, status,
+          retreat_format, created_at, approval_email_sent_at, registration_phase,
+          age, identity, passport_country, line_id, wechat_id, line_qr_url, wechat_qr_url,
+          attended_formal, watched_recordings, zoom_guidance, watched_30_talks, keep_precepts,
+          practice_years, practice_frequency, mental_health_note, attended_courses
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to)
 
-  if (format === 'in_person' || format === 'online') {
-    query = query.eq('retreat_format', format)
-  }
+      if (format === 'in_person' || format === 'online') {
+        query = query.eq('retreat_format', format)
+      }
 
-  const { data: regs, error: regsErr } = await query
+      return query
+    })
 
-  if (regsErr) {
-    return NextResponse.json({ error: regsErr.message }, { status: 500 })
-  }
-
-  const regIds = (regs || []).map(r => r.id)
-  const { data: lodgings } = regIds.length > 0
-    ? await supabaseAdmin
+    // 每位學員最多一筆食宿登記，故以 id 分批查詢即可
+    lodgings = await fetchRowsByIds<any>(
+      regs.map(r => r.id),
+      chunk => supabaseAdmin
         .from('lodging_registrations')
         .select('*')
-        .in('registration_id', regIds)
-    : { data: [] as any[] }
+        .in('registration_id', chunk),
+    )
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 
   const lodgingByReg = new Map<string, any>()
-  for (const l of lodgings || []) lodgingByReg.set(l.registration_id, l)
+  for (const l of lodgings) lodgingByReg.set(l.registration_id, l)
 
   // 包裝成 rows：每筆都有 registration 子物件，lodging 欄位攤平在 row（無 lodging 時為 null）
-  const data = (regs || []).map(reg => {
+  const data = regs.map(reg => {
     const l = lodgingByReg.get(reg.id) || {}
     return {
       id: l.id || null,

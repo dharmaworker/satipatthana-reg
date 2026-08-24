@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 import { createDirectMailClient, matchRecords, MailRecord } from '@/lib/alibaba-dm'
 
 // 郵件佇列對帳 API
@@ -157,15 +157,24 @@ export async function POST(request: NextRequest) {
   }
 
   // 一次查詢兩個供應商的暫態列，再按 provider 分流
-  const { data: allRows, error } = await supabaseAdmin
-    .from('email_queue')
-    .select('id, provider, provider_message_id, to_email, sent_at, subject, status')
-    .in('provider', ['resend', 'alicloud'])
-    .in('status', TRANSIENT_STATUSES)
-    .order('sent_at', { ascending: false })
+  // email_queue 已數千筆：分頁全撈，否則對帳只會處理到前 1000 筆
+  let allRows: QueueRow[]
+  try {
+    allRows = await fetchAllRows<QueueRow>(
+      (from, to) => supabaseAdmin
+        .from('email_queue')
+        .select('id, provider, provider_message_id, to_email, sent_at, subject, status')
+        .in('provider', ['resend', 'alicloud'])
+        .in('status', TRANSIENT_STATUSES)
+        .order('sent_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to),
+    )
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!allRows?.length) return NextResponse.json({
+  if (!allRows.length) return NextResponse.json({
     resend:   { checked: 0, updated: 0, updates: [] },
     alicloud: { total: 0, updated: 0, unmatched: 0 },
   })

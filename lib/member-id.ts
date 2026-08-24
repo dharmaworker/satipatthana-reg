@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase'
+import { supabaseAdmin, fetchAllRows } from './supabase'
 
 // 實體報名序號（member_id）：T-001 ... 報名時自動編
 const SERIAL_REGEX = /^T-(\d+)$/
@@ -32,12 +32,17 @@ export function formatOnlineStudentId(n: number): string {
 export async function nextAvailableMemberId(isOnline = false): Promise<string> {
   const regex = isOnline ? ONLINE_SERIAL_REGEX : SERIAL_REGEX
   const format = isOnline ? formatOnlineMemberId : formatMemberId
-  const { data } = await supabaseAdmin
-    .from('registrations')
-    .select('member_id')
-    .not('member_id', 'is', null)
+  // 必須分頁全撈：單次查詢上限 1000 筆，掃描被截斷會算出偏小的最大流水號 → 發出重複序號
+  const data = await fetchAllRows<{ member_id: string | null }>(
+    (from, to) => supabaseAdmin
+      .from('registrations')
+      .select('member_id')
+      .not('member_id', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, to),
+  )
   let maxN = 0
-  for (const r of data || []) {
+  for (const r of data) {
     const m = (r.member_id || '').match(regex)
     if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
   }
@@ -45,12 +50,17 @@ export async function nextAvailableMemberId(isOnline = false): Promise<string> {
 }
 
 export async function nextAvailableStudentId(): Promise<string> {
-  const { data } = await supabaseAdmin
-    .from('registrations')
-    .select('student_id')
-    .not('student_id', 'is', null)
+  // 同上：掃描被截斷會發出重複學號
+  const data = await fetchAllRows<{ student_id: string | null }>(
+    (from, to) => supabaseAdmin
+      .from('registrations')
+      .select('student_id')
+      .not('student_id', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, to),
+  )
   let maxN = 0
-  for (const r of data || []) {
+  for (const r of data) {
     const m = (r.student_id || '').match(STUDENT_REGEX)
     if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
   }
@@ -58,12 +68,17 @@ export async function nextAvailableStudentId(): Promise<string> {
 }
 
 export async function nextAvailableOnlineStudentId(): Promise<string> {
-  const { data } = await supabaseAdmin
-    .from('registrations')
-    .select('student_id')
-    .not('student_id', 'is', null)
+  // 同上：掃描被截斷會發出重複學號
+  const data = await fetchAllRows<{ student_id: string | null }>(
+    (from, to) => supabaseAdmin
+      .from('registrations')
+      .select('student_id')
+      .not('student_id', 'is', null)
+      .order('id', { ascending: true })
+      .range(from, to),
+  )
   let maxN = 0
-  for (const r of data || []) {
+  for (const r of data) {
     const m = (r.student_id || '').match(ONLINE_STUDENT_REGEX)
     if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
   }

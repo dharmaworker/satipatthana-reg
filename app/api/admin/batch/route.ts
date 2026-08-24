@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchRowsByIds } from '@/lib/supabase'
 import { nextAvailableMemberId, formatMemberId, formatOnlineMemberId, nextAvailableOnlineStudentId, formatOnlineStudentId } from '@/lib/member-id'
 
 type Action = 'approve' | 'reject' | 'delete'
@@ -28,15 +28,16 @@ export async function POST(request: NextRequest) {
 
   if (action === 'delete') {
     // 先撈 QR URL + 食宿上傳檔 URL，清 Storage
-    const { data: regs } = await supabaseAdmin
+    const regs = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
       .from('registrations')
       .select('id, line_qr_url, wechat_qr_url')
-      .in('id', ids)
+      .in('id', chunk))
 
-    const { data: lodgings } = await supabaseAdmin
+    // 依 id 分批查詢：uuid 全塞進查詢字串會超過長度上限，單次查詢也只回 1000 筆
+    const lodgings = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
       .from('lodging_registrations')
       .select('id_front_url, id_back_url, passport_url, arc_url, photo_url, arrival_ticket_url, departure_ticket_url, test_0817_url, test_0819_url')
-      .in('registration_id', ids)
+      .in('registration_id', chunk))
 
     const { error: delErr } = await supabaseAdmin
       .from('registrations')
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const lodgingPaths = (lodgings || []).flatMap(l =>
+      const lodgingPaths = lodgings.flatMap(l =>
         [l.id_front_url, l.id_back_url, l.passport_url, l.arc_url, l.photo_url,
          l.arrival_ticket_url, l.departure_ticket_url, l.test_0817_url, l.test_0819_url]
           .map(u => extractPath(u, '/lodging-docs/')).filter(Boolean)
@@ -78,15 +79,15 @@ export async function POST(request: NextRequest) {
   const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
   // 先撈目前狀態＋member_id＋retreat_format
-  const { data: currentRegs } = await supabaseAdmin
+  const currentRegs = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
     .from('registrations')
     .select('id, status, member_id, student_id, retreat_format')
-    .in('id', ids)
+    .in('id', chunk))
 
   let assignedCount = 0
   if (action === 'approve') {
     // 批次錄取：對尚未編號者依序編（線上 L-XXX，實體 T-XXX）
-    const needAssignInPerson = (currentRegs || []).filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format !== 'online')
+    const needAssignInPerson = currentRegs.filter(r => r.status !== 'approved' && !r.member_id && r.retreat_format !== 'online')
 
     if (needAssignInPerson.length > 0) {
       const start = await nextAvailableMemberId(false)
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 線上：所有尚未 approved 的都要處理（有 member_id 但沒 student_id 的也要補）
-    const onlineToApprove = (currentRegs || []).filter(r =>
+    const onlineToApprove = currentRegs.filter(r =>
       r.status !== 'approved' && r.retreat_format === 'online'
     )
     if (onlineToApprove.length > 0) {
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 剩下：實體且已 approved 或已有 member_id 的，只改狀態
-    const remaining = (currentRegs || [])
+    const remaining = currentRegs
       .filter(r => r.retreat_format !== 'online' && !(r.status !== 'approved' && !r.member_id))
       .map(r => r.id)
     if (remaining.length > 0) {
@@ -140,14 +141,14 @@ export async function POST(request: NextRequest) {
     }
   } else {
     // 批次拒絕：若原本是 approved → 註銷 member_id
-    const wasApproved = (currentRegs || []).filter(r => r.status === 'approved').map(r => r.id)
+    const wasApproved = currentRegs.filter(r => r.status === 'approved').map(r => r.id)
     if (wasApproved.length > 0) {
       await supabaseAdmin
         .from('registrations')
         .update({ status: newStatus, member_id: null })
         .in('id', wasApproved)
     }
-    const others = (currentRegs || []).filter(r => r.status !== 'approved').map(r => r.id)
+    const others = currentRegs.filter(r => r.status !== 'approved').map(r => r.id)
     if (others.length > 0) {
       await supabaseAdmin
         .from('registrations')

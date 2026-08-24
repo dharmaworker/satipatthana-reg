@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchRowsByIds } from '@/lib/supabase'
 import { sendGroupJoinEmail } from '@/lib/group-join-email'
 
 export async function POST(request: NextRequest) {
@@ -10,13 +10,15 @@ export async function POST(request: NextRequest) {
 
   const { ids } = await request.json()
 
-  const { data: registrations, error } = await supabaseAdmin
-    .from('registrations')
-    .select('id, email, chinese_name, member_id, line_qr_url, wechat_qr_url')
-    .in('id', ids)
-    .eq('status', 'approved')
-
-  if (error || !registrations) {
+  // 依 id 分批查詢：uuid 全塞進查詢字串會超過長度上限，單次查詢也只回 1000 筆
+  let registrations: any[]
+  try {
+    registrations = await fetchRowsByIds<any>(ids, chunk => supabaseAdmin
+      .from('registrations')
+      .select('id, email, chinese_name, member_id, line_qr_url, wechat_qr_url')
+      .in('id', chunk)
+      .eq('status', 'approved'))
+  } catch {
     return NextResponse.json({ error: '查詢失敗' }, { status: 500 })
   }
 

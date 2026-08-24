@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 import { getPreviewRegistrationId } from '@/lib/preview-test-student'
 
 export async function GET(request: NextRequest) {
@@ -9,14 +9,20 @@ export async function GET(request: NextRequest) {
   }
 
   const previewId = await getPreviewRegistrationId()
-  let q = supabaseAdmin
-    .from('registrations')
-    .select('*')
-    .order('created_at', { ascending: true })
-  if (previewId) q = q.neq('id', previewId)
-  const { data, error } = await q
-
-  if (error) {
+  // 分頁全撈：單次查詢上限 1000 筆，報名數破千後匯出會靜默漏人
+  let data: any[]
+  try {
+    data = await fetchAllRows<any>((from, to) => {
+      let q = supabaseAdmin
+        .from('registrations')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to)
+      if (previewId) q = q.neq('id', previewId)
+      return q
+    })
+  } catch {
     return NextResponse.json({ error: '匯出失敗' }, { status: 500 })
   }
 

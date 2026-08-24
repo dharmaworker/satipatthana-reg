@@ -9,16 +9,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '權限不足' }, { status: 403 })
   }
 
-  const { data, error } = await supabaseAdmin
+  const { count, error } = await supabaseAdmin
     .from('email_queue')
-    .select('status')
+    // 用 count 取代抓列再數長度：單次查詢上限 1000 筆，佇列一破千就會永遠顯示 1000
+    .select('id', { count: 'exact', head: true })
     .in('status', ['pending', 'processing'])
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const pending = data?.length ?? 0
+  const pending = count ?? 0
   const batches = Math.ceil(pending / BATCH_SIZE)
   const estimatedMinutes = batches
 
