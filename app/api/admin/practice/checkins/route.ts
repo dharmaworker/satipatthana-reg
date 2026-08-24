@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   if (request.cookies.get('admin_role')?.value !== 'admin') {
@@ -26,18 +26,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ items: [], rows: [] })
   }
 
-  const regIds = regsRes.data.map((r: { id: string }) => r.id)
+  const regIdSet = new Set(regsRes.data.map((r: { id: string }) => r.id))
 
-  const { data: checkins } = regIds.length > 0
-    ? await supabaseAdmin
-        .from('practice_checkins')
-        .select('registration_id, schedule_item_id')
-        .in('registration_id', regIds)
-        .eq('checked', true)
-    : { data: [] }
+  // 打卡記錄已破萬筆：分頁全撈再於記憶體過濾。
+  // 不用 .in(regIds)——一來單次查詢仍受 1000 筆上限截斷，二來數百組 uuid 會撐爆查詢字串。
+  const checkins = regIdSet.size > 0
+    ? await fetchAllRows<{ registration_id: string; schedule_item_id: string }>(
+        (from, to) => supabaseAdmin
+          .from('practice_checkins')
+          .select('registration_id, schedule_item_id')
+          .eq('checked', true)
+          .order('id', { ascending: true })
+          .range(from, to),
+      )
+    : []
 
   const checkinMap: Record<string, Set<string>> = {}
-  for (const c of checkins || []) {
+  for (const c of checkins) {
+    if (!regIdSet.has(c.registration_id)) continue
     if (!checkinMap[c.registration_id]) checkinMap[c.registration_id] = new Set()
     checkinMap[c.registration_id].add(c.schedule_item_id)
   }

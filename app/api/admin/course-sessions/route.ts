@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, fetchAllRows } from '@/lib/supabase'
 import { fetchTimetable, saveTimetable } from '@/lib/timetable'
 
 function checkAuth(request: NextRequest) {
@@ -10,24 +10,32 @@ function checkAuth(request: NextRequest) {
 export async function GET(request: NextRequest) {
   if (!checkAuth(request)) return NextResponse.json({ error: '請先登入' }, { status: 401 })
 
-  const [sessionsRes, checkinsRes, regsRes] = await Promise.all([
+  // 打卡記錄已破萬筆，必須分頁全撈，否則統計只會算到前 1000 筆
+  const [sessionsRes, checkins, regs] = await Promise.all([
     supabaseAdmin
       .from('course_sessions')
       .select('*')
       .order('sort_order', { ascending: true }),
-    supabaseAdmin
-      .from('course_session_checkins')
-      .select('session_id, registration_id, status, checked_in_at'),
-    supabaseAdmin
-      .from('registrations')
-      .select('id, chinese_name, student_id, member_id')
-      .eq('status', 'approved')
-      .eq('retreat_format', 'online'),
+    fetchAllRows<{ session_id: string; registration_id: string; status: string | null; checked_in_at: string | null }>(
+      (from, to) => supabaseAdmin
+        .from('course_session_checkins')
+        .select('session_id, registration_id, status, checked_in_at')
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllRows<{ id: string; chinese_name: string; student_id: string | null; member_id: string | null }>(
+      (from, to) => supabaseAdmin
+        .from('registrations')
+        .select('id, chinese_name, student_id, member_id')
+        .eq('status', 'approved')
+        .eq('retreat_format', 'online')
+        .order('student_id', { ascending: true, nullsFirst: false })
+        .order('id', { ascending: true })
+        .range(from, to),
+    ),
   ])
 
   const sessions = sessionsRes.data || []
-  const checkins = checkinsRes.data || []
-  const regs = regsRes.data || []
 
   // per-session stats
   const statsMap = new Map<string, { present: number; absent: number; total: number }>()

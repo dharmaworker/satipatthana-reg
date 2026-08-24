@@ -20,3 +20,21 @@ export function generateRandomCode(): string {
   return code
 }
 
+
+// Supabase/PostgREST 單次查詢預設上限 1000 筆。打卡類資料早已破萬筆，
+// 後台統計若直接 select 會被靜默截斷（只讀到前 1000 筆），故一律分頁讀取。
+// 注意：分頁必須搭配穩定排序（各表以 id 主鍵排序），否則跨頁會重複或漏抓。
+const PAGE_SIZE = 1000
+
+export async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const rows: T[] = []
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1)
+    if (error) throw new Error(error.message)
+    const batch = data || []
+    rows.push(...batch)
+    if (batch.length < PAGE_SIZE) return rows
+  }
+}

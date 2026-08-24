@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase'
+import { supabaseAdmin, fetchAllRows } from './supabase'
 
 export type TimetableRow = {
   rid?: string        // 穩定列 id（打卡對應鍵）；一次產生後永不變動，reorder/改字都不影響
@@ -243,11 +243,16 @@ async function syncCourseSessions(t: Timetable): Promise<void> {
 
   // 3. 刪除 stale 場次（跳過有打卡記錄者）
   if (staleIds.length > 0) {
-    const { data: checkins } = await supabaseAdmin
-      .from('course_session_checkins')
-      .select('session_id')
-      .in('session_id', staleIds)
-    const sessionsWithCheckins = new Set((checkins || []).map((c: any) => c.session_id))
+    // 必須分頁全撈：單次查詢上限 1000 筆，截斷會讓「有打卡的場次」被誤判為可刪 → 打卡記錄連帶消失
+    const checkins = await fetchAllRows<{ session_id: string }>(
+      (from, to) => supabaseAdmin
+        .from('course_session_checkins')
+        .select('session_id')
+        .in('session_id', staleIds)
+        .order('id', { ascending: true })
+        .range(from, to),
+    )
+    const sessionsWithCheckins = new Set(checkins.map(c => c.session_id))
     const safeToDelete = staleIds.filter(id => !sessionsWithCheckins.has(id))
     if (safeToDelete.length > 0) {
       await supabaseAdmin.from('course_sessions').delete().in('id', safeToDelete)

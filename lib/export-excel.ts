@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { supabaseAdmin } from './supabase'
+import { supabaseAdmin, fetchAllRows } from './supabase'
 import { getPreviewRegistrationId } from './preview-test-student'
 import { fetchAllSessions, fetchAllSmallSlots, deriveTeachersFromSlots, buildSessionLabelMap, buildTeacherLabelMap } from './interactive-db'
 
@@ -460,17 +460,22 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     .eq('enabled', true)
     .order('sort_order')
 
-  const approvedIds = all.filter(r => r.status === 'approved').map(r => r.id)
-  const { data: practiceCheckins } = approvedIds.length > 0
-    ? await supabaseAdmin
-        .from('practice_checkins')
-        .select('registration_id, schedule_item_id, checked')
-        .in('registration_id', approvedIds)
-        .eq('checked', true)
-    : { data: [] as { registration_id: string; schedule_item_id: string; checked: boolean }[] }
+  const approvedIds = new Set(all.filter(r => r.status === 'approved').map(r => r.id))
+  // 打卡記錄已破萬筆：分頁全撈再於記憶體過濾，否則匯出只會拿到前 1000 筆
+  const practiceCheckins = approvedIds.size > 0
+    ? await fetchAllRows<{ registration_id: string; schedule_item_id: string }>(
+        (from, to) => supabaseAdmin
+          .from('practice_checkins')
+          .select('registration_id, schedule_item_id')
+          .eq('checked', true)
+          .order('id', { ascending: true })
+          .range(from, to),
+      )
+    : []
 
   const checkinsByRegId = new Map<string, Set<string>>()
-  for (const c of practiceCheckins || []) {
+  for (const c of practiceCheckins) {
+    if (!approvedIds.has(c.registration_id)) continue
     if (!checkinsByRegId.has(c.registration_id)) checkinsByRegId.set(c.registration_id, new Set())
     checkinsByRegId.get(c.registration_id)!.add(c.schedule_item_id)
   }
@@ -488,16 +493,20 @@ export async function generateExportWorkbook(cutoff?: Date): Promise<{
     .order('sort_order', { ascending: true })
   const courseSessions = courseSessionsData || []
 
-  const onlineApprovedIds = online.filter(r => r.status === 'approved').map(r => r.id)
-  const { data: courseCheckinData } = onlineApprovedIds.length > 0
-    ? await supabaseAdmin
-        .from('course_session_checkins')
-        .select('registration_id, session_id, status')
-        .in('registration_id', onlineApprovedIds)
-    : { data: [] as { registration_id: string; session_id: string; status: string }[] }
+  const onlineApprovedIds = new Set(online.filter(r => r.status === 'approved').map(r => r.id))
+  const courseCheckinData = onlineApprovedIds.size > 0
+    ? await fetchAllRows<{ registration_id: string; session_id: string; status: string | null }>(
+        (from, to) => supabaseAdmin
+          .from('course_session_checkins')
+          .select('registration_id, session_id, status')
+          .order('id', { ascending: true })
+          .range(from, to),
+      )
+    : []
 
   const courseCheckinMap = new Map<string, Map<string, string | null>>()
-  for (const c of courseCheckinData || []) {
+  for (const c of courseCheckinData) {
+    if (!onlineApprovedIds.has(c.registration_id)) continue
     if (!courseCheckinMap.has(c.registration_id)) courseCheckinMap.set(c.registration_id, new Map())
     courseCheckinMap.get(c.registration_id)!.set(c.session_id, c.status)
   }
